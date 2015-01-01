@@ -1,0 +1,5 @@
+These codes are put in the protected tickets when the anti-cheat triggers.
+
+Warden for windows: a
+Warden for MAC: b
+Sentinel - Overspeed: c
