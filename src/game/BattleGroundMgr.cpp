@@ -223,28 +223,28 @@ GroupQueueInfo * BattleGroundQueue::AddGroup(Player *leader, Group* grp, BattleG
                     sWorld.SendWorldText(LANG_BG_QUEUE_ANNOUNCE_WORLD, bgName, q_min_level, q_max_level,
                         qAlliance, MinPlayers, qHorde, MinPlayers);
                 }
-				else
-				{	
-					ChannelMgr *chmgr = channelMgr(leader->GetTeam());
-					Channel* announcement = chmgr->GetChannel("rebirth_pvp", leader);
-					if (announcement)
-					{
-						for (auto current_player : announcement->GetPlayers())
-						{
-							Player* member = sObjectMgr.GetPlayer(current_player.first);
+                else
+                {
+                    ChannelMgr *chmgr = channelMgr(leader->GetTeam());
+                    Channel* announcement = chmgr->GetChannel("rebirth_pvp", leader);
+                    if (announcement)
+                    {
+                        for (auto current_player : announcement->GetPlayers())
+                        {
+                            Player* member = sObjectMgr.GetPlayer(current_player.first);
 
-							if (!member)
-								continue;               
+                            if (!member)
+                                continue;
 
-							char buff[500];
-							sprintf(buff, "[Battleground Announcement]: %s[%i-%i] - A:%i/%i H:%i/%i", bgName, q_min_level, q_max_level,
-								qAlliance, MinPlayers, qHorde, MinPlayers);
+                            char buff[500];
+                            sprintf(buff, "[Battleground Announcement]: %s[%i-%i] - A:%i/%i H:%i/%i", bgName, q_min_level, q_max_level,
+                                    qAlliance, MinPlayers, qHorde, MinPlayers);
 
-							announcement->Say(member->GetObjectGuid(), buff, LANG_UNIVERSAL); 
-							break; // If a player that is in the announcement channel is found we're done.
-						}
-					}
-				}
+                            announcement->Say(member->GetObjectGuid(), buff, LANG_UNIVERSAL);
+                            break; // If a player that is in the announcement channel is found we're done.
+                        }
+                    }
+                }
 
             }
         }
