@@ -692,9 +692,10 @@ void Guild::Disband()
 
 void Guild::Roster(WorldSession *session /*= NULL*/)
 {
-                                                            // we can only guess size
-    WorldPacket data(SMSG_GUILD_ROSTER, (4+MOTD.length()+1+GINFO.length()+1+4+m_Ranks.size()*4+members.size()*50));
-    data << uint32(members.size());
+    size_t guild_size = members.size() > 500 ? 500 : members.size(); // We cap the size sent to 500. Appearently this was the Vanilla limit.
+                                                            
+    WorldPacket data(SMSG_GUILD_ROSTER, (4+MOTD.length()+1+GINFO.length()+1+4+m_Ranks.size()*4+guild_size*50)); // we can only guess size
+    data << uint32(guild_size);
     data << MOTD;
     data << GINFO;
 
@@ -702,8 +703,13 @@ void Guild::Roster(WorldSession *session /*= NULL*/)
     for (RankList::const_iterator ritr = m_Ranks.begin(); ritr != m_Ranks.end(); ++ritr)
         data << uint32(ritr->Rights);
 
+    unsigned int counter = 0; 
     for (MemberList::const_iterator itr = members.begin(); itr != members.end(); ++itr)
     {
+	// If we send more than 500 members to the player the client might crash.
+	if (++counter > 500)
+	  break;
+      
         if (Player *pl = ObjectAccessor::FindPlayer(ObjectGuid(HIGHGUID_PLAYER, itr->first)))
         {
             data << pl->GetObjectGuid();
