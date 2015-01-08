@@ -106,7 +106,7 @@ Map::Map(uint32 id, time_t expiry, uint32 InstanceId)
     m_TerrainData->AddRef();
 
     m_persistentState = sMapPersistentStateMgr.AddPersistentState(i_mapEntry, GetInstanceId(), 0, IsDungeon());
-	m_persistentState->SetUsedByMapState(this);
+    m_persistentState->SetUsedByMapState(this);
 
 #ifdef DEBUG_LOAD_CONTINENTS
     if (GetId() == 0 || GetId() == 1)
@@ -149,7 +149,7 @@ void Map::AddToGrid(T* obj, NGridType *grid, Cell const& cell)
 template<>
 void Map::AddToGrid(Player* obj, NGridType *grid, Cell const& cell)
 {
-	(*grid)(cell.CellX(), cell.CellY()).AddWorldObject(obj);
+    (*grid)(cell.CellX(), cell.CellY()).AddWorldObject(obj);
 }
 
 template<>
@@ -158,12 +158,12 @@ void Map::AddToGrid(Corpse *obj, NGridType *grid, Cell const& cell)
     // add to world object registry in grid
     if(obj->GetType()!=CORPSE_BONES)
     {
-		(*grid)(cell.CellX(), cell.CellY()).AddWorldObject(obj);
+        (*grid)(cell.CellX(), cell.CellY()).AddWorldObject(obj);
     }
     // add to grid object store
     else
     {
-		(*grid)(cell.CellX(), cell.CellY()).AddGridObject(obj);
+        (*grid)(cell.CellX(), cell.CellY()).AddGridObject(obj);
     }
 }
 
@@ -193,7 +193,7 @@ void Map::RemoveFromGrid(T* obj, NGridType *grid, Cell const& cell)
 template<>
 void Map::RemoveFromGrid(Player* obj, NGridType *grid, Cell const& cell)
 {
-	(*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject(obj);
+    (*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject(obj);
 }
 
 template<>
@@ -202,12 +202,12 @@ void Map::RemoveFromGrid(Corpse *obj, NGridType *grid, Cell const& cell)
     // remove from world object registry in grid
     if(obj->GetType()!=CORPSE_BONES)
     {
-		(*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject(obj);
+        (*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject(obj);
     }
     // remove from grid object store
     else
     {
-		(*grid)(cell.CellX(), cell.CellY()).RemoveGridObject(obj);
+        (*grid)(cell.CellX(), cell.CellY()).RemoveGridObject(obj);
     }
 }
 
@@ -401,6 +401,19 @@ Map::Add(T *obj)
     }
 }
 
+void Map::AddActiveObjectToRemove(WorldObject* obj)
+{
+    if (std::find(m_activeNonPlayersRemoveList.begin(), m_activeNonPlayersRemoveList.end(), obj) == m_activeNonPlayersRemoveList.end())
+        m_activeNonPlayersRemoveList.push_back(obj);
+}
+
+void Map::AddActiveObjectToUpdate(WorldObject* obj)
+{
+    // Only add objects that aren't already in the list.
+    if (std::find(m_activeNonPlayers.begin(), m_activeNonPlayers.end(), obj) == m_activeNonPlayers.end())
+	m_activeNonPlayers.push_back(obj);
+}
+
 void Map::MessageBroadcast(Player *player, WorldPacket *msg, bool to_self)
 {
     CellPair p = MaNGOS::ComputeCellPair(player->GetPositionX(), player->GetPositionY());
@@ -560,46 +573,54 @@ void Map::Update(const uint32 &t_diff)
     }
 
     // non-player active objects
-	std::mutex update_mutex;
-	tbb::parallel_do(m_activeNonPlayers.begin(), m_activeNonPlayers.end(), [&](WorldObject* obj)
-	{
-		if (!obj->IsInWorld() || !obj->IsPositionValid())
-			return;
+    std::mutex update_mutex;
+    tbb::parallel_do(m_activeNonPlayers.begin(), m_activeNonPlayers.end(), [&](WorldObject* obj)
+    {
+        if (!obj->IsInWorld() || !obj->IsPositionValid())
+            return;
 
-		// Only update creatures that are in combat, in evade mode or following a path.
-		Creature* current_creature = dynamic_cast<Creature*>(obj);
-		if (current_creature)
-		{
-			if (!current_creature->isInCombat() && !current_creature->IsInEvadeMode() &&
-				current_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() != MovementGeneratorType::WAYPOINT_MOTION_TYPE)
-				return;
-		}
+        std::lock_guard<std::mutex> guard(update_mutex);
 
-		std::lock_guard<std::mutex> guard(update_mutex);
+        //lets update mobs/objects in ALL visible cells around player!
+        CellArea area = Cell::CalculateCellArea(obj->GetPositionX(), obj->GetPositionY(), GetVisibilityDistance());
 
-		//lets update mobs/objects in ALL visible cells around player!
-		CellArea area = Cell::CalculateCellArea(obj->GetPositionX(), obj->GetPositionY(), GetVisibilityDistance());
+        for(uint32 x = area.low_bound.x_coord; x <= area.high_bound.x_coord; ++x)
+        {
+            for(uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
+            {
+                // marked cells are those that have been visited
+                // don't visit the same cell twice
+                uint32 cell_id =(y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
 
-		for(uint32 x = area.low_bound.x_coord; x <= area.high_bound.x_coord; ++x)
-		{
-			for(uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
-			{
-				// marked cells are those that have been visited
-				// don't visit the same cell twice
-				uint32 cell_id =(y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
-
-				if(!isCellMarked(cell_id))
-				{
-					markCell(cell_id);
-					CellPair pair(x,y);
-					Cell cell(pair);
-					cell.SetNoCreate();
-					Visit(cell, grid_object_update);
-					Visit(cell, world_object_update);
-				}
-			}
-		}
-	});
+                if(!isCellMarked(cell_id))
+                {
+                    markCell(cell_id);
+                    CellPair pair(x,y);
+                    Cell cell(pair);
+                    cell.SetNoCreate();
+                    Visit(cell, grid_object_update);
+                    Visit(cell, world_object_update);
+                }
+            }
+        }
+    });
+    
+    auto itr = m_activeNonPlayersRemoveList.begin();
+    while(itr != m_activeNonPlayersRemoveList.end())
+    {
+	// Only creatures that are no longer in evade mode should be removed.
+        Creature* current_creature = dynamic_cast<Creature*>(*itr);
+        if (current_creature)
+        {
+            if (current_creature->IsInEvadeMode())
+                ++itr;
+            else
+            {
+                m_activeNonPlayers.remove(*itr);
+                itr = m_activeNonPlayersRemoveList.erase(itr);
+            }
+        }
+    }
 
     // Send world objects and item update field changes
     SendObjectUpdates();
@@ -1128,8 +1149,12 @@ bool Map::ActiveObjectsNearGrid(uint32 x, uint32 y) const
 
 void Map::AddToActive( WorldObject* obj )
 {
-	m_activeNonPlayers.push_back(obj);
-
+    Creature* creature = dynamic_cast<Creature*>(obj);
+    if (!creature || creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == MovementGeneratorType::WAYPOINT_MOTION_TYPE)
+    {
+            m_activeNonPlayers.push_back(obj);
+    }
+    
     // also not allow unloading spawn grid to prevent creating creature clone at load
     if (obj->GetTypeId()==TYPEID_UNIT)
     {
@@ -1154,7 +1179,7 @@ void Map::AddToActive( WorldObject* obj )
 
 void Map::RemoveFromActive( WorldObject* obj )
 {
-	m_activeNonPlayers.remove(obj);
+    m_activeNonPlayers.remove(obj);
 
     // also allow unloading spawn grid
     if (obj->GetTypeId()==TYPEID_UNIT)
@@ -3191,41 +3216,41 @@ uint32 Map::GenerateLocalLowGuid(HighGuid guidhigh)
  */
 class StaticMonsterChatBuilder
 {
-public:
+    public:
     StaticMonsterChatBuilder(CreatureInfo const* cInfo, ChatMsg msgtype, int32 textId, uint32 language, Unit* target, uint32 senderLowGuid = 0)
         : i_cInfo(cInfo), i_msgtype(msgtype), i_textId(textId), i_language(language), i_target(target)
-    {
-        // 0 lowguid not used in core, but accepted fine in this case by client
-        i_senderGuid = i_cInfo->GetObjectGuid(senderLowGuid);
-    }
-    void operator()(WorldPacket& data, int32 loc_idx)
-    {
-        char const* text = sObjectMgr.GetMangosString(i_textId,loc_idx);
+{
+    // 0 lowguid not used in core, but accepted fine in this case by client
+    i_senderGuid = i_cInfo->GetObjectGuid(senderLowGuid);
+}
+void operator()(WorldPacket& data, int32 loc_idx)
+{
+    char const* text = sObjectMgr.GetMangosString(i_textId,loc_idx);
 
-        std::string nameForLocale = "";
-        if (loc_idx >= 0)
+    std::string nameForLocale = "";
+    if (loc_idx >= 0)
+    {
+        CreatureLocale const *cl = sObjectMgr.GetCreatureLocale(i_cInfo->Entry);
+        if (cl)
         {
-            CreatureLocale const *cl = sObjectMgr.GetCreatureLocale(i_cInfo->Entry);
-            if (cl)
-            {
-                if (cl->Name.size() > (size_t)loc_idx && !cl->Name[loc_idx].empty())
-                    nameForLocale = cl->Name[loc_idx];
-            }
+            if (cl->Name.size() > (size_t)loc_idx && !cl->Name[loc_idx].empty())
+                nameForLocale = cl->Name[loc_idx];
         }
-
-        if (nameForLocale.empty())
-            nameForLocale = i_cInfo->Name;
-
-        WorldObject::BuildMonsterChat(&data, i_senderGuid, i_msgtype, text, i_language, nameForLocale.c_str(), i_target ? i_target->GetObjectGuid() : ObjectGuid(), i_target ? i_target->GetNameForLocaleIdx(loc_idx) : "");
     }
+
+    if (nameForLocale.empty())
+        nameForLocale = i_cInfo->Name;
+
+    WorldObject::BuildMonsterChat(&data, i_senderGuid, i_msgtype, text, i_language, nameForLocale.c_str(), i_target ? i_target->GetObjectGuid() : ObjectGuid(), i_target ? i_target->GetNameForLocaleIdx(loc_idx) : "");
+}
 
 private:
-    ObjectGuid i_senderGuid;
-    CreatureInfo const* i_cInfo;
-    ChatMsg i_msgtype;
-    int32 i_textId;
-    uint32 i_language;
-    Unit* i_target;
+ObjectGuid i_senderGuid;
+CreatureInfo const* i_cInfo;
+ChatMsg i_msgtype;
+int32 i_textId;
+uint32 i_language;
+Unit* i_target;
 };
 
 
