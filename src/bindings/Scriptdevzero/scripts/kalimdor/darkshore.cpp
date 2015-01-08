@@ -380,6 +380,101 @@ bool GossipSelect_npc_threshwackonator(Player* pPlayer, Creature* pCreature, uin
     return true;
 }
 
+/*####
+# npc_volcor
+####*/
+
+enum
+{
+    QUEST_ESCAPE_THROUGH_FORCE = 994,
+	HELLO_GRIMCLAW = -1713002,
+	ENDING_TEXT = -1713001,
+};
+
+struct MANGOS_DLL_DECL npc_volcorAI : public npc_escortAI
+{
+    npc_volcorAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+
+	uint32 ui_ending_delay;
+
+	void Reset() 
+	{
+		ui_ending_delay = 0;
+	}
+
+    void WaypointReached(uint32 i)
+    {
+		switch(i)
+		{
+			case 17:
+				SetEscortPaused(true);
+				ui_ending_delay = 3000;
+
+				Creature *GrimClaw = GetClosestCreatureWithEntry(m_creature, 3695, 20.0f); 
+
+				if(GrimClaw)
+				{
+					DoScriptText(HELLO_GRIMCLAW, m_creature, GrimClaw);
+				}
+				
+				break;
+		}
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+	{
+		if(ui_ending_delay)
+		{
+			if(ui_ending_delay <= uiDiff)
+			{
+				Player *pPlayer = GetPlayerForEscort();
+
+				if(pPlayer)
+				{
+					DoScriptText(ENDING_TEXT, m_creature, pPlayer);
+					pPlayer->GroupEventHappens(QUEST_ABSENT_MINDED_PT2, m_creature);
+				}
+				SetEscortPaused(false);
+				SetRun(true);
+				ui_ending_delay = 0;
+			}
+			else
+				ui_ending_delay -= uiDiff;
+		}
+
+		npc_escortAI::UpdateAI(uiDiff);
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+
+    void Aggro(Unit* who)
+    {
+    }
+};
+
+
+CreatureAI* GetAI_npc_volcor(Creature* pCreature)
+{
+    return new npc_volcorAI(pCreature);
+}
+
+bool QuestAccept_npc_volcor(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == QUEST_ESCAPE_THROUGH_FORCE)
+    {
+        pCreature->setFaction(FACTION_ESCORT_A_NEUTRAL_PASSIVE);
+
+        if (npc_volcorAI* pEscortAI = dynamic_cast<npc_volcorAI*>(pCreature->AI()))
+            pEscortAI->Start(false, pPlayer, pQuest, true);
+    }
+
+    return true;
+}
+
+
 void AddSC_darkshore()
 {
     Script* pNewscript;
@@ -401,5 +496,11 @@ void AddSC_darkshore()
     pNewscript->GetAI = &GetAI_npc_threshwackonator;
     pNewscript->pGossipHello = &GossipHello_npc_threshwackonator;
     pNewscript->pGossipSelect = &GossipSelect_npc_threshwackonator;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_volcor";
+    pNewscript->GetAI = &GetAI_npc_volcor;
+    pNewscript->pQuestAcceptNPC = &QuestAccept_npc_volcor;
     pNewscript->RegisterSelf();
 }
