@@ -396,10 +396,12 @@ struct MANGOS_DLL_DECL npc_volcorAI : public npc_escortAI
     npc_volcorAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
 
 	uint32 ui_ending_delay;
+	uint32 ui_runDelay;
 
 	void Reset() 
 	{
 		ui_ending_delay = 0;
+		ui_runDelay = 0;
 	}
 
     void WaypointReached(uint32 i)
@@ -410,11 +412,12 @@ struct MANGOS_DLL_DECL npc_volcorAI : public npc_escortAI
 				SetEscortPaused(true);
 				ui_ending_delay = 3000;
 
-				Creature *GrimClaw = GetClosestCreatureWithEntry(m_creature, 3695, 20.0f); 
+				Creature *GrimClaw = GetClosestCreatureWithEntry(m_creature, 3695, 40.0f); 
 
 				if(GrimClaw)
 				{
-					DoScriptText(HELLO_GRIMCLAW, m_creature, GrimClaw);
+					m_creature->SetFacingToObject(GrimClaw);
+					DoScriptText(HELLO_GRIMCLAW, m_creature);
 				}
 				
 				break;
@@ -431,15 +434,26 @@ struct MANGOS_DLL_DECL npc_volcorAI : public npc_escortAI
 
 				if(pPlayer)
 				{
+					m_creature->SetFacingToObject(pPlayer);
 					DoScriptText(ENDING_TEXT, m_creature, pPlayer);
-					pPlayer->GroupEventHappens(QUEST_ABSENT_MINDED_PT2, m_creature);
+					pPlayer->GroupEventHappens(QUEST_ESCAPE_THROUGH_FORCE, m_creature);
 				}
-				SetEscortPaused(false);
+				ui_runDelay = 4000;
 				SetRun(true);
 				ui_ending_delay = 0;
 			}
 			else
 				ui_ending_delay -= uiDiff;
+		}
+
+		if(ui_runDelay)
+		{
+			if(ui_runDelay <= uiDiff)
+			{
+				SetEscortPaused(false);
+			}
+			else
+				ui_runDelay -= uiDiff;
 		}
 
 		npc_escortAI::UpdateAI(uiDiff);
@@ -455,7 +469,6 @@ struct MANGOS_DLL_DECL npc_volcorAI : public npc_escortAI
     }
 };
 
-
 CreatureAI* GetAI_npc_volcor(Creature* pCreature)
 {
     return new npc_volcorAI(pCreature);
@@ -468,10 +481,109 @@ bool QuestAccept_npc_volcor(Player* pPlayer, Creature* pCreature, const Quest* p
         pCreature->setFaction(FACTION_ESCORT_A_NEUTRAL_PASSIVE);
 
         if (npc_volcorAI* pEscortAI = dynamic_cast<npc_volcorAI*>(pCreature->AI()))
+		{
+			pCreature->SetStandState(UNIT_STAND_STATE_STAND);
             pEscortAI->Start(false, pPlayer, pQuest, true);
+		}
     }
 
     return true;
+}
+
+/*####
+# npc_grimclaw
+####*/
+
+struct MANGOS_DLL_DECL npc_grimclaw : public ScriptedAI
+{
+    npc_grimclaw(Creature* pCreature) : ScriptedAI(pCreature) { Reset(); }
+
+	uint32 ui_sniffTimer;
+	uint32 ui_turnPlayerTimer;
+	uint32 ui_sniffReturnTimer;
+	uint32 ui_responseCooldown;
+	Player *player;
+
+	void Reset() 
+	{
+		player = nullptr;
+		ui_sniffTimer = 0;
+		ui_sniffReturnTimer = 0;
+		ui_turnPlayerTimer = 0;
+		ui_responseCooldown = 0;
+	}
+
+	void ReceiveEmote(Player *pPlayer, uint32 uiTextEmote)
+	{
+		if(uiTextEmote == TEXTEMOTE_WAVE && !ui_responseCooldown)
+		{
+			if(pPlayer)
+			{
+				player = pPlayer;
+				m_creature->GenericTextEmote("Grimclaw growls in your direction before taking time to sniff you.", nullptr);
+				m_creature->SetFacingToObject(pPlayer);
+				ui_sniffTimer = 3000;
+				ui_responseCooldown = 15000;
+			}
+		}
+	}
+
+	void UpdateAI(uint32 uiDiff)
+	{
+		if(ui_sniffTimer)
+		{
+			if(ui_sniffTimer <= uiDiff)
+			{
+				m_creature->GenericTextEmote("Grimclaw faces southeast and whimpers before looking back at you.", nullptr);
+				m_creature->SetOrientation(3.9f);
+				ui_sniffTimer = 0;
+				ui_turnPlayerTimer = 3000;
+			}
+			else
+				ui_sniffTimer -= uiDiff;
+		}
+
+		if(ui_turnPlayerTimer)
+		{
+			if(ui_turnPlayerTimer <= uiDiff)
+			{
+				if(player)
+					m_creature->SetFacingToObject(player);
+				else
+					m_creature->SetOrientation(2.1f);
+
+				ui_sniffReturnTimer = 2000;
+				ui_turnPlayerTimer = 0;
+				player = nullptr;
+			}
+			else
+				ui_turnPlayerTimer -= uiDiff;
+		}
+
+		if(ui_sniffReturnTimer)
+		{
+			if(ui_sniffReturnTimer <= uiDiff)
+			{
+				ui_sniffReturnTimer = 0;
+				m_creature->SetOrientation(2.1f);
+			}
+			else
+				ui_sniffReturnTimer -= uiDiff;
+		}
+
+		if(ui_responseCooldown)
+		{
+			if(ui_responseCooldown <= uiDiff)
+				ui_responseCooldown = 0;
+			else
+				ui_responseCooldown -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_grimclaw(Creature* pCreature)
+{
+    return new npc_grimclaw(pCreature);
 }
 
 
@@ -502,5 +614,10 @@ void AddSC_darkshore()
     pNewscript->Name = "npc_volcor";
     pNewscript->GetAI = &GetAI_npc_volcor;
     pNewscript->pQuestAcceptNPC = &QuestAccept_npc_volcor;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_grimclaw";
+    pNewscript->GetAI = &GetAI_npc_grimclaw;
     pNewscript->RegisterSelf();
 }
