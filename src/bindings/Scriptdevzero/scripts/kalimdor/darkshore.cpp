@@ -64,7 +64,9 @@ enum
 //TODO: make concept similar as "ringo" -escort. Find a way to run the scripted attacks, _if_ player are choosing road.
 struct MANGOS_DLL_DECL npc_kerlonianAI : public FollowerAI
 {
-    npc_kerlonianAI(Creature* pCreature) : FollowerAI(pCreature) { Reset(); }
+    npc_kerlonianAI(Creature* pCreature) : FollowerAI(pCreature) {
+        Reset();
+    }
 
     uint32 m_uiFallAsleepTimer;
 
@@ -106,17 +108,31 @@ struct MANGOS_DLL_DECL npc_kerlonianAI : public FollowerAI
 
         switch(urand(0, 2))
         {
-            case 0: DoScriptText(EMOTE_KER_SLEEP_1, m_creature); break;
-            case 1: DoScriptText(EMOTE_KER_SLEEP_2, m_creature); break;
-            case 2: DoScriptText(EMOTE_KER_SLEEP_3, m_creature); break;
+        case 0:
+            DoScriptText(EMOTE_KER_SLEEP_1, m_creature);
+            break;
+        case 1:
+            DoScriptText(EMOTE_KER_SLEEP_2, m_creature);
+            break;
+        case 2:
+            DoScriptText(EMOTE_KER_SLEEP_3, m_creature);
+            break;
         }
 
         switch(urand(0, 3))
         {
-            case 0: DoScriptText(SAY_KER_SLEEP_1, m_creature); break;
-            case 1: DoScriptText(SAY_KER_SLEEP_2, m_creature); break;
-            case 2: DoScriptText(SAY_KER_SLEEP_3, m_creature); break;
-            case 3: DoScriptText(SAY_KER_SLEEP_4, m_creature); break;
+        case 0:
+            DoScriptText(SAY_KER_SLEEP_1, m_creature);
+            break;
+        case 1:
+            DoScriptText(SAY_KER_SLEEP_2, m_creature);
+            break;
+        case 2:
+            DoScriptText(SAY_KER_SLEEP_3, m_creature);
+            break;
+        case 3:
+            DoScriptText(SAY_KER_SLEEP_4, m_creature);
+            break;
         }
 
         m_creature->SetStandState(UNIT_STAND_STATE_SLEEP);
@@ -206,7 +222,9 @@ enum
 
 struct MANGOS_DLL_DECL npc_prospector_remtravelAI : public npc_escortAI
 {
-    npc_prospector_remtravelAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+    npc_prospector_remtravelAI(Creature* pCreature) : npc_escortAI(pCreature) {
+        Reset();
+    }
 
     void WaypointReached(uint32 i)
     {
@@ -217,57 +235,57 @@ struct MANGOS_DLL_DECL npc_prospector_remtravelAI : public npc_escortAI
 
         switch(i)
         {
-            case 0:
-                DoScriptText(SAY_REM_START, m_creature, pPlayer);
-                break;
-            case 5:
-                DoScriptText(SAY_REM_RAMP1_1, m_creature, pPlayer);
-                break;
-            case 6:
-                DoSpawnCreature(NPC_GRAVEL_SCOUT, -10.0f, 5.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                DoSpawnCreature(NPC_GRAVEL_BONE, -10.0f, 7.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                break;
-            case 9:
-                DoScriptText(SAY_REM_RAMP1_2, m_creature, pPlayer);
-                break;
-            case 14:
-                //depend quest rewarded?
-                DoScriptText(SAY_REM_BOOK, m_creature, pPlayer);
-                break;
-            case 15:
-                DoScriptText(SAY_REM_TENT1_1, m_creature, pPlayer);
-                break;
-            case 16:
-                DoSpawnCreature(NPC_GRAVEL_SCOUT, -10.0f, 5.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                DoSpawnCreature(NPC_GRAVEL_BONE, -10.0f, 7.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                break;
-            case 17:
-                DoScriptText(SAY_REM_TENT1_2, m_creature, pPlayer);
-                break;
-            case 26:
-                DoScriptText(SAY_REM_MOSS, m_creature, pPlayer);
-                break;
-            case 27:
-                DoScriptText(EMOTE_REM_MOSS, m_creature, pPlayer);
-                break;
-            case 28:
-                DoScriptText(SAY_REM_MOSS_PROGRESS, m_creature, pPlayer);
-                break;
-            case 29:
-                DoSpawnCreature(NPC_GRAVEL_SCOUT, -15.0f, 3.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                DoSpawnCreature(NPC_GRAVEL_BONE, -15.0f, 5.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                DoSpawnCreature(NPC_GRAVEL_GEO, -15.0f, 7.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                break;
-            case 31:
-                DoScriptText(SAY_REM_PROGRESS, m_creature, pPlayer);
-                break;
-            case 41:
-                DoScriptText(SAY_REM_REMEMBER, m_creature, pPlayer);
-                break;
-            case 42:
-                DoScriptText(EMOTE_REM_END, m_creature, pPlayer);
-                pPlayer->GroupEventHappens(QUEST_ABSENT_MINDED_PT2, m_creature);
-                break;
+        case 0:
+            DoScriptText(SAY_REM_START, m_creature, pPlayer);
+            break;
+        case 5:
+            DoScriptText(SAY_REM_RAMP1_1, m_creature, pPlayer);
+            break;
+        case 6:
+            DoSpawnCreature(NPC_GRAVEL_SCOUT, -10.0f, 5.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+            DoSpawnCreature(NPC_GRAVEL_BONE, -10.0f, 7.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+            break;
+        case 9:
+            DoScriptText(SAY_REM_RAMP1_2, m_creature, pPlayer);
+            break;
+        case 14:
+            //depend quest rewarded?
+            DoScriptText(SAY_REM_BOOK, m_creature, pPlayer);
+            break;
+        case 15:
+            DoScriptText(SAY_REM_TENT1_1, m_creature, pPlayer);
+            break;
+        case 16:
+            DoSpawnCreature(NPC_GRAVEL_SCOUT, -10.0f, 5.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+            DoSpawnCreature(NPC_GRAVEL_BONE, -10.0f, 7.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+            break;
+        case 17:
+            DoScriptText(SAY_REM_TENT1_2, m_creature, pPlayer);
+            break;
+        case 26:
+            DoScriptText(SAY_REM_MOSS, m_creature, pPlayer);
+            break;
+        case 27:
+            DoScriptText(EMOTE_REM_MOSS, m_creature, pPlayer);
+            break;
+        case 28:
+            DoScriptText(SAY_REM_MOSS_PROGRESS, m_creature, pPlayer);
+            break;
+        case 29:
+            DoSpawnCreature(NPC_GRAVEL_SCOUT, -15.0f, 3.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+            DoSpawnCreature(NPC_GRAVEL_BONE, -15.0f, 5.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+            DoSpawnCreature(NPC_GRAVEL_GEO, -15.0f, 7.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+            break;
+        case 31:
+            DoScriptText(SAY_REM_PROGRESS, m_creature, pPlayer);
+            break;
+        case 41:
+            DoScriptText(SAY_REM_REMEMBER, m_creature, pPlayer);
+            break;
+        case 42:
+            DoScriptText(EMOTE_REM_END, m_creature, pPlayer);
+            pPlayer->GroupEventHappens(QUEST_ABSENT_MINDED_PT2, m_creature);
+            break;
         }
     }
 
@@ -321,7 +339,9 @@ enum
 
 struct MANGOS_DLL_DECL npc_threshwackonatorAI : public FollowerAI
 {
-    npc_threshwackonatorAI(Creature* pCreature) : FollowerAI(pCreature) { Reset(); }
+    npc_threshwackonatorAI(Creature* pCreature) : FollowerAI(pCreature) {
+        Reset();
+    }
 
     void Reset() {}
 
@@ -387,84 +407,86 @@ bool GossipSelect_npc_threshwackonator(Player* pPlayer, Creature* pCreature, uin
 enum
 {
     QUEST_ESCAPE_THROUGH_FORCE = 994,
-	HELLO_GRIMCLAW = -1713002,
-	ENDING_TEXT = -1713001,
+    HELLO_GRIMCLAW = -1713002,
+    ENDING_TEXT = -1713001,
 };
 
 struct MANGOS_DLL_DECL npc_volcorAI : public npc_escortAI
 {
-    npc_volcorAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+    npc_volcorAI(Creature* pCreature) : npc_escortAI(pCreature) {
+        Reset();
+    }
 
-	uint32 ui_ending_delay;
-	uint32 ui_runDelay;
+    uint32 ui_ending_delay;
+    uint32 ui_runDelay;
 
-	void Reset() 
-	{
-		ui_ending_delay = 0;
-		ui_runDelay = 0;
-	}
+    void Reset()
+    {
+        ui_ending_delay = 0;
+        ui_runDelay = 0;
+    }
 
     void WaypointReached(uint32 i)
     {
-		switch(i)
-		{
-			case 17:
-				SetEscortPaused(true);
-				ui_ending_delay = 3000;
+        switch(i)
+        {
+        case 17:
+            SetEscortPaused(true);
+            ui_ending_delay = 3000;
 
-				Creature *GrimClaw = GetClosestCreatureWithEntry(m_creature, 3695, 40.0f); 
+            Creature *GrimClaw = GetClosestCreatureWithEntry(m_creature, 3695, 40.0f);
 
-				if(GrimClaw)
-				{
-					m_creature->SetFacingToObject(GrimClaw);
-					DoScriptText(HELLO_GRIMCLAW, m_creature);
-				}
-				
-				break;
-		}
+            if(GrimClaw)
+            {
+                m_creature->SetFacingToObject(GrimClaw);
+                DoScriptText(HELLO_GRIMCLAW, m_creature);
+            }
+
+            break;
+        }
     }
 
-	void UpdateAI(const uint32 uiDiff)
-	{
-		if(ui_ending_delay)
-		{
-			if(ui_ending_delay <= uiDiff)
-			{
-				Player *pPlayer = GetPlayerForEscort();
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(ui_ending_delay)
+        {
+            if(ui_ending_delay <= uiDiff)
+            {
+                Player *pPlayer = GetPlayerForEscort();
 
-				if(pPlayer)
-				{
-					m_creature->SetFacingToObject(pPlayer);
-					DoScriptText(ENDING_TEXT, m_creature, pPlayer);
-					pPlayer->GroupEventHappens(QUEST_ESCAPE_THROUGH_FORCE, m_creature);
-				}
-				ui_runDelay = 4000;
-				SetRun(true);
-				ui_ending_delay = 0;
-			}
-			else
-				ui_ending_delay -= uiDiff;
-		}
+                if(pPlayer)
+                {
+                    m_creature->SetFacingToObject(pPlayer);
+                    DoScriptText(ENDING_TEXT, m_creature, pPlayer);
+                    pPlayer->GroupEventHappens(QUEST_ESCAPE_THROUGH_FORCE, m_creature);
+                }
+                ui_runDelay = 4000;
+                SetRun(true);
+                ui_ending_delay = 0;
+            }
+            else
+                ui_ending_delay -= uiDiff;
+        }
 
-		if(ui_runDelay)
-		{
-			if(ui_runDelay <= uiDiff)
-			{
-				SetEscortPaused(false);
-			}
-			else
-				ui_runDelay -= uiDiff;
-		}
+        if(ui_runDelay)
+        {
+            if(ui_runDelay <= uiDiff)
+            {
+                SetEscortPaused(false);
+            }
+            else
+                ui_runDelay -= uiDiff;
+        }
 
-		npc_escortAI::UpdateAI(uiDiff);
+        npc_escortAI::UpdateAI(uiDiff);
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         DoMeleeAttackIfReady();
-	}
+    }
 
-    void Aggro(Unit* who)
+    void Aggro(Unit* /*who*/)
     {
     }
 };
@@ -481,10 +503,10 @@ bool QuestAccept_npc_volcor(Player* pPlayer, Creature* pCreature, const Quest* p
         pCreature->setFaction(FACTION_ESCORT_A_NEUTRAL_PASSIVE);
 
         if (npc_volcorAI* pEscortAI = dynamic_cast<npc_volcorAI*>(pCreature->AI()))
-		{
-			pCreature->SetStandState(UNIT_STAND_STATE_STAND);
+        {
+            pCreature->SetStandState(UNIT_STAND_STATE_STAND);
             pEscortAI->Start(false, pPlayer, pQuest, true);
-		}
+        }
     }
 
     return true;
@@ -496,89 +518,91 @@ bool QuestAccept_npc_volcor(Player* pPlayer, Creature* pCreature, const Quest* p
 
 struct MANGOS_DLL_DECL npc_grimclaw : public ScriptedAI
 {
-    npc_grimclaw(Creature* pCreature) : ScriptedAI(pCreature) { Reset(); }
+    npc_grimclaw(Creature* pCreature) : ScriptedAI(pCreature) {
+        Reset();
+    }
 
-	uint32 ui_sniffTimer;
-	uint32 ui_turnPlayerTimer;
-	uint32 ui_sniffReturnTimer;
-	uint32 ui_responseCooldown;
-	Player *player;
+    uint32 ui_sniffTimer;
+    uint32 ui_turnPlayerTimer;
+    uint32 ui_sniffReturnTimer;
+    uint32 ui_responseCooldown;
+    Player *player;
 
-	void Reset() 
-	{
-		player = nullptr;
-		ui_sniffTimer = 0;
-		ui_sniffReturnTimer = 0;
-		ui_turnPlayerTimer = 0;
-		ui_responseCooldown = 0;
-	}
+    void Reset()
+    {
+        player = nullptr;
+        ui_sniffTimer = 0;
+        ui_sniffReturnTimer = 0;
+        ui_turnPlayerTimer = 0;
+        ui_responseCooldown = 0;
+    }
 
-	void ReceiveEmote(Player *pPlayer, uint32 uiTextEmote)
-	{
-		if(uiTextEmote == TEXTEMOTE_WAVE && !ui_responseCooldown)
-		{
-			if(pPlayer)
-			{
-				player = pPlayer;
-				m_creature->GenericTextEmote("Grimclaw growls in your direction before taking time to sniff you.", nullptr);
-				m_creature->SetFacingToObject(pPlayer);
-				ui_sniffTimer = 3000;
-				ui_responseCooldown = 15000;
-			}
-		}
-	}
+    void ReceiveEmote(Player *pPlayer, uint32 uiTextEmote)
+    {
+        if(uiTextEmote == TEXTEMOTE_WAVE && !ui_responseCooldown)
+        {
+            if(pPlayer)
+            {
+                player = pPlayer;
+                m_creature->GenericTextEmote("Grimclaw growls in your direction before taking time to sniff you.", nullptr);
+                m_creature->SetFacingToObject(pPlayer);
+                ui_sniffTimer = 3000;
+                ui_responseCooldown = 15000;
+            }
+        }
+    }
 
-	void UpdateAI(uint32 uiDiff)
-	{
-		if(ui_sniffTimer)
-		{
-			if(ui_sniffTimer <= uiDiff)
-			{
-				m_creature->GenericTextEmote("Grimclaw faces southeast and whimpers before looking back at you.", nullptr);
-				m_creature->SetOrientation(3.9f);
-				ui_sniffTimer = 0;
-				ui_turnPlayerTimer = 3000;
-			}
-			else
-				ui_sniffTimer -= uiDiff;
-		}
+    void UpdateAI(uint32 uiDiff)
+    {
+        if(ui_sniffTimer)
+        {
+            if(ui_sniffTimer <= uiDiff)
+            {
+                m_creature->GenericTextEmote("Grimclaw faces southeast and whimpers before looking back at you.", nullptr);
+                m_creature->SetOrientation(3.9f);
+                ui_sniffTimer = 0;
+                ui_turnPlayerTimer = 3000;
+            }
+            else
+                ui_sniffTimer -= uiDiff;
+        }
 
-		if(ui_turnPlayerTimer)
-		{
-			if(ui_turnPlayerTimer <= uiDiff)
-			{
-				if(player)
-					m_creature->SetFacingToObject(player);
-				else
-					m_creature->SetOrientation(2.1f);
+        if(ui_turnPlayerTimer)
+        {
+            if(ui_turnPlayerTimer <= uiDiff)
+            {
+                if(player)
+                    m_creature->SetFacingToObject(player);
+                else
+                    m_creature->SetOrientation(2.1f);
 
-				ui_sniffReturnTimer = 2000;
-				ui_turnPlayerTimer = 0;
-				player = nullptr;
-			}
-			else
-				ui_turnPlayerTimer -= uiDiff;
-		}
+                ui_sniffReturnTimer = 2000;
+                ui_turnPlayerTimer = 0;
+                player = nullptr;
+            }
+            else
+                ui_turnPlayerTimer -= uiDiff;
+        }
 
-		if(ui_sniffReturnTimer)
-		{
-			if(ui_sniffReturnTimer <= uiDiff)
-			{
-				ui_sniffReturnTimer = 0;
-				m_creature->SetOrientation(2.1f);
-			}
-			else
-				ui_sniffReturnTimer -= uiDiff;
-		}
+        if(ui_sniffReturnTimer)
+        {
+            if(ui_sniffReturnTimer <= uiDiff)
+            {
+                ui_sniffReturnTimer = 0;
+                m_creature->SetOrientation(2.1f);
+            }
+            else
+                ui_sniffReturnTimer -= uiDiff;
+        }
 
-		if(ui_responseCooldown)
-		{
-			if(ui_responseCooldown <= uiDiff)
-				ui_responseCooldown = 0;
-			else
-				ui_responseCooldown -= uiDiff;
-		}
-	}
+        if(ui_responseCooldown)
+        {
+            if(ui_responseCooldown <= uiDiff)
+                ui_responseCooldown = 0;
+            else
+                ui_responseCooldown -= uiDiff;
+        }
+    }
 };
 
 CreatureAI* GetAI_npc_grimclaw(Creature* pCreature)
@@ -610,13 +634,13 @@ void AddSC_darkshore()
     pNewscript->pGossipSelect = &GossipSelect_npc_threshwackonator;
     pNewscript->RegisterSelf();
 
-	pNewscript = new Script;
+    pNewscript = new Script;
     pNewscript->Name = "npc_volcor";
     pNewscript->GetAI = &GetAI_npc_volcor;
     pNewscript->pQuestAcceptNPC = &QuestAccept_npc_volcor;
     pNewscript->RegisterSelf();
 
-	pNewscript = new Script;
+    pNewscript = new Script;
     pNewscript->Name = "npc_grimclaw";
     pNewscript->GetAI = &GetAI_npc_grimclaw;
     pNewscript->RegisterSelf();
