@@ -49,7 +49,11 @@ void WorldSession::HandleGuildCreateOpcode(WorldPacket& recvPacket)
 {
     DEBUG_LOG("WORLD: Received CMSG_GUILD_CREATE");
 
-    std::string gname;
+    sLog.outError("Error: The player %s has tried to create a guild directly without using a guild charter. This is most likely a hacking attempt!", GetPlayerName());
+    sWorld.SendAntiCheatMessageToGMs(GetPlayerName(), "The player has tried to create a guild directly without using a guild charter!");
+    return;
+    
+    /*std::string gname;
     recvPacket >> gname;
 
     if(GetPlayer()->GetGuildId())                           // already in guild
@@ -62,7 +66,7 @@ void WorldSession::HandleGuildCreateOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    sGuildMgr.AddGuild(guild);
+    sGuildMgr.AddGuild(guild);*/
 }
 
 void WorldSession::HandleGuildInviteOpcode(WorldPacket& recvPacket)
