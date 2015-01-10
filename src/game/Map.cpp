@@ -37,7 +37,6 @@
 #include "VMapFactory.h"
 #include "MoveMap.h"
 #include "BattleGroundMgr.h"
-#include "tbb/parallel_do.h"
 
 #include <mutex>
 
@@ -572,14 +571,10 @@ void Map::Update(const uint32 &t_diff)
         }
     }
 
-    // non-player active objects
-    std::mutex update_mutex;
-    tbb::parallel_do(m_activeNonPlayers.begin(), m_activeNonPlayers.end(), [&](WorldObject* obj)
+    for (WorldObject* obj : m_activeNonPlayers)
     {
         if (!obj->IsInWorld() || !obj->IsPositionValid())
             return;
-
-        std::lock_guard<std::mutex> guard(update_mutex);
 
         //lets update mobs/objects in ALL visible cells around player!
         CellArea area = Cell::CalculateCellArea(obj->GetPositionX(), obj->GetPositionY(), GetVisibilityDistance());
@@ -603,7 +598,7 @@ void Map::Update(const uint32 &t_diff)
                 }
             }
         }
-    });
+    }
     
     auto itr = m_activeNonPlayersRemoveList.begin();
     while(itr != m_activeNonPlayersRemoveList.end())
