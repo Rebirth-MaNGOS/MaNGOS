@@ -270,7 +270,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     movementInfo.Read(recv_data);
 
 	if (plMover)
-		movementInfo.UpdateTime(movementInfo.time + plMover->GetSession()->GetLatency() + 150); // We add a small constant to give the game some time to sync up the movement.
+		movementInfo.UpdateTime(movementInfo.time - plMover->GetSession()->GetLatency());
     
 	if (!VerifyMovementInfo(movementInfo))
         return;
