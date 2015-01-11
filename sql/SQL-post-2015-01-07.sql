@@ -44,7 +44,7 @@ UPDATE zp_mangosd.item_template SET item_template.spellppmRate_1 = 7 WHERE item_
 
     /** Remove old DB script for the quest Escape through stealth. **/
 
-    DELETE FROM zp_mangosd.quest_start_scripts WHERE id = 995
+    DELETE FROM zp_mangosd.quest_start_scripts WHERE id = 995;
 
     /** DB script for the quest Escape through stealth. **/
 
