@@ -3504,6 +3504,12 @@ void Spell::finish(bool ok)
         if (needDrop)
             ((Player*)m_caster)->ClearComboPoints();
     }
+    
+    // If the spell is triggered by a warrior's execute it consumes all rage.
+    if (m_spellInfo->Id == 20647)
+    {
+        m_caster->SetPower(POWER_RAGE, 0);
+    }
 
     // call triggered spell only at successful cast (after clear combo points -> for add some if need)
     if(!m_TriggerSpells.empty())
