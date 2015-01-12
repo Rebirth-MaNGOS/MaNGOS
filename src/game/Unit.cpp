@@ -3502,23 +3502,24 @@ bool Unit::IsNonMeleeSpellCasted(bool withDelayed, bool skipChanneled, bool skip
 {
     // We don't do loop here to explicitly show that melee spell is excluded.
     // Maybe later some special spells will be excluded too.
-
+    
     // generic spells are casted when they are not finished and not delayed
-    if ( m_currentSpells[CURRENT_GENERIC_SPELL] &&
-            (m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_FINISHED) &&
-            (withDelayed || m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_DELAYED) )
-        return(true);
+    if (m_currentSpells[CURRENT_GENERIC_SPELL] &&
+        (m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_FINISHED) &&
+        (withDelayed || m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_DELAYED) &&
+        m_currentSpells[CURRENT_GENERIC_SPELL]->m_spellInfo->Effect[EFFECT_INDEX_0] != SPELL_EFFECT_SUMMON_CHANGE_ITEM)
+        return true;
 
     // channeled spells may be delayed, but they are still considered casted
     else if ( !skipChanneled && m_currentSpells[CURRENT_CHANNELED_SPELL] &&
               (m_currentSpells[CURRENT_CHANNELED_SPELL]->getState() != SPELL_STATE_FINISHED) )
-        return(true);
+        return true;
 
     // autorepeat spells may be finished or delayed, but they are still considered casted
     else if ( !skipAutorepeat && m_currentSpells[CURRENT_AUTOREPEAT_SPELL] )
-        return(true);
+        return true;
 
-    return(false);
+    return false;
 }
 
 void Unit::InterruptSpellsTargettingUnit(bool withDelayed, ObjectGuid target)
