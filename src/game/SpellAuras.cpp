@@ -4443,6 +4443,27 @@ void Aura::HandleAuraModStat(bool apply, bool /*Real*/)
             return;
     }
 
+    // Hunter talent Improved Scorpid Sting
+    if ((GetId() == 14277 || GetId() == 3043 || GetId() == 14275 || GetId() == 14276)
+        && m_modifier.m_miscvalue == STAT_STRENGTH)
+    {
+        Unit* caster = GetCaster();
+        if (caster)
+        {
+            float effect;
+            if (caster->HasAura(19491))
+                effect = 0.1f * m_modifier.m_amount;
+            else if (caster->HasAura(19493))
+                effect = 0.2f * m_modifier.m_amount;
+            else if (caster->HasAura(19494))
+                effect = 0.3f * m_modifier.m_amount;
+            
+            GetTarget()->HandleStatModifier(UnitMods(UNIT_MOD_STAT_START + STAT_STAMINA), TOTAL_VALUE, float(effect), apply);
+            if(GetTarget()->GetTypeId() == TYPEID_PLAYER)
+                ((Player*)GetTarget())->ApplyStatBuffMod(Stats(STAT_STAMINA), float(effect), apply);
+        }
+    }
+    
 
     for(int32 i = STAT_STRENGTH; i < MAX_STATS; i++)
     {
