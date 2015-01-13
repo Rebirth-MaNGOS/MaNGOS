@@ -4337,6 +4337,15 @@ void Aura::HandleAuraModResistance(bool apply, bool /*Real*/)
         if (m_modifier.m_amount == 200)
             m_modifier.m_amount = 2000;
     }
+    else if (GetId() == 21992) // Extra threat for Thunderfury.
+    {
+        Creature* cTarget = dynamic_cast<Creature*>(target);
+        if (cTarget)
+        {
+            ThreatManager& mgr = cTarget->getThreatManager();
+            mgr.addThreatDirectly(GetCaster(), 216.f);
+        }
+    }
 
     for(int8 x = SPELL_SCHOOL_NORMAL; x < MAX_SPELL_SCHOOL; x++)
     {
@@ -4857,6 +4866,18 @@ void Aura::HandleModAttackSpeed(bool apply, bool /*Real*/)
 void Aura::HandleModMeleeSpeedPct(bool apply, bool /*Real*/)
 {
     Unit *target = GetTarget();
+    
+    // Thunderfury extra threat.
+    if (GetId() == 27648)
+    {
+        Creature* cTarget = dynamic_cast<Creature*>(target);
+        if (cTarget)
+        {
+            ThreatManager& mgr = cTarget->getThreatManager();
+            mgr.addThreatDirectly(GetCaster(), 134.f);
+        }
+    }
+    
     target->ApplyAttackTimePercentMod(BASE_ATTACK, float(m_modifier.m_amount), apply);
     target->ApplyAttackTimePercentMod(OFF_ATTACK, float(m_modifier.m_amount), apply);
 }
