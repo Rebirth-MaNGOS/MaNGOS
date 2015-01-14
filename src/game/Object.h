@@ -443,7 +443,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         void Relocate(float x, float y, float z, float orientation);
         void Relocate(float x, float y, float z);
 
-        virtual void SetOrientation(float orientation);
+        void SetOrientation(float orientation);
 
         float GetPositionX( ) const { return m_position.x; }
         float GetPositionY( ) const { return m_position.y; }

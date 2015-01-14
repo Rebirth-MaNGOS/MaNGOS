@@ -3565,16 +3565,10 @@ void Unit::SetInFront(Unit const* target)
     SetOrientation(GetAngle(target));
 }
 
-void Unit::SetOrientation(float orientation)
-{
-    WorldObject::SetOrientation(orientation);
-    SendHeartBeat(false);
-}
-
 void Unit::SetFacingTo(float ori, bool bToSelf /*= false*/)
 {
     // update orientation at server
-    WorldObject::SetOrientation(ori);
+    SetOrientation(ori);
 
     // and client
     SendHeartBeat(bToSelf);
