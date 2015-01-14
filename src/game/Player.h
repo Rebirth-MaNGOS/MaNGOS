@@ -1412,7 +1412,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         template <class T> T ApplySpellMod(uint32 spellId, SpellModOp op, T &basevalue, Spell const* spell = NULL);
         SpellModifier* GetSpellMod(SpellModOp op, uint32 spellId) const;
         void RemoveSpellMods(Spell const* spell);
-		void RemoveSpellModsOnSpellSuccess(Spell const* spell);
+        void RemoveSpellModsOnSpellSuccess(Spell const* spell);
+        void ReapplyModsOnSpellFailure(Spell const* spell); // If a spell fails to cast this is called to reapply any spellmods marked for deletion.
 
         static uint32 const infinityCooldownDelay = MONTH;  // used for set "infinity cooldowns" for spells and check
         static uint32 const infinityCooldownDelayCheck = MONTH/2;
@@ -2213,6 +2214,7 @@ public:
         float m_auraBaseMod[BASEMOD_END][MOD_END];
 
         SpellModList m_spellMods[MAX_SPELLMOD];
+        SpellModList m_spellModsToRemove[MAX_SPELLMOD];
         int32 m_SpellModRemoveCount;
         EnchantDurationList m_enchantDuration;
         ItemDurationList m_itemDuration;
@@ -2389,52 +2391,77 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
     bool found = false;
     if (op == SPELLMOD_CASTING_TIME)
     {
-        for (SpellModifier* current_mod : m_spellMods[op])
+        auto current_mod = m_spellMods[op].begin();
+        while (current_mod != m_spellMods[op].end())
         {
-            if (current_mod->type == SPELLMOD_PCT && current_mod->value == -100 && IsAffectedBySpellmod(spellInfo, current_mod, spell))
+            if ((*current_mod)->type == SPELLMOD_PCT && (*current_mod)->value == -100 && IsAffectedBySpellmod(spellInfo, *current_mod, spell))
             {
                 // skip percent mods for null basevalue (most important for spell mods with charges )
                 if(basevalue == T(0))
+                {
+                    ++current_mod;
                     continue;
+                }
 
                 // special case (skip >10sec spell casts for instant cast setting)
-                if( basevalue >= T(10*IN_MILLISECONDS) && current_mod->value <= -100)
+                if( basevalue >= T(10*IN_MILLISECONDS) && (*current_mod)->value <= -100)
+                {
+                    ++current_mod;
                     continue;
+                }
 
 
-                current_mod->laterDeletion = current_mod->charges > 0 ? true : false;
-                current_mod->lastAffected = spell;
-                if(!current_mod->lastAffected)
-                    current_mod->lastAffected = FindCurrentSpellBySpellId(spellId);
+                (*current_mod)->laterDeletion = (*current_mod)->charges > 0 ? true : false;
+                (*current_mod)->lastAffected = spell;
+                if(!(*current_mod)->lastAffected)
+                    (*current_mod)->lastAffected = FindCurrentSpellBySpellId(spellId);
 
-                totalpct += current_mod->value;
+                totalpct += (*current_mod)->value;
 
+                if ((*current_mod)->laterDeletion)
+                {
+                    m_spellModsToRemove[op].push_back(*current_mod);
+                    current_mod = m_spellMods[op].erase(current_mod);
+                }
+                
                 found = true;
                 break;
             }
+            
+            ++current_mod;
         }
     }
 
     if (!found)
     {
-        for (SpellModList::iterator itr = m_spellMods[op].begin(); itr != m_spellMods[op].end(); ++itr)
+        auto itr = m_spellMods[op].begin(); 
+        while (itr != m_spellMods[op].end())
         {
             SpellModifier *mod = *itr;
 
 
             if(!IsAffectedBySpellmod(spellInfo,mod,spell))
+            {
+                ++itr;
                 continue;
+            }
             if (mod->type == SPELLMOD_FLAT)
                 totalflat += mod->value;
             else if (mod->type == SPELLMOD_PCT)
             {
                 // skip percent mods for null basevalue (most important for spell mods with charges )
                 if(basevalue == T(0))
+                {
+                    ++itr;
                     continue;
+                }
 
                 // special case (skip >10sec spell casts for instant cast setting)
                 if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILLISECONDS) && mod->value <= -100)
+                {
+                    ++itr;
                     continue;
+                }
 
                 // Mark cost- and casting time mods for deletion on successfull cast.
                 if (mod->op == SPELLMOD_CASTING_TIME || mod->op == SPELLMOD_COST)
@@ -2463,6 +2490,14 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
                     }
                 }
             }
+            
+            if (mod->laterDeletion)
+            {
+                m_spellModsToRemove[op].push_back(mod);
+                itr = m_spellMods[op].erase(itr);
+            }
+            else
+                ++itr;
         }
     }
 

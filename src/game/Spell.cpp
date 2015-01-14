@@ -3428,18 +3428,24 @@ void Spell::finish(bool ok)
         return;
 
     m_spellState = SPELL_STATE_FINISHED;
+    
+    Player* pCaster = dynamic_cast<Player*>(m_caster);
 
     // other code related only to successfully finished spells
     if(!ok)
+    {
+        if (pCaster)
+            pCaster->ReapplyModsOnSpellFailure(this);
         return;
+    }
 
     // remove spell mods
-    if (m_caster->GetTypeId() == TYPEID_PLAYER)
+    if (pCaster)
     {
-        ((Player*)m_caster)->RemoveSpellMods(this);
+        pCaster->RemoveSpellMods(this);
 
         // Remove spell mods that should only be removed if the spell was successfully cast.
-        ((Player*) m_caster)->RemoveSpellModsOnSpellSuccess(this);
+        pCaster->RemoveSpellModsOnSpellSuccess(this);
     }
 
     // handle SPELL_AURA_ADD_TARGET_TRIGGER auras
