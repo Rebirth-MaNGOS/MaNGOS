@@ -2385,86 +2385,86 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
     int32 totalpct = 0;
     int32 totalflat = 0;
 
-	// If spell mods that decrease your casting time by 100 % are active they should be prioritised over flat modifiers.
-	bool found = false;
-	if (op == SPELLMOD_CASTING_TIME)
-	{
-		for (SpellModifier* current_mod : m_spellMods[op])
-		{
-			if (current_mod->type == SPELLMOD_PCT && current_mod->value == -100 && IsAffectedBySpellmod(spellInfo, current_mod, spell))
-			{
-				// skip percent mods for null basevalue (most important for spell mods with charges )
-				if(basevalue == T(0))
-					continue;
+    // If spell mods that decrease your casting time by 100 % are active they should be prioritised over flat modifiers.
+    bool found = false;
+    if (op == SPELLMOD_CASTING_TIME)
+    {
+        for (SpellModifier* current_mod : m_spellMods[op])
+        {
+            if (current_mod->type == SPELLMOD_PCT && current_mod->value == -100 && IsAffectedBySpellmod(spellInfo, current_mod, spell))
+            {
+                // skip percent mods for null basevalue (most important for spell mods with charges )
+                if(basevalue == T(0))
+                    continue;
 
-				// special case (skip >10sec spell casts for instant cast setting)
-				if( basevalue >= T(10*IN_MILLISECONDS) && current_mod->value <= -100)
-					continue;
-
-
-				current_mod->laterDeletion = current_mod->charges > 0 ? true : false;
-				current_mod->lastAffected = spell;
-				if(!current_mod->lastAffected)
-					current_mod->lastAffected = FindCurrentSpellBySpellId(spellId);
-
-				totalpct += current_mod->value;
-
-				found = true;
-				break;
-			}
-		}
-	}
-
-	if (!found)
-	{
-		for (SpellModList::iterator itr = m_spellMods[op].begin(); itr != m_spellMods[op].end(); ++itr)
-		{
-			SpellModifier *mod = *itr;
+                // special case (skip >10sec spell casts for instant cast setting)
+                if( basevalue >= T(10*IN_MILLISECONDS) && current_mod->value <= -100)
+                    continue;
 
 
-			if(!IsAffectedBySpellmod(spellInfo,mod,spell))
-				continue;
-			if (mod->type == SPELLMOD_FLAT)
-				totalflat += mod->value;
-			else if (mod->type == SPELLMOD_PCT)
-			{
-				// skip percent mods for null basevalue (most important for spell mods with charges )
-				if(basevalue == T(0))
-					continue;
+                current_mod->laterDeletion = current_mod->charges > 0 ? true : false;
+                current_mod->lastAffected = spell;
+                if(!current_mod->lastAffected)
+                    current_mod->lastAffected = FindCurrentSpellBySpellId(spellId);
 
-				// special case (skip >10sec spell casts for instant cast setting)
-				if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILLISECONDS) && mod->value <= -100)
-					continue;
+                totalpct += current_mod->value;
 
-				// Mark cost- and casting time mods for deletion on successfull cast.
-				if (mod->op == SPELLMOD_CASTING_TIME || mod->op == SPELLMOD_COST)
-				{
-					mod->laterDeletion = mod->charges > 0 ? true : false;
-					mod->lastAffected = spell;
-					if(!mod->lastAffected)
-						mod->lastAffected = FindCurrentSpellBySpellId(spellId);
-				}
+                found = true;
+                break;
+            }
+        }
+    }
 
-				totalpct += mod->value;
-			}
+    if (!found)
+    {
+        for (SpellModList::iterator itr = m_spellMods[op].begin(); itr != m_spellMods[op].end(); ++itr)
+        {
+            SpellModifier *mod = *itr;
 
-			if (mod->charges > 0 )
-			{
-				if (!mod->laterDeletion)
-				{
-					--mod->charges;
-					if (mod->charges == 0)
-					{
-						mod->charges = -1;
-						mod->lastAffected = spell;
-						if(!mod->lastAffected)
-							mod->lastAffected = FindCurrentSpellBySpellId(spellId);
-						++m_SpellModRemoveCount;
-					}
-				}
-			}
-		}
-	}
+
+            if(!IsAffectedBySpellmod(spellInfo,mod,spell))
+                continue;
+            if (mod->type == SPELLMOD_FLAT)
+                totalflat += mod->value;
+            else if (mod->type == SPELLMOD_PCT)
+            {
+                // skip percent mods for null basevalue (most important for spell mods with charges )
+                if(basevalue == T(0))
+                    continue;
+
+                // special case (skip >10sec spell casts for instant cast setting)
+                if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILLISECONDS) && mod->value <= -100)
+                    continue;
+
+                // Mark cost- and casting time mods for deletion on successfull cast.
+                if (mod->op == SPELLMOD_CASTING_TIME || mod->op == SPELLMOD_COST)
+                {
+                    mod->laterDeletion = mod->charges > 0 ? true : false;
+                    mod->lastAffected = spell;
+                    if(!mod->lastAffected)
+                        mod->lastAffected = FindCurrentSpellBySpellId(spellId);
+                }
+
+                totalpct += mod->value;
+            }
+
+            if (mod->charges > 0 )
+            {
+                if (!mod->laterDeletion)
+                {
+                    --mod->charges;
+                    if (mod->charges == 0)
+                    {
+                        mod->charges = -1;
+                        mod->lastAffected = spell;
+                        if(!mod->lastAffected)
+                            mod->lastAffected = FindCurrentSpellBySpellId(spellId);
+                        ++m_SpellModRemoveCount;
+                    }
+                }
+            }
+        }
+    }
 
     float diff = (float)basevalue*(float)totalpct/100.0f + (float)totalflat;
     basevalue = T((float)basevalue + diff);
