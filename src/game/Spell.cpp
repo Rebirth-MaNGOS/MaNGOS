@@ -3084,6 +3084,10 @@ void Spell::cast(bool skipCheck)
 
     // CAST SPELL
     SendSpellCooldown();
+    
+     // Remove spell mods that should only be removed if the spell was successfully cast.
+     if (m_caster->GetTypeId() == TYPEID_PLAYER)
+        dynamic_cast<Player*>(m_caster)->RemoveSpellModsOnSpellSuccess(this);
 
     TakePower();
     TakeReagents();                                         // we must remove reagents before HandleEffects to allow place crafted item in same slot
@@ -3437,9 +3441,6 @@ void Spell::finish(bool ok)
     if (m_caster->GetTypeId() == TYPEID_PLAYER)
     {
         ((Player*)m_caster)->RemoveSpellMods(this);
-
-        // Remove spell mods that should only be removed if the spell was successfully cast.
-        ((Player*) m_caster)->RemoveSpellModsOnSpellSuccess(this);
     }
 
     // handle SPELL_AURA_ADD_TARGET_TRIGGER auras
