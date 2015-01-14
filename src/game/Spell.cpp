@@ -3084,10 +3084,6 @@ void Spell::cast(bool skipCheck)
 
     // CAST SPELL
     SendSpellCooldown();
-    
-     // Remove spell mods that should only be removed if the spell was successfully cast.
-     if (m_caster->GetTypeId() == TYPEID_PLAYER)
-        dynamic_cast<Player*>(m_caster)->RemoveSpellModsOnSpellSuccess(this);
 
     TakePower();
     TakeReagents();                                         // we must remove reagents before HandleEffects to allow place crafted item in same slot
@@ -3119,12 +3115,14 @@ void Spell::cast(bool skipCheck)
         // Immediate spell, no big deal
         handle_immediate();
     }
+    
+     // Remove spell mods that should only be removed if the spell was successfully cast.
+    if (m_caster->GetTypeId() == TYPEID_PLAYER)
+        dynamic_cast<Player*>(m_caster)->RemoveSpellModsOnSpellSuccess(this);
 
-    // Aura 24389 is the buff received from the trinket Fire Ruby (Mage quest reward).
-    if(m_caster->HasAura(24389) && ((strcmp("Blast Wave", *m_spellInfo->SpellName) == 0) || (strcmp("Flamestrike", *m_spellInfo->SpellName) == 0)))
-    {
-        m_caster->RemoveAurasDueToSpell(24389); // Consume aura, remove it.
-    }
+    // Handle auras that should have charges removed on cast.
+    // This has to be done after the spell has been handled.
+    HandleAuraDecayAtSpellCast();
 
     // Update spellmods that were affected at cast.
     if (m_caster->GetTypeId() == TYPEID_PLAYER)
@@ -3232,6 +3230,28 @@ uint64 Spell::handle_delayed(uint64 t_offset)
     {
         // spell is unfinished, return next execution time
         return next_time;
+    }
+}
+
+void Spell::HandleAuraDecayAtSpellCast()
+{
+    if (m_spellInfo->DmgClass)
+    {
+        // Unstable Power
+        if (m_caster->HasAura(24659) && (m_damage > 0 || m_healing > 0 || 
+            m_spellInfo->EffectApplyAuraName[0] == SPELL_AURA_PERIODIC_DAMAGE || 
+            m_spellInfo->EffectApplyAuraName[0] == SPELL_AURA_PERIODIC_HEAL ||
+            m_spellInfo->EffectApplyAuraName[0] == SPELL_AURA_PERIODIC_LEECH))
+        {
+            // Need remove one 24659 aura
+            m_caster->RemoveAuraHolderFromStack(24659);
+        }
+        
+        // Aura 24389 is the buff received from the trinket Fire Ruby (Mage quest reward).
+        if(m_caster->HasAura(24389) && ((strcmp("Blast Wave", *m_spellInfo->SpellName) == 0) || (strcmp("Flamestrike", *m_spellInfo->SpellName) == 0)))
+        {
+            m_caster->RemoveAurasDueToSpell(24389); // Consume aura, remove it.
+        }
     }
 }
 

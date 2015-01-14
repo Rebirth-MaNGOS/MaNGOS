@@ -448,15 +448,6 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 case 21063:
                     triggered_spell_id = 21064;
                     break;
-                // Unstable Power
-                case 24658:
-                {
-                    if (!procSpell || procSpell->Id == 24659)
-                        return SPELL_AURA_PROC_FAILED;
-                    // Need remove one 24659 aura
-                    RemoveAuraHolderFromStack(24659);
-                    return SPELL_AURA_PROC_OK;
-                }
                 // Restless Strength
                 case 24661:
                 {

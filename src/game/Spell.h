@@ -323,6 +323,7 @@ class Spell
         // handlers
         void handle_immediate();
         uint64 handle_delayed(uint64 t_offset);
+        void HandleAuraDecayAtSpellCast();
         // handler helpers
         void _handle_immediate_phase();
         void _handle_finish_phase();
