@@ -16798,52 +16798,29 @@ void Player::RemoveSpellModsOnSpellSuccess(Spell const* spell)
 
     for(int i=0; i < MAX_SPELLMOD; ++i)
     {
-        for (SpellModList::iterator itr = m_spellModsToRemove[i].begin(); itr != m_spellModsToRemove[i].end();)
+        for (SpellModList::const_iterator itr = m_spellMods[i].begin(); itr != m_spellMods[i].end();)
         {
             SpellModifier *mod = *itr;
+            ++itr;
 
             if (mod && (mod->lastAffected == spell || mod->lastAffected == nullptr) && mod->laterDeletion)
             {
-                // Mods will be marked for later deletion even if they have a lot of charges left.
-                // Remove one charge if a mod is marked.
-                --mod->charges;
+				// Mods will be marked for later deletion even if they have a lot of charges left.
+				// Remove one charge if a mod is marked.
+				--mod->charges;
 
-                // If there are no charges left the mod will be removed.
-                if (mod->charges == 0)
-                {
-                    RemoveAurasDueToSpell(mod->spellId);
-                    if (m_spellModsToRemove[i].empty())
-                        break;
-                    else
-                        itr = m_spellModsToRemove[i].begin();
-                }
-                else // If there are charges left the deletion mark is removed.
-                {
-                    m_spellMods[i].push_back(mod);
-                    itr = m_spellModsToRemove[i].erase(itr);
-                    mod->laterDeletion = false;
-                }
+				// If there are no charges left the mod will be removed.
+				if (mod->charges == 0)
+				{
+					RemoveAurasDueToSpell(mod->spellId);
+					if (m_spellMods[i].empty())
+						break;
+					else
+						itr = m_spellMods[i].begin();
+				}
+				else // If there are charges left the deletion mark is removed.
+					mod->laterDeletion = false;
             }
-            
-            ++itr;
-        }
-    }
-}
-
-void Player::ReapplyModsOnSpellFailure(Spell const* spell)
-{
-    for (int i = 0; i < MAX_SPELLMOD; i++)
-    {
-        auto current_mod = m_spellModsToRemove[i].begin();
-        while (current_mod != m_spellModsToRemove[i].end())
-        {
-            if ((*current_mod)->lastAffected == spell)
-            {
-                m_spellMods[i].push_back(*current_mod);
-                current_mod = m_spellModsToRemove[i].erase(current_mod);
-            }
-            else
-                ++current_mod;
         }
     }
 }
