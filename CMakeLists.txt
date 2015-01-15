@@ -347,11 +347,10 @@ add_executable(genrev
 #   )
 # endif()
 
-get_target_property(GENERATE_EXE genrev LOCATION)
 add_custom_target("revision.h" ALL
-  COMMAND ${GENERATE_EXE} ${CMAKE_SOURCE_DIR}
-  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-  DEPENDS genrev
+	COMMAND $<TARGET_FILE:genrev> ${CMAKE_SOURCE_DIR}
+	WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+	DEPENDS genrev
 )
 
 if(WIN32)
@@ -403,28 +402,27 @@ add_subdirectory(dep) # TODO: add vmap extractor build support
 
 # Add definitions for all build types
 # Don't place this above 'dep' subdirectory! Because of defines build will crash.
-set(DEFINITIONS
-  DO_MYSQL
-  HAVE_CONFIG_H
-  VERSION="${MANGOS_VERSION}"
-  SYSCONFDIR="${CONF_DIR}/"
-)
-set(DEFINITIONS_RELEASE NDEBUG)
-set(DEFINITIONS_DEBUG _DEBUG MANGOS_DEBUG)
-if(WIN32)
-  set(DEFINITIONS ${DEFINITIONS} WIN32 _WIN32)
-  set(DEFINITIONS_RELEASE ${DEFINITIONS_RELEASE} _CRT_SECURE_NO_WARNINGS)
-endif()
-if(USE_STD_MALLOC)
-  set(DEFINITIONS ${DEFINITIONS} USE_STANDARD_MALLOC)
-endif()
+#set(DEFINITIONS
+#  DO_MYSQL
+#  HAVE_CONFIG_H
+#  VERSION="${MANGOS_VERSION}"
+#  SYSCONFDIR="${CONF_DIR}/"
+#)
+#set(DEFINITIONS_RELEASE NDEBUG)
+#set(DEFINITIONS_DEBUG _DEBUG MANGOS_DEBUG)
+#if(WIN32)
+#  set(DEFINITIONS ${DEFINITIONS} WIN32 _WIN32)
+#  set(DEFINITIONS_RELEASE ${DEFINITIONS_RELEASE} _CRT_SECURE_NO_WARNINGS)
+#endif()
+#if(USE_STD_MALLOC)
+#  set(DEFINITIONS ${DEFINITIONS} USE_STANDARD_MALLOC)
+#endif()
 
-set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "${DEFINITIONS}")
-set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_RELEASE "${DEFINITIONS_RELEASE}")
-set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DEFINITIONS_DEBUG}")
+#set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "${DEFINITIONS}")
+#set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_RELEASE "${DEFINITIONS_RELEASE}")
+#set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DEFINITIONS_DEBUG}")
 
 add_subdirectory(src)
 # if(SQL)
 #   add_subdirectory(sql)
 # endif()
-
