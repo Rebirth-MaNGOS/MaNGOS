@@ -28,6 +28,7 @@ EndContentData */
 #include "precompiled.h"
 #include "escort_ai.h"
 #include "Log.h"
+#include "TemporarySummon.h"
 
 /*######
 ## mob_yenniku
@@ -257,6 +258,98 @@ CreatureAI* GetAI_npc_short_mithril_jones(Creature* pCreature)
     return new npc_short_mithril_jones(pCreature);
 }
 
+
+/*########################################################################
+ * npc_pats_hellfire_guy                                                ##
+ * AI for the mob spawning objects when the Heart of Hakkar is created. ##
+########################################################################*/
+
+/*
+ * 4 sec after SB hit -> first channel
+ * +2 s second and third channel
+ * +2 s fourth channel and heart appears
+ * +10 s clouds appear
+ * +12 s explosion happens, event ends
+ */
+
+enum HakkarRitualSpell
+{
+    SPELL_CHANNEL = 24217, // The spell the summoning circle should cast. Its target is set in the DB.
+    SPELL_EXPLOSION = 24207, // The spell that finishes the event and makes the explosion happen.
+    SPELL_CREATE_RIFT = 24202, // The spell that summons the cloud animation.
+    SPELL_CREATE_SUMMON_CIRCLE = 24602, // The spell that creates a swirly animation around the channelers.
+    SPELL_SUMMON_PAT = 24215, // Spell that can be used to summon Pat.
+    SPELL_HEART_BOLT = 24214 // The Spell that Molthor uses to initiate the event.
+};
+
+enum HakkarRitualObject
+{
+        OBJ_HEART = 180402
+};
+
+struct MANGOS_DLL_DECL npc_pats_hellfire_guy : public ScriptedAI
+{
+    explicit npc_pats_hellfire_guy(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_creature->SetVisibility(UnitVisibility::VISIBILITY_OFF);
+        Reset();
+    }
+    
+    uint32 m_uiEventTimer;
+    uint32 m_uiEventStage;
+    bool m_bDone;
+    
+    void Reset()
+    {
+        m_uiEventStage = 0;
+        m_uiEventTimer = 8000;
+        m_bDone = false;
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {   
+        if (!m_bDone)
+        {
+            if (m_uiEventTimer <= uiDiff)
+            {
+                switch (m_uiEventStage)
+                {
+                case 0: // Spawn the heart
+                    m_creature->SummonGameObject(HakkarRitualObject::OBJ_HEART, 22000, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ() + 1.f, 0.f);
+                    
+                    m_uiEventTimer = 8000;
+                    ++m_uiEventStage;
+                    break;
+                case 1: // Clouds appear
+                    DoCast(m_creature, HakkarRitualSpell::SPELL_CREATE_RIFT, true);
+                    
+                    m_uiEventTimer = 12000;
+                    ++m_uiEventStage;
+                    break;
+                case 2: // Cast the explosion and despawn.
+                {
+                    DoCast(m_creature, HakkarRitualSpell::SPELL_EXPLOSION, true);
+                    
+                    TemporarySummon* pTemp = dynamic_cast<TemporarySummon*>(m_creature);
+                    if (pTemp)
+                        pTemp->ForcedDespawn();
+                    
+                    m_bDone = true;
+                    break;
+                }   
+                }
+            }
+            else
+                m_uiEventTimer -= uiDiff;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_pats_hellfire_guy(Creature* pCreature)
+{
+    return new npc_pats_hellfire_guy(pCreature);
+}
+
 void AddSC_stranglethorn_vale()
 {
     Script* pNewscript;
@@ -276,8 +369,13 @@ void AddSC_stranglethorn_vale()
     pNewscript->pQuestRewardedNPC = &reward_quest_stranglethorn_fever;
     pNewscript->RegisterSelf();
 
-	pNewscript = new Script;
+    pNewscript = new Script;
     pNewscript->Name = "npc_short_mithril_jones";
     pNewscript->GetAI = &GetAI_npc_short_mithril_jones;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_pats_hellfire_guy";
+    pNewscript->GetAI = &GetAI_npc_pats_hellfire_guy;
     pNewscript->RegisterSelf();
 }
