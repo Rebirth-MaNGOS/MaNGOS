@@ -603,18 +603,23 @@ void Map::Update(const uint32 &t_diff)
     auto itr = m_activeNonPlayersRemoveList.begin();
     while(itr != m_activeNonPlayersRemoveList.end())
     {
-	// Only creatures that are no longer in evade mode should be removed.
-        Creature* current_creature = dynamic_cast<Creature*>(*itr);
-        if (current_creature)
+        if ((*itr)->IsInWorld())
         {
-            if (current_creature->IsInEvadeMode())
-                ++itr;
-            else
+            // Only creatures that are no longer in evade mode should be removed.
+            Creature* current_creature = dynamic_cast<Creature*>(*itr);
+            if (current_creature)
             {
-                m_activeNonPlayers.remove(*itr);
-                itr = m_activeNonPlayersRemoveList.erase(itr);
+                if (current_creature->IsInEvadeMode())
+                    ++itr;
+                else
+                {
+                    m_activeNonPlayers.remove(*itr);
+                    itr = m_activeNonPlayersRemoveList.erase(itr);
+                }
             }
         }
+        else
+            itr = m_activeNonPlayersRemoveList.erase(itr);
     }
 
     // Send world objects and item update field changes

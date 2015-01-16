@@ -6970,7 +6970,8 @@ void Unit::ClearInCombat()
         if(creature &&
            creature->GetMotionMaster()->GetCurrentMovementGeneratorType() != MovementGeneratorType::WAYPOINT_MOTION_TYPE)
         {
-            GetMap()->AddActiveObjectToRemove(this);
+            if (GetMap())
+                GetMap()->AddActiveObjectToRemove(this);
         }
     }
 
