@@ -354,6 +354,7 @@ struct MANGOS_DLL_DECL npc_pats_hellfire_guy : public ScriptedAI
                         pTemp->ForcedDespawn();
                     
                     m_bDone = true;
+                    break;
                 }
                 }
             }
