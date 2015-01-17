@@ -30,6 +30,8 @@ EndContentData */
 #include "Log.h"
 #include "TemporarySummon.h"
 
+#include <vector>
+
 /*######
 ## mob_yenniku
 ######*/
@@ -277,23 +279,24 @@ enum HakkarRitualSpell
     SPELL_CHANNEL = 24217, // The spell the summoning circle should cast. Its target is set in the DB.
     SPELL_EXPLOSION = 24207, // The spell that finishes the event and makes the explosion happen.
     SPELL_CREATE_RIFT = 24202, // The spell that summons the cloud animation.
-    SPELL_CREATE_SUMMON_CIRCLE = 24602, // The spell that creates a swirly animation around the channelers.
+    SPELL_CREATE_SUMMON_CIRCLE = 24602, // The spell that creates a swirly animation around the channelers. We don't use this one.
     SPELL_SUMMON_PAT = 24215, // Spell that can be used to summon Pat.
     SPELL_HEART_BOLT = 24214, // The Spell that Molthor uses to initiate the event.
     SPELL_LONGSHAKE = 24203,
-    SPELL_SHORT_SHAKE = 24204
+    SPELL_SHORT_SHAKE = 24204,
+    SPELL_BUFF = 24425
 };
 
 enum HakkarRitualObject
 {
-        OBJ_HEART = 180402
+        OBJ_HEART = 180402,
+        OBJ_SUMMONING_CIRCLE = 180404
 };
 
 struct MANGOS_DLL_DECL npc_pats_hellfire_guy : public ScriptedAI
 {
     explicit npc_pats_hellfire_guy(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        m_creature->SetVisibility(UnitVisibility::VISIBILITY_OFF);
         Reset();
     }
     
@@ -303,13 +306,15 @@ struct MANGOS_DLL_DECL npc_pats_hellfire_guy : public ScriptedAI
     
     void Reset()
     {
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
         m_uiEventStage = 0;
-        m_uiEventTimer = 8000;
+        m_uiEventTimer = 4000;
         m_bDone = false;
     }
     
     void UpdateAI(const uint32 uiDiff)
-    {   
+    {           
         if (!m_bDone)
         {
             if (m_uiEventTimer <= uiDiff)
@@ -317,7 +322,7 @@ struct MANGOS_DLL_DECL npc_pats_hellfire_guy : public ScriptedAI
                 switch (m_uiEventStage)
                 {
                 case 0: // Spawn the heart
-                    m_creature->SummonGameObject(HakkarRitualObject::OBJ_HEART, 22000, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ() + 1.f, 0.f);
+                    m_creature->SummonGameObject(HakkarRitualObject::OBJ_HEART, 22000, m_creature->GetPositionX() + 0.35f, m_creature->GetPositionY() - 0.35f, m_creature->GetPositionZ() + 0.5f, 0.f);
                     
                     m_uiEventTimer = 8000;
                     ++m_uiEventStage;
@@ -332,19 +337,24 @@ struct MANGOS_DLL_DECL npc_pats_hellfire_guy : public ScriptedAI
                     ++m_uiEventStage;
                     break;
                 case 2: // Cast the explosion and despawn.
-                {
                     // Shake on explosion.
                     DoCast(m_creature, HakkarRitualSpell::SPELL_SHORT_SHAKE, true);
                     
                     DoCast(m_creature, HakkarRitualSpell::SPELL_EXPLOSION, true);
                     
+                    
+                    m_uiEventTimer = 8000;
+                    ++m_uiEventStage;
+                    break;
+                    
+                case 3:
+                {
                     TemporarySummon* pTemp = dynamic_cast<TemporarySummon*>(m_creature);
                     if (pTemp)
                         pTemp->ForcedDespawn();
                     
                     m_bDone = true;
-                    break;
-                }   
+                }
                 }
             }
             else
@@ -356,6 +366,202 @@ struct MANGOS_DLL_DECL npc_pats_hellfire_guy : public ScriptedAI
 CreatureAI* GetAI_npc_pats_hellfire_guy(Creature* pCreature)
 {
     return new npc_pats_hellfire_guy(pCreature);
+}
+
+
+/*###############
+ * npc_molthor ##
+ *#############*/
+
+enum HakkarRitualQuest
+{
+    ID = 8183
+};
+
+enum HakkariRitualNPCs
+{
+    NPC_PATS_HELLFIRE_GUY = 15073,
+    NPC_SERVANT_OF_THE_HAND = 15080
+};
+
+enum HakkariRitualTalk
+{
+    SAY_FIRST = -1720001,
+    SHOUT = -1720002
+};
+
+const float fLocations[3][3] = { { -11820.f, 1249.f, 2.6f }, { -11836.f, 1294.f, 0.53f }, { -11825.f, 1324.f, 0.48f } };
+const float fSummonerLocations[4][4] = { { -11817.63f, 1325.02f, 1.46f, 1.23f }, { -11801.25f, 1335.36f, 1.27f, 2.73f}, 
+                                         { -11834.92f, 1349.61f, 2.01f, 5.86f }, { -11831.56f, 1331.34f, 1.84f, 1.15f } };
+
+struct MANGOS_DLL_DECL npc_molthor : public ScriptedAI
+{
+    explicit npc_molthor(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+    
+    uint32 m_uiEventStage;
+    uint32 m_uiEventTimer;
+    
+    std::vector<Creature*> m_Summons;
+    
+    void Reset()
+    {
+        m_uiEventStage = 0;
+        m_uiEventTimer = 0;
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiEventStage)
+        {
+            if (m_uiEventTimer <= uiDiff)
+            {
+                switch (m_uiEventStage)
+                {
+                case 1:
+                    DoScriptText(HakkariRitualTalk::SAY_FIRST, m_creature);
+                    
+                    m_uiEventTimer = 3000;
+                    ++m_uiEventStage;
+                    break;
+                case 2:
+                    m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                    m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    m_creature->GetMotionMaster()->MovePoint(0, fLocations[0][0], fLocations[0][1], fLocations[0][2]);
+                    
+                    for (short i = 0; i < 4; i++)
+                        m_creature->SummonGameObject(HakkarRitualObject::OBJ_SUMMONING_CIRCLE, 50000, fSummonerLocations[i][0], 
+                                                     fSummonerLocations[i][1], fSummonerLocations[i][2], fSummonerLocations[i][3]);
+                    
+                    m_uiEventTimer = 4000;
+                    ++m_uiEventStage;
+                    break;
+                case 3:
+                    for (short i = 0; i < 4; ++i)
+                    {
+                        Creature* summon = m_creature->SummonCreature(HakkariRitualNPCs::NPC_SERVANT_OF_THE_HAND, fSummonerLocations[i][0], fSummonerLocations[i][1], 
+                                                                    fSummonerLocations[i][2], fSummonerLocations[i][3], TEMPSUMMON_TIMED_DESPAWN, 46000);
+                        
+                        if (summon)
+                            m_Summons.push_back(summon);
+                    }                   
+                    
+                    ++m_uiEventStage;
+                    break;
+                case 4:
+                    // Wait for Molthor to reach his destination. m_uiEventStage is incremented in WaypointReached.
+                    break;
+                case 5:
+                    DoCast(m_creature, HakkarRitualSpell::SPELL_HEART_BOLT);
+                    
+                    m_uiEventTimer = 6000;
+                    ++m_uiEventStage;
+                    break;
+                case 6:
+                    DoScriptText(HakkariRitualTalk::SHOUT, m_creature);
+                    
+                    m_uiEventTimer = 2000;
+                    ++m_uiEventStage;
+                    break;
+                case 7:
+                    m_creature->SummonCreature(HakkariRitualNPCs::NPC_PATS_HELLFIRE_GUY, -11818.61f, 1344.06f, 8.f, 0.f, TEMPSUMMON_TIMED_DESPAWN, 50000);
+                    
+                    if (m_Summons.size() == 4)
+                        m_Summons[3]->CastSpell(m_Summons[3], HakkarRitualSpell::SPELL_CHANNEL, false);
+                    
+                    m_uiEventTimer = 2000;
+                    ++m_uiEventStage;
+                    break;
+                case 8:
+                    if (m_Summons.size() == 4)
+                    {
+                        m_Summons[0]->CastSpell(m_Summons[0], HakkarRitualSpell::SPELL_CHANNEL, false);
+                        m_Summons[1]->CastSpell(m_Summons[1], HakkarRitualSpell::SPELL_CHANNEL, false);
+                    }
+                    
+                    m_uiEventTimer = 2000;
+                    ++m_uiEventStage;
+                    break;
+                case 9:
+                    if (m_Summons.size() == 4)
+                        m_Summons[2]->CastSpell(m_Summons[2], HakkarRitualSpell::SPELL_CHANNEL, false);
+                    
+                    m_uiEventTimer = 20000;
+                    ++m_uiEventStage;
+                    break;
+                case 10:
+                    for (Creature* current_creature : m_Summons)
+                        current_creature->InterruptSpell(CurrentSpellTypes::CURRENT_CHANNELED_SPELL, true);
+                    
+                    m_Summons.clear();
+                    
+                    m_uiEventTimer = 8000;
+                    ++m_uiEventStage;
+                    break;
+                case 11:
+                    DoCast(m_creature, HakkarRitualSpell::SPELL_BUFF, true);
+                    
+                    m_uiEventTimer = 1000;
+                    ++m_uiEventStage;
+                    break;
+                case 12:
+                    m_creature->GetMotionMaster()->MovePoint(3, fLocations[1][0], fLocations[1][1], fLocations[1][2]);
+                    
+                    ++m_uiEventStage;
+                    break;
+                }
+            }
+            else
+                m_uiEventTimer -= uiDiff;
+        }
+        
+        if (m_creature->SelectHostileTarget() && m_creature->getVictim())
+            DoMeleeAttackIfReady();
+    }
+    
+    void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId)
+    {
+        if (uiPointId < 2)
+        {
+            m_creature->GetMotionMaster()->MovePoint(uiPointId + 1, fLocations[uiPointId + 1][0], 
+                                                     fLocations[uiPointId + 1][1], fLocations[uiPointId + 1][2]);
+        }
+        else if (uiPointId == 2)
+        {
+            ++m_uiEventStage;
+        }
+        else if (uiPointId == 3)
+            m_creature->GetMotionMaster()->MoveTargetedHome();
+    }
+    
+    void JustReachedHome()
+    {
+        m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+    }
+    
+    void StartEvent()
+    {
+        m_uiEventStage = 1;
+    }
+};
+
+bool QuestRewardedMolthor(Player* /*pPlayer*/, Creature* pCreature, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == HakkarRitualQuest::ID)
+    {
+        npc_molthor* pAI = dynamic_cast<npc_molthor*>(pCreature->AI());
+        
+        if (pAI)
+            pAI->StartEvent();
+    }
+    return false; // We just do some extra things. Let the core handle the rewarding.
+}
+
+CreatureAI* GetAI_npc_molthor(Creature* pCreature)
+{
+    return new npc_molthor(pCreature);
 }
 
 void AddSC_stranglethorn_vale()
@@ -385,5 +591,11 @@ void AddSC_stranglethorn_vale()
     pNewscript = new Script;
     pNewscript->Name = "npc_pats_hellfire_guy";
     pNewscript->GetAI = &GetAI_npc_pats_hellfire_guy;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_molthor";
+    pNewscript->GetAI = &GetAI_npc_molthor;
+    pNewscript->pQuestRewardedNPC = &QuestRewardedMolthor;
     pNewscript->RegisterSelf();
 }

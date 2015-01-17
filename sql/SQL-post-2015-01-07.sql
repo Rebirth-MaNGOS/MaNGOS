@@ -76,3 +76,23 @@ UPDATE zp_mangosd.item_template SET item_template.spellppmRate_1 = 7 WHERE item_
 insert into zp_mangosd.spell_script_target (`entry`, `type`, `targetEntry`) VALUES ('24217', '1', '15073');
 -- AI for the spawning guy.
 update zp_mangosd.creature_template set ScriptName = "npc_pats_hellfire_guy" where entry = 15073;
+-- Target coordinates for Molthor's spell.
+REPLACE INTO zp_mangosd.spell_target_position (`id`, `target_map`, `target_position_x`, `target_position_y`, `target_position_z`, `target_orientation`) VALUES ('24214', '0', '-11818.61', '1344.06', '13.5', '0');
+-- AI script for Molthor.
+UPDATE zp_mangosd.creature_template SET ScriptName = "npc_molthor" WHERE entry = 14875;
+-- Scale for Pat's Hellfire Guy
+UPDATE zp_mangosd.creature_template SET scale = '3' WHERE entry = 15073;
+-- Lower the speeed of Molthor slightly.
+UPDATE zp_mangosd.creature_template SET speed_run = 1.05 WHERE entry = 14875;
+-- Sizes for the objects
+UPDATE `zp_mangosd`.`gameobject_template` SET `size`='2' WHERE `entry`='180249';
+UPDATE `zp_mangosd`.`gameobject_template` SET `size`='2' WHERE `entry`='180250';
+UPDATE `zp_mangosd`.`gameobject_template` SET `size`='3' WHERE `entry`='180402';
+-- Delete the old DB script.
+DELETE FROM zp_mangosd.quest_end_scripts WHERE id = 8183 LIMIT 1;
+-- Change the size for the summoning circle swirly animation.
+UPDATE `zp_mangosd`.`gameobject_template` SET `size`='2' WHERE `entry`='180404';
+-- Talk for Molothar
+INSERT INTO `zp_scriptdevzerod`.`script_texts` (`entry`, `content_default`) VALUES ('-1720001', 'Now, only one step remains to rid us of the Soulflayer\'s threat...');
+INSERT INTO `zp_scriptdevzerod`.`script_texts` (`entry`, `content_default`) VALUES ('-1720002', 'Begin the ritual, my servants. We must banish the heart of Hakkar back into the void!');
+UPDATE `zp_scriptdevzerod`.`script_texts` SET `type`='1' WHERE `entry`='-1720002';
