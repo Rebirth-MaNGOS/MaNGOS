@@ -122,6 +122,7 @@ public:
     void AddActiveObjectToRemove(WorldObject* obj);
     void AddActiveObjectToUpdate(WorldObject* obj);
     virtual void Remove(Player *, bool);
+    void RemoveFromAllActiveLists(WorldObject* obj);
     template<class T> void Add(T *);
     template<class T> void Remove(T *, bool);
 

@@ -741,6 +741,17 @@ Map::Remove(T *obj, bool remove)
     }
 }
 
+void Map::RemoveFromAllActiveLists(WorldObject* obj)
+{
+    auto loc = std::find(m_activeNonPlayers.begin(), m_activeNonPlayers.end(), obj);
+    if (loc != m_activeNonPlayers.end())
+        m_activeNonPlayers.erase(loc);
+    
+    loc = std::find(m_activeNonPlayersRemoveList.begin(), m_activeNonPlayersRemoveList.end(), obj);
+    if (loc != m_activeNonPlayersRemoveList.end())
+        m_activeNonPlayersRemoveList.erase(loc);
+}
+
 void
 Map::PlayerRelocation(Player *player, float x, float y, float z, float orientation)
 {

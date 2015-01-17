@@ -8648,6 +8648,10 @@ void Unit::CleanupsBeforeDelete()
         RemoveAllAuras(AURA_REMOVE_BY_DELETE);
         GetMotionMaster()->Clear(false);                    // remove different non-standard movement generators.
     }
+    
+    if (GetMap())
+        GetMap()->RemoveFromAllActiveLists(this);
+    
     WorldObject::CleanupsBeforeDelete();
 }
 
