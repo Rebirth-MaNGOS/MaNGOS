@@ -279,7 +279,9 @@ enum HakkarRitualSpell
     SPELL_CREATE_RIFT = 24202, // The spell that summons the cloud animation.
     SPELL_CREATE_SUMMON_CIRCLE = 24602, // The spell that creates a swirly animation around the channelers.
     SPELL_SUMMON_PAT = 24215, // Spell that can be used to summon Pat.
-    SPELL_HEART_BOLT = 24214 // The Spell that Molthor uses to initiate the event.
+    SPELL_HEART_BOLT = 24214, // The Spell that Molthor uses to initiate the event.
+    SPELL_LONGSHAKE = 24203,
+    SPELL_SHORT_SHAKE = 24204
 };
 
 enum HakkarRitualObject
@@ -323,11 +325,17 @@ struct MANGOS_DLL_DECL npc_pats_hellfire_guy : public ScriptedAI
                 case 1: // Clouds appear
                     DoCast(m_creature, HakkarRitualSpell::SPELL_CREATE_RIFT, true);
                     
+                    // Shake the ground
+                    DoCast(m_creature, HakkarRitualSpell::SPELL_LONGSHAKE, true);
+                    
                     m_uiEventTimer = 12000;
                     ++m_uiEventStage;
                     break;
                 case 2: // Cast the explosion and despawn.
                 {
+                    // Shake on explosion.
+                    DoCast(m_creature, HakkarRitualSpell::SPELL_SHORT_SHAKE, true);
+                    
                     DoCast(m_creature, HakkarRitualSpell::SPELL_EXPLOSION, true);
                     
                     TemporarySummon* pTemp = dynamic_cast<TemporarySummon*>(m_creature);
