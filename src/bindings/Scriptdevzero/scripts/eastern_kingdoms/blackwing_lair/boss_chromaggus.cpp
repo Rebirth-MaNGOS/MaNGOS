@@ -121,7 +121,7 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
 
         GameObject* pDoor = GetClosestGameObjectWithEntry(m_creature, 179116, 1000.f);
         if (pDoor && pDoor->GetGoState() == GO_STATE_ACTIVE)
-            m_creature->GetMotionMaster()->MovePoint(0, -7488.f, -1073.f, 477.f, false); // Chromaggus should stand in the middle of the room after a wipe.
+            m_creature->GetMotionMaster()->MovePoint(0, -7488.f, -1073.f, 477.f); // Chromaggus should stand in the middle of the room after a wipe.
     }
 
     void MovementInform(uint32 /*pointID*/, uint32 /*movementType*/)
