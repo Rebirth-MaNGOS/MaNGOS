@@ -126,6 +126,9 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
 
     void MovementInform(uint32 /*pointID*/, uint32 /*movementType*/)
     {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_CHROMAGGUS, FAIL);
+        
         m_creature->SetFacingTo(0.5699f);
         m_creature->RelocateCreature(-7488.f, -1073.f, 477.f, 0.5699f);
     }
