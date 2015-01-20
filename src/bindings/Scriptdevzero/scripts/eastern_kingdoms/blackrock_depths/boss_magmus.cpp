@@ -137,7 +137,7 @@ struct MANGOS_DLL_DECL mob_ironhand_guardAI : public ScriptedAI
             if (m_uiGoutOfFlame_Timer <= uiDiff)
             {
 			    DoCastSpellIfCan(m_creature, SPELL_GOUT_OF_FLAME, CAST_FORCE_TARGET_SELF);
-                m_uiGoutOfFlame_Timer = 16000;
+                m_uiGoutOfFlame_Timer = urand(13000, 18000);
             }
             else
                 m_uiGoutOfFlame_Timer -= uiDiff;
