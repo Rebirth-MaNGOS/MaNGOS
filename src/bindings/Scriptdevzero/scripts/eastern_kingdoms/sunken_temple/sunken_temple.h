@@ -90,6 +90,7 @@ enum Misc
 {
     MAX_DEFENDER                    = 6,
 
+	GREEN_VISUAL					= 13540,
     ITEM_HAKKARI_BLOOD              = 10460,
     SAY_ZONE_JAMMAL                 = -1109006
 };

@@ -61,7 +61,7 @@ static Loc Supp[]=
 
 instance_sunken_temple::instance_sunken_temple(Map* pMap) : ScriptedInstance(pMap),
     m_bIsSerpentSummoning(false),
-    
+
     m_uiSerpent(0),
     m_uiSerpentSummonTimer(2000),
     m_uiStatueOrder(0),
@@ -156,7 +156,8 @@ void instance_sunken_temple::OnCreatureCreate(Creature* pCreature)
         case NPC_MIJAN:
         case NPC_ZOLO:
         case NPC_ZULLOR:
-            pCreature->SetStandState(UNIT_STAND_STATE_KNEEL);
+			pCreature->CastSpell(pCreature, GREEN_VISUAL, false);
+          //  pCreature->SetStandState(UNIT_STAND_STATE_KNEEL);		//removed
             return;
         case NPC_ATALAI_DEATHWALKER:
         case NPC_ATALAI_HIGH_PRIEST:
@@ -170,7 +171,8 @@ void instance_sunken_temple::OnCreatureCreate(Creature* pCreature)
             pCreature->SetStandState(UNIT_STAND_STATE_KNEEL);
             break;
         case NPC_JAMMALAN_THE_PROPHET:
-            pCreature->SetStandState(UNIT_STAND_STATE_KNEEL);
+			pCreature->CastSpell(pCreature, GREEN_VISUAL, false);
+       //     pCreature->SetStandState(UNIT_STAND_STATE_KNEEL);		//removed
             break;
         case NPC_DREAMSCYTHE:
         case NPC_WEAVER:
