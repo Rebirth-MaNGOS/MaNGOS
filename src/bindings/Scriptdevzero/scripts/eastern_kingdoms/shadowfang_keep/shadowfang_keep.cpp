@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Shadowfang_Keep
 SD%Complete: 75
-SDComment: npc_shadowfang_prisoner using escortAI for movement to door.
+SDComment: npc_shadowfang_prisoner using escortAI for movement to door. TODO: Add RP to Nandos when the 4 mobs around him dies.
 SDCategory: Shadowfang Keep
 EndScriptData */
 
@@ -855,48 +855,50 @@ struct MANGOS_DLL_DECL npc_arugalAI : public ScriptedAI
             {
                 case 1:
                     m_creature->SetVisibility(VISIBILITY_ON);
-                    m_uiSpeechTimer = 500;
+                    m_uiSpeechTimer = 2000;
                     break;
                 case 2:
                     DoCastSpellIfCan(m_creature, SPELL_SPAWN);
-                    m_uiSpeechTimer = 2000;
+                    m_uiSpeechTimer = 5000;
                     break;
                 case 3:
-                    //make him die
-                    if (Creature* pVincent = GetClosestCreatureWithEntry(m_creature,NPC_VINCENT,20.0f))
-                        pVincent->SetStandState(UNIT_STAND_STATE_DEAD);
-
-                    m_uiSpeechTimer = 10000;
+                    DoScriptText(SAY_INTRO_1, m_creature);
+                    // m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                    m_uiSpeechTimer = 1750;
                     break;
                 case 4:
-                    DoScriptText(SAY_INTRO_1, m_creature);
-                    //m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
-                    m_uiSpeechTimer = 1750;
+                    m_creature->HandleEmote(EMOTE_ONESHOT_POINT);
+                    m_uiSpeechTimer = 5000;
                     break;
                 case 5:
-                    m_creature->HandleEmote(EMOTE_ONESHOT_POINT);
-                    m_uiSpeechTimer = 1750;
-                    break;
-                case 6:
                     DoScriptText(SAY_INTRO_2, m_creature);
                     m_uiSpeechTimer = 1750;
                     break;
-                case 7:
+                case 6:
                     m_creature->HandleEmote(EMOTE_ONESHOT_EXCLAMATION);
-                    m_uiSpeechTimer = 1750;
+                    m_uiSpeechTimer = 3000;
                     break;
-                case 8:
-                    //m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                case 7:
+                    // m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
                     DoScriptText(SAY_INTRO_3, m_creature);
                     m_uiSpeechTimer = 1750;
                     break;
+				case 8:
+					// Make him die
+					if (Creature* pVincent = GetClosestCreatureWithEntry(m_creature, NPC_VINCENT, 20.0f))
+					{
+						pVincent->SetStandState(UNIT_STAND_STATE_DEAD);
+					}
+
+					m_uiSpeechTimer = 1000;
+					break;
                 case 9:
                     m_creature->HandleEmote(EMOTE_ONESHOT_LAUGH);
-                    m_uiSpeechTimer = 1750;
+                    m_uiSpeechTimer = 5000;
                     break;
                 case 10:
                     DoScriptText(SAY_INTRO_4, m_creature);
-                    m_uiSpeechTimer = 2000;
+                    m_uiSpeechTimer = 5000;
                     break;
                 case 11:
                     DoCastSpellIfCan(m_creature, SPELL_SPAWN);
@@ -904,7 +906,9 @@ struct MANGOS_DLL_DECL npc_arugalAI : public ScriptedAI
                     break;
                 case 12:
                     if (m_pInstance)
-                        m_pInstance->SetData(TYPE_INTRO,DONE);
+                    {
+                        m_pInstance->SetData(TYPE_INTRO, DONE);
+                    }
 
                     m_creature->SetVisibility(VISIBILITY_OFF);
                     m_uiSpeechStep = 0;
@@ -951,7 +955,13 @@ struct MANGOS_DLL_DECL npc_deathstalker_vincentAI : public ScriptedAI
     void Reset()
     {
         if (m_pInstance && m_pInstance->GetData(TYPE_INTRO) == DONE && !m_creature->GetByteValue(UNIT_FIELD_BYTES_1, 0))
+        {
             m_creature->SetStandState(UNIT_STAND_STATE_DEAD);
+		}
+		else
+		{
+			m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+		}
     }
 
     void DamageTaken(Unit* pDoneBy, uint32& uiDamage) 
