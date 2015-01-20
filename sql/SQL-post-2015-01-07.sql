@@ -106,3 +106,13 @@ UPDATE zp_mangosd.creature SET spawntimesecs = FLOOR(30 + RAND() * (121 - 30)) W
 
 -- Immunities for Flamewaker Protector.
 UPDATE `zp_mangosd`.`creature_template` SET `mechanic_immune_mask`=617299803 WHERE  `entry`=12119 LIMIT 1;
+
+/******************** Update size + interact state for pylons in DM West ***********************************/
+
+UPDATE `zp_mangosd`.`gameobject_template` SET `faction`=114, `flags`=1, `size`=6.527, `ScriptName`='' WHERE `entry`=177259;
+UPDATE `zp_mangosd`.`gameobject_template` SET `faction`=114, `flags`=1, `size`=6.527, `ScriptName`='' WHERE `entry`=177257;
+UPDATE `zp_mangosd`.`gameobject_template` SET `faction`=114, `flags`=1, `size`=6.527, `ScriptName`='' WHERE `entry`=177258;
+UPDATE `zp_mangosd`.`gameobject_template` SET `faction`=114, `flags`=1, `size`=6.527, `ScriptName`='' WHERE `entry`=179504;
+UPDATE `zp_mangosd`.`gameobject_template` SET `faction`=114, `flags`=1, `size`=6.527, `ScriptName`='' WHERE `entry`=179505;
+UPDATE `zp_mangosd`.`gameobject_template` SET `faction`=114, `flags`=32 WHERE  `entry`=179506;
+
