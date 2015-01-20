@@ -4922,6 +4922,11 @@ bool Player::UpdateSkill(uint32 skill_id, uint32 step)
         SetUInt32Value(valueIndex,MAKE_SKILL_VALUE(new_value,max));
         if(itr->second.uState != SKILL_NEW)
             itr->second.uState = SKILL_CHANGED;
+        
+        // Save the player if it gains a skillpoint. This to prevent skill rollbacks
+        // if the server were to crash before the next character save.
+        SaveToDB();
+        
         return true;
 }
 
@@ -5043,6 +5048,11 @@ bool Player::UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step)
         SetUInt32Value(valueIndex,MAKE_SKILL_VALUE(new_value,MaxValue));
         if(itr->second.uState != SKILL_NEW)
             itr->second.uState = SKILL_CHANGED;
+        
+        // Save the player to the DB when it gains a skill point.
+        // This way we avoid skills rolling back on a server crash.
+        SaveToDB();
+        
         DEBUG_LOG("Player::UpdateSkillPro Chance=%3.1f%% taken", Chance/10.0);
         return true;
     }
