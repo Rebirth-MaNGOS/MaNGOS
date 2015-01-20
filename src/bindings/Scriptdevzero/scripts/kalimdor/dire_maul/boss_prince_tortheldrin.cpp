@@ -31,7 +31,6 @@ enum Spells
     SPELL_TRASH                 = 3391,
     SPELL_WHIRLWIND             = 15589,
     GOSSIP_PRINCE_TORTHELDRIN   = 6909,
-    SAY_AGGRO                   = -1429015,
 };
 
 struct MANGOS_DLL_DECL boss_prince_tortheldrinAI : public ScriptedAI
@@ -68,8 +67,8 @@ struct MANGOS_DLL_DECL boss_prince_tortheldrinAI : public ScriptedAI
         if (m_pInstance)
         {
             m_pInstance->SetData(TYPE_PRINCE_TORTHELDRIN, IN_PROGRESS);
-            if (m_pInstance->GetData(TYPE_IMMOLTHAR) == DONE)
-                DoScriptText(SAY_AGGRO, m_creature);
+            /*if (m_pInstance->GetData(TYPE_IMMOLTHAR) == DONE)
+                DoScriptText(SAY_AGGRO, m_creature);*/
         }
     }
 

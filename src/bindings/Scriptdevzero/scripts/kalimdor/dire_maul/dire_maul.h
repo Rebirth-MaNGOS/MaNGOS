@@ -13,7 +13,7 @@ enum Data
     TYPE_IRONBARK_THE_REDEEMED,
     TYPE_ALZZIN_THE_WILDSHAPER,
     TYPE_ISALIEN,
-
+	
     // North
     TYPE_STOMPER_KREEG,
     TYPE_GUARD_MOLDAR,
@@ -25,12 +25,19 @@ enum Data
     TYPE_TRIBUTE_RUN,
     TYPE_KNOT_THIMBLEJACK,
 
-    // West
+	 // West
     TYPE_TENDRIS_WARPWOOD,
-    TYPE_BARRIER,
+    //TYPE_BARRIER,
     TYPE_IMMOLTHAR,
     TYPE_PRINCE_TORTHELDRIN,
-	MAX_ENCOUNTER
+	TYPE_PYLON_1,
+    TYPE_PYLON_2                = TYPE_PYLON_1 + 1,
+    TYPE_PYLON_3                = TYPE_PYLON_1 + 2,
+    TYPE_PYLON_4                = TYPE_PYLON_1 + 3,
+    TYPE_PYLON_5                = TYPE_PYLON_1 + 4,
+	
+	MAX_ENCOUNTER,					//Not sure about this, were 17 before
+	
 };
 
 enum Creatures
@@ -80,6 +87,7 @@ enum Creatures
     NPC_PRINCE_TORTHELDRIN      = 11486,
     NPC_ARCANE_ABERRATION       = 11480,
     NPC_MANA_REMNANT            = 11483,
+	NPC_HIGHBORNE_SUMMONER      = 11466,
 };
 
 enum GameObjects
@@ -104,21 +112,24 @@ enum GameObjects
 	GO_BROKEN_TRAP				= 179485,
 
     // West
-    GO_PYLON_1                  = 177257,
-    GO_PYLON_2                  = 177258,
-    GO_PYLON_3                  = 177259,
-    GO_PYLON_4                  = 179504,
-    GO_PYLON_5                  = 179505,
+    GO_CRYSTAL_GENERATOR_1      = 177257,
+    GO_CRYSTAL_GENERATOR_2      = 177258,
+    GO_CRYSTAL_GENERATOR_3      = 177259,
+    GO_CRYSTAL_GENERATOR_4      = 179504,
+    GO_CRYSTAL_GENERATOR_5      = 179505,
     GO_FORCE_FIELD              = 179503,
     GO_THE_PRINCES_CHEST        = 179545,
 };
 
 enum Misc
 {
+	MAX_GENERATORS              = 5,
     FACTION_FRIENDLY            = 35,
     FACTION_HOSTILE             = 14,
     SAY_REDEEMED                = -1429005,
     SPELL_KING_OF_GORDOK        = 22799,
+	SAY_KILL_IMMOLTHAR			= -1429015,
+	SAY_FREE_IMMOLTHAR			= -1429016,
 };
 
 struct Loc
@@ -140,11 +151,21 @@ class MANGOS_DLL_DECL instance_dire_maul : public ScriptedInstance
         void SetData(uint32 uiType, uint32 uiData);
         uint32 GetData(uint32 uiType);
 
+		void JustReachedHome(Creature* pCreature);
+		void OnCreatureEnterCombat(Creature* pCreature);
+        void OnCreatureDeath(Creature* pCreature);
+
         const char* Save() { return strInstData.c_str(); }
         void Load(const char* chrIn);
 
 		void CallProtectors();
     protected:
+		bool CheckAllGeneratorsDestroyed();
+        void ProcessForceFieldOpening();
+        void SortPylonGuards();
+        void PylonGuardJustDied(Creature* pCreature);
+		bool bYell1;
+
         uint32 m_auiEncounter[MAX_ENCOUNTER];
         std::string strInstData;
 
@@ -156,6 +177,13 @@ class MANGOS_DLL_DECL instance_dire_maul : public ScriptedInstance
 		GUIDList m_uiProtectorGUID;
 		GUIDList m_uiShardGUID;
 		GUIDList m_uiPyramideTrash;
+
+		// West
+        ObjectGuid m_aCrystalGeneratorGuid[MAX_GENERATORS];
+
+        GUIDList m_luiHighborneSummonerGUIDs;
+        GUIDList m_lGeneratorGuardGUIDs;
+        std::set<uint32> m_sSortedGeneratorGuards[MAX_GENERATORS];
 };
 
 #endif

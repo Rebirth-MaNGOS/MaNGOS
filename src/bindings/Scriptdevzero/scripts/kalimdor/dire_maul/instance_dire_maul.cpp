@@ -37,9 +37,9 @@ EndScriptData */
     Encounter 12 = Tribute Run
     Encounter 13 = Knot Thimblejack
     Encounter 14 = Tendris Warpwood
-    Encounter 15 = Barrier
-    Encounter 16 = Immolthar
-    Encounter 17 = Prince Tortheldrin
+    (Encounter 15 = Barrier) - removed
+    Encounter 15 = Immolthar
+    Encounter 16 = Prince Tortheldrin
 */
 
 #include "precompiled.h"
@@ -56,7 +56,8 @@ static Loc Tendris[]=
 
 instance_dire_maul::instance_dire_maul(Map* pMap) : ScriptedInstance(pMap),
 	// We won't count pylons OnObjectCreate() because they are not all created --> could be exploited
-	m_uiPylonCount(5)
+	m_uiPylonCount(5),
+	bYell1(false)
 {
 	Initialize();
 };
@@ -109,7 +110,30 @@ void instance_dire_maul::OnCreatureCreate(Creature* pCreature)
         case NPC_ALZZINS_MINION:
 			m_uiAlzzinsMinionGUID.push_back(pCreature->GetObjectGuid());
             return;
-        // North
+        // West
+        case NPC_TENDRIS_WARPWOOD:
+            if (m_auiEncounter[14] == DONE)
+                pCreature->SummonCreature(NPC_ANCIENT_EQUINE_SPIRIT, 9.18f, 491.05f, -23.29f, 4.89f, TEMPSUMMON_DEAD_DESPAWN, 0);
+            break;
+        case NPC_PROTECTOR:
+            m_uiProtectorGUID.push_back(pCreature->GetObjectGuid());
+            break;
+		case NPC_PRINCE_TORTHELDRIN:
+            if (m_auiEncounter[15] != DONE)
+                pCreature->setFaction(FACTION_FRIENDLY);
+				break;
+		case NPC_ARCANE_ABERRATION:
+        case NPC_MANA_REMNANT:
+            m_lGeneratorGuardGUIDs.push_back(pCreature->GetObjectGuid());
+            return;
+        case NPC_IMMOLTHAR:
+           /* if (m_auiEncounter[15] != DONE)
+                pCreature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE + UNIT_FLAG_NOT_SELECTABLE);*/
+            break;
+		case NPC_HIGHBORNE_SUMMONER:
+            m_luiHighborneSummonerGUIDs.push_back(pCreature->GetObjectGuid());
+            return;
+         // North
         case NPC_GUARD_MOLDAR:
         case NPC_GUARD_FENGUS:
         case NPC_GUARD_SLIPKIK:
@@ -138,22 +162,6 @@ void instance_dire_maul::OnCreatureCreate(Creature* pCreature)
                 pCreature->SetVisibility(VISIBILITY_OFF);
                 pCreature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             }
-            break;
-        // West
-        case NPC_TENDRIS_WARPWOOD:
-            if (m_auiEncounter[14] == DONE)
-                pCreature->SummonCreature(NPC_ANCIENT_EQUINE_SPIRIT, 9.18f, 491.05f, -23.29f, 4.89f, TEMPSUMMON_DEAD_DESPAWN, 0);
-            break;
-        case NPC_PROTECTOR:
-            m_uiProtectorGUID.push_back(pCreature->GetObjectGuid());
-            return;
-        case NPC_IMMOLTHAR:
-            if (m_auiEncounter[15] != DONE)
-                pCreature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE + UNIT_FLAG_NOT_SELECTABLE);
-            break;
-        case NPC_PRINCE_TORTHELDRIN:
-            if (m_auiEncounter[16] != DONE)
-                pCreature->setFaction(FACTION_FRIENDLY);
             break;
 		default:
 			return;
@@ -192,17 +200,46 @@ void instance_dire_maul::OnObjectCreate(GameObject* pGo)
         case GO_KNOT_THIMBLEJACK_CACHE:
             break;
         // West
-        case GO_PYLON_1:
-        case GO_PYLON_2:
-        case GO_PYLON_3:
-        case GO_PYLON_4:
-        case GO_PYLON_5:
-            if (m_auiEncounter[15] == DONE)
-                InteractWithGo(pGo->GetEntry(), false);
-            return;
-        case GO_FORCE_FIELD:
-            if (m_auiEncounter[15] == DONE)
+        case GO_CRYSTAL_GENERATOR_1:
+            m_aCrystalGeneratorGuid[0] = pGo->GetObjectGuid();
+            if (m_auiEncounter[TYPE_PYLON_1] == DONE)
+            {
                 pGo->SetGoState(GO_STATE_ACTIVE);
+            }
+            return;
+        case GO_CRYSTAL_GENERATOR_2:
+            m_aCrystalGeneratorGuid[1] = pGo->GetObjectGuid();
+            if (m_auiEncounter[TYPE_PYLON_2] == DONE)
+            {
+                pGo->SetGoState(GO_STATE_ACTIVE);
+            }
+            return;
+        case GO_CRYSTAL_GENERATOR_3:
+            m_aCrystalGeneratorGuid[2] = pGo->GetObjectGuid();
+            if (m_auiEncounter[TYPE_PYLON_3] == DONE)
+            {
+                pGo->SetGoState(GO_STATE_ACTIVE);
+            }
+            return;
+        case GO_CRYSTAL_GENERATOR_4:
+            m_aCrystalGeneratorGuid[3] = pGo->GetObjectGuid();
+            if (m_auiEncounter[TYPE_PYLON_4] == DONE)
+            {
+                pGo->SetGoState(GO_STATE_ACTIVE);
+            }
+            return;
+        case GO_CRYSTAL_GENERATOR_5:
+            m_aCrystalGeneratorGuid[4] = pGo->GetObjectGuid();
+            if (m_auiEncounter[TYPE_PYLON_5] == DONE)
+            {
+                pGo->SetGoState(GO_STATE_ACTIVE);
+            }
+            return;
+		case GO_FORCE_FIELD:
+            if (CheckAllGeneratorsDestroyed())
+            {
+                pGo->SetGoState(GO_STATE_ACTIVE);
+            }
             break;
 		case GO_BROKEN_TRAP:
         case GO_THE_PRINCES_CHEST:
@@ -250,12 +287,12 @@ void instance_dire_maul::SetData(uint32 uiType, uint32 uiData)
                             pMinion->Respawn();
                     }
                     break;
-                case DONE:
+                case DONE:														//Not sure why but boss stopped doing crumble wall when it dies so I had to remove SPECIAL case.
                     HandleGameObject(GO_CORRUPTED_CRYSTAL_VINE, true);
                     for(GUIDList::iterator itr = m_uiShardGUID.begin(); itr != m_uiShardGUID.end(); ++itr)
-                        DoRespawnGameObject(*itr, HOUR);
-                    break;
-                case SPECIAL:
+					{ DoRespawnGameObject(*itr, HOUR);}
+                /*    break;
+                case SPECIAL:*/
                     HandleGameObject(GO_CRUMBLE_WALL, true);
 
                     if (Creature* pAlzzin = GetSingleCreatureFromStorage(NPC_ALZZINS_THE_WILDSHAPER))
@@ -369,7 +406,7 @@ void instance_dire_maul::SetData(uint32 uiType, uint32 uiData)
                     pTendris->SummonCreature(NPC_ANCIENT_EQUINE_SPIRIT, 9.18f, 491.05f, -23.29f, 4.89f, TEMPSUMMON_DEAD_DESPAWN, 0);
             }
             break;
-        case TYPE_BARRIER:
+    /*    case TYPE_BARRIER:
             m_auiEncounter[15] = uiData;
             if (uiData == IN_PROGRESS)
             {
@@ -379,26 +416,46 @@ void instance_dire_maul::SetData(uint32 uiType, uint32 uiData)
                     SetData(TYPE_BARRIER, DONE);
                 else
                     debug_log("SD0: Instance Dire Maul: %u pylons left to activate.", m_uiPylonCount);
-            }
-            if (uiData == DONE)
-            {
-                HandleGameObject(GO_FORCE_FIELD, true);
-                if (Creature* pImmolthar = GetSingleCreatureFromStorage(NPC_IMMOLTHAR))
-                    pImmolthar->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE + UNIT_FLAG_NOT_SELECTABLE);
-            }
-            break;
+            }*/
+            
         case TYPE_IMMOLTHAR:
-            m_auiEncounter[16] = uiData;
+            m_auiEncounter[15] = uiData;
             if (uiData == DONE)
             {
+				
                 if (Creature* pPrince = GetSingleCreatureFromStorage(NPC_PRINCE_TORTHELDRIN))
-                    pPrince->setFaction(pPrince->GetCreatureInfo()->faction_A);
-            }
+				{
+					pPrince->setFaction(pPrince->GetCreatureInfo()->faction_A);	
+					if (!bYell1 && pPrince)
+						{
+							DoScriptText(SAY_KILL_IMMOLTHAR, pPrince);					//TODO: still does the text twice.
+							bYell1 = true;
+						}
+				}
+			}
+
             break;
         case TYPE_PRINCE_TORTHELDRIN:
-            m_auiEncounter[17] = uiData;
+            m_auiEncounter[16] = uiData;
             if (uiData == DONE)
                 DoRespawnGameObject(GO_THE_PRINCES_CHEST, HOUR);
+            break;
+		case TYPE_PYLON_1:
+        case TYPE_PYLON_2:
+        case TYPE_PYLON_3:
+        case TYPE_PYLON_4:
+        case TYPE_PYLON_5:
+            m_auiEncounter[uiType] = uiData;
+            if (uiData == DONE)
+            {
+               DoUseDoorOrButton(m_aCrystalGeneratorGuid[uiType - TYPE_PYLON_1]);
+                if (CheckAllGeneratorsDestroyed())
+                {
+                    ProcessForceFieldOpening();
+                }
+                /*if (Creature* pImmolthar = GetSingleCreatureFromStorage(NPC_IMMOLTHAR))
+                    pImmolthar->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE + UNIT_FLAG_NOT_SELECTABLE);*/			//Unused since barrier case is removed
+            }
             break;
     }
         
@@ -424,6 +481,54 @@ uint32 instance_dire_maul::GetData(uint32 uiType)
 		return m_auiEncounter[uiType];
 
 	return 0;
+}
+void instance_dire_maul::JustReachedHome(Creature* pCreature)
+{
+       switch (pCreature->GetEntry())
+    {
+	   case NPC_PRINCE_TORTHELDRIN:
+            SetData(TYPE_PRINCE_TORTHELDRIN, NOT_STARTED);
+			break;
+    }
+}
+
+void instance_dire_maul::OnCreatureEnterCombat(Creature* pCreature)
+{
+    switch (pCreature->GetEntry())
+    {
+            // West
+            // - Handling of guards of generators
+        case NPC_ARCANE_ABERRATION:
+        case NPC_MANA_REMNANT:
+            SortPylonGuards();
+            break;
+			// - Set InstData for Prince
+		case NPC_PRINCE_TORTHELDRIN:
+			SetData(TYPE_PRINCE_TORTHELDRIN, IN_PROGRESS);
+			break;
+            // - Set InstData for ImmolThar
+        case NPC_IMMOLTHAR:
+            SetData(TYPE_IMMOLTHAR, IN_PROGRESS);
+            break;
+    }
+}
+
+void instance_dire_maul::OnCreatureDeath(Creature* pCreature)
+{
+    switch (pCreature->GetEntry())
+    {
+            // West
+            // - Handling of generator guards
+        case NPC_ARCANE_ABERRATION:
+        case NPC_MANA_REMNANT:
+            PylonGuardJustDied(pCreature);
+            break;
+		case NPC_PRINCE_TORTHELDRIN: 
+			SetData(TYPE_PRINCE_TORTHELDRIN, DONE);
+        case NPC_IMMOLTHAR:
+            SetData(TYPE_IMMOLTHAR, DONE);
+            break;
+	}
 }
 
 void instance_dire_maul::Load(const char* chrIn)
@@ -454,6 +559,109 @@ void instance_dire_maul::Load(const char* chrIn)
         m_auiEncounter[0] = NOT_STARTED;
 
     OUT_LOAD_INST_DATA_COMPLETE;
+}
+
+bool instance_dire_maul::CheckAllGeneratorsDestroyed()
+{
+    if (m_auiEncounter[TYPE_PYLON_1] != DONE || m_auiEncounter[TYPE_PYLON_2] != DONE || m_auiEncounter[TYPE_PYLON_3] != DONE || m_auiEncounter[TYPE_PYLON_4] != DONE || m_auiEncounter[TYPE_PYLON_5] != DONE)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void instance_dire_maul::ProcessForceFieldOpening()				//Removed attack event due to MMaps, the npcs fly down to the middle.
+{
+    // 'Open' the force field
+    DoUseDoorOrButton(GO_FORCE_FIELD);
+/*
+    //  Make the summoners attack Immol'Thar when force field goes down
+	 Creature* pImmolThar = GetSingleCreatureFromStorage(NPC_IMMOLTHAR);
+    if (!pImmolThar || pImmolThar->isDead())
+    {
+        return;
+    }
+*/
+    bool bHasYelled = false;
+    for (GUIDList::const_iterator itr = m_luiHighborneSummonerGUIDs.begin(); itr != m_luiHighborneSummonerGUIDs.end(); ++itr)
+    {
+        Creature* pSummoner = instance->GetCreature(*itr);
+
+        if (!bHasYelled && pSummoner)
+        {
+            DoScriptText(SAY_FREE_IMMOLTHAR, pSummoner);
+            bHasYelled = true;
+	    }
+		/*
+		if (!pSummoner || pSummoner->isDead())
+        {
+            continue;
+        }	
+		pSummoner->Attack(pImmolThar, true);		*/		//attack Immolthar
+	}
+    m_luiHighborneSummonerGUIDs.clear();
+}
+
+void instance_dire_maul::SortPylonGuards()
+{
+    if (!m_lGeneratorGuardGUIDs.empty())
+    {
+        for (uint8 i = 0; i < MAX_GENERATORS; ++i)
+        {
+            GameObject* pGenerator = instance->GetGameObject(m_aCrystalGeneratorGuid[i]);
+            // Skip non-existing or finished generators
+            if (!pGenerator || GetData(TYPE_PYLON_1 + i) == DONE)
+            {
+                continue;
+            }
+
+            // Sort all remaining (alive) NPCs to unfinished generators
+            for (GUIDList::iterator itr = m_lGeneratorGuardGUIDs.begin(); itr != m_lGeneratorGuardGUIDs.end();)
+            {
+                Creature* pGuard = instance->GetCreature(*itr);
+                if (!pGuard || pGuard->isDead())    // Remove invalid guids and dead guards
+                {
+                    m_lGeneratorGuardGUIDs.erase(itr++);
+                    continue;
+                }
+
+                if (pGuard->IsWithinDist2d(pGenerator->GetPositionX(), pGenerator->GetPositionY(), 20.0f))
+                {
+                    m_sSortedGeneratorGuards[i].insert(pGuard->GetGUIDLow());
+                    m_lGeneratorGuardGUIDs.erase(itr++);
+                }
+                else
+                {
+                    ++itr;
+                }
+            }
+        }
+    }
+}
+
+void instance_dire_maul::PylonGuardJustDied(Creature* pCreature)
+{
+    for (uint8 i = 0; i < MAX_GENERATORS; ++i)
+    {
+        // Skip already activated generators
+        if (GetData(TYPE_PYLON_1 + i) == DONE)
+        {
+            continue;
+        }
+
+        // Only process generator where the npc is sorted in
+        if (m_sSortedGeneratorGuards[i].find(pCreature->GetGUIDLow()) != m_sSortedGeneratorGuards[i].end())
+        {
+            m_sSortedGeneratorGuards[i].erase(pCreature->GetGUIDLow());
+            if (m_sSortedGeneratorGuards[i].empty())
+            {
+                SetData(TYPE_PYLON_1 + i, DONE);
+            }
+
+            break;
+        }
+    }
 }
 
 InstanceData* GetInstanceData_instance_dire_maul(Map* pMap)

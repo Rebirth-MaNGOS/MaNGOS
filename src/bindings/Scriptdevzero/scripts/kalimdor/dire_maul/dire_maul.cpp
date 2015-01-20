@@ -81,8 +81,8 @@ bool QuestRewarded_go_broken_trap(Player* pPlayer, GameObject* pGo, const Quest*
 # go_prison_pylon
 ####*/
 
-bool GOUse_go_prison_pylon(Player* /*pPlayer*/, GameObject* pGo)
-{
+//bool GOUse_go_prison_pylon(Player* /*pPlayer*/, GameObject* pGo)
+/*{
     if (GetClosestCreatureWithEntry(pGo, NPC_MANA_REMNANT, 50.0f) || GetClosestCreatureWithEntry(pGo, NPC_ARCANE_ABERRATION, 50.0f))
         return true;
 
@@ -97,7 +97,7 @@ bool GOUse_go_prison_pylon(Player* /*pPlayer*/, GameObject* pGo)
 
     return true;
 }
-
+*/
 /*####
 # go_warpwood_pod
 ####*/
@@ -485,11 +485,11 @@ void AddSC_dire_maul()
     pNewscript->pQuestRewardedGO = &QuestRewarded_go_broken_trap;
     pNewscript->RegisterSelf();
 
-    pNewscript = new Script;
+ /*   pNewscript = new Script;
     pNewscript->Name = "go_prison_pylon";
-    pNewscript->pGOUse = &GOUse_go_prison_pylon;
+	pNewscript->pGOUse = &GOUse_go_prison_pylon;
     pNewscript->RegisterSelf();
-
+*/
 	pNewscript = new Script;
     pNewscript->Name = "go_warpwood_pod";
     pNewscript->pGOUse = &GOUse_go_warpwood_pod;
