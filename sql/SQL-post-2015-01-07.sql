@@ -96,3 +96,13 @@ UPDATE `zp_mangosd`.`gameobject_template` SET `size`='2' WHERE `entry`='180404';
 INSERT INTO `zp_scriptdevzerod`.`script_texts` (`entry`, `content_default`) VALUES ('-1720001', 'Now, only one step remains to rid us of the Soulflayer\'s threat...');
 INSERT INTO `zp_scriptdevzerod`.`script_texts` (`entry`, `content_default`) VALUES ('-1720002', 'Begin the ritual, my servants. We must banish the heart of Hakkar back into the void!');
 UPDATE `zp_scriptdevzerod`.`script_texts` SET `type`='1' WHERE `entry`='-1720002';
+
+	-- Script for Rabid Thistle Bear.
+	
+	REPLACE INTO `zp_mangosd`.`creature_template` (`entry`, `KillCredit1`, `KillCredit2`, `modelid_1`, `modelid_2`, `name`, `subname`, `gossip_menu_id`, `minlevel`, `maxlevel`, `minhealth`, `maxhealth`, `minmana`, `maxmana`, `armor`, `faction_A`, `faction_H`, `npcflag`, `speed_walk`, `speed_run`, `scale`, `rank`, `mindmg`, `maxdmg`, `dmgschool`, `attackpower`, `dmg_multiplier`, `baseattacktime`, `rangeattacktime`, `aggrorangeoverride`, `unit_class`, `unit_flags`, `dynamicflags`, `family`, `trainer_type`, `trainer_spell`, `trainer_class`, `trainer_race`, `minrangedmg`, `maxrangedmg`, `rangedattackpower`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `resistance1`, `resistance2`, `resistance3`, `resistance4`, `resistance5`, `resistance6`, `spell1`, `spell2`, `spell3`, `spell4`, `PetSpellDataId`, `mingold`, `maxgold`, `AIName`, `MovementType`, `InhabitType`, `Civilian`, `RacialLeader`, `RegenHealth`, `equipment_id`, `trainer_id`, `vendor_id`, `mechanic_immune_mask`, `flags_extra`, `ScriptName`) VALUES (2164, 0, 0, 8840, 0, 'Rabid Thistle Bear', NULL, 0, 13, 14, 341, 491, 0, 0, 270, 44, 44, 0, 0.94, 1.11286, 0, 0, 19, 25, 0, 10, 1, 2000, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 22.792, 31.339, 100, 1, 0, 2164, 0, 2164, 0, 0, 0, 0, 0, 0, 3150, 0, 0, 0, 0, 0, 0, 'EventAI', 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 'mob_rabid_thistle_bear');
+
+-- Adjustment for whelp spawn times in BWL.
+UPDATE zp_mangosd.creature SET spawntimesecs = FLOOR(30 + RAND() * (121 - 30)) WHERE id IN ('14022', '14023', '14024', '14025');
+
+-- Immunities for Flamewaker Protector.
+UPDATE `zp_mangosd`.`creature_template` SET `mechanic_immune_mask`=617299803 WHERE  `entry`=12119 LIMIT 1;

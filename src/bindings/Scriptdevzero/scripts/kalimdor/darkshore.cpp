@@ -559,7 +559,7 @@ struct MANGOS_DLL_DECL npc_grimclaw : public ScriptedAI
             if(ui_sniffTimer <= uiDiff)
             {
                 m_creature->GenericTextEmote("Grimclaw faces southeast and whimpers before looking back at you.", nullptr);
-                m_creature->SetOrientation(3.9f);
+				m_creature->SetFacingTo(3.9f);
                 ui_sniffTimer = 0;
                 ui_turnPlayerTimer = 3000;
             }
@@ -574,7 +574,7 @@ struct MANGOS_DLL_DECL npc_grimclaw : public ScriptedAI
                 if(player)
                     m_creature->SetFacingToObject(player);
                 else
-                    m_creature->SetOrientation(2.1f);
+                    m_creature->SetFacingTo(2.1f);
 
                 ui_sniffReturnTimer = 2000;
                 ui_turnPlayerTimer = 0;
@@ -589,7 +589,7 @@ struct MANGOS_DLL_DECL npc_grimclaw : public ScriptedAI
             if(ui_sniffReturnTimer <= uiDiff)
             {
                 ui_sniffReturnTimer = 0;
-                m_creature->SetOrientation(2.1f);
+                m_creature->SetFacingTo(2.1f);
             }
             else
                 ui_sniffReturnTimer -= uiDiff;
@@ -610,6 +610,96 @@ CreatureAI* GetAI_npc_grimclaw(Creature* pCreature)
     return new npc_grimclaw(pCreature);
 }
 
+/*####
+# mob_rabid_thistle_bear
+####*/
+
+enum
+{
+	RABID_THISTLE_BEAR = 2164,
+	CAPTURED_THISTLE_BEAR = 11836,
+	CAPTURED_THISTLE_BEAR_DISPLAY_ID = 8840,
+	NPC_THARNARIUN = 3701,
+	QUEST_PLAGUED_LANDS = 2118,
+	BEAR_TRAP = 111148,
+};
+
+struct MANGOS_DLL_DECL mob_rabid_thistle_bear : public ScriptedAI
+{
+    mob_rabid_thistle_bear(Creature* pCreature) : ScriptedAI(pCreature) {
+        Reset();
+    }
+
+	GameObject *trap;
+	Player *trapOwner;
+	Creature *tharnariun;
+	bool captured;
+	uint32 ui_despawnTimer;
+
+    void Reset()
+    {
+		trap = nullptr;
+		trapOwner = nullptr;
+        tharnariun = nullptr;
+		captured = false;
+		ui_despawnTimer = 0;
+    }
+
+    void UpdateAI(uint32 uiDiff)
+    {
+		if(!captured)
+		{
+			trap = GetClosestGameObjectWithEntry(m_creature, BEAR_TRAP, 2.0f);
+
+			if(trap)
+			{
+				trapOwner = (Player*)trap->GetOwner();
+
+				if(trapOwner)
+				{
+					if(trapOwner->GetQuestStatus(QUEST_PLAGUED_LANDS) == QUEST_STATUS_INCOMPLETE)
+					{
+						captured = true;
+						trapOwner->KilledMonsterCredit(CAPTURED_THISTLE_BEAR);
+						m_creature->setFaction(FACTION_ESCORT_A_NEUTRAL_PASSIVE);
+						m_creature->SetEntry(CAPTURED_THISTLE_BEAR);
+						m_creature->SetDisplayId(CAPTURED_THISTLE_BEAR_DISPLAY_ID);
+						m_creature->UpdateVisibilityAndView();
+						m_creature->GetMotionMaster()->MoveFollow(trapOwner, 0, 0);
+						m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+						ui_despawnTimer = 120000;
+					}
+				}
+			}
+		} else {
+			tharnariun = GetClosestCreatureWithEntry(m_creature, NPC_THARNARIUN, 10.0f);
+					
+			if(tharnariun)
+			{
+				m_creature->GenericTextEmote("I'm safe now, farewell stranger!", nullptr);
+				m_creature->ForcedDespawn();
+			}
+            
+			if(ui_despawnTimer <= uiDiff)
+				m_creature->ForcedDespawn();
+			else
+				ui_despawnTimer -= uiDiff;
+
+			return;
+		}
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+
+    }
+};
+
+CreatureAI* GetAI_mob_rabid_thistle_bear(Creature* pCreature)
+{
+    return new mob_rabid_thistle_bear(pCreature);
+}
 
 void AddSC_darkshore()
 {
@@ -643,5 +733,10 @@ void AddSC_darkshore()
     pNewscript = new Script;
     pNewscript->Name = "npc_grimclaw";
     pNewscript->GetAI = &GetAI_npc_grimclaw;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_rabid_thistle_bear";
+    pNewscript->GetAI = &GetAI_mob_rabid_thistle_bear;
     pNewscript->RegisterSelf();
 }
