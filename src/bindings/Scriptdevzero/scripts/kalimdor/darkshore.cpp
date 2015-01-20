@@ -638,6 +638,7 @@ struct MANGOS_DLL_DECL mob_rabid_thistle_bear : public ScriptedAI
 
     void Reset()
     {
+        m_creature->m_AuraFlags = UNIT_AURAFLAG_ALIVE_INVISIBLE;
 		trap = nullptr;
 		trapOwner = nullptr;
         tharnariun = nullptr;
@@ -676,7 +677,6 @@ struct MANGOS_DLL_DECL mob_rabid_thistle_bear : public ScriptedAI
 					
 			if(tharnariun)
 			{
-				m_creature->GenericTextEmote("I'm safe now, farewell stranger!", nullptr);
 				m_creature->ForcedDespawn();
 			}
             
@@ -687,7 +687,7 @@ struct MANGOS_DLL_DECL mob_rabid_thistle_bear : public ScriptedAI
 
 			return;
 		}
-
+        
 		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
