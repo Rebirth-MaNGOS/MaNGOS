@@ -116,3 +116,190 @@ UPDATE `zp_mangosd`.`gameobject_template` SET `faction`=114, `flags`=1, `size`=6
 UPDATE `zp_mangosd`.`gameobject_template` SET `faction`=114, `flags`=1, `size`=6.527, `ScriptName`='' WHERE `entry`=179505;
 UPDATE `zp_mangosd`.`gameobject_template` SET `faction`=114, `flags`=32 WHERE  `entry`=179506;
 
+/********************* Pyrewood village event ***************************/
+
+-- Add events to events list
+
+INSERT INTO `zp_mangosd`.`game_event` VALUES (50, '2006-02-08 06:00:00', '2020-12-31 20:59:59', 1440, 960, 0, 'Pyrewood Village - Day');
+INSERT INTO `zp_mangosd`.`game_event` VALUES (51, '2006-02-08 21:00:00', '2020-12-31 05:59:59', 1440, 480, 0, 'Pyrewood Village - Worgen Curse');
+
+-- Add all Worgen
+
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008870, 1892, 0, 0, 0, -354.096, 1421.48, 28.1202, 5.37542, 25, 5, 0, 842, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008871, 1892, 0, 0, 0, -350.452, 1448.51, 24.2547, 4.63715, 25, 5, 0, 897, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008872, 1893, 0, 0, 0, -380.696, 1435.16, 25.684, 6.27863, 25, 5, 0, 979, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008873, 1896, 0, 0, 0, -392.203, 1432.1, 26.8478, 6.1137, 25, 5, 0, 823, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008874, 1893, 0, 0, 0, -390.635, 1466.56, 26.0207, 5.30082, 25, 5, 0, 1242, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008875, 1892, 0, 0, 0, -404.243, 1458.93, 26.9134, 0.00330591, 25, 5, 0, 897, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008876, 1896, 0, 0, 0, -408.024, 1451.09, 26.9036, 0.835828, 25, 5, 0, 889, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008877, 1893, 0, 0, 0, -404.465, 1460.8, 31.6819, 5.84274, 25, 5, 0, 979, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008878, 1893, 0, 0, 0, -413.611, 1456.66, 31.6789, 0.0190139, 25, 5, 0, 1242, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008879, 1892, 0, 0, 0, -377.734, 1491.9, 18.3213, 5.26155, 25, 5, 0, 897, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008880, 3531, 0, 0, 0, -361.536, 1500.37, 17.2484, 4.48794, 25, 5, 0, 647, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008881, 3529, 0, 0, 0, -346.413, 1500.84, 18.8082, 0.875111, 25, 5, 0, 981, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008882, 1896, 0, 0, 0, -343.165, 1505.29, 18.7815, 4.001, 25, 5, 0, 889, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008883, 1896, 0, 0, 0, -395.136, 1545.23, 16.8954, 3.04674, 25, 5, 0, 889, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008884, 1896, 0, 0, 0, -423.653, 1543.42, 18.4704, 6.1687, 25, 5, 0, 889, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008885, 1892, 0, 0, 0, -429.356, 1533.42, 18.5726, 0.674839, 25, 5, 0, 842, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008886, 1893, 0, 0, 0, -444.301, 1540.62, 19.6352, 6.27473, 25, 5, 0, 979, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008887, 1892, 0, 0, 0, -434.829, 1562.94, 19.9626, 5.22622, 25, 5, 0, 897, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008888, 1892, 0, 0, 0, -436.403, 1518.17, 19.5468, 0.800507, 25, 5, 0, 842, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008889, 1896, 0, 0, 0, -411.785, 1518.87, 19.7699, 4.73535, 25, 5, 0, 889, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008890, 1893, 0, 0, 0, -411.989, 1508.83, 19.7702, 1.61339, 25, 5, 0, 1242, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008891, 1893, 0, 0, 0, -384.272, 1563.06, 17.1922, 4.28375, 25, 5, 0, 1242, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008892, 1893, 0, 0, 0, -357.268, 1580.44, 18.0479, 0.0229683, 25, 5, 0, 979, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008893, 1892, 0, 0, 0, -344.681, 1601.51, 16.9805, 2.09643, 25, 5, 0, 842, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008894, 3533, 0, 0, 0, -407.482, 1602.53, 18.1017, 5.59146, 25, 5, 0, 836, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008895, 1893, 0, 0, 0, -391.615, 1602.18, 16.9907, 4.94744, 25, 5, 0, 1242, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008896, 1896, 0, 0, 0, -379.114, 1623.75, 16.8078, 1.73515, 25, 5, 0, 889, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008897, 1893, 0, 0, 0, -387.662, 1634.56, 17.4309, 6.02735, 25, 5, 0, 1242, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008898, 1892, 0, 0, 0, -381.525, 1650.85, 17.4179, 4.61757, 25, 5, 0, 842, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008899, 1893, 0, 0, 0, -381.366, 1656.47, 10.2629, 2.79545, 25, 5, 0, 1242, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008900, 1893, 0, 0, 0, -372.209, 1611.23, 24.2887, 1.62913, 25, 5, 0, 979, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008901, 1893, 0, 0, 0, -384.223, 1618.96, 24.2887, 4.93173, 25, 5, 0, 1242, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008902, 1893, 0, 0, 0, -384.372, 1633.35, 24.2887, 3.20778, 25, 5, 0, 979, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008903, 1892, 0, 0, 0, -363.295, 1545.28, 24.398, 3.21956, 25, 5, 0, 842, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008904, 1893, 0, 0, 0, -341.577, 1553.61, 24.3428, 3.22348, 25, 5, 0, 1242, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008905, 1892, 0, 0, 0, -358.1, 1527.82, 24.9345, 1.34638, 25, 5, 0, 897, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008906, 1893, 0, 0, 0, -333.162, 1548.77, 25.2865, 4.53902, 25, 5, 0, 1242, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008907, 1896, 0, 0, 0, -325.607, 1550.69, 25.2832, 1.34245, 25, 5, 0, 889, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008908, 1896, 0, 0, 0, -329.513, 1545.99, 30.053, 2.22995, 25, 5, 0, 889, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008909, 1893, 0, 0, 0, -337.335, 1548.11, 30.0304, 1.13432, 25, 5, 0, 979, 0, 0, 1);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008910, 1892, 0, 0, 0, -390.462, 1571.06, 17.002, 0.0190455, 25, 5, 0, 897, 0, 0, 2);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008911, 1893, 0, 0, 0, -400.889, 1550.64, 16.7986, 0.372473, 25, 5, 0, 1242, 0, 0, 2);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008912, 1892, 0, 0, 0, -349.412, 1609.79, 16.9815, 5.22624, 25, 5, 0, 842, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008913, 1892, 0, 0, 0, -417.046, 1576.94, 19.5426, 3.39626, 25, 5, 0, 897, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008914, 1896, 0, 0, 0, -411.877, 1579.63, 19.5426, 5.62286, 25, 5, 0, 823, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008915, 1896, 0, 0, 0, -406.599, 1583.59, 24.3014, 3.71042, 25, 5, 0, 823, 0, 0, 0);
+INSERT INTO `zp_mangosd`.`creature` VALUES (3008916, 1896, 0, 0, 0, -421.6, 1580.97, 24.3086, 3.48265, 25, 5, 0, 889, 0, 0, 0);
+
+-- Add the Humans to Day event
+
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (17663, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (17905, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (17908, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (17910, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (17911, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18220, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18221, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18235, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18236, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18237, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18238, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18239, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18291, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18306, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18307, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18309, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18310, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18350, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18354, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18355, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18400, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18404, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18405, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18407, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18408, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18409, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18411, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18413, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (18996, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19002, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19005, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19007, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19008, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19012, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19015, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19019, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19084, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19219, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19220, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19222, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19223, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19224, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19227, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19228, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19229, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19316, 50);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (19343, 50);
+
+-- Add Worgen to Night event
+
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008870, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008871, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008872, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008873, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008874, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008875, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008876, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008877, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008878, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008879, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008880, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008881, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008882, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008883, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008884, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008885, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008886, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008887, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008888, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008889, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008890, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008891, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008892, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008893, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008894, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008895, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008896, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008897, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008898, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008899, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008900, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008901, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008902, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008903, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008904, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008905, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008906, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008907, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008908, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008909, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008910, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008911, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008912, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008913, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008914, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008915, 51);
+INSERT INTO `zp_mangosd`.`game_event_creature` VALUES (3008916, 51);
+
+-- Add pat for Worgen
+
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008910, 1, -382.181, 1570.67, 16.961, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.403891, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008910, 2, -379.38, 1572.53, 16.7838, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.694488, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008910, 3, -369.441, 1579.26, 16.7701, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.97076, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008910, 4, -373.897, 1583.97, 17.1676, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.2967, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008910, 5, -379.014, 1589.39, 17.2118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.2967, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008910, 6, -386.714, 1593.99, 16.7651, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.63442, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008910, 7, -393.862, 1588.19, 17.1849, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.12668, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008910, 8, -393.784, 1578.47, 17.8744, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.88459, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008910, 9, -390.237, 1570.61, 16.9771, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5.46971, 0, 0);
+
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 1, -392.727, 1555.82, 17.1764, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.592381, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 2, -387.342, 1554.73, 16.7328, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5.94095, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 3, -390.143, 1544.12, 16.8032, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.40549, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 4, -391.954, 1534.89, 16.8775, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.88182, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 5, -401.508, 1536.62, 17.173, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.99963, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 6, -410.951, 1543.39, 17.1922, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.65798, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 7, -416.812, 1548.05, 17.7608, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.60693, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 8, -424.208, 1551.16, 18.3696, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.60693, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 9, -429.021, 1552.79, 18.3278, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.9368, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 10, -416.235, 1546.81, 17.6732, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5.65427, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 11, -415.047, 1540.61, 17.2976, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.84001, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 12, -419.956, 1536.64, 17.63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.80859, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 13, -425.084, 1531.36, 18.2603, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.96175, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 14, -429.651, 1525.79, 18.5796, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.07956, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 15, -423.778, 1532.59, 18.1165, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.773029, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 16, -416.668, 1538.53, 17.1238, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.670927, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 17, -409.094, 1544.45, 16.9799, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.62773, 0, 0);
+INSERT INTO `zp_mangosd`.`creature_movement` VALUES (3008911, 18, -400.958, 1550.35, 16.7739, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.62773, 0, 0);
