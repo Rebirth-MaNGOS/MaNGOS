@@ -103,3 +103,6 @@ UPDATE `zp_scriptdevzerod`.`script_texts` SET `type`='1' WHERE `entry`='-1720002
 
 -- Adjustment for whelp spawn times in BWL.
 UPDATE zp_mangosd.creature SET spawntimesecs = FLOOR(30 + RAND() * (121 - 30)) WHERE id IN ('14022', '14023', '14024', '14025');
+
+-- Immunities for Flamewaker Protector.
+UPDATE `zp_mangosd`.`creature_template` SET `mechanic_immune_mask`=617299803 WHERE  `entry`=12119 LIMIT 1;
