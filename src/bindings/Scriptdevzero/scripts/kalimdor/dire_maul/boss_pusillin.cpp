@@ -62,7 +62,7 @@ static Loc Move[]=
 	{59.61f,-551.01f,-17.41f,0},				//3rd corner
 	{49.43f,-570.39f,-20.29f,0},				//4th corner
 	{51.12f,-633.68f,-25.12f,0},			// 4th gossip spot
-	{37.91f,-680.64f,-25.16f,0},				//1st corner on bottom floor
+	{34.63f,-689.64f,-25.16f,0},				//1st corner on bottom floor
 	{2.09f,-698.57f,-25.16f,0},					//2nd corner
 	{7.25f,-666.43f,-12.64f,0},					//1st on boss floor
 	{17.52f,-701.77f,-12.64,0},					//2nd on boss floor
@@ -133,8 +133,7 @@ struct MANGOS_DLL_DECL boss_pusillinAI : public ScriptedAI
                 m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
 				break;
 			case 9:
-				m_creature->NearTeleportTo(15.79f,-703.57f,-25.16f,0);				//Slight hack, otherwise npc bugs out.
-				m_creature->GetMotionMaster()->MovePoint(10, Move[10].x, Move[10].y, Move[10].z);
+				m_creature->GetMotionMaster()->MovePoint(10, Move[10].x, Move[10].y, Move[10].z, false);		//Doesn't use MMaps
 				return;
 			case 10:
 				m_creature->GetMotionMaster()->MovePoint(11, Move[11].x, Move[11].y, Move[11].z);
