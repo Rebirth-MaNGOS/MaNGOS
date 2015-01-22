@@ -65,7 +65,7 @@ enum
     SPELL_HUNTER                = 23436,                // bow broke
     SPELL_ROGUE                 = 23414,                // Paralise
 
-	FACTION_BLACK_DRAGON        = 103
+    FACTION_BLACK_DRAGON        = 103
 };
 
 struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
@@ -133,15 +133,15 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
             m_creature->ForcedDespawn();
         }
 
-		instance_blackwing_lair* blackwing_lair = dynamic_cast<instance_blackwing_lair*>(m_pInstance);
-		if (blackwing_lair)
-		{
-			for (Creature* current_spawn : blackwing_lair->GetDrakonoidsAndBoneConstructs())
-				if (current_spawn)
-					((TemporarySummon*) current_spawn)->UnSummon();
+        instance_blackwing_lair* blackwing_lair = dynamic_cast<instance_blackwing_lair*>(m_pInstance);
+        if (blackwing_lair)
+        {
+            for (Creature* current_spawn : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+                if (current_spawn)
+                    ((TemporarySummon*) current_spawn)->UnSummon();
 
-			blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
-		}
+            blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
+        }
 
     }
 
@@ -217,51 +217,51 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
         if (m_uiClassCallTimer < uiDiff && !m_creature->getThreatManager().getThreatList().empty())
         {
             std::vector<uint8> class_list;
-			for (HostileReference* current_target_ref : m_creature->getThreatManager().getThreatList())
-			{
-				Player* current_target = dynamic_cast<Player*>(current_target_ref->getTarget());
-				if (current_target && std::find(class_list.begin(), class_list.end(), current_target->getClass()) == class_list.end())
-					class_list.push_back(current_target->getClass());
-			}
+            for (HostileReference* current_target_ref : m_creature->getThreatManager().getThreatList())
+            {
+                Player* current_target = dynamic_cast<Player*>(current_target_ref->getTarget());
+                if (current_target && std::find(class_list.begin(), class_list.end(), current_target->getClass()) == class_list.end())
+                    class_list.push_back(current_target->getClass());
+            }
 
             switch(class_list[urand(0, class_list.size() - 1)])
             {
-                case CLASS_MAGE:
-                    DoScriptText(SAY_MAGE, m_creature);
-                    DoCastSpellIfCan(m_creature, SPELL_MAGE);	// Works
-                    break;
-                case CLASS_WARRIOR:
-                    DoScriptText(SAY_WARRIOR, m_creature);
-                    DoCastSpellIfCan(m_creature, SPELL_WARRIOR); // Works
-                    break;
-                case CLASS_DRUID:
-                    DoScriptText(SAY_DRUID, m_creature);
-                    DoCastSpellIfCan(m_creature, SPELL_DRUID);  // Works
-                    break;
-                case CLASS_PRIEST:
-                    DoScriptText(SAY_PRIEST, m_creature);
-                    DoCastSpellIfCan(m_creature, SPELL_PRIEST); // Works
-                    break;
-                case CLASS_PALADIN:
-                    DoScriptText(SAY_PALADIN, m_creature);
-                    DoCastSpellIfCan(m_creature, SPELL_PALADIN); // Works
-                    break;
-                case CLASS_SHAMAN:
-                    DoScriptText(SAY_SHAMAN, m_creature);
-                    DoCastSpellIfCan(m_creature, SPELL_SHAMAN); // Works
-                    break;
-                case CLASS_WARLOCK:
-                    DoScriptText(SAY_WARLOCK, m_creature);
-                    DoCastSpellIfCan(m_creature, SPELL_WARLOCK); // Works
-                    break;
-                case CLASS_HUNTER:
-                    DoScriptText(SAY_HUNTER, m_creature);
-                    DoCastSpellIfCan(m_creature, SPELL_HUNTER); // Works
-                    break;
-                case CLASS_ROGUE:
-                    DoScriptText(SAY_ROGUE, m_creature);
-                    DoCastSpellIfCan(m_creature, SPELL_ROGUE); // Works
-                    break;
+            case CLASS_MAGE:
+                DoScriptText(SAY_MAGE, m_creature);
+                DoCastSpellIfCan(m_creature, SPELL_MAGE);	// Works
+                break;
+            case CLASS_WARRIOR:
+                DoScriptText(SAY_WARRIOR, m_creature);
+                DoCastSpellIfCan(m_creature, SPELL_WARRIOR); // Works
+                break;
+            case CLASS_DRUID:
+                DoScriptText(SAY_DRUID, m_creature);
+                DoCastSpellIfCan(m_creature, SPELL_DRUID);  // Works
+                break;
+            case CLASS_PRIEST:
+                DoScriptText(SAY_PRIEST, m_creature);
+                DoCastSpellIfCan(m_creature, SPELL_PRIEST); // Works
+                break;
+            case CLASS_PALADIN:
+                DoScriptText(SAY_PALADIN, m_creature);
+                DoCastSpellIfCan(m_creature, SPELL_PALADIN); // Works
+                break;
+            case CLASS_SHAMAN:
+                DoScriptText(SAY_SHAMAN, m_creature);
+                DoCastSpellIfCan(m_creature, SPELL_SHAMAN); // Works
+                break;
+            case CLASS_WARLOCK:
+                DoScriptText(SAY_WARLOCK, m_creature);
+                DoCastSpellIfCan(m_creature, SPELL_WARLOCK); // Works
+                break;
+            case CLASS_HUNTER:
+                DoScriptText(SAY_HUNTER, m_creature);
+                DoCastSpellIfCan(m_creature, SPELL_HUNTER); // Works
+                break;
+            case CLASS_ROGUE:
+                DoScriptText(SAY_ROGUE, m_creature);
+                DoCastSpellIfCan(m_creature, SPELL_ROGUE); // Works
+                break;
             }
 
             m_uiClassCallTimer = urand(35000, 40000);
@@ -273,38 +273,38 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
         if (!m_bPhase3 && m_creature->GetHealthPercent() < 20.0f)
         {
             // revive all dead dragos as 14605
-			instance_blackwing_lair* blackwing_lair = dynamic_cast<instance_blackwing_lair*>(m_pInstance);
-			if (blackwing_lair)
-			{
-				std::vector<Creature*> tmp_list;
+            instance_blackwing_lair* blackwing_lair = dynamic_cast<instance_blackwing_lair*>(m_pInstance);
+            if (blackwing_lair)
+            {
+                std::vector<Creature*> tmp_list;
 
-				for (Creature* current_drakonoid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
-					if (current_drakonoid)
-					{
-						float x, y, z;
+                for (Creature* current_drakonoid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+                    if (current_drakonoid)
+                    {
+                        float x, y, z;
 
-						current_drakonoid->GetPosition(x, y, z);
+                        current_drakonoid->GetPosition(x, y, z);
 
-						Creature* bone_construct = m_creature->SummonCreature(14605, x, y, z, 0.f, TEMPSUMMON_DEAD_DESPAWN, 0);
+                        Creature* bone_construct = m_creature->SummonCreature(14605, x, y, z, 0.f, TEMPSUMMON_DEAD_DESPAWN, 0);
 
-						if (bone_construct)
-						{
-							bone_construct->setFaction(FACTION_BLACK_DRAGON);
+                        if (bone_construct)
+                        {
+                            bone_construct->setFaction(FACTION_BLACK_DRAGON);
 
-							Player* rnd_player = GetRandomPlayerInCurrentMap();
-							bone_construct->Attack(rnd_player ? rnd_player : m_creature->getVictim(), true);
-							bone_construct->GetMotionMaster()->MoveChase(rnd_player ? rnd_player : m_creature->getVictim());
+                            Player* rnd_player = GetRandomPlayerInCurrentMap();
+                            bone_construct->Attack(rnd_player ? rnd_player : m_creature->getVictim(), true);
+                            bone_construct->GetMotionMaster()->MoveChase(rnd_player ? rnd_player : m_creature->getVictim());
 
-							tmp_list.push_back(bone_construct);
-						}
+                            tmp_list.push_back(bone_construct);
+                        }
 
-						((TemporarySummon*) current_drakonoid)->UnSummon();
-					}
+                        ((TemporarySummon*) current_drakonoid)->UnSummon();
+                    }
 
-				blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
-				blackwing_lair->GetDrakonoidsAndBoneConstructs() = tmp_list;
+                blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
+                blackwing_lair->GetDrakonoidsAndBoneConstructs() = tmp_list;
 
-			}
+            }
 
 
             m_bPhase3 = true;
