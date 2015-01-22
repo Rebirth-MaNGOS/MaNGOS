@@ -934,6 +934,40 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             m_caster->CastSpell(m_caster, 19394, true);
             return;
         }
+        case 19512:                                 // Curative Animal Salve
+        {
+            if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            {
+                Player *pPlayer = (Player*)m_caster;
+
+                if(pPlayer)
+                {
+                    if(pPlayer->GetQuestStatus(6124) == QUEST_STATUS_INCOMPLETE)
+                    {
+                        pPlayer->KilledMonsterCredit(12298);
+                                        
+                        if(unitTarget)
+                        {
+                            unitTarget->SetEntry(12299);
+                            unitTarget->SetDisplayId(347);
+                            unitTarget->UpdateVisibilityAndView();
+                        }
+                    }
+                    else if(pPlayer->GetQuestStatus(6129) == QUEST_STATUS_INCOMPLETE)
+                    {
+                        pPlayer->KilledMonsterCredit(12296);
+
+                        if(unitTarget)
+                        {
+                            unitTarget->SetEntry(12297);
+                            unitTarget->SetDisplayId(1547);
+                            unitTarget->UpdateVisibilityAndView();
+                        }
+                    }
+                }
+            }
+            return;
+        }
         case 19869:									// The Orb of Domination in BWL.
         {
             m_caster->CastSpell(unitTarget, 19832, true);
