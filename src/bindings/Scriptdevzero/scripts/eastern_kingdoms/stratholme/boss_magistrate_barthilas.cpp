@@ -35,6 +35,19 @@ enum
     MODEL_HUMAN               = 3637
 };
 
+static Locations Move[]=
+{
+    {3690.27f,-3604.21f,138.386f,0},
+	{3712.78f,-3606.16f,141.341f,0},
+	{3777.16f,-3580.01f,142.348f,0},
+	{3811.69f,-3627.07f,145.202f,0},
+	{3895.91f,-3544.69,137.338,0},
+	{3997.96f,-3557.17f,124.946f,0},
+	{4045.33f,-3521.74f,121.727f,0},
+	{4072.01f,-3535.4f,123.252,0},
+	{4067.31,-3534.69,122.623,2.67143},
+};
+
 struct MANGOS_DLL_DECL boss_magistrate_barthilasAI : public ScriptedAI
 {
     boss_magistrate_barthilasAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -42,14 +55,14 @@ struct MANGOS_DLL_DECL boss_magistrate_barthilasAI : public ScriptedAI
         m_pInstance = (instance_stratholme*)pCreature->GetInstanceData();
         Reset();
     }
-
+	
     instance_stratholme* m_pInstance;
 
     uint32 m_uiAngerCount;
     uint32 m_uiCrowdPummelTimer;
     uint32 m_uiDrainingBlowTimer;
     uint32 m_uiFuriousAngerTimer;
-    uint32 m_uiMightyBlowTimer;    
+    uint32 m_uiMightyBlowTimer;   
 
     void Reset()
     {
@@ -63,19 +76,27 @@ struct MANGOS_DLL_DECL boss_magistrate_barthilasAI : public ScriptedAI
             m_creature->SetDisplayId(MODEL_NORMAL);
         else
             m_creature->SetDisplayId(MODEL_HUMAN);
+
+		GameObject* pDoor = GetClosestGameObjectWithEntry(m_creature, GO_PORT_GAUNTLET, 100.f);
+		    if (pDoor && pDoor->IsInRange(m_creature, 0, 100))
+		    {
+			    m_creature->GetMotionMaster()->MovePoint(0, 4065.45f, -3532.95f, 122.35f);
+			  //  m_creature->SetFacingTo(2.64f);			not working well
+		    }
     }
 
     void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId)
     {
-        if (uiPointId == 0)
+		if (uiPointId == 3)
         {
             if (m_pInstance)
             {
-                m_pInstance->SetData(TYPE_BARON_RUN, IN_PROGRESS);
+                //m_pInstance->SetData(TYPE_BARON_RUN, IN_PROGRESS);
                 m_pInstance->SetData(TYPE_MAGISTRATE, DONE);
             }
-            m_creature->NearTeleportTo(4065.45f, -3532.95f, 122.35f, 2.50f);
-        }
+			m_creature->NearTeleportTo(4065.45f, -3532.95f, 122.35f, 2.64f);
+			m_creature->GetMotionMaster()->MovementExpired();
+		}
     }
 
     void JustDied(Unit* /*pKiller*/)
@@ -125,7 +146,10 @@ struct MANGOS_DLL_DECL boss_magistrate_barthilasAI : public ScriptedAI
         if (m_uiMightyBlowTimer <= uiDiff)
         {
             DoCastSpellIfCan(m_creature->getVictim(), SPELL_MIGHTY_BLOW);
-            m_uiMightyBlowTimer = urand(8000,12000);
+			{
+				m_creature->getThreatManager().modifyThreatPercent(m_creature->getVictim(), -25);				//added threat reduction
+				m_uiMightyBlowTimer = urand(8000,12000);	
+			}
         }
         else
             m_uiMightyBlowTimer -= uiDiff;

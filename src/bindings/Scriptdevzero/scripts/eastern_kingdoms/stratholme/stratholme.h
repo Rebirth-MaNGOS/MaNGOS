@@ -111,6 +111,7 @@ enum Misc
 
 enum ZoneYells
 {
+	SAY_WARN_BARON				= -1329020,
     SAY_RUN_START               = -1329000,
     SAY_RUN_10_UP               = -1329001,
     SAY_RUN_5_UP                = -1329002,

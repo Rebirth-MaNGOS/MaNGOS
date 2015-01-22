@@ -258,7 +258,7 @@ void instance_stratholme::SetData(uint32 uiType, uint32 uiData)
         case TYPE_MAGISTRATE:
             if (uiData == IN_PROGRESS && m_auiEncounter[1] != IN_PROGRESS)
             {
-                m_uiBaronWarnTimer = 3*IN_MILLISECONDS;
+               // m_uiBaronWarnTimer = 3*IN_MILLISECONDS;
                 m_bBaronWarn = true;
             }
             m_auiEncounter[1] = uiData;
@@ -528,13 +528,18 @@ void instance_stratholme::Update(uint32 uiDiff)
     {
         if (m_uiBaronWarnTimer <= uiDiff)
         {
-			GameObject* pGauntlet = GetSingleGameObjectFromStorage(GO_GAUNTLET_OUTER_GATE);
+			GameObject* pGauntlet = GetSingleGameObjectFromStorage(GO_SERVICE_ENTRANCE);
 			Creature* pMagistrate = GetSingleCreatureFromStorage(NPC_MAGISTRATE_BARTHILAS);
-            if (pGauntlet && pMagistrate && pMagistrate->isAlive())
+            if (pGauntlet && pMagistrate && pMagistrate->isAlive() && !pMagistrate->isInCombat())
             {
-                float fX, fY, fZ;
+				DoScriptText(SAY_WARN_BARON, pMagistrate);
+				/*float fX, fY, fZ;
                 pGauntlet->GetPosition(fX, fY, fZ);
-                pMagistrate->GetMotionMaster()->MovePoint(0, fX, fY, fZ);
+                pMagistrate->GetMotionMaster()->MovePoint(0, fX, fY, fZ);*/
+				pMagistrate->RemoveSplineFlag(SPLINEFLAG_WALKMODE);		//to make boss run.
+				pMagistrate->GetMotionMaster()->MoveWaypoint();
+			
+
             }
             m_bBaronWarn = false;
         }
@@ -699,7 +704,7 @@ void instance_stratholme::PlayersRun(uint32 uiAction)
                 case ACTION_RUN_ENCOUNTER:
                     if (pPlayer->HasAura(SPELL_BARON_ULTIMATUM))
                         pPlayer->RemoveAurasDueToSpell(SPELL_BARON_ULTIMATUM);
-                    pPlayer->NearTeleportTo(4032.77f, -3350.6f, 115.06f, 0);
+                    //pPlayer->NearTeleportTo(4032.77f, -3350.6f, 115.06f, 0);			// Not sure why it was there, non-blizz
                     break;
                 case ACTION_RUN_COMPLETE:
                     if (pPlayer->GetQuestStatus(QUEST_DEAD_MAN_PLEA) == QUEST_STATUS_INCOMPLETE)
