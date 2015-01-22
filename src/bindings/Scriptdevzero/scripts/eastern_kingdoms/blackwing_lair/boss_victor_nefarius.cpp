@@ -115,7 +115,8 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
     ScriptedInstance* m_pInstance;
 
     uint32 m_uiAddSpawnTimer;
-	uint32 m_uiSpawnChromaticTimer;
+    uint32 m_uiSpawnWaveCounter;
+    uint32 m_uiSpawnChromaticTimer;
     uint32 m_uiShadowBoltTimer;
     uint32 m_uiFearTimer;
     uint32 m_uiMindControlTimer;
@@ -124,20 +125,21 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
     uint32 m_uiDrakeTypeTwo;
     uint32 m_uiShadowBlinkTimer0;
     uint32 m_uiShadowBlinkTimer1;
-	uint32 m_uiKilledAdds;
+    uint32 m_uiKilledAdds;
     bool m_bIsNefarianSpawned;
 
     void Reset()
     {
         m_uiAddSpawnTimer   = 10000;
-		m_uiSpawnChromaticTimer = urand(5000, 20000);
+        m_uiSpawnWaveCounter = 0;
+        m_uiSpawnChromaticTimer = urand(5000, 20000);
         m_uiShadowBoltTimer = 5000;
         m_uiFearTimer       = 8000;
         m_uiMindControlTimer = 15000;
         m_uiShadowBlinkTimer0 = 20000;
         m_uiShadowBlinkTimer1 = 0;
         m_uiResetTimer      = 15 * MINUTE * IN_MILLISECONDS;
-		m_uiKilledAdds = 0;
+        m_uiKilledAdds = 0;
         m_bIsNefarianSpawned = false;
 
         // set gossip flag to begin the event
@@ -214,11 +216,11 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
         if (pSummoned->GetEntry() == NPC_NEFARIAN)
             m_creature->ForcedDespawn();
 
-		 ++m_uiKilledAdds;
+        ++m_uiKilledAdds;
 
-		// When a dragon is killed it should turn in to a skeleton.
-		if (pSummoned->GetEntry() != NPC_NEFARIAN && pSummoned->GetDisplayId() != 12073)
-			pSummoned->SetDisplayId(12073);
+        // When a dragon is killed it should turn in to a skeleton.
+        if (pSummoned->GetEntry() != NPC_NEFARIAN && pSummoned->GetDisplayId() != 12073)
+            pSummoned->SetDisplayId(12073);
 
     }
 
@@ -287,18 +289,18 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                 else
                     m_uiFearTimer -= uiDiff;
 
-				if (m_uiMindControlTimer <= uiDiff)
-				{
-					Unit* random_target = GetRandomTargetFromThreatList();
-					if (random_target)
-					{
-						DoCastSpellIfCan(random_target, SPELL_SHADOW_COMMAND);
+                if (m_uiMindControlTimer <= uiDiff)
+                {
+                    Unit* random_target = GetRandomTargetFromThreatList();
+                    if (random_target)
+                    {
+                        DoCastSpellIfCan(random_target, SPELL_SHADOW_COMMAND);
 
-						m_uiMindControlTimer = urand(20000, 45000);
-					}
-				}
-				else
-					m_uiMindControlTimer -= uiDiff;
+                        m_uiMindControlTimer = urand(20000, 45000);
+                    }
+                }
+                else
+                    m_uiMindControlTimer -= uiDiff;
 
 
                 // Switch between the two Shadowblink spells to guarantee he doesn't end up in the same place twice.
@@ -332,19 +334,10 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                 if (m_uiAddSpawnTimer < uiDiff)
                 {
                     //Spawn 2 random types of creatures at the 2 locations
-					Creature* summoned_drakonoid;
+                    Creature* summoned_drakonoid;
 
-					summoned_drakonoid = m_creature->SummonCreature(m_uiDrakeTypeOne, aNefarianLocs[0].m_fX, aNefarianLocs[0].m_fY, aNefarianLocs[0].m_fZ,
-																	5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
-
-                    if (blackwing_lair && summoned_drakonoid)
-                    {
-                        summoned_drakonoid->setFaction(FACTION_BLACK_DRAGON);
-                        blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid);
-                    }
-
-					summoned_drakonoid = m_creature->SummonCreature(m_uiDrakeTypeTwo, aNefarianLocs[1].m_fX, aNefarianLocs[1].m_fY, aNefarianLocs[1].m_fZ,
-																	5.000f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    summoned_drakonoid = m_creature->SummonCreature(m_uiDrakeTypeOne, aNefarianLocs[0].m_fX, aNefarianLocs[0].m_fY, aNefarianLocs[0].m_fZ,
+                                                                    5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
 
                     if (blackwing_lair && summoned_drakonoid)
                     {
@@ -352,30 +345,45 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                         blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid);
                     }
 
+                    summoned_drakonoid = m_creature->SummonCreature(m_uiDrakeTypeTwo, aNefarianLocs[1].m_fX, aNefarianLocs[1].m_fY, aNefarianLocs[1].m_fZ,
+                                         5.000f, TEMPSUMMON_MANUAL_DESPAWN, 0);
 
-                    m_uiAddSpawnTimer = 4000;
+                    if (blackwing_lair && summoned_drakonoid)
+                    {
+                        summoned_drakonoid->setFaction(FACTION_BLACK_DRAGON);
+                        blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid);
+                    }
+
+                    if (m_uiSpawnWaveCounter <= 20)
+                    {
+                        m_uiAddSpawnTimer = 8000 - 100.f * m_uiSpawnWaveCounter;
+                    }
+                    else
+                        m_uiAddSpawnTimer = 6000;
+                    
+                    ++m_uiSpawnWaveCounter;
                 }
                 else
                     m_uiAddSpawnTimer -= uiDiff;
 
-				if (m_uiSpawnChromaticTimer <= uiDiff)
-				{
-					for (short i = 0; i < 2; ++i)
-					{
-						Creature* summoned_drakonid;
-						summoned_drakonid = m_creature->SummonCreature(NPC_CHROMATIC_DRAKANOID, aNefarianLocs[i].m_fX, aNefarianLocs[i].m_fY, aNefarianLocs[i].m_fZ,
-																		5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
-						if (summoned_drakonid)
-						{
-							summoned_drakonid->setFaction(FACTION_BLACK_DRAGON);
-							blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonid);
-						}
+                if (m_uiSpawnChromaticTimer <= uiDiff)
+                {
+                    for (short i = 0; i < 2; ++i)
+                    {
+                        Creature* summoned_drakonid;
+                        summoned_drakonid = m_creature->SummonCreature(NPC_CHROMATIC_DRAKANOID, aNefarianLocs[i].m_fX, aNefarianLocs[i].m_fY, aNefarianLocs[i].m_fZ,
+                                                                       5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
+                        if (summoned_drakonid)
+                        {
+                            summoned_drakonid->setFaction(FACTION_BLACK_DRAGON);
+                            blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonid);
+                        }
 
-						m_uiSpawnChromaticTimer = 60000; // TODO: This time needs to be verified.
-					}
-				}
-				else
-					m_uiSpawnChromaticTimer -= uiDiff;
+                        m_uiSpawnChromaticTimer = 60000; // TODO: This time needs to be verified.
+                    }
+                }
+                else
+                    m_uiSpawnChromaticTimer -= uiDiff;
             }
         }
     }
