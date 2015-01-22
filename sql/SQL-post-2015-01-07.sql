@@ -322,3 +322,8 @@ INSERT INTO `zp_mangosd`.`creature_movement` VALUES (54237, 4, 3781.45, -3588.16
 
 -- Make sure he doesn't use waypoint movement on spawn
 UPDATE `zp_mangosd`.`creature` SET `MovementType`=0 WHERE  `guid`=54237;
+
+/********************** Drakonids' incorrect summon spell **************************************************************/
+-- Delet casting of the summon spell.
+select * from zp_mangosd.creature_ai_scripts where creature_id in (select entry from creature_template where name like "%Drakonid");
+
