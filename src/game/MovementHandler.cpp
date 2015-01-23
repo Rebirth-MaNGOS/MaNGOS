@@ -271,9 +271,12 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     movementInfo.Read(recv_data);
     
 
-    WorldSession* pSession = plMover->GetSession();
-    if (pSession && plMover)
-        movementInfo.UpdateTime(movementInfo.GetTime() + pSession->GetLatency());
+    if (plMover)
+    {
+        WorldSession* pSession = plMover->GetSession();
+        if (pSession)
+            movementInfo.UpdateTime(movementInfo.GetTime() + pSession->GetLatency());
+    }
     
     if (!VerifyMovementInfo(movementInfo))
         return;
