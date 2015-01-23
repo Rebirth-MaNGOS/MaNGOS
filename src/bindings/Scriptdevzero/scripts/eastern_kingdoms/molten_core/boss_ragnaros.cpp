@@ -372,6 +372,8 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
                 m_uiSubmergeTimer = 180000;
                 m_uiGcdTimer = 3000;
             }
+            
+            m_creature->UpdateVisibilityAndView();
         }
         else
             m_uiEmergeTimer -= diff;
