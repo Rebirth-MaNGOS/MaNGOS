@@ -103,7 +103,7 @@ void GameObject::DisarmTrap()
 		m_cooldownTime = time(NULL) + this->GetGOInfo()->trap.autoCloseTime;
  		SwitchDoorOrButton(true);
 		
-		if (m_goInfo->id != 179784) // The supression traps in BWL should not go invisible when disarmed.
+		if (m_goInfo->id != 179784 && m_goInfo->id != 175124) // The supression traps in BWL and Rookery eggs in UBRS should not go invisible when disarmed.
 			SetLootState(GO_JUST_DEACTIVATED);
 	}
 }

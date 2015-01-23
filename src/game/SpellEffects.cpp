@@ -2467,6 +2467,14 @@ void Spell::DoCreateItem(SpellEffectIndex /*eff_idx*/, uint32 itemtype)
 void Spell::EffectCreateItem(SpellEffectIndex eff_idx)
 {
     DoCreateItem(eff_idx,m_spellInfo->EffectItemType[eff_idx]);
+
+    if(m_caster && m_spellInfo && m_spellInfo->Id == 15958)
+    {
+        GameObject *rookeryEgg = m_caster->GetClosestGameObjectWithEntry(m_caster, 175124, 5.0f);
+
+        if(rookeryEgg)
+            rookeryEgg->GetMap()->Remove(rookeryEgg, true);
+    }
 }
 
 void Spell::EffectPersistentAA(SpellEffectIndex eff_idx)
@@ -2557,6 +2565,11 @@ void Spell::SendLoot(ObjectGuid guid, LootType loottype, LockType lockType)
             if (gameObjTarget->GetEntry() == 178559) //Exception for Larva Spewer in Maraudon
             {
                 gameObjTarget->SetGoState(GO_STATE_ACTIVE);
+                return;
+            }
+            if (gameObjTarget->GetEntry() == 175124) //Rookery egg.
+            {
+                gameObjTarget->DisarmTrap();
                 return;
             }
             if (lockType == LOCKTYPE_DISARM_TRAP)
