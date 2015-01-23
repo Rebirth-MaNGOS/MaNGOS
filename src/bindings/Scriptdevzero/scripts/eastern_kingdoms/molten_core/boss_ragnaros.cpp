@@ -34,12 +34,12 @@ enum eRagnaros
     SAY_MAGMA_BLAST             = -1409018,
 
     SPELL_ELEMENTAL_FIRE        = 20563,
-	SPELL_ELEMENTAL_FIRE_DIRECT = 20564,
-    SPELL_MIGHT_OF_RAGNAROS     = 21154,    
-    SPELL_MAGMA_BLAST           = 20565,    
+    SPELL_ELEMENTAL_FIRE_DIRECT = 20564,
+    SPELL_MIGHT_OF_RAGNAROS     = 21154,
+    SPELL_MAGMA_BLAST           = 20565,
     SPELL_MELT_WEAPON           = 21387,
     SPELL_WRATH_OF_RAGNAROS     = 20566,    // Melee Knockback
-    SPELL_LAVA_BURST            = 21908,    
+    SPELL_LAVA_BURST            = 21908,
     SPELL_RAGNAROS_EMERGE       = 20568,
     SPELL_RAGNAROS_SUBMERGE     = 21107,
     SPELL_RAGNAROS_SUBMERGE_    = 20567,
@@ -81,10 +81,10 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
     uint32 m_uiEmergeTimer;
     uint32 m_uiMightOfRagnarosTimer;
     uint32 m_uiLavaBurstTimer;
-	uint32 m_uiLavaBurstCount;
+    uint32 m_uiLavaBurstCount;
     uint32 m_uiSubmergeTimer;
     uint32 m_uiWrathOfRagnarosTimer;
-	uint32 m_uiMeltWeaponTimer;
+    uint32 m_uiMeltWeaponTimer;
     uint32 m_uiGcdTimer;
     uint32 m_sonCheckTimer;
 
@@ -96,10 +96,10 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         m_bSubmergedOnce = false;
 
         m_uiEmergeTimer = 0;
-		m_uiMeltWeaponTimer = 10000;
+        m_uiMeltWeaponTimer = 10000;
         m_uiMightOfRagnarosTimer = 20000;
         m_uiLavaBurstTimer = urand(10000, 15000);
-		m_uiLavaBurstCount = 0;
+        m_uiLavaBurstCount = 0;
         m_uiSubmergeTimer = 180000;
         m_uiWrathOfRagnarosTimer = 25000;
         m_sonCheckTimer = 0;
@@ -107,7 +107,7 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
 
         m_uiEmergePhase = 0;
 
-		m_creature->RemoveAurasDueToSpell(SPELL_MELT_WEAPON);
+        m_creature->RemoveAurasDueToSpell(SPELL_MELT_WEAPON);
         m_creature->RemoveAurasDueToSpell(SPELL_ELEMENTAL_FIRE);
         m_creature->RemoveAurasDueToSpell(SPELL_ROOT_SELF);
 
@@ -133,7 +133,7 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         else
             attackDistance = 0;
     }
-	
+
     void JustReachedHome()
     {
         if (m_pInstance)
@@ -153,9 +153,9 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
 
     void Aggro(Unit* /*pAttacker*/)
     {
-		//Start combat with all players in order to prevent ooc rezzing!
-		m_creature->SetInCombatWithZone();
-		m_creature->CastSpell(m_creature, SPELL_MELT_WEAPON, true);
+        //Start combat with all players in order to prevent ooc rezzing!
+        m_creature->SetInCombatWithZone();
+        m_creature->CastSpell(m_creature, SPELL_MELT_WEAPON, true);
         m_creature->CastSpell(m_creature, SPELL_ELEMENTAL_FIRE, true);
         m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
         if (m_pInstance)
@@ -168,13 +168,13 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
             pSummoned->SetMeleeDamageSchool(SPELL_SCHOOL_FIRE);
     }
 
-	void JustSummoned(GameObject* pGo) 
-	{
-		if (pGo->GetEntry() != 178088)
-			return;
+    void JustSummoned(GameObject* pGo)
+    {
+        if (pGo->GetEntry() != 178088)
+            return;
 
-		pGo->SetOwnerGuid(m_creature->GetObjectGuid());
-	}
+        pGo->SetOwnerGuid(m_creature->GetObjectGuid());
+    }
 
     Player* DoSelectRandomManaPlayer()
     {
@@ -208,45 +208,45 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
             advance(i, (rand() % vManaPlayers.size()));
             return (*i);
         }
-        
+
         return 0;
     }
 
-	Player* DoGetPlayerInMeleeRangeByThreat()
-	{
-		std::vector<Player*> tmp_list;
+    Player* DoGetPlayerInMeleeRangeByThreat()
+    {
+        std::vector<Player*> tmp_list;
 
-		if (!m_creature->CanHaveThreatList())
-			return NULL;
+        if (!m_creature->CanHaveThreatList())
+            return NULL;
 
-		GUIDVector vGuids;
-		m_creature->FillGuidsListFromThreatList(vGuids);
+        GUIDVector vGuids;
+        m_creature->FillGuidsListFromThreatList(vGuids);
 
-		if (!vGuids.empty())
-		{
-			for (ObjectGuid current_guid : vGuids)
-			{
-				if (Unit* current_target = m_creature->GetMap()->GetUnit(current_guid))
-				{
-					// We need only a player
-					if (!current_target->IsCharmerOrOwnerPlayerOrPlayerItself())
-						continue;
+        if (!vGuids.empty())
+        {
+            for (ObjectGuid current_guid : vGuids)
+            {
+                if (Unit* current_target = m_creature->GetMap()->GetUnit(current_guid))
+                {
+                    // We need only a player
+                    if (!current_target->IsCharmerOrOwnerPlayerOrPlayerItself())
+                        continue;
 
-					if (m_creature->CanReachWithMeleeAttack(current_target))
-						tmp_list.push_back(dynamic_cast<Player*>(current_target));
-				}
-			}
-		}
+                    if (m_creature->CanReachWithMeleeAttack(current_target))
+                        tmp_list.push_back(dynamic_cast<Player*>(current_target));
+                }
+            }
+        }
 
-		// If there's just one player on the threat list we return that player.
-		if (tmp_list.size() == 1)
-			return tmp_list.front();
+        // If there's just one player on the threat list we return that player.
+        if (tmp_list.size() == 1)
+            return tmp_list.front();
 
-		// Sort the list from highest to lowest threat.
-		std::sort(tmp_list.begin(), tmp_list.end(), [&]( Player* first, Player* second) -> bool { return m_creature->getThreatManager().getThreat(first) > m_creature->getThreatManager().getThreat(second); });
+        // Sort the list from highest to lowest threat.
+        std::sort(tmp_list.begin(), tmp_list.end(), [&]( Player* first, Player* second) -> bool { return m_creature->getThreatManager().getThreat(first) > m_creature->getThreatManager().getThreat(second); });
 
-		return tmp_list.empty() ? NULL : tmp_list.front();
-	}
+        return tmp_list.empty() ? NULL : tmp_list.front();
+    }
 
 
     void HandleLavaBurst(uint32 diff)
@@ -254,12 +254,12 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         if (m_uiLavaBurstTimer <= diff)
         {
             if (DoCastSpellIfCan(m_creature, SPELL_LAVA_BURST) == CAST_OK)
-			{
-				if (++m_uiLavaBurstCount % 3 == 0)
-	                m_uiLavaBurstTimer = urand(10000, 15000);
-				else
-					m_uiLavaBurstTimer = 2000;
-			}
+            {
+                if (++m_uiLavaBurstCount % 3 == 0)
+                    m_uiLavaBurstTimer = urand(10000, 15000);
+                else
+                    m_uiLavaBurstTimer = 2000;
+            }
         }
         else
             m_uiLavaBurstTimer -= diff;
@@ -284,9 +284,9 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
             DoScriptText(SAY_SUMMON, m_creature);
 
         for (uint8 i = 0; i < 8; ++i)
-		{
+        {
             m_creature->CastSpell(m_creature, SPELL_SONS_OF_FLAME + i, true);
-		}
+        }
         //DoCastSpellIfCan(m_creature, SPELL_RAGNAROS_SUBMERGE_);   // Animation of submerge
         DoCastSpellIfCan(m_creature, SPELL_RAGNAROS_SUBMERGE, CAST_INTERRUPT_PREVIOUS);      // Passive
 
@@ -372,6 +372,8 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
                 m_uiSubmergeTimer = 180000;
                 m_uiGcdTimer = 3000;
             }
+            
+            m_creature->UpdateVisibilityAndView();
         }
         else
             m_uiEmergeTimer -= diff;
@@ -392,7 +394,7 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         {
             if (m_uiGcdTimer <= diff)
                 m_uiGcdTimer = 0;
-            else 
+            else
                 m_uiGcdTimer -= diff;
         }
 
@@ -406,7 +408,7 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
                 m_uiWrathOfRagnarosTimer = 25000;
                 m_uiGcdTimer = 3000;
 
-				// Threat wipe: done in core!
+                // Threat wipe: done in core!
                 /*GUIDVector vGuids;
                 m_creature->FillGuidsListFromThreatList(vGuids);
 
@@ -428,7 +430,7 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         else
             m_uiWrathOfRagnarosTimer -= diff;
 
-		// Might of Ragnaros
+        // Might of Ragnaros
         if (m_uiMightOfRagnarosTimer <= diff)
         {
             m_uiMightOfRagnarosTimer = 0;
@@ -436,19 +438,19 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
             if (m_uiGcdTimer == 0 && m_uiWrathOfRagnarosTimer >= 3000)
             {
                 if (Player* pManaPlayer = DoSelectRandomManaPlayer())
-				    if (DoCastSpellIfCan(pManaPlayer, SPELL_MIGHT_OF_RAGNAROS) == CAST_OK)
-				    {
+                    if (DoCastSpellIfCan(pManaPlayer, SPELL_MIGHT_OF_RAGNAROS) == CAST_OK)
+                    {
                         DoScriptText(SAY_MIGHT, m_creature);
                         m_uiMightOfRagnarosTimer = 20000;
                         m_uiGcdTimer = 3000;
-				    }
+                    }
             }
         }
         else
             m_uiMightOfRagnarosTimer -= diff;
 
-		// Cast the Elemental Fire effect on anyone in range who doesn't have the effect.
-		DoCastSpellIfCan(m_creature->getVictim(), SPELL_ELEMENTAL_FIRE_DIRECT, CAST_AURA_NOT_PRESENT);
+        // Cast the Elemental Fire effect on anyone in range who doesn't have the effect.
+        DoCastSpellIfCan(m_creature->getVictim(), SPELL_ELEMENTAL_FIRE_DIRECT, CAST_AURA_NOT_PRESENT);
 
 
         // Lava Burst
@@ -458,34 +460,34 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         {
             if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
             {
-				if (Player* melee_player = DoGetPlayerInMeleeRangeByThreat())
-				{
-					// If there are players in melee range prioritise them.
-					m_creature->SetTargetGuid(melee_player->GetGUID());
-					if (m_creature->getVictim())
-						this->DoMeleeAttackIfReady();
-				}
-				else
-				{
-					// Cannot find target- move to magma blast mode
-					DoScriptText(SAY_MAGMA_BLAST, m_creature);
-					m_bossState = BOSS_STATE_MAGMA_BLAST;
-				}
-            } 
-			else
+                if (Player* melee_player = DoGetPlayerInMeleeRangeByThreat())
+                {
+                    // If there are players in melee range prioritise them.
+                    m_creature->SetTargetGuid(melee_player->GetGUID());
+                    if (m_creature->getVictim())
+                        this->DoMeleeAttackIfReady();
+                }
+                else
+                {
+                    // Cannot find target- move to magma blast mode
+                    DoScriptText(SAY_MAGMA_BLAST, m_creature);
+                    m_bossState = BOSS_STATE_MAGMA_BLAST;
+                }
+            }
+            else
                 this->DoMeleeAttackIfReady();
-        } 
-		else
+        }
+        else
         {
             if (m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
                 m_bossState = BOSS_STATE_NORMAL;
             else if (m_uiGcdTimer == 0)
             {
-		        if (Unit* bTarget = GetRandomPlayerInCurrentMap())
+                if (Unit* bTarget = GetRandomPlayerInCurrentMap())
                 {
-					if ((bTarget->GetDistance(m_creature) > 150 || !m_creature->IsWithinLOS(bTarget->GetPositionX(), bTarget->GetPositionY(), bTarget->GetPositionZ())) && bTarget->isAlive())
-						bTarget->NearTeleportTo(836.58f, -813.99f, -229.28f, 4.79f);
-						
+                    if ((bTarget->GetDistance(m_creature) > 150 || !m_creature->IsWithinLOS(bTarget->GetPositionX(), bTarget->GetPositionY(), bTarget->GetPositionZ())) && bTarget->isAlive())
+                        bTarget->NearTeleportTo(836.58f, -813.99f, -229.28f, 4.79f);
+
                     DoCastSpellIfCan(bTarget, SPELL_MAGMA_BLAST);
                     m_uiGcdTimer = 3000;
                 }
@@ -508,8 +510,8 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         {
         case BOSS_STATE_NORMAL:
         case BOSS_STATE_MAGMA_BLAST:
-           DoNormalState(uiDiff);
-           break;
+            DoNormalState(uiDiff);
+            break;
         }
     }
 };

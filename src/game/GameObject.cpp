@@ -328,9 +328,9 @@ void GameObject::Update(uint32 /*update_diff*/, uint32 /*p_time*/)
                     {
                         Unit *caster =  owner ? owner : ok;
 
-						// For the suppression traps in BWL.
-						if (goInfo->trap.spellId == 22247 && caster->HasStealthAura())
-							return;
+                    // For the suppression traps in BWL.
+                    if (goInfo->trap.spellId == 22247 && caster->HasStealthAura())
+                        return;
 
 						caster->CastSpell(ok, goInfo->trap.spellId, true, NULL, NULL, GetObjectGuid());
                         // use template cooldown if provided
