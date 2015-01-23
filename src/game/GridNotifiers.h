@@ -80,6 +80,22 @@ namespace MaNGOS
         void Visit(CameraMapType &m);
         template<class SKIP> void Visit(GridRefManager<SKIP> &) {}
     };
+    
+    struct MovementOpcodeDeliverer
+    {
+        Player const* i_skipped_receiver;
+        PackedGuid i_mover_guid;
+        MovementInfo i_movement_info;
+        WorldPacket* i_received_movement;
+        uint32 i_initial_timestamp;
+
+        MovementOpcodeDeliverer(Player const* skipped, PackedGuid guid, MovementInfo info, WorldPacket* received_movement)
+            : i_skipped_receiver(skipped), i_mover_guid(guid), i_movement_info(info), i_received_movement(received_movement), 
+              i_initial_timestamp(i_movement_info.GetTime()) {}
+
+        void Visit(CameraMapType &m);
+        template<class SKIP> void Visit(GridRefManager<SKIP> &) {}
+    };
 
     struct MANGOS_DLL_DECL ObjectMessageDeliverer
     {

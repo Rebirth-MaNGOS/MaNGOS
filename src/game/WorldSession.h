@@ -269,7 +269,7 @@ class MANGOS_DLL_SPEC WorldSession
         const char *GetMangosString(int32 entry) const;
 
         uint32 GetLatency() const { return m_latency; }
-        void SetLatency(uint32 latency) { m_latency = latency; }
+        void SetLatency(uint32 latency) { m_latency = m_latency * 0.50f + latency * 0.50f; }
         uint32 getDialogStatus(Player *pPlayer, Object* questgiver, uint32 defstatus);
 
     public:                                                 // opcodes handlers
@@ -661,8 +661,8 @@ class MANGOS_DLL_SPEC WorldSession
         AccountTypes _security;
         uint32 _accountId;
 
-		// Warden
-		WardenBase *m_Warden;
+        // Warden
+        WardenBase *m_Warden;
 
         time_t _logoutTime;
         bool m_inQueue;                                     // session wait in auth.queue

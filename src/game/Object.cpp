@@ -1420,6 +1420,15 @@ void WorldObject::SendMessageToSetExcept(WorldPacket *data, Player const* skippe
     }
 }
 
+void WorldObject::SendMovementOpcadeMessagesToSetExcept(const Player* mover, PackedGuid guid, MovementInfo info, WorldPacket* received_movement)
+{
+    if (IsInWorld())
+    {
+        MaNGOS::MovementOpcodeDeliverer notifier(mover, guid, info, received_movement);
+        Cell::VisitWorldObjects(this, notifier, GetMap()->GetVisibilityDistance());
+    }
+}
+
 void WorldObject::SendObjectDeSpawnAnim(ObjectGuid guid)
 {
     WorldPacket data(SMSG_GAMEOBJECT_DESPAWN_ANIM, 8);
