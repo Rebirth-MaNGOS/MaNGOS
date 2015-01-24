@@ -596,6 +596,29 @@ void Group::MasterLoot(Creature *creature, Loot* loot)
     }
 }
 
+void Group::SendMasterLootList(Player* player, Loot* loot)
+{
+    // Don't send the list to a player that's not allowed to loot the creature.
+    if (!loot->IsAllowedLooter(player->GetObjectGuid()))
+        return;
+    
+    WorldPacket data(SMSG_LOOT_MASTER_LIST, 330);
+    data << uint8(GetMembersCount());
+    
+    uint32 real_count = 0;
+    
+    for (const ObjectGuid& guid : loot->GetAllowedLooters())
+    {
+        data << guid;
+        ++real_count;
+    }
+
+    data.put<uint8>(0, real_count);
+
+    player->GetSession()->SendPacket(&data);
+}
+
+
 bool Group::CountRollVote(Player* player, ObjectGuid const& lootedTarget, uint32 itemSlot, RollVote vote)
 {
     Rolls::iterator rollI = RollId.begin();

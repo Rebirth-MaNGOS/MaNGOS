@@ -7361,6 +7361,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                     loot->clear();
                 }
 
+                Group* group = creature->GetGroupLootRecipient();
                 if (!creature->lootForBody)
                 {
                     creature->lootForBody = true;
@@ -7371,7 +7372,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 
                     loot->generateMoneyLoot(creature->GetCreatureInfo()->mingold,creature->GetCreatureInfo()->maxgold);
 
-                    if (Group* group = creature->GetGroupLootRecipient())
+                    if (group)
                     {
                         group->UpdateLooterGuid(creature,true);
 
@@ -7391,9 +7392,22 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                                 break;
                         }
 
-						group->UpdateLooterGuid(creature);
+                        group->UpdateLooterGuid(creature);
+                        
+                        // Loop through the group and create a list of allowed looters.
+                        for(GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
+                        {
+                            Player *looter = itr->getSource();
+                            if (!looter->IsInWorld())
+                                continue;
+
+                            if (looter->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
+                                loot->AddAllowedLooter(looter->GetObjectGuid());
+                        }
                     }
                 }
+                else if (group && group->GetLootMethod() == MASTER_LOOT)
+                    group->SendMasterLootList(this, loot);
 
                 // possible only if creature->lootForBody && loot->empty() at spell cast check
                 if (loot_type == LOOT_SKINNING)
@@ -7414,27 +7428,32 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                 // set group rights only for loot_type != LOOT_SKINNING
                 else
                 {
-                    if(Group* group = creature->GetGroupLootRecipient())
+                    if (loot->IsAllowedLooter(this->GetObjectGuid())) // Check that the player is in the list of allowed looters.
                     {
-                        if (group == GetGroup())
+                        if(Group* group = creature->GetGroupLootRecipient())
                         {
-                            if (group->GetLootMethod() == FREE_FOR_ALL)
-                                permission = ALL_PERMISSION;
-                            else if (group->GetLooterGuid() == GetObjectGuid())
-                            {
-                                if (group->GetLootMethod() == MASTER_LOOT)
-                                    permission = MASTER_PERMISSION;
-                                else
+                            if (group == GetGroup())
+                            {                            
+                                if (group->GetLootMethod() == FREE_FOR_ALL)
                                     permission = ALL_PERMISSION;
+                                else if (group->GetLooterGuid() == GetObjectGuid())
+                                {
+                                    if (group->GetLootMethod() == MASTER_LOOT)
+                                        permission = MASTER_PERMISSION;
+                                    else
+                                        permission = ALL_PERMISSION;
+                                }
+                                else
+                                    permission = GROUP_PERMISSION;
                             }
                             else
-                                permission = GROUP_PERMISSION;
+                                permission = NONE_PERMISSION;
                         }
+                        else if (recipient == this)
+                            permission = OWNER_PERMISSION;
                         else
                             permission = NONE_PERMISSION;
                     }
-                    else if (recipient == this)
-                        permission = OWNER_PERMISSION;
                     else
                         permission = NONE_PERMISSION;
                 }

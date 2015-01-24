@@ -44,15 +44,6 @@ class Unit;
 #define MAX_RAID_SUBGROUPS (MAX_RAID_SIZE / MAX_GROUP_SIZE)
 #define TARGET_ICON_COUNT 8
 
-enum LootMethod
-{
-    FREE_FOR_ALL      = 0,
-    ROUND_ROBIN       = 1,
-    MASTER_LOOT       = 2,
-    GROUP_LOOT        = 3,
-    NEED_BEFORE_GREED = 4
-};
-
 enum RollVote
 {
     ROLL_PASS              = 0,
@@ -307,6 +298,7 @@ class MANGOS_DLL_SPEC Group
         void GroupLoot(Creature *creature, Loot *loot);
         void NeedBeforeGreed(Creature *creature, Loot *loot);
         void MasterLoot(Creature *creature, Loot *loot);
+        void SendMasterLootList(Player* looter, Loot* loot);
         bool CountRollVote(Player* player, ObjectGuid const& lootedTarget, uint32 itemSlot, RollVote vote);
         void StartLootRool(Creature* lootTarget, LootMethod method, Loot* loot, uint8 itemSlot);
         void EndRoll();
