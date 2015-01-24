@@ -1001,110 +1001,110 @@ INSERT INTO `zp_mangosd`.`creature_movement` (`id`, `point`, `position_x`, `posi
 INSERT INTO `zp_mangosd`.`creature_movement` (`id`, `point`, `position_x`, `position_y`, `position_z`, `waittime`, `script_id`, `textid1`, `textid2`, `textid3`, `textid4`, `textid5`, `emote`, `spell`, `wpguid`, `orientation`, `model1`, `model2`) VALUES ('58015', '12', '-8831.89', '1596.52', '21.3863', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0.019659', '0', '0');
 
 /* update scale of swarmguardsand qiraj warrior and many more */
-UPDATE `creature_template` SET `scale`='1.5' WHERE (`entry`='15343');
-UPDATE `creature_template` SET `scale`='1.25' WHERE (`entry`='15387');
-UPDATE `creature_template` SET `scale`='1.25' WHERE (`entry`='15391');
-UPDATE `creature_template` SET `scale`='2' WHERE (`entry`='15389');
-UPDATE `creature_template` SET `scale`='2' WHERE (`entry`='15386');
-UPDATE `creature_template` SET `scale`='2' WHERE (`entry`='15385');
-UPDATE `creature_template` SET `scale`='2' WHERE (`entry`='15392');
-UPDATE `creature_template` SET `scale`='2' WHERE (`entry`='15388');
-UPDATE `creature_template` SET `scale`='2' WHERE (`entry`='15390');
-UPDATE `creature_template` SET `scale`='2' WHERE (`entry`='15391');
+UPDATE `zp_mangosd`.`creature_template` SET `scale`='1.5' WHERE (`entry`='15343');
+UPDATE `zp_mangosd`.`creature_template` SET `scale`='1.25' WHERE (`entry`='15387');
+UPDATE `zp_mangosd`.`creature_template` SET `scale`='1.25' WHERE (`entry`='15391');
+UPDATE `zp_mangosd`.`creature_template` SET `scale`='2' WHERE (`entry`='15389');
+UPDATE `zp_mangosd`.`creature_template` SET `scale`='2' WHERE (`entry`='15386');
+UPDATE `zp_mangosd`.`creature_template` SET `scale`='2' WHERE (`entry`='15385');
+UPDATE `zp_mangosd`.`creature_template` SET `scale`='2' WHERE (`entry`='15392');
+UPDATE `zp_mangosd`.`creature_template` SET `scale`='2' WHERE (`entry`='15388');
+UPDATE `zp_mangosd`.`creature_template` SET `scale`='2' WHERE (`entry`='15390');
+UPDATE `zp_mangosd`.`creature_template` SET `scale`='2' WHERE (`entry`='15391');
 
 
 /* adjust speeds of wasps and stingers */
-UPDATE `creature_template` SET `speed_walk`='1.6', `speed_run`='1.35' WHERE (`entry`='15325');
-UPDATE `creature_template` SET `speed_walk`='1.6', `speed_run`='1.35' WHERE (`entry`='15327');
+UPDATE `zp_mangosd`.`creature_template` SET `speed_walk`='1.6', `speed_run`='1.35' WHERE (`entry`='15325');
+UPDATE `zp_mangosd`.`creature_template` SET `speed_walk`='1.6', `speed_run`='1.35' WHERE (`entry`='15327');
 
 /*Hive'Zara Stinger boss circle far n1 */
-UPDATE `creature` SET `MovementType`='2' WHERE (`guid`='58014');
+UPDATE `zp_mangosd`.`creature` SET `MovementType`='2' WHERE (`guid`='58014');
 
-/*Hive'Zara Stinger boss circle far n1 */
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58014', '58014', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58014', '58025', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58014', '58028', '3', '315', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58014', '58029', '3', '45', '2');
-
-
-/*Hive'Zara Stinger boss circle far n2*/
-UPDATE `creature` SET `MovementType`='2' WHERE (`guid`='58015');
-
-/*Hive'Zara Stinger boss circle far n2*/
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58015', '58015', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58015', '58024', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58015', '58026', '3', '315', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58015', '58027', '3', '45', '2');
-
-/*****************/
-
-/*Hive'Zara Stinger boss room back&forth first*/
-UPDATE `creature` SET `MovementType`='2' WHERE (`guid`='58013');
-
-/*Hive'Zara Stinger boss room back&forth second*/
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58013', '58013', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58013', '58023', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58013', '58031', '3', '315', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58013', '58030', '3', '45', '2');
-
-/*Hive'Zara Stinger boss room back&forth first*/
-UPDATE `creature` SET `MovementType`='2' WHERE (`guid`='58012');
-
-/*Hive'Zara Stinger boss room back&forth second*/
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58012', '58012', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58012', '58022', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58012', '58032', '3', '315', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58012', '58033', '3', '45', '2');
-
-/*Hive'Zara Stinger main room behind corner*/
-UPDATE `creature` SET `MovementType`='2' WHERE (`guid`='58006');
-
-/*Hive'Zara Stinger main room behind corner*/
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58006', '58006', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58006', '58021', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58006', '58036', '3', '315', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58006', '58037', '3', '45', '2');
-
-/*Hive'Zara Stinger main room back&forth horizontal second*/
-UPDATE `creature` SET `MovementType`='2' WHERE (`guid`='58007');
-
-/*Hive'Zara Stinger main room back&forth horizontal second*/
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58007', '58007', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58007', '58018', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58007', '58039', '3', '315', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58007', '58038', '3', '45', '2');
-
-/*Hive'Zara Stinger main room back&forth horizontal first*/
-UPDATE `creature` SET `MovementType`='2' WHERE (`guid`='58009');
-
-/*Hive'Zara Stinger main room back&forth horizontal first*/
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58009', '58009', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58009', '58019', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58009', '58044', '3', '315', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58009', '58045', '3', '45', '2');
+	/*Hive'Zara Stinger boss circle far n1 */
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58014', '58014', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58014', '58025', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58014', '58028', '3', '315', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58014', '58029', '3', '45', '2');
 
 
-/*Hive'Zara Stinger main room small circle*/
-UPDATE `creature` SET `MovementType`='2' WHERE (`guid`='58011');
+	/*Hive'Zara Stinger boss circle far n2*/
+	UPDATE `zp_mangosd`.`creature` SET `MovementType`='2' WHERE (`guid`='58015');
 
-/*Hive'Zara Stinger main room small circle*/
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58011', '58011', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58011', '58016', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58011', '58043', '3', '315', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58011', '58042', '3', '45', '2');
+	/*Hive'Zara Stinger boss circle far n2*/
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58015', '58015', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58015', '58024', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58015', '58026', '3', '315', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58015', '58027', '3', '45', '2');
 
-/*Hive'Zara Stinger main room large circle*/
-UPDATE `creature` SET `MovementType`='2' WHERE (`guid`='58010');
+	/*****************/
 
-/*Hive'Zara Stinger main room large circle*/
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58010', '58010', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58010', '58017', '0', '0', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58010', '58041', '3', '315', '2');
-INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58010', '58040', '3', '45', '2');
+	/*Hive'Zara Stinger boss room back&forth first*/
+	UPDATE `zp_mangosd`.`creature` SET `MovementType`='2' WHERE (`guid`='58013');
+
+	/*Hive'Zara Stinger boss room back&forth second*/
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58013', '58013', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58013', '58023', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58013', '58031', '3', '315', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58013', '58030', '3', '45', '2');
+
+	/*Hive'Zara Stinger boss room back&forth first*/
+	UPDATE `zp_mangosd`.`creature` SET `MovementType`='2' WHERE (`guid`='58012');
+
+	/*Hive'Zara Stinger boss room back&forth second*/
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58012', '58012', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58012', '58022', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58012', '58032', '3', '315', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58012', '58033', '3', '45', '2');
+
+	/*Hive'Zara Stinger main room behind corner*/
+	UPDATE `zp_mangosd`.`creature` SET `MovementType`='2' WHERE (`guid`='58006');
+
+	/*Hive'Zara Stinger main room behind corner*/
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58006', '58006', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58006', '58021', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58006', '58036', '3', '315', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58006', '58037', '3', '45', '2');
+
+	/*Hive'Zara Stinger main room back&forth horizontal second*/
+	UPDATE `zp_mangosd`.`creature` SET `MovementType`='2' WHERE (`guid`='58007');
+
+	/*Hive'Zara Stinger main room back&forth horizontal second*/
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58007', '58007', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58007', '58018', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58007', '58039', '3', '315', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58007', '58038', '3', '45', '2');
+
+	/*Hive'Zara Stinger main room back&forth horizontal first*/
+	UPDATE `zp_mangosd`.`creature` SET `MovementType`='2' WHERE (`guid`='58009');
+
+	/*Hive'Zara Stinger main room back&forth horizontal first*/
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58009', '58009', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58009', '58019', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58009', '58044', '3', '315', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58009', '58045', '3', '45', '2');
 
 
-/*Hive'Zara Stinger main room back&forth diagonal*/
-UPDATE `creature` SET `MovementType`='2' WHERE (`guid`='58008');
+	/*Hive'Zara Stinger main room small circle*/
+	UPDATE `zp_mangosd`.`creature` SET `MovementType`='2' WHERE (`guid`='58011');
+
+	/*Hive'Zara Stinger main room small circle*/
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58011', '58011', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58011', '58016', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58011', '58043', '3', '315', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58011', '58042', '3', '45', '2');
+
+	/*Hive'Zara Stinger main room large circle*/
+	UPDATE `zp_mangosd`.`creature` SET `MovementType`='2' WHERE (`guid`='58010');
+
+	/*Hive'Zara Stinger main room large circle*/
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58010', '58010', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58010', '58017', '0', '0', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58010', '58041', '3', '315', '2');
+	INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58010', '58040', '3', '45', '2');
+
+
+	/*Hive'Zara Stinger main room back&forth diagonal*/
+UPDATE `zp_mangosd`.`creature` SET `MovementType`='2' WHERE (`guid`='58008');
 
 /*Hive'Zara Stinger main room back&forth diagonal*/
 INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58008', '58008', '0', '0', '2');
