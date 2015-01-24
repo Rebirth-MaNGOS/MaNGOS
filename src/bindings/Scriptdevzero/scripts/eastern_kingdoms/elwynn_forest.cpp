@@ -26,6 +26,7 @@ npc_henze_faulk
 EndContentData */
 
 #include "precompiled.h"
+#include "patrol_ai.h"
 
 /*######
 ## npc_henze_faulk
@@ -80,6 +81,31 @@ CreatureAI* GetAI_npc_henze_faulk(Creature* pCreature)
     return new npc_henze_faulkAI(pCreature);
 }
 
+/*####################
+ * npc_creepy_child ##
+ * #################*/
+
+struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
+{
+    npc_creepy_child(Creature* pCreature) : npc_patrolAI(pCreature, 0.f, true)
+    {
+        Reset();
+    }
+    
+    void Reset()
+    {
+    }
+    
+    void UpdateAI(const uint32 /*uiDiff*/)
+    {
+    }
+};
+
+CreatureAI* GetAI_npc_creepy_child(Creature* pCreature)
+{
+    return new npc_creepy_child(pCreature);
+}
+
 void AddSC_elwynn_forest()
 {
     Script* pNewscript;
@@ -87,5 +113,10 @@ void AddSC_elwynn_forest()
     pNewscript = new Script;
     pNewscript->Name = "npc_henze_faulk";
     pNewscript->GetAI = &GetAI_npc_henze_faulk;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_creepy_child";
+    pNewscript->GetAI = &GetAI_npc_creepy_child;
     pNewscript->RegisterSelf();
 }
