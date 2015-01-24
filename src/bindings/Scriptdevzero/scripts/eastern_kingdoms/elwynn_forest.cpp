@@ -98,6 +98,12 @@ enum Children
     JOHN        = 806
 };
 
+enum Creepy_Sounds
+{
+    CTHUN_DEATH_IS_CLOSE = 8580,
+    CTHUN_YOU_WILL_DIE = 8585,
+};
+
 // The AI for the middle child.
 struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
 {
