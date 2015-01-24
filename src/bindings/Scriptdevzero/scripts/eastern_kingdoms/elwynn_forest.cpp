@@ -104,6 +104,7 @@ enum CreepySounds
     CTHUN_YOU_WILL_DIE = 8585,
 };
 
+static const uint32 m_ChildEntries[5] = { DANA, JOSE, ARON, LISA, JOHN };
 // The AI for the middle child.
 struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
 {
@@ -112,7 +113,6 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
         Reset();
     }
     
-    uint32 m_ChildEntries[5] = { DANA, JOSE, ARON, LISA, JOHN };
     float m_ChildOffsets[5][2];
     std::vector<Unit*> m_ChildList;
     
@@ -186,14 +186,14 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
     }
     
     // Give the children offsets that match a pentagram.
-    void InitialiseChildOffsets()
+    void InitialiseChildOffsets(float rotation = 0.f)
     {
         for (short i = 0; i < 5; ++i)
         {
             if (i != 4)
-                CalculateNewChildOffset(i < 2 ? 3.5f : 2.f, i * (PI / 2.f) + PI / 4.f, m_ChildOffsets[i]);
+                CalculateNewChildOffset(i < 2 ? 3.5f : 2.f, i * (PI / 2.f) + PI / 4.f + rotation, m_ChildOffsets[i]);
             else
-                CalculateNewChildOffset(4.f, PI / 2, m_ChildOffsets[i]);
+                CalculateNewChildOffset(4.f, PI / 2 + rotation, m_ChildOffsets[i]);
         }
     }
     
