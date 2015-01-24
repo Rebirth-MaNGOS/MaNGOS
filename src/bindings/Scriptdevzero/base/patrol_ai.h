@@ -16,6 +16,7 @@ struct MANGOS_DLL_DECL npc_patrolAI : public ScriptedAI
     void Reset();
     void StartPatrol(uint32 repeatPoint = 0, bool run = true);                       // Start the patrol. Pass 0 to not have any repetition.
     void PausePatrol(bool paused);
+    Escort_Waypoint GetTargetWaypoint();
 
 private:
     void FillPointMovementListForCreature();

@@ -134,4 +134,8 @@ void npc_patrolAI::PausePatrol(bool paused)
         Reset();
 }
 
+Escort_Waypoint npc_patrolAI::GetTargetWaypoint()
+{
+    return *m_TargetPoint;
+}
 
