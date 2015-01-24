@@ -98,7 +98,7 @@ enum Children
     JOHN        = 806
 };
 
-enum Creepy_Sounds
+enum CreepySounds
 {
     CTHUN_DEATH_IS_CLOSE = 8580,
     CTHUN_YOU_WILL_DIE = 8585,
@@ -120,6 +120,8 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
     
     void Reset()
     {
+        npc_patrolAI::Reset();
+        
         m_uiChildCatchingTimer = 20000;
         m_ChildList.clear();
         
@@ -142,6 +144,11 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
             else
                 m_uiChildCatchingTimer -= uiDiff;
         }
+    }
+    
+    void MovementInform(uint32 movementType, uint32 pointId)
+    {
+        npc_patrolAI::MovementInform(movementType, pointId);
     }
     
     void PositionChildren()
