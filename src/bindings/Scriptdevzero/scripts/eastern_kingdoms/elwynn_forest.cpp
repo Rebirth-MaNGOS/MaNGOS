@@ -143,6 +143,8 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
                 origo[1] = m_creature->GetPositionY();
                 PositionChildren(origo);
 
+                StartPatrol(0, false);
+                
                 m_uiChildCatchingTimer = 0;
             }
             else
@@ -153,6 +155,9 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
     void MovementInform(uint32 movementType, uint32 pointId)
     {
         npc_patrolAI::MovementInform(movementType, pointId);
+        
+        float origo[2] = { GetTargetWaypoint().fX, GetTargetWaypoint().fY };
+        PositionChildren(origo);
     }
     
     void PositionChildren(float origo[2])
