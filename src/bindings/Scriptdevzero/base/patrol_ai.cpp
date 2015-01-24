@@ -61,7 +61,8 @@ void npc_patrolAI::MovementInform(uint32 /*uiMovementType*/, uint32 /*uiPointID*
         if (m_TargetPoint->uiId == m_uiRepeatPointID)
             m_RepeatPoint = m_TargetPoint;
 
-        m_creature->GetMotionMaster()->MovePoint(m_TargetPoint->uiId, m_TargetPoint->fX, m_TargetPoint->fY, m_TargetPoint->fZ, m_bUsePathing);
+        if (!m_bIsPaused)
+            m_creature->GetMotionMaster()->MovePoint(m_TargetPoint->uiId, m_TargetPoint->fX, m_TargetPoint->fY, m_TargetPoint->fZ, m_bUsePathing);
     }
     else
     {
@@ -70,7 +71,8 @@ void npc_patrolAI::MovementInform(uint32 /*uiMovementType*/, uint32 /*uiPointID*
         {
             m_TargetPoint = m_RepeatPoint;
 
-            m_creature->GetMotionMaster()->MovePoint(m_TargetPoint->uiId, m_TargetPoint->fX, m_TargetPoint->fY, m_TargetPoint->fZ, m_bUsePathing);
+            if (!m_bIsPaused)
+                m_creature->GetMotionMaster()->MovePoint(m_TargetPoint->uiId, m_TargetPoint->fX, m_TargetPoint->fY, m_TargetPoint->fZ, m_bUsePathing);
         }
         else
         {
@@ -123,4 +125,13 @@ void npc_patrolAI::StartPatrol(uint32 repeatPoint, bool run)
         m_bPatrolling = true;
     }
 }
+
+void npc_patrolAI::PausePatrol(bool paused)
+{
+    m_bIsPaused = paused;
+    
+    if (!paused)
+        Reset();
+}
+
 
