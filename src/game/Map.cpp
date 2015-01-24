@@ -1160,11 +1160,7 @@ bool Map::ActiveObjectsNearGrid(uint32 x, uint32 y) const
 
 void Map::AddToActive( WorldObject* obj )
 {
-    Creature* creature = dynamic_cast<Creature*>(obj);
-    if (!creature || creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == MovementGeneratorType::WAYPOINT_MOTION_TYPE)
-    {
-            m_activeNonPlayers.push_back(obj);
-    }
+    m_activeNonPlayers.push_back(obj);
     
     // also not allow unloading spawn grid to prevent creating creature clone at load
     if (obj->GetTypeId()==TYPEID_UNIT)
