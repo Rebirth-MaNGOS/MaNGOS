@@ -12323,138 +12323,138 @@ bool Player::CanRewardQuest(Quest const *pQuest, uint32 reward, bool msg) const
         }
     }
 
-	// Calculate how many inventory slots will be needed to store the rewards.
-	// There is no need to differentiate between the two ammo types since there is no quest in the game
-	// that gives more than one stack of ammo at a time since those cases get caught by the code above.
-	short requiredSlots = 0;
-	short ammoSlots = 0;
-	
-	const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->RewChoiceItemId[reward]);
-	if (itemProt)
-	{
-		short result;
-		short modulo = GetItemCount(pQuest->RewChoiceItemId[reward]) % itemProt->GetMaxStackSize();
-		if (modulo > 0)
-		{
-			result = (short) ceil((float)(modulo + pQuest->RewChoiceItemCount[reward]) / (float) itemProt->GetMaxStackSize()) - 1;
-		}
-		else
-		{
-			result = (short) ceil((float)(pQuest->RewChoiceItemCount[reward]) / (float) itemProt->GetMaxStackSize());
-		}
+    // Calculate how many inventory slots will be needed to store the rewards.
+    // There is no need to differentiate between the two ammo types since there is no quest in the game
+    // that gives more than one stack of ammo at a time since those cases get caught by the code above.
+    short requiredSlots = 0;
+    short ammoSlots = 0;
 
-		if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
-		{
-			ammoSlots += result;
-		}
-		else
-		{
-			requiredSlots += result;
-		}
-	}
+    const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->RewChoiceItemId[reward]);
+    if (itemProt)
+    {
+        short result;
+        short modulo = GetItemCount(pQuest->RewChoiceItemId[reward]) % itemProt->GetMaxStackSize();
+        if (modulo > 0)
+        {
+            result = (short) ceil((float)(modulo + pQuest->RewChoiceItemCount[reward]) / (float) itemProt->GetMaxStackSize()) - 1;
+        }
+        else
+        {
+            result = (short) ceil((float)(pQuest->RewChoiceItemCount[reward]) / (float) itemProt->GetMaxStackSize());
+        }
 
-	for (uint32 i = 0; i < pQuest->GetRewItemsCount(); ++i)
-	{
-		const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->RewItemId[i]);
-		if (itemProt)
-		{
-			short result;
-			short modulo = GetItemCount(pQuest->RewItemId[i]) % itemProt->GetMaxStackSize();
-			if (modulo > 0)
-			{
-				result = (short) ceil((float)(modulo + pQuest->RewItemCount[i]) / (float) itemProt->GetMaxStackSize()) - 1;
-			}
-			else
-			{
-				result = (short) ceil((float)(pQuest->RewItemCount[i]) / (float) itemProt->GetMaxStackSize());
-			}
+        if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
+        {
+            ammoSlots += result;
+        }
+        else
+        {
+            requiredSlots += result;
+        }
+    }
 
-			if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
-			{
-				ammoSlots += result;
-			}
-			else
-			{
-				requiredSlots += result;
-			}
-		}
-	}
+    for (uint32 i = 0; i < pQuest->GetRewItemsCount(); ++i)
+    {
+        const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->RewItemId[i]);
+        if (itemProt)
+        {
+            short result;
+            short modulo = GetItemCount(pQuest->RewItemId[i]) % itemProt->GetMaxStackSize();
+            if (modulo > 0)
+            {
+                result = (short) ceil((float)(modulo + pQuest->RewItemCount[i]) / (float) itemProt->GetMaxStackSize()) - 1;
+            }
+            else
+            {
+                result = (short) ceil((float)(pQuest->RewItemCount[i]) / (float) itemProt->GetMaxStackSize());
+            }
 
-	short freeSlots = 0;
-	short freeAmmoSlots = 0;
-	for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
-	{
-		if (!GetItemByPos( INVENTORY_SLOT_BAG_0, i ))
-			++freeSlots;
-	}       
+            if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
+            {
+                ammoSlots += result;
+            }
+            else
+            {
+                requiredSlots += result;
+            }
+        }
+    }
 
-	// Count the free slots in the player's bags.
+    short freeSlots = 0;
+    short freeAmmoSlots = 0;
+    for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+    {
+        if (!GetItemByPos( INVENTORY_SLOT_BAG_0, i ))
+            ++freeSlots;
+    }
+
+    // Count the free slots in the player's bags.
     for(int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
-	{
+    {
         Bag* pBag = (Bag*)GetItemByPos( INVENTORY_SLOT_BAG_0, i );
-		if (pBag)
-		{
+        if (pBag)
+        {
             for(uint32 j = 0; j < pBag->GetBagSize(); ++j)
-			{
-				if (!GetItemByPos(i, j))
-				{
-					// Normal bag.
-					if (pBag->GetProto()->SubClass == 0)
-					{
-						++freeSlots;
-					}
-					else if ((pBag->GetProto()->SubClass == 2) || (pBag->GetProto()->SubClass == 3)) // Ammo bags.
-					{
-						++freeAmmoSlots;
-					}
+            {
+                if (!GetItemByPos(i, j))
+                {
+                    // Normal bag.
+                    if (pBag->GetProto()->SubClass == 0)
+                    {
+                        ++freeSlots;
+                    }
+                    else if ((pBag->GetProto()->SubClass == 2) || (pBag->GetProto()->SubClass == 3)) // Ammo bags.
+                    {
+                        ++freeAmmoSlots;
+                    }
 
-				}
-			}
-		}
-	}
+                }
+            }
+        }
+    }
 
-	// Calculate how many slots the turn-in items are using.
-	short questTurnInSlots = 0;
-	short questTurnInAmmoSlots = 0;
-	for (uint32 i = 0; i < pQuest->GetReqItemsCount(); ++i)
-	{
-		if (pQuest->ReqItemId[i])
-		{
-			const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->ReqItemId[i]);
-			if (itemProt)
-			{
-				if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
-				{
-					questTurnInAmmoSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) : 
-											floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
-				}
-				else
-				{
-					questTurnInSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) : 
-										floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
-				}
-			}
-		}
-	}
+    // Calculate how many slots the turn-in items are using.
+    short questTurnInSlots = 0;
+    short questTurnInAmmoSlots = 0;
+    for (uint32 i = 0; i < pQuest->GetReqItemsCount(); ++i)
+    {
+        if (pQuest->ReqItemId[i])
+        {
+            const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->ReqItemId[i]);
+            if (itemProt)
+            {
+                if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
+                {
+                    questTurnInAmmoSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) :
+                                            floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
+                }
+                else
+                {
+                    questTurnInSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) :
+                                        floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
+                }
+            }
+        }
+    }
 
 
-	// Subtract slots used by the ammo.
-	if (ammoSlots >= freeAmmoSlots + questTurnInAmmoSlots)
-		ammoSlots -= freeAmmoSlots + questTurnInAmmoSlots;
-	else
-		ammoSlots = 0;
+    // Subtract slots used by the ammo.
+    if (ammoSlots >= freeAmmoSlots + questTurnInAmmoSlots)
+        ammoSlots -= freeAmmoSlots + questTurnInAmmoSlots;
+    else
+        ammoSlots = 0;
 
-	// Add the remaining ammo to the required slots.
-	requiredSlots += ammoSlots;
+    // Add the remaining ammo to the required slots.
+    requiredSlots += ammoSlots;
 
-	// If the number of free slots plus the number of slots freed
-	// by turning in the quest is smaller than the required slots
-	// we cannot reward the player.
-	if (freeSlots + questTurnInSlots < requiredSlots)
-	{
-		SendEquipError(EQUIP_ERR_INVENTORY_FULL, NULL, NULL);
-		return false;
-	}
+    // If the number of free slots plus the number of slots freed
+    // by turning in the quest is smaller than the required slots
+    // we cannot reward the player.
+    if (freeSlots + questTurnInSlots < requiredSlots)
+    {
+        SendEquipError(EQUIP_ERR_INVENTORY_FULL, NULL, NULL);
+        return false;
+    }
 
     return true;
 }
