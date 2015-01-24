@@ -12423,15 +12423,18 @@ bool Player::CanRewardQuest(Quest const *pQuest, uint32 reward, bool msg) const
             const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->ReqItemId[i]);
             if (itemProt)
             {
-                if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
+                if (itemProt->BagFamily != BAG_FAMILY_KEYS)
                 {
-                    questTurnInAmmoSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) :
+                    if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
+                    {
+                        questTurnInAmmoSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) :
+                                                floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
+                    }
+                    else
+                    {
+                        questTurnInSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) :
                                             floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
-                }
-                else
-                {
-                    questTurnInSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) :
-                                        floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
+                    }
                 }
             }
         }
