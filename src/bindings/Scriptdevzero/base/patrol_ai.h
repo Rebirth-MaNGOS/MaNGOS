@@ -1,7 +1,8 @@
 #ifndef SC_PATROLAI_H
 #define SC_PATROLAI_H
 
-#include "escort_ai.h"         // Include this to get the Escort_Waypoint struct.
+#include "sc_creature.h"
+#include "escort_ai.h"
 
 /* AI that allows an npc to patrol a certain area. Loads its waypoints from the Scriptdevzero waypoint database.
    It follows the path to the end and then repeats from the waypoint with the ID passed when StartPatrol is called. */

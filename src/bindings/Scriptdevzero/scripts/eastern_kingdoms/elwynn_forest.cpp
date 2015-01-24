@@ -28,6 +28,8 @@ EndContentData */
 #include "precompiled.h"
 #include "patrol_ai.h"
 
+#include <vector>
+
 /*######
 ## npc_henze_faulk
 ######*/
@@ -85,6 +87,18 @@ CreatureAI* GetAI_npc_henze_faulk(Creature* pCreature)
  * npc_creepy_child ##
  * #################*/
 
+
+enum Children
+{
+    DANA        = 804,
+    CAMERON     = 805,
+    JOSE        = 811,
+    ARON        = 810,
+    LISA        = 807,
+    JOHN        = 806
+};
+
+// The AI for the middle child.
 struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
 {
     npc_creepy_child(Creature* pCreature) : npc_patrolAI(pCreature, 0.f, true)
@@ -92,12 +106,91 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
         Reset();
     }
     
+    uint32 m_ChildEntries[5] = { DANA, JOSE, ARON, LISA, JOHN };
+    float m_ChildOffsets[5][2];
+    std::vector<Unit*> m_ChildList;
+    
+    uint32 m_uiChildCatchingTimer;
+    
     void Reset()
     {
+        m_uiChildCatchingTimer = 20000;
+        m_ChildList.clear();
+        
+        InitialiseChildOffsets();
     }
     
-    void UpdateAI(const uint32 /*uiDiff*/)
+    void UpdateAI(const uint32 uiDiff)
     {
+        // Only do this once after reset.
+        if (m_uiChildCatchingTimer)
+        {
+            if (m_uiChildCatchingTimer <= uiDiff)
+            {
+                GetChildren();
+                
+                PositionChildren();
+                
+                m_uiChildCatchingTimer = 0;
+            }
+            else
+                m_uiChildCatchingTimer -= uiDiff;
+        }
+    }
+    
+    void PositionChildren()
+    {
+        if (m_ChildList.size() < 5)
+            return;
+        
+        for (short i = 0; i < 5; ++i)
+        {
+            float pos[2], origo[2];
+            
+            origo[0] = m_creature->GetPositionX();
+            origo[1] = m_creature->GetPositionY();
+            
+            CalculateChildPosFromOffset(origo, m_ChildOffsets[i], pos);
+            
+            m_ChildList[i]->GetMotionMaster()->MovePoint(0, pos[0], pos[1], m_creature->GetPositionZ());
+        }
+    }
+    
+    void GetChildren()
+    {
+        for (short i = 0; i < 5; ++i)
+        {
+            Unit* child = GetClosestCreatureWithEntry(m_creature, m_ChildEntries[i], 10.f);
+            if (child)
+                m_ChildList.push_back(child);
+        }
+    }
+    
+    // Give the children offsets that match a pentagram.
+    void InitialiseChildOffsets()
+    {
+        for (short i = 0; i < 5; ++i)
+        {
+            if (i != 4)
+                CalculateNewChildOffset(i < 2 ? 3.5f : 2.f, i * (PI / 2.f) + PI / 4.f, m_ChildOffsets[i]);
+            else
+                CalculateNewChildOffset(4.f, PI / 2, m_ChildOffsets[i]);
+        }
+    }
+    
+    // Takes an offset and a center point and returns the childs position in the same
+    // coordinates as the center was given as.
+    inline void CalculateChildPosFromOffset(float origo[2], float offset[2], float* result)
+    {
+        result[0] = origo[0] + offset[0];
+        result[1] = origo[1] + offset[1];
+    }
+    
+    // Calculates a child's offset from origo for the given radius and angle.
+    inline void CalculateNewChildOffset(float radius, float angle, float* result)
+    {
+        result[0] = radius * (float) cos(angle);
+        result[1] = radius * (float) sin(angle);
     }
 };
 
