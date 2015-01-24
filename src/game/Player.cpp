@@ -7369,6 +7369,9 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 
                     if (uint32 lootid = creature->GetCreatureInfo()->lootid)
                         loot->FillLoot(lootid, LootTemplates_Creature, recipient, false);
+                    
+                    // Make sure to add the current looter to the list. (Player will be added twice to the list if in a group, but that doesn't matter.)
+                    loot->AddAllowedLooter(GetObjectGuid());
 
                     loot->generateMoneyLoot(creature->GetCreatureInfo()->mingold,creature->GetCreatureInfo()->maxgold);
 
