@@ -136,9 +136,13 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
             if (m_uiChildCatchingTimer <= uiDiff)
             {
                 GetChildren();
-                
-                PositionChildren();
-                
+
+                // Position the children around this creature.
+                float origo[2];
+                origo[0] = m_creature->GetPositionX();
+                origo[1] = m_creature->GetPositionY();
+                PositionChildren(origo);
+
                 m_uiChildCatchingTimer = 0;
             }
             else
@@ -151,17 +155,14 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
         npc_patrolAI::MovementInform(movementType, pointId);
     }
     
-    void PositionChildren()
+    void PositionChildren(float origo[2])
     {
         if (m_ChildList.size() < 5)
             return;
         
         for (short i = 0; i < 5; ++i)
         {
-            float pos[2], origo[2];
-            
-            origo[0] = m_creature->GetPositionX();
-            origo[1] = m_creature->GetPositionY();
+            float pos[2];
             
             CalculateChildPosFromOffset(origo, m_ChildOffsets[i], pos);
             
