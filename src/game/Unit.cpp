@@ -6967,11 +6967,17 @@ void Unit::ClearInCombat()
     {
         // Creatures that are patrolling should never stop updating.
         Creature* creature = dynamic_cast<Creature*>(this);
-        if(creature &&
-           creature->GetMotionMaster()->GetCurrentMovementGeneratorType() != MovementGeneratorType::WAYPOINT_MOTION_TYPE)
+        if(creature)
         {
-            if (GetMap())
-                GetMap()->AddActiveObjectToRemove(this);
+            // Pop the current movement generator to see what the previous one was.
+            auto tmp = creature->GetMotionMaster()->top();
+            creature->GetMotionMaster()->pop();
+            if (creature->GetMotionMaster()->GetCurrentMovementGeneratorType() != MovementGeneratorType::WAYPOINT_MOTION_TYPE)
+            {
+                if (GetMap())
+                    GetMap()->AddActiveObjectToRemove(this);
+            }
+            creature->GetMotionMaster()->push(tmp);
         }
     }
 

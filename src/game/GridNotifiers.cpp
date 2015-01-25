@@ -131,6 +131,28 @@ void MessageDelivererExcept::Visit(CameraMapType &m)
     }
 }
 
+void MovementOpcodeDeliverer::Visit(CameraMapType& m)
+{
+    for (CameraMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
+    {
+            Player* owner = iter->getSource()->GetOwner();
+            
+            if (owner == i_skipped_receiver)
+                continue;
+            
+            
+            if (WorldSession* session = owner->GetSession())
+            {
+                i_movement_info.UpdateTime(i_initial_timestamp + 150 + session->GetLatency());
+                
+                WorldPacket data(i_received_movement->GetOpcode(), uint16(i_received_movement->size() + 2));
+                data << i_mover_guid;             // write guid
+                i_movement_info.Write(data);      // write data
+                
+                session->SendPacket(&data);
+            }
+    }
+}
 
 void
 ObjectMessageDeliverer::Visit(CameraMapType &m)

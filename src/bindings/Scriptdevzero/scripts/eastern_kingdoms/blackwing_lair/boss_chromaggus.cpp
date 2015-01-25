@@ -122,6 +122,15 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
         GameObject* pDoor = GetClosestGameObjectWithEntry(m_creature, 179116, 1000.f);
         if (pDoor && pDoor->GetGoState() == GO_STATE_ACTIVE)
             m_creature->GetMotionMaster()->MovePoint(0, -7488.f, -1073.f, 477.f); // Chromaggus should stand in the middle of the room after a wipe.
+        
+        // Kill any players with the Chromatic Mutation.
+        for (auto currentPlayerRef = m_creature->GetMap()->GetPlayers().begin(); currentPlayerRef != m_creature->GetMap()->GetPlayers().end(); ++currentPlayerRef)
+        {
+            Player* currentPlayer = currentPlayerRef->getSource();
+            if (currentPlayer && currentPlayer->HasAura(SPELL_CHROMATIC_MUT_1))
+                m_creature->DealDamage(currentPlayer, currentPlayer->GetHealth(), nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, true);
+        }
+            
     }
 
     void MovementInform(uint32 /*pointID*/, uint32 /*movementType*/)

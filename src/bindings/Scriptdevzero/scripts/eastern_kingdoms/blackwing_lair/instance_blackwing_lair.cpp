@@ -317,19 +317,31 @@ void instance_blackwing_lair::SetData(uint32 uiType, uint32 uiData)
     switch(uiType)
     {
     case TYPE_RAZORGORE:
+    {
         m_auiEncounter[uiType] = uiData;
         DoUseDoorOrButton(GO_DOOR_RAZORGORE_ENTER);
-        if (uiData == DONE)
-            DoUseDoorOrButton(GO_DOOR_RAZORGORE_EXIT);
+        
+        GameObject* razorgoreDoorEntrance = GetSingleGameObjectFromStorage(GO_DOOR_RAZORGORE_ENTER);
+        if (razorgoreDoorEntrance)
+            razorgoreDoorEntrance->SetGoState(uiData == DONE ? GO_STATE_ACTIVE : GO_STATE_READY);
+        
+        GameObject* razorgoreDoorExit = GetSingleGameObjectFromStorage(GO_DOOR_RAZORGORE_EXIT);
+        if (razorgoreDoorExit)
+            razorgoreDoorExit->SetGoState(uiData == DONE ? GO_STATE_ACTIVE : GO_STATE_READY);
         break;
+    }
     case TYPE_VAELASTRASZ:
+    {
         m_auiEncounter[uiType] = uiData;
-        // Prevent the players from running back to the first room; use if the encounter is not special
-        if (uiData != SPECIAL)
-            DoUseDoorOrButton(GO_DOOR_RAZORGORE_EXIT);
+        
+        GameObject* razorgoreDoorExit = GetSingleGameObjectFromStorage(GO_DOOR_RAZORGORE_EXIT);
+        if (razorgoreDoorExit)
+            razorgoreDoorExit->SetGoState(uiData == DONE ? GO_STATE_ACTIVE: GO_STATE_READY);
+
         if (uiData == DONE)
             DoUseDoorOrButton(GO_DOOR_VAELASTRASZ);
         break;
+    }
     case TYPE_LASHLAYER:
         m_auiEncounter[uiType] = uiData;
         break;

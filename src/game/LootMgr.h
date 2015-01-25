@@ -24,6 +24,7 @@
 #include "ByteBuffer.h"
 #include "ObjectGuid.h"
 #include "Utilities/LinkedReference/RefManager.h"
+#include "SharedDefines.h"
 
 #include <map>
 #include <vector>
@@ -241,10 +242,9 @@ struct Loot
     uint32 gold;
     uint8 unlootedCount;
     LootType loot_type;                                     // required for for proper item loot finish (store internal loot types in different from 3.x version, in fact this meaning that it send same loot types for interesting cases like 3.x version code, skip pre-3.x client loot type limitaitons)
-
-	ObjectGuid GroupLooterGuid;								// saves the GUID of the player who has loot right for all items in this Loot with quality under threshold, in case of group loot
-
-
+    
+    ObjectGuid GroupLooterGuid;                             // saves the GUID of the player who has loot right for all items in this Loot with quality under threshold, in case of group loot.
+    
     Loot(uint32 _gold = 0) : gold(_gold), unlootedCount(0), GroupLooterGuid(ObjectGuid()) {}
     ~Loot() { clear(); }
 
@@ -275,6 +275,7 @@ struct Loot
         gold = 0;
         unlootedCount = 0;
         m_LootValidatorRefManager.clearReferences();
+        m_allowedLooters.clear();
     }
 
     bool empty() const { return items.empty() && gold == 0; }
@@ -285,6 +286,9 @@ struct Loot
     void NotifyMoneyRemoved();
     void AddLooter(ObjectGuid guid) { m_playersLooting.insert(guid); }
     void RemoveLooter(ObjectGuid guid) { m_playersLooting.erase(guid); }
+    void AddAllowedLooter(ObjectGuid guid) { m_allowedLooters.push_back(guid); }
+    bool IsAllowedLooter(ObjectGuid guid) { return std::find(m_allowedLooters.begin(), m_allowedLooters.end(), guid) != m_allowedLooters.end(); }
+    const std::list<ObjectGuid>& GetAllowedLooters() { return m_allowedLooters; }
 
     void generateMoneyLoot(uint32 minAmount, uint32 maxAmount);
     bool FillLoot(uint32 loot_id, LootStore const& store, Player* loot_owner, bool personal, bool noEmptyError = false);
@@ -312,6 +316,8 @@ struct Loot
 
         // All rolls are registered here. They need to know, when the loot is not valid anymore
         LootValidatorRefManager m_LootValidatorRefManager;
+        
+        std::list<ObjectGuid> m_allowedLooters;
 };
 
 struct LootView

@@ -220,10 +220,10 @@ void Creature::AddToWorld()
 
     SearchFormation();
 
-    if (sWorld.getConfig(CONFIG_BOOL_ACTIVE_CONTINENT_MOBS) && (GetMap()->GetId() == 1 || GetMap()->GetId() == 0))
-        SetActiveObjectState(true);
-
     Unit::AddToWorld();
+    
+    if (sWorld.getConfig(CONFIG_BOOL_ACTIVE_CONTINENT_MOBS) && (GetMap()->GetId() == 1 || GetMap()->GetId() == 0))
+        m_isActiveObject = true;
 }
 
 void Creature::RemoveFromWorld()

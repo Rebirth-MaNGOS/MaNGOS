@@ -7361,6 +7361,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                     loot->clear();
                 }
 
+                Group* group = creature->GetGroupLootRecipient();
                 if (!creature->lootForBody)
                 {
                     creature->lootForBody = true;
@@ -7368,10 +7369,13 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 
                     if (uint32 lootid = creature->GetCreatureInfo()->lootid)
                         loot->FillLoot(lootid, LootTemplates_Creature, recipient, false);
+                    
+                    // Make sure to add the current looter to the list. (Player will be added twice to the list if in a group, but that doesn't matter.)
+                    loot->AddAllowedLooter(GetObjectGuid());
 
                     loot->generateMoneyLoot(creature->GetCreatureInfo()->mingold,creature->GetCreatureInfo()->maxgold);
 
-                    if (Group* group = creature->GetGroupLootRecipient())
+                    if (group)
                     {
                         group->UpdateLooterGuid(creature,true);
 
@@ -7391,9 +7395,22 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                                 break;
                         }
 
-						group->UpdateLooterGuid(creature);
+                        group->UpdateLooterGuid(creature);
+                        
+                        // Loop through the group and create a list of allowed looters.
+                        for(GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
+                        {
+                            Player *looter = itr->getSource();
+                            if (!looter->IsInWorld())
+                                continue;
+
+                            if (looter->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
+                                loot->AddAllowedLooter(looter->GetObjectGuid());
+                        }
                     }
                 }
+                else if (group && group->GetLootMethod() == MASTER_LOOT)
+                    group->SendMasterLootList(this, loot);
 
                 // possible only if creature->lootForBody && loot->empty() at spell cast check
                 if (loot_type == LOOT_SKINNING)
@@ -7414,27 +7431,32 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                 // set group rights only for loot_type != LOOT_SKINNING
                 else
                 {
-                    if(Group* group = creature->GetGroupLootRecipient())
+                    if (loot->IsAllowedLooter(this->GetObjectGuid())) // Check that the player is in the list of allowed looters.
                     {
-                        if (group == GetGroup())
+                        if(Group* group = creature->GetGroupLootRecipient())
                         {
-                            if (group->GetLootMethod() == FREE_FOR_ALL)
-                                permission = ALL_PERMISSION;
-                            else if (group->GetLooterGuid() == GetObjectGuid())
-                            {
-                                if (group->GetLootMethod() == MASTER_LOOT)
-                                    permission = MASTER_PERMISSION;
-                                else
+                            if (group == GetGroup())
+                            {                            
+                                if (group->GetLootMethod() == FREE_FOR_ALL)
                                     permission = ALL_PERMISSION;
+                                else if (group->GetLooterGuid() == GetObjectGuid())
+                                {
+                                    if (group->GetLootMethod() == MASTER_LOOT)
+                                        permission = MASTER_PERMISSION;
+                                    else
+                                        permission = ALL_PERMISSION;
+                                }
+                                else
+                                    permission = GROUP_PERMISSION;
                             }
                             else
-                                permission = GROUP_PERMISSION;
+                                permission = NONE_PERMISSION;
                         }
+                        else if (recipient == this)
+                            permission = OWNER_PERMISSION;
                         else
                             permission = NONE_PERMISSION;
                     }
-                    else if (recipient == this)
-                        permission = OWNER_PERMISSION;
                     else
                         permission = NONE_PERMISSION;
                 }
@@ -12301,138 +12323,141 @@ bool Player::CanRewardQuest(Quest const *pQuest, uint32 reward, bool msg) const
         }
     }
 
-	// Calculate how many inventory slots will be needed to store the rewards.
-	// There is no need to differentiate between the two ammo types since there is no quest in the game
-	// that gives more than one stack of ammo at a time since those cases get caught by the code above.
-	short requiredSlots = 0;
-	short ammoSlots = 0;
-	
-	const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->RewChoiceItemId[reward]);
-	if (itemProt)
-	{
-		short result;
-		short modulo = GetItemCount(pQuest->RewChoiceItemId[reward]) % itemProt->GetMaxStackSize();
-		if (modulo > 0)
-		{
-			result = (short) ceil((float)(modulo + pQuest->RewChoiceItemCount[reward]) / (float) itemProt->GetMaxStackSize()) - 1;
-		}
-		else
-		{
-			result = (short) ceil((float)(pQuest->RewChoiceItemCount[reward]) / (float) itemProt->GetMaxStackSize());
-		}
+    // Calculate how many inventory slots will be needed to store the rewards.
+    // There is no need to differentiate between the two ammo types since there is no quest in the game
+    // that gives more than one stack of ammo at a time since those cases get caught by the code above.
+    short requiredSlots = 0;
+    short ammoSlots = 0;
 
-		if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
-		{
-			ammoSlots += result;
-		}
-		else
-		{
-			requiredSlots += result;
-		}
-	}
+    const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->RewChoiceItemId[reward]);
+    if (itemProt)
+    {
+        short result;
+        short modulo = GetItemCount(pQuest->RewChoiceItemId[reward]) % itemProt->GetMaxStackSize();
+        if (modulo > 0)
+        {
+            result = (short) ceil((float)(modulo + pQuest->RewChoiceItemCount[reward]) / (float) itemProt->GetMaxStackSize()) - 1;
+        }
+        else
+        {
+            result = (short) ceil((float)(pQuest->RewChoiceItemCount[reward]) / (float) itemProt->GetMaxStackSize());
+        }
 
-	for (uint32 i = 0; i < pQuest->GetRewItemsCount(); ++i)
-	{
-		const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->RewItemId[i]);
-		if (itemProt)
-		{
-			short result;
-			short modulo = GetItemCount(pQuest->RewItemId[i]) % itemProt->GetMaxStackSize();
-			if (modulo > 0)
-			{
-				result = (short) ceil((float)(modulo + pQuest->RewItemCount[i]) / (float) itemProt->GetMaxStackSize()) - 1;
-			}
-			else
-			{
-				result = (short) ceil((float)(pQuest->RewItemCount[i]) / (float) itemProt->GetMaxStackSize());
-			}
+        if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
+        {
+            ammoSlots += result;
+        }
+        else
+        {
+            requiredSlots += result;
+        }
+    }
 
-			if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
-			{
-				ammoSlots += result;
-			}
-			else
-			{
-				requiredSlots += result;
-			}
-		}
-	}
+    for (uint32 i = 0; i < pQuest->GetRewItemsCount(); ++i)
+    {
+        const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->RewItemId[i]);
+        if (itemProt)
+        {
+            short result;
+            short modulo = GetItemCount(pQuest->RewItemId[i]) % itemProt->GetMaxStackSize();
+            if (modulo > 0)
+            {
+                result = (short) ceil((float)(modulo + pQuest->RewItemCount[i]) / (float) itemProt->GetMaxStackSize()) - 1;
+            }
+            else
+            {
+                result = (short) ceil((float)(pQuest->RewItemCount[i]) / (float) itemProt->GetMaxStackSize());
+            }
 
-	short freeSlots = 0;
-	short freeAmmoSlots = 0;
-	for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
-	{
-		if (!GetItemByPos( INVENTORY_SLOT_BAG_0, i ))
-			++freeSlots;
-	}       
+            if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
+            {
+                ammoSlots += result;
+            }
+            else
+            {
+                requiredSlots += result;
+            }
+        }
+    }
 
-	// Count the free slots in the player's bags.
+    short freeSlots = 0;
+    short freeAmmoSlots = 0;
+    for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+    {
+        if (!GetItemByPos( INVENTORY_SLOT_BAG_0, i ))
+            ++freeSlots;
+    }
+
+    // Count the free slots in the player's bags.
     for(int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
-	{
+    {
         Bag* pBag = (Bag*)GetItemByPos( INVENTORY_SLOT_BAG_0, i );
-		if (pBag)
-		{
+        if (pBag)
+        {
             for(uint32 j = 0; j < pBag->GetBagSize(); ++j)
-			{
-				if (!GetItemByPos(i, j))
-				{
-					// Normal bag.
-					if (pBag->GetProto()->SubClass == 0)
-					{
-						++freeSlots;
-					}
-					else if ((pBag->GetProto()->SubClass == 2) || (pBag->GetProto()->SubClass == 3)) // Ammo bags.
-					{
-						++freeAmmoSlots;
-					}
+            {
+                if (!GetItemByPos(i, j))
+                {
+                    // Normal bag.
+                    if (pBag->GetProto()->SubClass == 0)
+                    {
+                        ++freeSlots;
+                    }
+                    else if ((pBag->GetProto()->SubClass == 2) || (pBag->GetProto()->SubClass == 3)) // Ammo bags.
+                    {
+                        ++freeAmmoSlots;
+                    }
 
-				}
-			}
-		}
-	}
+                }
+            }
+        }
+    }
 
-	// Calculate how many slots the turn-in items are using.
-	short questTurnInSlots = 0;
-	short questTurnInAmmoSlots = 0;
-	for (uint32 i = 0; i < pQuest->GetReqItemsCount(); ++i)
-	{
-		if (pQuest->ReqItemId[i])
-		{
-			const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->ReqItemId[i]);
-			if (itemProt)
-			{
-				if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
-				{
-					questTurnInAmmoSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) : 
-											floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
-				}
-				else
-				{
-					questTurnInSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) : 
-										floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
-				}
-			}
-		}
-	}
+    // Calculate how many slots the turn-in items are using.
+    short questTurnInSlots = 0;
+    short questTurnInAmmoSlots = 0;
+    for (uint32 i = 0; i < pQuest->GetReqItemsCount(); ++i)
+    {
+        if (pQuest->ReqItemId[i])
+        {
+            const ItemPrototype *itemProt = sObjectMgr.GetItemPrototype(pQuest->ReqItemId[i]);
+            if (itemProt)
+            {
+                if (itemProt->BagFamily != BAG_FAMILY_KEYS)
+                {
+                    if (itemProt->Class == 6 && (itemProt->SubClass == 2 || itemProt->SubClass == 3))
+                    {
+                        questTurnInAmmoSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) :
+                                                floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
+                    }
+                    else
+                    {
+                        questTurnInSlots += GetItemCount(pQuest->ReqItemId[i]) == pQuest->ReqItemCount[i] ? ceil((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize()) :
+                                            floor((float) pQuest->ReqItemCount[i] / (float) itemProt->GetMaxStackSize());
+                    }
+                }
+            }
+        }
+    }
 
 
-	// Subtract slots used by the ammo.
-	if (ammoSlots >= freeAmmoSlots + questTurnInAmmoSlots)
-		ammoSlots -= freeAmmoSlots + questTurnInAmmoSlots;
-	else
-		ammoSlots = 0;
+    // Subtract slots used by the ammo.
+    if (ammoSlots >= freeAmmoSlots + questTurnInAmmoSlots)
+        ammoSlots -= freeAmmoSlots + questTurnInAmmoSlots;
+    else
+        ammoSlots = 0;
 
-	// Add the remaining ammo to the required slots.
-	requiredSlots += ammoSlots;
+    // Add the remaining ammo to the required slots.
+    requiredSlots += ammoSlots;
 
-	// If the number of free slots plus the number of slots freed
-	// by turning in the quest is smaller than the required slots
-	// we cannot reward the player.
-	if (freeSlots + questTurnInSlots < requiredSlots)
-	{
-		SendEquipError(EQUIP_ERR_INVENTORY_FULL, NULL, NULL);
-		return false;
-	}
+    // If the number of free slots plus the number of slots freed
+    // by turning in the quest is smaller than the required slots
+    // we cannot reward the player.
+    if (freeSlots + questTurnInSlots < requiredSlots)
+    {
+        SendEquipError(EQUIP_ERR_INVENTORY_FULL, NULL, NULL);
+        return false;
+    }
 
     return true;
 }
