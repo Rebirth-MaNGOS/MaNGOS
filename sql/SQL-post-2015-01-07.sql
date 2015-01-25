@@ -1132,3 +1132,57 @@ UPDATE `zp_mangosd`.`creature_template` SET `minhealth`=3052, `maxhealth`=3052, 
 
 -- Adjust size of Spawn of Mar'li
 UPDATE `zp_mangosd`.`creature_template` SET `scale`=0.4 WHERE  `entry`=15041;
+
+/************************* Update Hitbox **************************/
+-- Edana Hatetalon
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1, `combat_reach`=1 WHERE  `modelid`=974;
+
+-- Mechanized sentry
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1 WHERE  `modelid`=6978;
+
+-- King Mukla
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1, `combat_reach`=1 WHERE  `modelid`=792;
+
+-- Firelord
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.5, `combat_reach`=2 WHERE  `modelid`=12231;
+
+-- Core Hounds
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.5 WHERE  `modelid`=12189;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.5 WHERE  `modelid`=12168;
+
+UPDATE `zp_mangosd`.`creature_model_info` SET `combat_reach`=3 WHERE  `modelid`=12189;
+UPDATE `zp_mangosd`.`creature_model_info` SET `combat_reach`=1.5 WHERE  `modelid`=12168;
+
+-- Garr
+UPDATE `zp_mangosd`.`creature_model_info` SET `combat_reach`=2 WHERE  `modelid`=12110;
+
+-- Gehennas + adds
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1 WHERE  `modelid`=13030;
+UPDATE `zp_mangosd`.`creature_model_info` SET `combat_reach`=1 WHERE  `modelid`=12030;
+UPDATE `zp_mangosd`.`creature_model_info` SET `combat_reach`=1 WHERE  `modelid`=13030;
+
+-- BRS Spirestone Ogres
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1, `combat_reach`=0.7 WHERE  `modelid`=11577;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.1, `combat_reach`=1 WHERE  `modelid`=11581;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.1, `combat_reach`=1 WHERE  `modelid`=11579;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.1, `combat_reach`=1 WHERE  `modelid`=11562;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.3, `combat_reach`=1 WHERE  `modelid`=11565;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=0.7, `combat_reach`=1 WHERE  `modelid`=9732;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1, `combat_reach`=1 WHERE  `modelid`=11582;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.1, `combat_reach`=1 WHERE  `modelid`=11543;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.3, `combat_reach`=1 WHERE  `modelid`=11583;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.1, `combat_reach`=1 WHERE  `modelid`=11584;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.1, `combat_reach`=1 WHERE  `modelid`=11585;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=2.3, `combat_reach`=2 WHERE  `modelid`=8711;
+
+-- Dire Maul Ogres
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.2, `combat_reach`=1 WHERE  `modelid`=12471;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.1, `combat_reach`=1 WHERE  `modelid`=12473;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.2, `combat_reach`=1 WHERE  `modelid`=12472;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.2, `combat_reach`=1 WHERE  `modelid`=11537;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.1, `combat_reach`=1 WHERE  `modelid`=11564;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1, `combat_reach`=1.1 WHERE  `modelid`=14423;
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.2, `combat_reach`=1 WHERE  `modelid`=10709;
+
+-- Ogre Guards
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.2, `combat_reach`=1 WHERE  `modelid`=11561; 
