@@ -2483,7 +2483,7 @@ void Spell::EffectCreateItem(SpellEffectIndex eff_idx)
         }
         case 13982: // Altered Black Dragonflight Mold
         {
-            if(unitTarget && m_caster);
+            if(unitTarget && m_caster)
             {
                 unitTarget = m_caster;
                 DoCreateItem(eff_idx,m_spellInfo->EffectItemType[eff_idx]);
