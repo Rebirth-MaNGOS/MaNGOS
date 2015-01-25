@@ -2468,12 +2468,28 @@ void Spell::EffectCreateItem(SpellEffectIndex eff_idx)
 {
     DoCreateItem(eff_idx,m_spellInfo->EffectItemType[eff_idx]);
 
-    if(m_caster && m_spellInfo && m_spellInfo->Id == 15958)
+    switch(m_spellInfo->Id)
     {
-        GameObject *rookeryEgg = m_caster->GetClosestGameObjectWithEntry(m_caster, 175124, 5.0f);
+        case 15958: // Rookery egg
+        {
+            if(m_caster)
+            {
+                GameObject *rookeryEgg = m_caster->GetClosestGameObjectWithEntry(m_caster, 175124, 5.0f);
 
-        if(rookeryEgg)
-            rookeryEgg->GetMap()->Remove(rookeryEgg, true);
+                if(rookeryEgg)
+                    rookeryEgg->GetMap()->Remove(rookeryEgg, true);
+            }
+            break;
+        }
+        case 13982: // Altered Black Dragonflight Mold
+        {
+            if(unitTarget && m_caster);
+            {
+                unitTarget = m_caster;
+                DoCreateItem(eff_idx,m_spellInfo->EffectItemType[eff_idx]);
+            }
+            break;
+        }
     }
 }
 
