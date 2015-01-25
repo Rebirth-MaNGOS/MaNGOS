@@ -30,6 +30,7 @@ mob_freed_soul
 mob_restless_soul
 mobs_spectral_ghostly_citizen
 mob_the_unforgiven
+mob_eye_of_naxxramas
 npc_aurius
 npc_stratholme_trigger
 EndContentData */
@@ -543,6 +544,85 @@ CreatureAI* GetAI_mob_the_unforgiven(Creature* pCreature)
 }
 
 /*######
+## mob_eye_of_naxxramas
+######*/
+
+enum
+{
+	YELL_LIVING					= -1329021,
+	SPELL_ROOT_SELF             = 23973,	//taken from rag
+    SPELL_STEALTH				= 16380,
+	SPELL_SUMMON				= 16381,
+	NPC_ROCKWING_GARGOYLE		= 10408,
+	
+};
+
+struct MANGOS_DLL_DECL mob_eye_of_naxxramasAI : public ScriptedAI
+{
+    mob_eye_of_naxxramasAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_pInstance = (instance_stratholme*)pCreature->GetInstanceData();
+        SetCombatMovement(false);
+		Reset();
+    }
+
+    instance_stratholme* m_pInstance;
+
+    uint32 m_uiSummonTimer;
+	uint32 m_uiChannelTimer;
+
+    void Reset()
+    {
+		DoCastSpellIfCan(m_creature, SPELL_STEALTH);
+		SetCombatMovement(false);
+		m_creature->RemoveAurasDueToSpell(SPELL_ROOT_SELF);
+        m_uiSummonTimer = 9000;
+		m_uiChannelTimer = 500;
+    }
+
+	void Aggro(Unit* /*pAttacker*/)
+	{
+		m_creature->RemoveAurasDueToSpell(SPELL_STEALTH);
+		m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
+		DoScriptText(YELL_LIVING, m_creature);
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		// Cast timer
+        if (m_uiChannelTimer <= uiDiff)
+        {
+			DoCastSpellIfCan(m_creature, SPELL_SUMMON);			// Fake cast, should never finish casting this spell
+		}
+		else 
+			m_uiChannelTimer -= uiDiff;
+
+        // Summon timer
+        if (m_uiSummonTimer <= uiDiff)
+        {
+			float fX, fY, fZ;
+            m_creature->GetPosition(fX, fY, fZ);
+			for(uint8 i = 0; i < 2; ++i)
+                    if (Creature* pGargoyle = m_creature->SummonCreature(NPC_ROCKWING_GARGOYLE, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
+                        pGargoyle->SetInCombatWithZone();
+						
+			m_creature->ForcedDespawn();
+            m_uiSummonTimer = 900000;
+        }
+        else
+            m_uiSummonTimer -= uiDiff;
+    }
+};
+
+CreatureAI* GetAI_mob_eye_of_naxxramas(Creature* pCreature)
+{
+    return new mob_eye_of_naxxramasAI(pCreature);
+}
+
+/*######
 ## npc_aurius
 ######*/
 
@@ -856,6 +936,11 @@ void AddSC_stratholme()
     pNewscript = new Script;
     pNewscript->Name = "mob_the_unforgiven";
     pNewscript->GetAI = &GetAI_mob_the_unforgiven;
+    pNewscript->RegisterSelf();
+
+	 pNewscript = new Script;
+    pNewscript->Name = "mob_eye_of_naxxramas";
+    pNewscript->GetAI = &GetAI_mob_eye_of_naxxramas;
     pNewscript->RegisterSelf();
 
     pNewscript = new Script;

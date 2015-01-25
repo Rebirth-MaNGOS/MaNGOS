@@ -1115,3 +1115,13 @@ INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dis
 INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58008', '58034', '3', '315', '2');
 INSERT INTO `zp_mangosd`.`creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`) VALUES ('58008', '58035', '3', '45', '2');
 
+/***************** Eye of naxxramas SQL **********************/
+-- add yell
+INSERT INTO `zp_scriptdevzerod`.`script_texts` VALUES (-1329021, 'The living are here!', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 6596, 1, 0, 0, 'eye of naxxramas yell on aggro');
+
+-- add target for spell
+INSERT INTO `zp_mangosd`.`spell_script_target` (`entry`, `type`, `targetEntry`) VALUES (16381, 1, 10411);
+
+-- immune all CC + set ai in db
+UPDATE `zp_mangosd`.`creature_template` SET `AIName`='', `ScriptName`='mob_eye_of_naxxramas' WHERE  `entry`=10411;
+UPDATE `zp_mangosd`.`creature_template` SET `mechanic_immune_mask`=583543195 WHERE  `entry`=10411;
