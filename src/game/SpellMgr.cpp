@@ -684,46 +684,48 @@ bool IsBinaryEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
 
 bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
 {
-	// Arcane power should be a positive effect.
-	if (spellproto->Id == 12042)
-		return true;
-	else if (spellproto->Id == 23603) // The Wild Polymorph spell is not a positive effect.
-		return false;
+    // Arcane power should be a positive effect.
+    if (spellproto->Id == 12042)
+        return true;
+    else if (spellproto->Id == 23603) // The Wild Polymorph spell is not a positive effect.
+        return false;
+    else if (spellproto->Id == 19451) // Magmadar's Frenzy should be a positive effect.
+        return true;
 
-	if ((spellproto->Attributes & SPELL_ATTR_HIDDEN) != 0)
-	{
-		//Hidden buffs are the glue that makes talents work, and many of them were being considered negative effects!
-		//Some of them are in fact negative though!
-		switch (spellproto->Id)
-		{
-			case 23183:			// Aura of Frost triggered Spell
-			case 25042:			// Aura of Nature triggered Spell
-				return false;
-			default:
-				break;
-		}
-		return true;
-	}
+    if ((spellproto->Attributes & SPELL_ATTR_HIDDEN) != 0)
+    {
+        //Hidden buffs are the glue that makes talents work, and many of them were being considered negative effects!
+        //Some of them are in fact negative though!
+        switch (spellproto->Id)
+        {
+        case 23183:			// Aura of Frost triggered Spell
+        case 25042:			// Aura of Nature triggered Spell
+            return false;
+        default:
+            break;
+        }
+        return true;
+    }
 
     switch(spellproto->Effect[effIndex])
     {
-		case SPELL_EFFECT_INSTAKILL:
-			switch (spellproto->Id)
-			{
-			case 20479:			//Geddon's Armageddon
-				return true;
-			}
-			break;
-        case SPELL_EFFECT_DUMMY:
-            // some explicitly required dummy effect sets
-            switch(spellproto->Id)
-            {
-                case 28441:                                 // AB Effect 000
-                    return false;
-                default:
-                    break;
-            }
+    case SPELL_EFFECT_INSTAKILL:
+        switch (spellproto->Id)
+        {
+        case 20479:			//Geddon's Armageddon
+            return true;
+        }
+        break;
+    case SPELL_EFFECT_DUMMY:
+        // some explicitly required dummy effect sets
+        switch(spellproto->Id)
+        {
+        case 28441:                                 // AB Effect 000
+            return false;
+        default:
             break;
+        }
+        break;
         // always positive effects (check before target checks that provided non-positive result in some case for positive effects)
         case SPELL_EFFECT_HEAL:
         case SPELL_EFFECT_LEARN_SPELL:
