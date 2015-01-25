@@ -1219,3 +1219,28 @@ UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1, `combat_reach
 -- Remove say + random mob
 DELETE FROM `zp_mangosd`.`creature_ai_scripts` WHERE  `id`=1148602;
 DELETE FROM `zp_mangosd`.`creature` WHERE  `guid`=138007;
+
+/********************************** Wsg + AV Emissary NPC(SW + IF), event linked ************************/
+-- Silverwing
+INSERT INTO `zp_mangosd`.`game_event_creature` (`guid`, `event`) VALUES (160009, 19);
+INSERT INTO `zp_mangosd`.`game_event_creature` (`guid`, `event`) VALUES (160010, 19);
+INSERT INTO `zp_mangosd`.`game_event_creature` (`guid`, `event`) VALUES (160013, 19);
+INSERT INTO `zp_mangosd`.`game_event_creature` (`guid`, `event`) VALUES (160014, 19);
+INSERT INTO `zp_mangosd`.`game_event_creature` (`guid`, `event`) VALUES (160011, 19);
+INSERT INTO `zp_mangosd`.`game_event_creature` (`guid`, `event`) VALUES (160012, 19);
+INSERT INTO `zp_mangosd`.`game_event_creature` (`guid`, `event`) VALUES (160007, 19);
+INSERT INTO `zp_mangosd`.`game_event_creature` (`guid`, `event`) VALUES (160008, 19);
+INSERT INTO `zp_mangosd`.`game_event_creature` (`guid`, `event`) VALUES (160005, 19);
+INSERT INTO `zp_mangosd`.`game_event_creature` (`guid`, `event`) VALUES (160006, 19);
+
+-- stormpike
+UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=20556;
+UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=51627; 
+UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=83184;
+UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=83181;
+UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=13427;
+UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=13428;
+UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=13425;
+UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=13426;
+UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=13423;
+UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=13424;
