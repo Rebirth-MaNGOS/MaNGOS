@@ -1186,3 +1186,36 @@ UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.2, `combat_rea
 
 -- Ogre Guards
 UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1.2, `combat_reach`=1 WHERE  `modelid`=11561; 
+
+/************************* Dire Maul misc ********************************/
+-- Kalendris + Ravenoak bosses, now immune to shackle
+UPDATE `zp_mangosd`.`creature_template` SET `mechanic_immune_mask`=8912913 WHERE  `entry`=11488;
+UPDATE `zp_mangosd`.`creature_template` SET `mechanic_immune_mask`=8912913 WHERE  `entry`=11487;
+
+-- Add text for DM West
+REPLACE INTO `zp_scriptdevzerod`.`script_texts` VALUES (-1429016, 'The demon is loose! Quickly we must restrain him!', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 6, 0, 0, 'highborne summoner SAY_FREE_IMMOLTHAR');
+
+-- Aggro range updated for Ravenoak, her pet + wildspawn imp
+UPDATE `zp_mangosd`.`creature_template` SET `aggrorangeoverride`=50 WHERE  `entry`=11488;
+UPDATE `zp_mangosd`.`creature_template` SET `aggrorangeoverride`=50 WHERE  `entry`=14308;
+UPDATE `zp_mangosd`.`creature_template` SET `aggrorangeoverride`=40 WHERE  `entry`=13276;
+
+-- Doomguard minion updated resistances
+UPDATE `zp_mangosd`.`creature_template` SET `resistance5`=54, `resistance6`=0 WHERE  `entry`=14385;
+
+-- Gordok mastiff updated faction
+UPDATE `zp_mangosd`.`creature_template` SET `faction_A`=14, `faction_H`=14 WHERE  `entry`=13036;
+
+-- AI for Prince Totheldrin
+UPDATE `zp_mangosd`.`creature_template` SET `AIName`='EventAI', `ScriptName`='mob_eventai' WHERE  `entry`=11486;
+REPLACE INTO `zp_mangosd`.`creature_ai_scripts` VALUES (1148601, 11486, 13, 0, 100, 3, 5000, 5000, 0, 0, 11, 20537, 6, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Prince Tortheldrin - Cast Counterspell on Target Spell Casting');
+REPLACE INTO `zp_mangosd`.`creature_ai_scripts` VALUES (1148602, 11486, 9, 0, 100, 3, 0, 8, 9900, 9900, 11, 15589, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Prince Tortheldrin - Cast Whirlwind');
+REPLACE INTO `zp_mangosd`.`creature_ai_scripts` VALUES (1148603, 11486, 9, 0, 100, 3, 0, 5, 15300, 19400, 11, 22920, 1, 1, 13, -30, 1, 0, 0, 0, 0, 0, 'Prince Tortheldrin - Cast Arcane Blast + threat reduction');
+REPLACE INTO `zp_mangosd`.`creature_ai_scripts` VALUES (1148604, 11486, 0, 0, 100, 3, 14400, 14400, 11100, 14200, 11, 22995, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Prince Tortheldrin - Summon');
+
+-- Prince totheldrin hitbox
+UPDATE `zp_mangosd`.`creature_model_info` SET `bounding_radius`=1, `combat_reach`=1.5 WHERE  `modelid`=11256;
+
+-- Remove say + random mob
+DELETE FROM `zp_mangosd`.`creature_ai_scripts` WHERE  `id`=1148602;
+DELETE FROM `zp_mangosd`.`creature` WHERE  `guid`=138007;
