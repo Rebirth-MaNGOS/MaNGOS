@@ -3352,6 +3352,10 @@ void Unit::_UpdateAutoRepeatSpell()
     //castroutine
     if (isAttackReady(RANGED_ATTACK))
     {
+        // Force shooting players to stand.
+        if (getStandState() != UNIT_STAND_STATE_STAND)
+            SetStandState(UNIT_STAND_STATE_STAND);
+        
         //Update Target for Player
         if (GetTypeId() == TYPEID_PLAYER && GetMap())
         {
