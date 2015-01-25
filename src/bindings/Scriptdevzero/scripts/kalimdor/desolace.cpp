@@ -192,6 +192,7 @@ struct MANGOS_DLL_DECL npc_dalinda_malemAI : public npc_escortAI
     {
         if (GetPlayerForEscort())
             DoScriptText(DALINDA_SAY1, m_creature);
+		    m_creature->SetFactionTemporary(124);			// added temp faction so mobs can hit her
     }
 
 	void WaypointReached(uint32 uiPointId)

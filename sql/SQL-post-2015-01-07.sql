@@ -322,3 +322,6 @@ INSERT INTO `zp_mangosd`.`creature_movement` VALUES (54237, 4, 3781.45, -3588.16
 
 -- Make sure he doesn't use waypoint movement on spawn
 UPDATE `zp_mangosd`.`creature` SET `MovementType`=0 WHERE  `guid`=54237;
+
+-- Dalinda Malem no longer hostile to mobs around, unless on escort q
+UPDATE `zp_mangosd`.`creature_template` SET `faction_A`=35 WHERE  `entry`=5644;
