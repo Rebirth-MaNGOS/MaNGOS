@@ -2069,7 +2069,6 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
         }
         else
         {
-
             // If the spell can stack and the spell is already applied on the target it shouldn't be checked towards the limit.
             bool stackable_aura_found = false;
             if (m_spellInfo->StackAmount &&

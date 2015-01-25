@@ -949,6 +949,7 @@ class SpellMgr
 
         bool IsRankSpellDueToSpell(SpellEntry const *spellInfo_1,uint32 spellId_2) const;
         bool IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) const;
+        inline static bool IsEQSpells(uint32 spellId_1, uint32 spellId_2, uint32 givenId_1, uint32 givenId_2);
         bool canStackSpellRanksInSpellBook(SpellEntry const *spellInfo) const;
         bool IsRankedSpellNonStackableInSpellBook(SpellEntry const *spellInfo) const
         {

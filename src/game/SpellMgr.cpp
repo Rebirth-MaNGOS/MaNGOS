@@ -2100,6 +2100,8 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     // Dragonmaw Illusion (multi-family check)
                     if (spellId_1 == 40216 && spellId_2 == 42016)
                         return false;
+                    
+                    
 
                     break;
                 }
@@ -2285,6 +2287,12 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 if ((spellInfo_1->Id == 16864 && spellInfo_2->Id == 37311) ||
                     (spellInfo_2->Id == 16864 && spellInfo_1->Id == 37311))
                     return false;
+                
+                // Mark of the Wild and Gift of the Wild should not stack.
+                if (IsEQSpells(spellId_1, spellId_2, 21849, 1126) || IsEQSpells(spellId_1, spellId_2, 21849, 5232) ||
+                    IsEQSpells(spellId_1, spellId_2, 21849, 6756) || IsEQSpells(spellId_1, spellId_2, 21850, 1126) ||
+                    IsEQSpells(spellId_1, spellId_2, 21850, 5232) || IsEQSpells(spellId_1, spellId_2, 21850, 6756))
+                    return true;
             }
 
             // Leader of the Pack and Scroll of Stamina (multi-family check)
@@ -2435,6 +2443,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
         return false;
 
     return true;
+}
+
+bool SpellMgr::IsEQSpells(uint32 spellId_1, uint32 spellId_2, uint32 givenId_1, uint32 givenId_2)
+{
+    return (spellId_1 == givenId_1 || spellId_2 == givenId_1) && (spellId_1 == givenId_2 || spellId_2 == givenId_2);
 }
 
 bool SpellMgr::IsProfessionOrRidingSpell(uint32 spellId)
