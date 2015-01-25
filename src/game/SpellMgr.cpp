@@ -684,14 +684,18 @@ bool IsBinaryEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
 
 bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
 {
-    // Arcane power should be a positive effect.
-    if (spellproto->Id == 12042)
+    switch (spellproto->Id)
+    {
+    case 12042: // Arcane power should be a positive effect.
         return true;
-    else if (spellproto->Id == 23603) // The Wild Polymorph spell is not a positive effect.
+    case 23603: // The Wild Polymorph spell is not a positive effect.
         return false;
-    else if (spellproto->Id == 19451) // Magmadar's Frenzy should be a positive effect.
+    case 19451: // Magmadar's Frenzy should be a positive effect.
         return true;
-
+    case 21153: // The Bonereaver's Edge effect should be positive.
+        return true;
+    }
+            
     if ((spellproto->Attributes & SPELL_ATTR_HIDDEN) != 0)
     {
         //Hidden buffs are the glue that makes talents work, and many of them were being considered negative effects!
