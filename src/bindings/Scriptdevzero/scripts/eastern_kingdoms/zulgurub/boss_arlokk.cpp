@@ -139,18 +139,18 @@ struct MANGOS_DLL_DECL boss_arlokkAI : public ScriptedAI
                 DoScriptText(SAY_FEAST_PANTHER, m_creature, pPlayer);
     }
 
-    void JustSummoned(Creature* pSummoned)
+    void JustSummoned(Creature* pSummoned)				// Removed, should not increase hp
     {
         ++m_uiSummonCount;
 
-        // New health for new panther(s)
+      /*  // New health for new panther(s)
         uint32 m_uiNewHealth = (pSummoned->GetMaxHealth() + ((m_uiSummonCount < 13 ? 50 : (m_uiSummonCount < 24 ? 200 : (m_uiSummonCount > 24 ? 500 : 0))) * m_uiSummonCount));
 
         if (m_uiNewHealth > 25000)
             m_uiNewHealth = 25000;
 
         pSummoned->SetMaxHealth(m_uiNewHealth);
-        pSummoned->SetHealth(m_uiNewHealth);
+        pSummoned->SetHealth(m_uiNewHealth);*/
 
         if (Unit* pUnit = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
         {
