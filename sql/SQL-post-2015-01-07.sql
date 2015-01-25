@@ -1244,3 +1244,12 @@ UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=13425;
 UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=13426;
 UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=13423;
 UPDATE `zp_mangosd`.`game_event_creature` SET `event`=18 WHERE  `guid`=13424;
+
+/******************* LBRS Misc *******************/
+-- Corrected Faction Challenge to Urok event
+UPDATE `zp_mangosd`.`creature_template` SET `faction_A`=14, `faction_H`=14 WHERE  `entry`=10602;
+
+-- Corrected spider + mother smolderweb position
+REPLACE INTO `zp_mangosd`.`creature` VALUES (3004107, 10374, 229, 0, 0, -146.424, -535.747, 7.37509, 5.20997, 10800, 2, 0, 10768, 0, 0, 1);
+REPLACE INTO `zp_mangosd`.`creature` VALUES (44342, 10596, 229, 9929, 0, -126.5, -567.449, 11.9353, 0.65467, 1000000, 0, 0, 600000, 0, 0, 1);
+
