@@ -1129,3 +1129,6 @@ UPDATE `zp_mangosd`.`creature_template` SET `mechanic_immune_mask`=583543195 WHE
 /******************** Zulian Prowler **************************/
 -- Add armor + adjust hp
 UPDATE `zp_mangosd`.`creature_template` SET `minhealth`=3052, `maxhealth`=3052, `armor`=3791 WHERE  `entry`=15101;
+
+-- Adjust size of Spawn of Mar'li
+UPDATE `zp_mangosd`.`creature_template` SET `scale`=0.4 WHERE  `entry`=15041;
