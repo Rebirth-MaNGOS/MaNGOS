@@ -1125,3 +1125,7 @@ INSERT INTO `zp_mangosd`.`spell_script_target` (`entry`, `type`, `targetEntry`) 
 -- immune all CC + set ai in db
 UPDATE `zp_mangosd`.`creature_template` SET `AIName`='', `ScriptName`='mob_eye_of_naxxramas' WHERE  `entry`=10411;
 UPDATE `zp_mangosd`.`creature_template` SET `mechanic_immune_mask`=583543195 WHERE  `entry`=10411;
+
+/******************** Zulian Prowler **************************/
+-- Add armor + adjust hp
+UPDATE `zp_mangosd`.`creature_template` SET `minhealth`=3052, `maxhealth`=3052, `armor`=3791 WHERE  `entry`=15101;
