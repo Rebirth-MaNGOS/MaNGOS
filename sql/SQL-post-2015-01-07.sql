@@ -1476,3 +1476,6 @@ REPLACE INTO zp_mangosd.quest_end_scripts (`id`, `delay`, `command`, `datalong`,
 REPLACE INTO zp_mangosd.quest_end_scripts (`id`, `delay`, `command`, `datalong`, `datalong2`) VALUES ('7782', '10', '9', '1712704', '127800');
 UPDATE `zp_mangosd`.`quest_template` SET `CompleteScript`='7782' WHERE `entry`='7782';
 UPDATE `zp_mangosd`.`gameobject_template` SET `type`='3', `faction`='114' WHERE `entry`='179882';
+
+/********** Primordial Behemoth added missing spell *******************/
+UPDATE `zp_mangosd`.`creature_ai_scripts` SET `action1_param1`=23391 WHERE  `id`=1220602;
