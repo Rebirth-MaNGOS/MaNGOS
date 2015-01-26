@@ -1457,7 +1457,10 @@ REPLACE INTO `zp_scriptdevzerod`.`script_texts` VALUES (-1090028, 'Warning! Warn
 UPDATE `zp_mangosd`.`creature_template` SET `AIName`='', `ScriptName`='mob_mobile_alert_system' WHERE  `entry`=7849;
 
 /********************** Nefarian Heads **************************/
+
 -- Stormwind
-REPLACE INTO `zp_mangosd`.`gameobject` VALUES (1712704, 179882, 0, -8926.53, 493.777, 106, 2, 0, 0, 0.998182, 0.0602684, 25, 100, 1);
+REPLACE INTO `zp_mangosd`.`gameobject` (`guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`) VALUES (1712704, 179882, 0, -8926.3, 496.3, 106, 2.4, 0, 0, 0, 0, -1, 0, 0);
+
 -- Orgrimmar
-REPLACE INTO `zp_mangosd`.`gameobject` VALUES (1712703, 179881, 1, 1539.23, -4422.79, 7.8, 1.6, 0, 0, 0.999889, -0.0149023, 25, 100, 1);
+REPLACE INTO `zp_mangosd`.`gameobject` (`guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`) VALUES (1712703, 179881, 1, 1539.23, -4422.79, 7.8, 5.3, 0, 0, 0, 0, -1, 0, 0);
+
