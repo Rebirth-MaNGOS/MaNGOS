@@ -1447,3 +1447,6 @@ INSERT INTO `creature_ai_scripts` VALUES (415401, 4154, 12, 0, 100, 1, 20, 0, 18
 UPDATE `zp_mangosd`.`creature_template` SET `resistance5`=185 WHERE  `entry`=14601;
 UPDATE `zp_mangosd`.`creature_template` SET `resistance5`=185 WHERE  `entry`=11983;
 UPDATE `zp_mangosd`.`creature_template` SET `resistance5`=185 WHERE  `entry`=11981;
+
+-- Krixix 10day respawn
+UPDATE `zp_mangosd`.`creature` SET `spawntimesecs`=864000 WHERE  `guid`=84627;
