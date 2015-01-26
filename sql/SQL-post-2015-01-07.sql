@@ -1340,3 +1340,57 @@ UPDATE `zp_mangosd`.`creature_template` SET `speed_walk`=0.79, `speed_run`=0.81 
 
 -- Increase Magistrate barthilas speed slightly
 UPDATE `zp_mangosd`.`creature_template` SET `speed_run`=1.3 WHERE  `entry`=10435;
+
+/************************* Add Armor to some NPCs *********************/
+-- Guards
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=3153 WHERE  `entry`=1642;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4500 WHERE  `entry`=1756;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4500 WHERE  `entry`=5595;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=3798 WHERE  `entry`=4979;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4500 WHERE  `entry`=4262;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4500 WHERE  `entry`=3296;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=3153 WHERE  `entry`=3571;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=542 WHERE  `entry`=1423;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=1463 WHERE  `entry`=727;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=2437 WHERE  `entry`=1475;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=2953 WHERE  `entry`=2405;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4500 WHERE  `entry`=2439;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=2953 WHERE  `entry`=2621;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=2964 WHERE  `entry`=4951;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=2357 WHERE  `entry`=4995;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=2357 WHERE  `entry`=4996;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=1203 WHERE  `entry`=5085;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4500 WHERE  `entry`=5624;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=5196 WHERE  `entry`=7980;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=5317 WHERE  `entry`=11099;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=2310 WHERE  `entry`=11279;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=3482 WHERE  `entry`=11598;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4500 WHERE  `entry`=12053;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4500 WHERE  `entry`=12127;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=5153 WHERE  `entry`=13080;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4362 WHERE  `entry`=14284;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4362 WHERE  `entry`=14285;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=376 WHERE  `entry`=3854;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=431 WHERE  `entry`=3877;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=3997 WHERE  `entry`=10037;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=5196 WHERE  `entry`=15852;
+
+-- Azuregos
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4691 WHERE  `entry`=6109;
+
+-- crimson rifleman, crimson hammersmith, crimson elite
+
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4325 WHERE  `entry`=11120;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=2964 WHERE  `entry`=11054;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=3074 WHERE  `entry`=12128;
+
+-- Rookery whelp, hatcher, guardian
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=1873 WHERE  `entry`=10161;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=3420 WHERE  `entry`=10683;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=3914 WHERE  `entry`=10258;
+
+-- Timmy the cruel
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=4256 WHERE  `entry`=10808;
+
+-- Warchief Rend Blackhand
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=5468 WHERE  `entry`=10429;
