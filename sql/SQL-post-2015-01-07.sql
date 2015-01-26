@@ -1455,3 +1455,9 @@ UPDATE `zp_mangosd`.`creature` SET `spawntimesecs`=864000 WHERE  `guid`=84627;
 -- Add text + ai
 REPLACE INTO `zp_scriptdevzerod`.`script_texts` VALUES (-1090028, 'Warning! Warning! Intruder alert! Intruder alert!', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 1, 0, 0, 'Mobile Alert System Yell');
 UPDATE `zp_mangosd`.`creature_template` SET `AIName`='', `ScriptName`='mob_mobile_alert_system' WHERE  `entry`=7849;
+
+/********************** Nefarian Heads **************************/
+-- Stormwind
+INSERT INTO `gameobject` VALUES (1712704, 179882, 0, -8926.53, 493.777, 106, 2, 0, 0, 0.998182, 0.0602684, 25, 100, 1);
+-- Orgrimmar
+INSERT INTO `gameobject` VALUES (1712703, 179881, 1, 1539.23, -4422.79, 7.8, 1.6, 0, 0, 0.999889, -0.0149023, 25, 100, 1);
