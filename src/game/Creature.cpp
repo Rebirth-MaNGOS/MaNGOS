@@ -805,7 +805,9 @@ void Creature::RegenerateHealth()
         float HealthIncreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_HEALTH);
         float Spirit = GetStat(STAT_SPIRIT);
 
-        if( GetPower(POWER_MANA) > 0 )
+        if (IsPolymorphed())
+            addvalue = uint32(maxValue / 3.f);
+        else if( GetPower(POWER_MANA) > 0 )
             addvalue = uint32(Spirit * 0.25 * HealthIncreaseRate);
         else
             addvalue = uint32(Spirit * 0.80 * HealthIncreaseRate);
