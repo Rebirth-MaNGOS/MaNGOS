@@ -11747,6 +11747,11 @@ void Player::SendPreparedGossip(WorldObject *pSource)
     if (uint32 menuId = PlayerTalkClass->GetGossipMenu().GetMenuId())
         textId = GetGossipTextId(menuId);
 
+    // We don't want gameobjects to greet players.
+
+    if(pSource->GetTypeId() == TYPEID_GAMEOBJECT && PlayerTalkClass->GetQuestMenu().Empty() && textId == DEFAULT_GOSSIP_MESSAGE)
+        return;
+
     PlayerTalkClass->SendGossipMenu(textId, pSource->GetObjectGuid());
 }
 

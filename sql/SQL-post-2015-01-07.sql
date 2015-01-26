@@ -1457,10 +1457,12 @@ REPLACE INTO `zp_scriptdevzerod`.`script_texts` VALUES (-1090028, 'Warning! Warn
 UPDATE `zp_mangosd`.`creature_template` SET `AIName`='', `ScriptName`='mob_mobile_alert_system' WHERE  `entry`=7849;
 
 /********************** Nefarian Heads **************************/
+
 -- Stormwind
-REPLACE INTO `zp_mangosd`.`gameobject` VALUES (1712704, 179882, 0, -8926.53, 493.777, 106, 2, 0, 0, 0.998182, 0.0602684, 25, 100, 1);
+REPLACE INTO `zp_mangosd`.`gameobject` (`guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`) VALUES (1712704, 179882, 0, -8926.3, 496.3, 106, 2.4, 0, 0, 0, 0, -1, 0, 0);
+
 -- Orgrimmar
-REPLACE INTO `zp_mangosd`.`gameobject` VALUES (1712703, 179881, 1, 1539.23, -4422.79, 7.8, 1.6, 0, 0, 0.999889, -0.0149023, 25, 100, 1);
+REPLACE INTO `zp_mangosd`.`gameobject` (`guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`) VALUES (1712703, 179881, 1, 1539.23, -4422.79, 7.8, 5.3, 0, 0, 0, 0, -1, 0, 0);
 
 -- Turn in Alliance talk.
 REPLACE INTO `zp_mangosd`.`db_script_string` (`entry`, `content_default`) VALUES ('2000005253', 'Citizens of the Alliance, the Lord of Blackrock is slain! Nefarian has been subdued by $N and $G his : her; allies!');
@@ -1473,4 +1475,3 @@ REPLACE INTO zp_mangosd.quest_end_scripts (`id`, `delay`, `command`, `datalong`,
 REPLACE INTO zp_mangosd.quest_end_scripts (`id`, `delay`, `command`, `datalong`, `datalong2`) VALUES ('7782', '15', '15', '22888', '0');
 REPLACE INTO zp_mangosd.quest_end_scripts (`id`, `delay`, `command`, `datalong`, `datalong2`) VALUES ('7782', '18', '9', '1712704', '127800');
 UPDATE `zp_mangosd`.`quest_template` SET `CompleteScript`='7782' WHERE `entry`='7782';
-
