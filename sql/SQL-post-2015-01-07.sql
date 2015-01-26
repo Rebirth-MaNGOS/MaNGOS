@@ -1253,3 +1253,7 @@ UPDATE `zp_mangosd`.`creature_template` SET `faction_A`=14, `faction_H`=14 WHERE
 REPLACE INTO `zp_mangosd`.`creature` VALUES (3004107, 10374, 229, 0, 0, -146.424, -535.747, 7.37509, 5.20997, 10800, 2, 0, 10768, 0, 0, 1);
 REPLACE INTO `zp_mangosd`.`creature` VALUES (44342, 10596, 229, 9929, 0, -126.5, -567.449, 11.9353, 0.65467, 1000000, 0, 0, 600000, 0, 0, 1);
 
+/************************** Legend of Stalvan *****************************/
+-- Adjusted faction, armor + where it spawns on quest turn in
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=276, `faction_A`=14, `faction_H`=14 WHERE  `entry`=2044;
+UPDATE `zp_mangosd`.`quest_start_scripts` SET `x`=-8831.1 WHERE  `id`=74 LIMIT 1;
