@@ -1298,3 +1298,29 @@ INSERT INTO `zp_mangosd`.`creature_ai_scripts` VALUES (174802, 1748, 2, 0, 100, 
 INSERT INTO `zp_mangosd`.`creature_ai_scripts` VALUES (174803, 1748, 0, 0, 50, 1, 120000, 150000, 120000, 240000, 11, 25807, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Highlord Bolvar Fordragon - Cast Greater Heal rarely');
 INSERT INTO `zp_mangosd`.`creature_ai_scripts` VALUES (174804, 1748, 0, 0, 100, 1, 4000, 15000, 8000, 22000, 11, 15284, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Highlord Bolvar Fordragon - Cleave');
 INSERT INTO `zp_mangosd`.`creature_ai_scripts` VALUES (174805, 1748, 0, 0, 100, 1, 18000, 25000, 23000, 30000, 11, 20683, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Highlord Bolvar Fordragon - Cast High Lord\'s Justice');
+
+/************************* More Misc NPCs ***********************/
+-- Commander springvale add missing spells
+REPLACE INTO `zp_mangosd`.`creature_ai_scripts` (`id`, `creature_id`, `event_type`, `event_inverse_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `action1_type`, `action1_param1`, `action1_param2`, `action1_param3`, `action2_type`, `action2_param1`, `action2_param2`, `action2_param3`, `action3_type`, `action3_param1`, `action3_param2`, `action3_param3`, `comment`) VALUES (427801, 4278, 0, 0, 100, 3, 10300, 17800, 61100, 63500, 11, 5588, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Commander Springvale - Cast Hammer of Justice');
+REPLACE INTO `zp_mangosd`.`creature_ai_scripts` (`id`, `creature_id`, `event_type`, `event_inverse_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `action1_type`, `action1_param1`, `action1_param2`, `action1_param3`, `action2_type`, `action2_param1`, `action2_param2`, `action2_param3`, `action3_type`, `action3_param1`, `action3_param2`, `action3_param3`, `comment`) VALUES (427802, 4278, 14, 0, 100, 3, 800, 40, 17500, 22300, 11, 1026, 6, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Commander Springvale - Cast Holy Light on Friendlies');
+REPLACE INTO `zp_mangosd`.`creature_ai_scripts` (`id`, `creature_id`, `event_type`, `event_inverse_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `action1_type`, `action1_param1`, `action1_param2`, `action1_param3`, `action2_type`, `action2_param1`, `action2_param2`, `action2_param3`, `action3_type`, `action3_param1`, `action3_param2`, `action3_param3`, `comment`) VALUES (427803, 4278, 2, 0, 100, 2, 30, 0, 30000, 36000, 11, 642, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Commander Springvale - Cast Divine shield at 30% hp');
+REPLACE INTO `zp_mangosd`.`creature_ai_scripts` (`id`, `creature_id`, `event_type`, `event_inverse_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `action1_type`, `action1_param1`, `action1_param2`, `action1_param3`, `action2_type`, `action2_param1`, `action2_param2`, `action2_param3`, `action3_type`, `action3_param1`, `action3_param2`, `action3_param3`, `comment`) VALUES (427804, 4278, 23, 0, 100, 2, 642, 1, 0, 0, 11, 1026, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Commander Springvale - Cast heal if divine shield is up');
+
+-- Earthcaller halmgar, armor, mana, faction, and spell
+REPLACE INTO `zp_mangosd`.`creature_template` VALUES (4842, 0, 0, 6102, 0, 'Earthcaller Halmgar', NULL, 0, 32, 32, 3782, 3782, 732, 732, 863, 152, 152, 0, 1.6, 1.11286, 0, 4, 221.95, 286.35, 0, 102, 1, 1341, 1475, 0, 2, 0, 0, 0, 0, 0, 0, 0, 44.84, 61.655, 100, 7, 0, 4842, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70, 349, 'EventAI', 1, 3, 0, 0, 1, 0, 0, 0, 617299931, 0, 'mob_eventai');
+REPLACE INTO `zp_mangosd`.`creature_ai_scripts` VALUES (484202, 4842, 4, 0, 100, 2, 0, 0, 0, 0, 11, 8270, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Earthcaller Halmgar - Summon Earth Rumbler on Aggro');
+
+-- ITEM Immature Venomsac add 1 IRL Hour duration
+UPDATE `zp_mangosd`.`item_template` SET `Duration`=3600, `ExtraFlags`=2 WHERE  `entry`=12586;
+
+-- Add weapon to Lord Valthalak
+UPDATE `zp_mangosd`.`creature_template` SET `equipment_id`=103 WHERE  `entry`=16042;
+
+-- Resolve combat bug outside stratholme(bridge)
+UPDATE `zp_mangosd`.`creature_template` SET `MovementType`=0 WHERE  `entry`=8477;
+
+-- Shade of jin'do now are undead instead of beast
+UPDATE `zp_mangosd`.`creature_template` SET `type`=6 WHERE  `entry`=14986;
+
+-- Added NPC for SFK intro
+INSERT INTO `zp_mangosd`.`creature` VALUES (90430, 10000, 33, 0, 0, -219.345, 2154.02, 81.2098, 5.12723, 43200, 0, 0, 4640, 1530, 0, 0);
