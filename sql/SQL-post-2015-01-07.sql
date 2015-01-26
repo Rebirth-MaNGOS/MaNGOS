@@ -1394,3 +1394,32 @@ UPDATE `zp_mangosd`.`creature_template` SET `armor`=4256 WHERE  `entry`=10808;
 
 -- Warchief Rend Blackhand
 UPDATE `zp_mangosd`.`creature_template` SET `armor`=5468 WHERE  `entry`=10429;
+
+/******************** Adjusted resistance + some armor for Dark Iron Dwarves ******************/
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=6123;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=1981;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=5, `resistance6`=0 WHERE  `entry`=6124;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=642, `resistance6`=0 WHERE  `entry`=2149;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=10, `resistance6`=0 WHERE  `entry`=1222;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=1169;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=1051;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=6523;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=10, `resistance6`=0 WHERE  `entry`=1052;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=1053;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=12, `resistance6`=0 WHERE  `entry`=1054;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=12, `resistance6`=0 WHERE  `entry`=4062;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=2575;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=5, `resistance6`=0 WHERE  `entry`=2577;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=10, `resistance6`=0 WHERE  `entry`=6212;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=30, `resistance6`=0 WHERE  `entry`=6228;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=2431, `resistance6`=0 WHERE  `entry`=8337;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=15692;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=45, `resistance6`=0 WHERE  `entry`=5839;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=8637;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=5844;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance3`=15, `resistance6`=10 WHERE  `entry`=5840;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=5846;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=8566;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=2344, `resistance6`=0 WHERE  `entry`=8504;
+UPDATE `zp_mangosd`.`creature_template` SET `armor`=3271, `resistance6`=0 WHERE  `entry`=8338;
+
