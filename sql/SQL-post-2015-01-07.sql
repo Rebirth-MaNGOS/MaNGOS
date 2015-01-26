@@ -1464,3 +1464,5 @@ REPLACE INTO `zp_mangosd`.`gameobject` (`guid`, `id`, `map`, `position_x`, `posi
 -- Orgrimmar
 REPLACE INTO `zp_mangosd`.`gameobject` (`guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`) VALUES (1712703, 179881, 1, 1539.23, -4422.79, 7.8, 5.3, 0, 0, 0, 0, -1, 0, 0);
 
+/********** Primordial Behemoth added missing spell *******************/
+UPDATE `zp_mangosd`.`creature_ai_scripts` SET `action1_param1`=23391 WHERE  `id`=1220602;
