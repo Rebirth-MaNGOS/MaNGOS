@@ -1290,3 +1290,11 @@ UPDATE `zp_mangosd`.`creature_template` SET `faction_A`=14, `faction_H`=14 WHERE
 UPDATE `zp_mangosd`.`creature_template` SET `faction_A`=14, `faction_H`=14 WHERE  `entry`=10405;
 UPDATE `zp_mangosd`.`creature_template` SET `faction_A`=14, `faction_H`=14 WHERE  `entry`=10463;
 UPDATE `zp_mangosd`.`creature_template` SET `faction_A`=14, `faction_H`=14 WHERE  `entry`=10414;
+
+/***************************** Highlord Bolvar Fordragon AI ******************************/
+UPDATE `zp_mangosd`.`creature_template` SET `AIName`='EventAI', `ScriptName`='mob_eventai' WHERE  `entry`=1748;
+INSERT INTO `zp_mangosd`.`creature_ai_scripts` VALUES (174801, 1748, 4, 0, 100, 0, 0, 0, 0, 0, 11, 13008, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Highlord Bolvar Fordragon - Cast Retribution Aura on Aggro');
+INSERT INTO `zp_mangosd`.`creature_ai_scripts` VALUES (174802, 1748, 2, 0, 100, 0, 30, 0, 120000, 120000, 11, 15062, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Highlord Bolvar Fordragon - Cast Shieldwall at 30%');
+INSERT INTO `zp_mangosd`.`creature_ai_scripts` VALUES (174803, 1748, 0, 0, 50, 1, 120000, 150000, 120000, 240000, 11, 25807, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Highlord Bolvar Fordragon - Cast Greater Heal rarely');
+INSERT INTO `zp_mangosd`.`creature_ai_scripts` VALUES (174804, 1748, 0, 0, 100, 1, 4000, 15000, 8000, 22000, 11, 15284, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Highlord Bolvar Fordragon - Cleave');
+INSERT INTO `zp_mangosd`.`creature_ai_scripts` VALUES (174805, 1748, 0, 0, 100, 1, 18000, 25000, 23000, 30000, 11, 20683, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Highlord Bolvar Fordragon - Cast High Lord\'s Justice');
