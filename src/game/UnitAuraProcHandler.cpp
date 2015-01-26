@@ -307,15 +307,28 @@ bool Unit::IsTriggeredAtSpellProcEvent(Unit *pVictim, SpellAuraHolder* holder, S
     }
 
     if (!roll_chance_f(chance))
-	{
-		//Break stealth on sap if improved sap doesnt proc
-		if ( (procSpell && procSpell->SpellIconID == 249 && procSpell->SpellVisual == 257) &&
-		   (spellProto->SpellFamilyName == SPELLFAMILY_ROGUE && spellProto->SpellIconID == 249 && spellProto->SpellVisual == 0) )
-		     RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
-		return false;
-	}
-	
-	return true;
+    {
+        //Break stealth on sap if improved sap doesnt proc
+        if ( (procSpell && procSpell->SpellIconID == 249 && procSpell->SpellVisual == 257) &&
+                (spellProto->SpellFamilyName == SPELLFAMILY_ROGUE && spellProto->SpellIconID == 249 && spellProto->SpellVisual == 0) )
+            RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+        return false;
+    }
+    
+    // The shaman spell Flurry should not be consumed by extra attacks (ex. Windfury).
+    if (m_extraAttacks > 1)
+    {
+        if (spellProto->Id == 16257)
+                return false;
+        
+        for (uint32 spellId = 16277; spellId <= 16280; spellId++)
+        {
+            if (spellProto->Id == spellId)
+                return false;
+        }
+    }
+
+    return true;
 }
 
 SpellAuraProcResult Unit::HandleHasteAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAura, SpellEntry const * /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 cooldown)
