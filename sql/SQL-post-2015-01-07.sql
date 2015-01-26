@@ -1435,3 +1435,7 @@ UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=20, `resistance6`=0 WH
 UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=30, `resistance6`=0 WHERE  `entry`=6228;
 UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=45, `resistance6`=0 WHERE  `entry`=5839;
 UPDATE `zp_mangosd`.`creature_template` SET `resistance3`=25, `resistance6`=10 WHERE  `entry`=5840;
+
+-- AI for Taskmaster Whipfang, no more self fear
+UPDATE `zp_mangosd`.`creature_ai_scripts` SET `event_type`=0, `event_param1`=5000, `event_param2`=15000, `action1_param2`=1 WHERE  `id`=593201;
+
