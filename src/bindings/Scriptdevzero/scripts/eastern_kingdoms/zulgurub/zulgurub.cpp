@@ -23,6 +23,7 @@ EndScriptData */
 
 /* ContentData
 at_altar_of_the_blood_god
+mob_razzashi_venombrood
 mob_gurubashi_axe_thrower
 mob_gurubashi_blood_drinker
 EndContentData */
@@ -46,6 +47,77 @@ bool AreaTrigger_at_zulgurub(Player* pPlayer, AreaTriggerEntry const* pAt)
 
     m_pInstance->HakkarYell(pAt->id);
     return true;
+}
+
+/*######
+##  mob_razzashi_venombrood
+######*/
+
+enum
+{
+	SPELL_INTOXICATING_VENOM	= 24596,
+	SPELL_SLOWING_POISON		= 7992,
+	NPC_RAZZASHI_SKITTERER		= 14880,
+};
+
+struct MANGOS_DLL_DECL mob_razzashi_venombroodAI : public ScriptedAI
+{
+    mob_razzashi_venombroodAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_pInstance = (instance_zulgurub*)pCreature->GetInstanceData();
+		Reset();
+    }
+
+    instance_zulgurub* m_pInstance;
+
+    uint32 m_uiVenomTimer;
+	uint32 m_uiPoisonTimer;
+
+    void Reset()
+    {
+        m_uiVenomTimer = 5000;
+		m_uiPoisonTimer = 0;
+    }
+
+	void JustDied(Unit* /*pKiller*/)			// Spawn adds on death
+    {
+		float fX, fY, fZ;
+            m_creature->GetPosition(fX, fY, fZ);
+			for(uint8 i = 0; i < 5; ++i)
+                    if (Creature* pSkitterer = m_creature->SummonCreature(NPC_RAZZASHI_SKITTERER, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
+                        pSkitterer->AI()->AttackStart(m_creature->getVictim());
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		// Intoxicating venom timer
+        if (m_uiVenomTimer <= uiDiff)
+        {
+			DoCastSpellIfCan(m_creature->getVictim(), SPELL_INTOXICATING_VENOM);
+			m_uiVenomTimer = 60000;
+		}
+		else 
+			m_uiVenomTimer -= uiDiff;
+
+        // Slowing poison timer
+        if (m_uiPoisonTimer <= uiDiff)
+        {
+			DoCastSpellIfCan(m_creature->getVictim(), SPELL_SLOWING_POISON);
+            m_uiPoisonTimer = urand(20000, 25000);
+        }
+        else
+            m_uiPoisonTimer -= uiDiff;
+
+		DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_razzashi_venombrood(Creature* pCreature)
+{
+    return new mob_razzashi_venombroodAI(pCreature);
 }
 
 /*######
@@ -414,6 +486,11 @@ void AddSC_zulgurub()
     pNewScript = new Script;
     pNewScript->Name = "at_zulgurub";
     pNewScript->pAreaTrigger = &AreaTrigger_at_zulgurub;
+    pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "mob_razzashi_venombrood";
+    pNewScript->GetAI = GetAI_razzashi_venombrood;
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;
