@@ -752,6 +752,10 @@ void Spell::prepareDataForTriggerSystem()
         //for a spell... should probably fix that.
         m_negativeEffectMask = 7;
     }
+    
+    // Seal of Command should be able to trigger things.
+    if (m_spellInfo->Id == 20424) 
+        m_canTrigger = true;
 }
 
 void Spell::CleanupTargetList()
