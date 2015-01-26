@@ -1324,3 +1324,19 @@ UPDATE `zp_mangosd`.`creature_template` SET `type`=6 WHERE  `entry`=14986;
 
 -- Added NPC for SFK intro
 INSERT INTO `zp_mangosd`.`creature` VALUES (90430, 10000, 33, 0, 0, -219.345, 2154.02, 81.2098, 5.12723, 43200, 0, 0, 4640, 1530, 0, 0);
+
+/********************* Update npc speed + remove text + npc ******************************/
+-- Remove priestess tyriona in SW
+DELETE FROM `zp_mangosd`.`creature` WHERE  `guid`=43690;
+
+-- removed random text on aggro for skeletal mage + witherbark axethrower.
+DELETE FROM `zp_mangosd`.`creature_ai_scripts` WHERE  `id`=20303;
+DELETE FROM `zp_mangosd`.`creature_ai_scripts` WHERE  `id`=255402;
+
+-- Update Ramstein speed + Ravaged / unstable corpse
+UPDATE `zp_mangosd`.`creature_template` SET `speed_run`= 0.75 WHERE  `entry`=10439;
+UPDATE `zp_mangosd`.`creature_template` SET `speed_walk`=0.79, `speed_run`=0.81 WHERE  `entry`=10480;
+UPDATE `zp_mangosd`.`creature_template` SET `speed_walk`=0.79, `speed_run`=0.81 WHERE  `entry`=10481;
+
+-- Increase Magistrate barthilas speed slightly
+UPDATE `zp_mangosd`.`creature_template` SET `speed_run`=1.3 WHERE  `entry`=10435;
