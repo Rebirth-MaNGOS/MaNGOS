@@ -71,6 +71,7 @@ struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
 
 		m_bIsCorrupted = false;
 		m_bIsBeingCorrupted = false;
+		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_FIRE, true);
 
         Reset();
 

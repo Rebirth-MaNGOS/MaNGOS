@@ -1442,3 +1442,8 @@ UPDATE `zp_mangosd`.`creature_ai_scripts` SET `event_type`=0, `event_param1`=500
 -- AI for Salt Flats Scavenger, should only use execute if player is below 20%
 UPDATE `zp_mangosd`.`creature_template` SET `AIName`='EventAI', `ScriptName`='mob_eventai' WHERE  `entry`=4154;
 INSERT INTO `creature_ai_scripts` VALUES (415401, 4154, 12, 0, 100, 1, 20, 0, 18000, 26000, 11, 7160, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Salt Flats Scavenger - Cast Execute at 20% Target HP');
+
+/********************** BWL 3 Drakes Shadow Resistance ***********************/
+UPDATE `zp_mangosd`.`creature_template` SET `resistance5`=185 WHERE  `entry`=14601;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance5`=185 WHERE  `entry`=11983;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance5`=185 WHERE  `entry`=11981;

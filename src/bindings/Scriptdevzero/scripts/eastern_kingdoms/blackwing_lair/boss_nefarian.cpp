@@ -73,6 +73,7 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
     boss_nefarianAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_FIRE, true);
         Reset();
     }
 

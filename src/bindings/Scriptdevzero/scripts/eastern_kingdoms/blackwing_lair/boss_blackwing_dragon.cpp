@@ -45,6 +45,7 @@ struct MANGOS_DLL_DECL boss_blackwing_dragonAI : public ScriptedAI
     boss_blackwing_dragonAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (instance_blackwing_lair*)pCreature->GetInstanceData();
+		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_FIRE, true);
         Reset();
 
         switch(m_creature->GetEntry())
