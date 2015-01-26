@@ -1473,5 +1473,6 @@ DELETE FROM zp_mangosd.quest_end_scripts WHERE id = 7782;
 REPLACE INTO zp_mangosd.quest_end_scripts (`id`, `delay`, `command`, `datalong`, `datalong4`, `dataint`) VALUES ('7782', '4', '0', '1', '7', '2000005253');
 REPLACE INTO zp_mangosd.quest_end_scripts (`id`, `delay`, `command`, `datalong`, `datalong4`, `dataint`) VALUES ('7782', '12', '0', '1', '7', '2000005254');
 REPLACE INTO zp_mangosd.quest_end_scripts (`id`, `delay`, `command`, `datalong`, `datalong2`) VALUES ('7782', '15', '15', '22888', '0');
-REPLACE INTO zp_mangosd.quest_end_scripts (`id`, `delay`, `command`, `datalong`, `datalong2`) VALUES ('7782', '18', '9', '1712704', '127800');
+REPLACE INTO zp_mangosd.quest_end_scripts (`id`, `delay`, `command`, `datalong`, `datalong2`) VALUES ('7782', '10', '9', '1712704', '127800');
 UPDATE `zp_mangosd`.`quest_template` SET `CompleteScript`='7782' WHERE `entry`='7782';
+UPDATE `zp_mangosd`.`gameobject_template` SET `type`='3', `faction`='114' WHERE `entry`='179882';
