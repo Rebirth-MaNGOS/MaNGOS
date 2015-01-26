@@ -1439,3 +1439,6 @@ UPDATE `zp_mangosd`.`creature_template` SET `resistance3`=25, `resistance6`=10 W
 -- AI for Taskmaster Whipfang, no more self fear
 UPDATE `zp_mangosd`.`creature_ai_scripts` SET `event_type`=0, `event_param1`=5000, `event_param2`=15000, `action1_param2`=1 WHERE  `id`=593201;
 
+-- AI for Salt Flats Scavenger, should only use execute if player is below 20%
+UPDATE `zp_mangosd`.`creature_template` SET `AIName`='EventAI', `ScriptName`='mob_eventai' WHERE  `entry`=4154;
+INSERT INTO `creature_ai_scripts` VALUES (415401, 4154, 12, 0, 100, 1, 20, 0, 18000, 26000, 11, 7160, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Salt Flats Scavenger - Cast Execute at 20% Target HP');
