@@ -1423,3 +1423,15 @@ UPDATE `zp_mangosd`.`creature_template` SET `resistance6`=0 WHERE  `entry`=8566;
 UPDATE `zp_mangosd`.`creature_template` SET `armor`=2344, `resistance6`=0 WHERE  `entry`=8504;
 UPDATE `zp_mangosd`.`creature_template` SET `armor`=3271, `resistance6`=0 WHERE  `entry`=8338;
 
+-- Updated the resistances again
+
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=15, `resistance6`=0 WHERE  `entry`=6124;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=30, `resistance6`=0 WHERE  `entry`=1222;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=30, `resistance6`=0 WHERE  `entry`=1052;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=35, `resistance6`=0 WHERE  `entry`=1054;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=35, `resistance6`=0 WHERE  `entry`=4062;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=20, `resistance6`=0 WHERE  `entry`=2577;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=20, `resistance6`=0 WHERE  `entry`=6212;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=30, `resistance6`=0 WHERE  `entry`=6228;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance2`=45, `resistance6`=0 WHERE  `entry`=5839;
+UPDATE `zp_mangosd`.`creature_template` SET `resistance3`=25, `resistance6`=10 WHERE  `entry`=5840;
