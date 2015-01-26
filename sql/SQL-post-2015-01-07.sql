@@ -1450,3 +1450,8 @@ UPDATE `zp_mangosd`.`creature_template` SET `resistance5`=185 WHERE  `entry`=119
 
 -- Krixix 10day respawn
 UPDATE `zp_mangosd`.`creature` SET `spawntimesecs`=864000 WHERE  `guid`=84627;
+
+/*********************** Mobile Alarm System *********************/
+-- Add text + ai
+INSERT INTO `zp_scriptdevzerod`.`script_texts` VALUES (-1090028, 'Warning! Warning! Intruder alert! Intruder alert!', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 1, 0, 0, 'Mobile Alert System Yell');
+UPDATE `zp_mangosd`.`creature_template` SET `AIName`='', `ScriptName`='mob_mobile_alert_system' WHERE  `entry`=7849;

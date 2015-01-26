@@ -26,6 +26,7 @@ npc_kernobee
 at_clockwerk_run
 go_thermaplug_button
 npc_blastmaster_emi_shortfuse
+mob_mobile_alert_system
 go_matrix_punchograph_3005A
 go_matrix_punchograph_3005B
 go_matrix_punchograph_3005C
@@ -596,6 +597,80 @@ bool GossipSelect_npc_blastmaster_emi_shortfuse(Player* pPlayer, Creature* pCrea
     return true;
 }
 
+
+/*######
+## mob_mobile_alert_system
+######*/
+
+enum
+{
+	YELL_WARNING				= -1090028,
+	NPC_MECHANIZED_GUARDIAN		= 6234,
+	
+};
+
+struct MANGOS_DLL_DECL mob_mobile_alert_systemAI : public ScriptedAI
+{
+    mob_mobile_alert_systemAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_pInstance = (instance_gnomeregan*)pCreature->GetInstanceData();
+		Reset();
+    }
+
+    instance_gnomeregan* m_pInstance;
+
+    uint32 m_uiSummonTimer;
+	uint32 m_uiYellTimer;
+
+    void Reset()
+    {
+		SetCombatMovement(false);
+        m_uiSummonTimer = 10000;
+		m_uiYellTimer = 4000;
+    }
+
+	void Aggro(Unit* /*pAttacker*/)
+	{
+		DoScriptText(YELL_WARNING, m_creature);
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		// Yell timer
+        if (m_uiYellTimer <= uiDiff)
+        {
+			DoScriptText(YELL_WARNING, m_creature);		// Yell 3x before summon
+			m_uiYellTimer = 4000;
+		}
+		else 
+			m_uiYellTimer -= uiDiff;
+
+        // Summon timer
+        if (m_uiSummonTimer <= uiDiff)
+        {
+			float fX, fY, fZ;
+            m_creature->GetPosition(fX, fY, fZ);
+			for(uint8 i = 0; i < 2; ++i)
+                    if (Creature* pGuardian = m_creature->SummonCreature(NPC_MECHANIZED_GUARDIAN, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
+                        pGuardian->SetInCombatWithZone();
+						
+			m_creature->ForcedDespawn();
+            m_uiSummonTimer = 900000;
+        }
+        else
+            m_uiSummonTimer -= uiDiff;
+    }
+};
+
+CreatureAI* GetAI_mobile_alert_system(Creature* pCreature)
+{
+    return new mob_mobile_alert_systemAI(pCreature);
+}
+
+
 /*######
 ## go_thermaplug_button
 ######*/
@@ -901,6 +976,11 @@ void AddSC_gnomeregan()
     pNewScript->pGOUse = &GOUse_go_thermaplug_button;
     pNewScript->RegisterSelf();
 
+	pNewScript = new Script;
+    pNewScript->Name = "mob_mobile_alert_system";
+    pNewScript->GetAI = &GetAI_mobile_alert_system;
+    pNewScript->RegisterSelf();
+	
 	pNewScript = new Script;
     pNewScript->Name = "go_matrix_punchograph_3005A";
     pNewScript->pGossipHelloGO = &GossipHello_go_matrix_punchograph_3005A;
