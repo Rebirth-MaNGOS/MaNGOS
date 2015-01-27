@@ -27,6 +27,7 @@ go_keystone_chamber
 go_shadowforge_cache
 mob_jadespine_basilisk
 npc_lore_keeper_of_norgannon
+mob_obsidian_sentinel
 EndContentData */
 
 #include "precompiled.h"
@@ -213,6 +214,93 @@ bool GossipSelect_npc_lore_keeper_of_norgannon(Player* pPlayer, Creature* pCreat
     return true;
 }
 
+/*######
+## mob_obsidian_sentinel
+######*/
+
+enum eObsidianSentinel
+{
+	NPC_OBSIDIAN_SHARD = 7209,
+	SPELL_SUMMON = 10061,
+	SPELL_SPLINTERED_OBSIDIAN = 10072,
+	SPELL_OBSIDIAN_REFLECTION = 9941,
+};
+
+struct MANGOS_DLL_DECL mob_obsidian_sentinelAI : public ScriptedAI
+{
+    mob_obsidian_sentinelAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+
+    uint32 m_uiSpellReflectTimer;
+	
+	bool Shards80;
+	bool Shards60;
+	bool Shards40;
+	bool Shards20;
+	
+    void Reset()
+    {
+		Shards80 = false;
+		Shards60 = false;
+        Shards40 = false;
+        Shards20 = false;
+		
+
+    m_uiSpellReflectTimer = 5000;
+    }
+
+	void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        if (pSummoned->GetEntry() == NPC_OBSIDIAN_SHARD)
+			DoCastSpellIfCan(m_creature, SPELL_SPLINTERED_OBSIDIAN);
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiSpellReflectTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature, SPELL_OBSIDIAN_REFLECTION);
+            m_uiSpellReflectTimer = urand(15000, 25000);
+        }
+        else
+            m_uiSpellReflectTimer -= uiDiff;
+
+		if (!Shards80 && HealthBelowPct(80))
+        {
+            DoCastSpellIfCan(m_creature, SPELL_SUMMON);
+            Shards80 = true;
+        }
+
+		if (!Shards60 && HealthBelowPct(60))
+        {
+			DoCastSpellIfCan(m_creature, SPELL_SUMMON);
+            Shards60 = true;
+        }
+
+		if (!Shards40 && HealthBelowPct(40))
+        {
+			DoCastSpellIfCan(m_creature, SPELL_SUMMON);
+            Shards40 = true;
+        }
+
+        if (!Shards20 && HealthBelowPct(20))
+        {
+			DoCastSpellIfCan(m_creature, SPELL_SUMMON);
+            Shards20 = true;
+        }
+
+	 DoMeleeAttackIfReady();
+	}
+			
+};
+
+CreatureAI* GetAI_mob_obsidian_sentinel(Creature* pCreature)
+{
+    return new mob_obsidian_sentinelAI(pCreature);
+}
+
 void AddSC_uldaman()
 {
     Script* pNewScript;
@@ -241,5 +329,10 @@ void AddSC_uldaman()
     pNewScript->Name = "npc_lore_keeper_of_norgannon";
     pNewScript->pGossipHello = &GossipHello_npc_lore_keeper_of_norgannon;
     pNewScript->pGossipSelect = &GossipSelect_npc_lore_keeper_of_norgannon;
+    pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "mob_obsidian_sentinel";
+    pNewScript->GetAI = &GetAI_mob_obsidian_sentinel;
     pNewScript->RegisterSelf();
 }
