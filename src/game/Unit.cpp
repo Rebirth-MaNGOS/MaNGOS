@@ -580,7 +580,7 @@ void Unit::DealDamageMods(Unit *pVictim, uint32 &damage, uint32* absorb)
     if (victim_creature)
     {
         // If the creature isn't tagged/tapped the damage map should be cleared.
-        if (!victim_creature->GetOriginalLootRecipient())
+        if (!victim_creature->HasLootRecipient())
             victim_creature->GetDamageTrackingMap().clear();
             
         victim_creature->GetDamageTrackingMap()[GetObjectGuid()] += damage; // Add the damage and the damager to the damage tracking of the victim.
