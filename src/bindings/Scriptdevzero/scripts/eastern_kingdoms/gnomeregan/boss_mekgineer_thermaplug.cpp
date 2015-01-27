@@ -31,7 +31,8 @@ enum eMekgineerThermaplug
     SPELL_KNOCK_AWAY_         = 11130,
 
     // Walking Bomb spells
-    SPELL_WALKING_BOMB_EFFECT = 11504,
+	SPELL_WALKING_BOMB_EFFECT_DMG = 25099,		// Does damage to players around
+    SPELL_WALKING_BOMB_EFFECT = 11504,			// Kills the bomb
 };
 
 struct MANGOS_DLL_DECL boss_mekgineer_thermaplugAI : public ScriptedAI
@@ -128,10 +129,10 @@ struct MANGOS_DLL_DECL mob_walking_bombAI : public ScriptedAI
     mob_walking_bombAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
 
     uint32 m_uiWalkingBombEffectTimer;
-
+	
     void Reset()
     {
-        m_uiWalkingBombEffectTimer = 15000;
+        m_uiWalkingBombEffectTimer = 3000;
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -139,16 +140,22 @@ struct MANGOS_DLL_DECL mob_walking_bombAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        // Walking Bomb Effect (200 dmg in 10 yard radius + caster instant kill)
-        if (m_uiWalkingBombEffectTimer <= uiDiff)
-        {
-            DoCastSpellIfCan(m_creature, SPELL_WALKING_BOMB_EFFECT);
-            m_uiWalkingBombEffectTimer = 15000;
-        }
-        else
-            m_uiWalkingBombEffectTimer -= uiDiff;
-            
-        // No meele?
+			if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+			{
+				if (m_creature->IsWithinDistInMap(pTarget, 10.0f))		// If player is within 10yrds blow up
+				{
+					if (m_uiWalkingBombEffectTimer <= uiDiff)
+					{
+					// Walking Bomb Effect (200 dmg in 10 yard radius + caster instant kill)	- spell not working well
+					DoCastSpellIfCan(m_creature, SPELL_WALKING_BOMB_EFFECT_DMG);			// does about 50 dmg
+					DoCastSpellIfCan(m_creature, SPELL_WALKING_BOMB_EFFECT);
+					}
+					else
+						m_uiWalkingBombEffectTimer -= uiDiff;
+				}
+			}
+		   
+        // No melee
     }
 };
 
