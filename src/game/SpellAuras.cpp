@@ -5662,7 +5662,6 @@ void Aura::PeriodicTick()
 
         DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s heal of %s for %u health inflicted by %u",
                           GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), pdamage, GetId());
-
         int32 gain = target->ModifyHealth(pdamage);
         SpellPeriodicAuraLogInfo pInfo(this, pdamage, 0, 0, 0.0f);
         target->SendPeriodicAuraLog(&pInfo);
@@ -5678,6 +5677,19 @@ void Aura::PeriodicTick()
         // The Well Fed buff from the Bobbing Apples.
         if ( GetId() == 24869 && !target->HasAura(24870) && GetAuraDuration() <= 14000)
             target->CastSpell(target, 24870, true);
+        
+        // Hunter talent Improved Mend Pet
+        if (spellProto->SpellIconID == 267 && spellProto->IsFitToFamily(SPELLFAMILY_HUNTER, uint64(0x800000)))
+        {
+            uint32 chance = 0;
+            if (pCaster->HasAura(19572))
+                chance = 15;
+            else if (pCaster->HasAura(19573))
+                chance = 50;
+            
+            if (urand(0, 99) < chance)
+                pCaster->CastSpell(pCaster, 24406, true);
+        }
 
         break;
     }
