@@ -37,6 +37,19 @@ enum eHazzarah
     MODELID_DEVILSAUR           = 5240,
 };
 
+static Loc Summon[9]=
+{
+    {-11912.7f,-1892.4f,65.14f},// end corner
+	{-11907.29f,-1896.57f,65.14f},
+	{-11901.59f,-1915.91f,65.14f},
+	{-11888.51f,-1911.85f,65.14f},
+	{-11897.6f,-1901.6,65.14f},
+    {-11879.3f,-1920.56f,65.14f},
+	{-11916.45f,-1902.36f,65.14f},
+	{-11892.12f,-1920.99f,65.14f},
+	{-11879.3f,-1920.56f,65.14f},//end corner
+};
+
 struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
 {
     boss_hazzarahAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
@@ -74,28 +87,38 @@ struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
         }
         else
             m_uiSleepTimer -= uiDiff;
-
+	
         // Illusions
-        if (m_uiIllusionsTimer <= uiDiff)
+        if (m_uiIllusionsTimer <= uiDiff)			// get the positions within the platform, and random between those because movemaps are buggy.
         {
             //We will summon 3 illusions that will spawn on a random player and attack this player
             for(uint8 i = 0; i < 3; ++i)
             {
+				int r;
+				r = urand(0,8);
                 if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                    if (Creature* pIllusion = m_creature->SummonCreature(NPC_NIGHTMARE_ILLUSION, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000))
+					if (Creature* pIllusion = m_creature->SummonCreature(NPC_NIGHTMARE_ILLUSION, Summon[r].x+irand(-8,8), Summon[r].y+irand(-8,8), Summon[r].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000))
                     {
                         // Summoned Illusion will to have a random model
                         uint32 m_uiNewDisplayId = 0;
                         switch(rand()%4)
                         {
-                            case 0: m_uiNewDisplayId = MODELID_ABOMINATION; break;
-                            case 1: m_uiNewDisplayId = MODELID_LASHER; break;
-                            case 2: m_uiNewDisplayId = MODELID_FELGUARD; break;
-                            case 3: m_uiNewDisplayId = MODELID_DEVILSAUR; break;
+                            case 0: m_uiNewDisplayId = MODELID_ABOMINATION;
+								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 2.0f);
+								break;
+                            case 1: m_uiNewDisplayId = MODELID_LASHER;
+								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 2.0f);
+								break;
+                            case 2: m_uiNewDisplayId = MODELID_FELGUARD;
+								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 2.0f);
+								break;
+                            case 3: m_uiNewDisplayId = MODELID_DEVILSAUR; 
+								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
+								break;
                         }
 
                         pIllusion->SetDisplayId(m_uiNewDisplayId);
-                        //pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 3.0f);   // bigger model
+                       //pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 2.0f);   // bigger model
                         pIllusion->AI()->AttackStart(pTarget);
                     }
             }
