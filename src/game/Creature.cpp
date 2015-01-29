@@ -1192,6 +1192,7 @@ void Creature::SetLootRecipient(Unit *unit)
     {
         m_lootRecipientGuid.Clear();
         m_lootGroupRecipientId = 0;
+        GetDamageTrackingMap().clear();
         RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_TAPPED);
         return;
     }
