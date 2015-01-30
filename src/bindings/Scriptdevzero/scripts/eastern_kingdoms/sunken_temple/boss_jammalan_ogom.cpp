@@ -41,6 +41,8 @@ enum Spells
 
 enum Yells
 {
+	SAY_AGGRO						= -1109007,
+	SAY_HP							= -1109008,
     SAY_HEX                         = -1109005
 };
 
@@ -59,12 +61,15 @@ struct MANGOS_DLL_DECL boss_jammalan_the_prophetAI : public ScriptedAI
     uint32 m_uiHealingWaveTimer;
     uint32 m_uiHexOfJammalanTimer;
 
+	bool m_bYellHp;
+
     void Reset()
     {
         m_uiEarthgrabTotemTimer = urand(3000,4000);
         m_uiFlamestrikeTimer = urand(4000,6000);
         m_uiHealingWaveTimer = urand(6000,8000);
         m_uiHexOfJammalanTimer = 10000;
+		m_bYellHp = false;
         if (m_pInstance)
 		{
 			Creature* pOgom = m_pInstance->GetSingleCreatureFromStorage(NPC_OGOM_THE_WRETCHED);
@@ -83,6 +88,7 @@ struct MANGOS_DLL_DECL boss_jammalan_the_prophetAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_JAMMALAN_THE_PROPHET, IN_PROGRESS);
+		DoScriptText(SAY_AGGRO, m_creature);
     }
 
     void JustDied(Unit* /*pKiller*/)
@@ -95,6 +101,12 @@ struct MANGOS_DLL_DECL boss_jammalan_the_prophetAI : public ScriptedAI
     {       
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+
+		if (!m_bYellHp && HealthBelowPct(10))
+        {
+            DoScriptText(SAY_HP, m_creature);
+            m_bYellHp = true;
+        }
 
         // Earthgrab Totem
         if (m_uiEarthgrabTotemTimer < uiDiff)
