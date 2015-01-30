@@ -26,7 +26,8 @@ EndScriptData */
 enum
 {
     SAY_AGGRO                       = -1189021,
-    SPELL_SUMMON_SCARLET_HOUND        = 17164,
+    SPELL_SUMMON_SCARLET_HOUND      = 17164,			// Can't be cast in combat.
+	SPELL_BATTLE_SHOUT				= 6192,
     SPELL_BLOODLUST                 = 6742
 };
 
@@ -34,11 +35,13 @@ struct MANGOS_DLL_DECL boss_houndmaster_lokseyAI : public ScriptedAI
 {
     boss_houndmaster_lokseyAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
 
-    uint32 m_uiBloodLustTimer;
+    uint32 m_uiBattleShoutTimer;
+	bool bEnrage;
 
     void Reset()
     {
-        m_uiBloodLustTimer = 20000;
+		bEnrage = false;
+		m_uiBattleShoutTimer = 1000;
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -52,13 +55,19 @@ struct MANGOS_DLL_DECL boss_houndmaster_lokseyAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        if (m_uiBloodLustTimer <= uiDiff)
+		if (!bEnrage && HealthBelowPct(25))
         {
             DoCastSpellIfCan(m_creature, SPELL_BLOODLUST);
-            m_uiBloodLustTimer = 20000;
+            bEnrage = true;
+        }
+
+        if (m_uiBattleShoutTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature, SPELL_BATTLE_SHOUT);
+            m_uiBattleShoutTimer = 120000;
         }
         else 
-            m_uiBloodLustTimer -= uiDiff;
+            m_uiBattleShoutTimer -= uiDiff;
 
         DoMeleeAttackIfReady();
     }
