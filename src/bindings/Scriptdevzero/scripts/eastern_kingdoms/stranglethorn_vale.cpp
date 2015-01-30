@@ -181,6 +181,7 @@ enum short_mithril_jones
 struct MANGOS_DLL_DECL npc_short_mithril_jones : public npc_escortAI
 {
 	npc_short_mithril_jones(Creature* pCreature) : npc_escortAI(pCreature) {
+        m_creature->SetActiveObjectState(true);
 		b_eventStarted = false;
 		Reset(); 
 	}
