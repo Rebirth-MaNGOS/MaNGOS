@@ -4275,6 +4275,8 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
 
     if (m_spellInfo->Id == 19250 && focusObject)		//Placing Smokey's Explosives
         focusObject->SetOwnerGuid(m_caster->GetObjectGuid());
+    if(m_spellInfo->Id == 19588 && m_caster && duration && pGameObj)
+        m_caster->SummonGameObject(177749, duration, pGameObj->GetPositionX(), pGameObj->GetPositionY(), pGameObj->GetPositionZ(), pGameObj->GetOrientation());
 }
 
 void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
