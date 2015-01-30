@@ -104,16 +104,17 @@ enum CreepySounds
     CTHUN_YOU_WILL_DIE = 8585,
 };
 
-static const uint32 m_ChildEntries[5] = { DANA, JOSE, ARON, LISA, JOHN };
+static const uint32 m_ChildEntries[5] = { JOHN, JOSE, ARON, LISA, DANA };
 // The AI for the middle child.
 struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
 {
-    npc_creepy_child(Creature* pCreature) : npc_patrolAI(pCreature, 0.f, true)
+    npc_creepy_child(Creature* pCreature) : npc_patrolAI(pCreature, 0.f, false)
     {
         Reset();
     }
     
     float m_ChildOffsets[5][2];
+    float direction;
     std::vector<Unit*> m_ChildList;
     
     uint32 m_uiChildCatchingTimer;
@@ -123,6 +124,7 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
         npc_patrolAI::Reset();
         
         m_uiChildCatchingTimer = 20000;
+        direction = 0;
         m_ChildList.clear();
         
         InitialiseChildOffsets();
@@ -136,14 +138,14 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
             if (m_uiChildCatchingTimer <= uiDiff)
             {
                 GetChildren();
-
+                m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);
                 // Position the children around this creature.
                 float origo[2];
                 origo[0] = m_creature->GetPositionX();
                 origo[1] = m_creature->GetPositionY();
                 PositionChildren(origo);
 
-                StartPatrol(0, false);
+                StartPatrol(0, true);
                 
                 m_uiChildCatchingTimer = 0;
             }
@@ -155,23 +157,27 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
     void MovementInform(uint32 movementType, uint32 pointId)
     {
         npc_patrolAI::MovementInform(movementType, pointId);
+
+        //if(pointId == 15)
+        //    InitialiseChildOffsets(-0.5 * PI);
         
         float origo[2] = { GetTargetWaypoint().fX, GetTargetWaypoint().fY };
-        PositionChildren(origo);
+        
+        m_creature->MonsterMove(GetTargetWaypoint().fX, GetTargetWaypoint().fY, GetTargetWaypoint().fZ, (sqrtf(m_creature->GetDistanceSqr(GetTargetWaypoint().fX, GetTargetWaypoint().fY, GetTargetWaypoint().fZ))/m_creature->GetSpeed(MOVE_RUN)) * 1000);
     }
     
     void PositionChildren(float origo[2])
     {
         if (m_ChildList.size() < 5)
             return;
-        
+
         for (short i = 0; i < 5; ++i)
         {
             float pos[2];
             
             CalculateChildPosFromOffset(origo, m_ChildOffsets[i], pos);
-            
-            m_ChildList[i]->GetMotionMaster()->MovePoint(0, pos[0], pos[1], m_creature->GetPositionZ());
+            m_ChildList[i]->MonsterMove(pos[0], pos[1], GetTargetWaypoint().fZ, (sqrtf(m_ChildList[i]->GetDistanceSqr(GetTargetWaypoint().fX, GetTargetWaypoint().fY, GetTargetWaypoint().fZ))/m_ChildList[i]->GetSpeed(MOVE_RUN)) * 1000);
+           // m_ChildList[i]->GetMotionMaster()->MovePoint(0, pos[0], pos[1], GetTargetWaypoint().fZ, false);//>MonsterMove(pos[0], pos[1], GetTargetWaypoint().fZ, m_ChildList[i]->GetDistanceSqr(pos[0], pos[1], GetTargetWaypoint().fZ));//
         }
     }
     
@@ -181,7 +187,10 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
         {
             Unit* child = GetClosestCreatureWithEntry(m_creature, m_ChildEntries[i], 10.f);
             if (child)
+            {
                 m_ChildList.push_back(child);
+                ((Creature*)child)->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+            }
         }
     }
     
