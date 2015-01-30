@@ -26,6 +26,7 @@ npc_narm_faulk
 EndContentData */
 
 #include "precompiled.h"
+#include "sc_gossip.h"
 
 /*######
 ## npc_narm_faulk
@@ -75,9 +76,101 @@ struct MANGOS_DLL_DECL npc_narm_faulkAI : public ScriptedAI
     }
 
 };
+
 CreatureAI* GetAI_npc_narm_faulk(Creature* pCreature)
 {
     return new npc_narm_faulkAI(pCreature);
+}
+
+/********
+** Jarven Thuunderbrew and Barrels
+****/
+
+enum JarvenThunderbrew
+{
+    QUEST_DISTRACTING_JARVEN = 308,
+    GUARDED_BARREL = 269,
+    UNGUARDED_BARREL = 270,
+};
+
+static const float m_guardedBarrelCoords[3] = { -5607.48f, -547.992f, 392.986f };
+
+struct MANGOS_DLL_DECL npc_jarven_thunderbrew : public ScriptedAI
+{
+    npc_jarven_thunderbrew(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+
+    uint32 m_relocateTimer;
+    GameObject *guardedBarrel;
+
+    void Reset()
+    {
+        m_relocateTimer = 0;
+    }
+
+    void StartRelocateTimer()
+    {
+        m_relocateTimer = 12000;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(m_relocateTimer)
+        {
+            if(m_relocateTimer <= uiDiff)
+            {
+                if(GameObject *guardedBarrel = GetClosestGameObjectWithEntry(m_creature, GUARDED_BARREL, 10.0f))
+                {
+                    guardedBarrel->SetRespawnTime(30);
+                    guardedBarrel->UpdateVisibilityAndView();
+                }
+                    
+                if(!GetClosestGameObjectWithEntry(m_creature, UNGUARDED_BARREL, 10.0f))
+                {
+                    m_creature->SummonGameObject(UNGUARDED_BARREL, 30000, m_guardedBarrelCoords[0], m_guardedBarrelCoords[1], m_guardedBarrelCoords[2], 0.0f);
+                }
+
+                m_relocateTimer = 0;
+            }
+            else
+                m_relocateTimer -= uiDiff;
+        }
+    }
+
+};
+
+CreatureAI* GetAI_npc_jarven_thunderbrew(Creature* pCreature)
+{
+    return new npc_jarven_thunderbrew(pCreature);
+}
+
+bool pQuestRewardedNPC_npc_jarven_thunderbrew(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+{
+	if(pCreature)
+    {
+        if (pQuest->GetQuestId() == QUEST_DISTRACTING_JARVEN)
+        {
+            if(GameObject *guardedBarrel = GetClosestGameObjectWithEntry(pCreature, GUARDED_BARREL, 10.0f))
+            {
+                if (npc_jarven_thunderbrew* jarvenAI = dynamic_cast<npc_jarven_thunderbrew*>(pCreature->AI()))
+                {
+                    pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                    jarvenAI->StartRelocateTimer();
+                }
+            }
+		
+        }
+    }
+    return false;
+}
+
+bool GOuse_guarded_barrel (Player* pPlayer, GameObject* pGameobject)
+{
+    if(pPlayer && pGameobject)
+    {
+        pPlayer->SEND_GOSSIP_MENU(9027, pGameobject->GetGUID());
+    }
+
+    return false;
 }
 
 void AddSC_dun_morogh()
@@ -88,4 +181,16 @@ void AddSC_dun_morogh()
     pNewscript->Name = "npc_narm_faulk";
     pNewscript->GetAI = &GetAI_npc_narm_faulk;
     pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_jarven_thunderbrew";
+    pNewscript->pQuestRewardedNPC = &pQuestRewardedNPC_npc_jarven_thunderbrew;
+    pNewscript->GetAI = &GetAI_npc_jarven_thunderbrew;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->pGOUse = &GOuse_guarded_barrel;
+    pNewscript->Name = "go_use_guarded_barrel";
+    pNewscript->RegisterSelf();
+
 }
