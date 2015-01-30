@@ -18,6 +18,10 @@ where entry = 8127;
 
 enum DATA
 {
+	SAY_AGGRO					= -1209005,
+	SAY_NON_ELITE_BASILISK		= -1209006,
+	SAY_ELITE_BASILISK			= -1209007,
+
     SPELL_KETTENBLITZSCHLAG     = 16006,
     SPELL_ERDSCHOCK				= 15501,
 	SPELL_HEILUNGSZAUBERSCHUTZ	= 11899,
@@ -45,6 +49,8 @@ struct MANGOS_DLL_DECL boss_antu_sulAI : public ScriptedAI
 	 uint32 blitz_timer;
 	 float boss_hp;
 
+	 bool m_bSayNonElite;
+
     void Reset()
     {
 		killAdds();
@@ -54,6 +60,8 @@ struct MANGOS_DLL_DECL boss_antu_sulAI : public ScriptedAI
 		shock_timer = 8000;
 		blitz_timer = 15000;
 		boss_hp = 100;
+
+		m_bSayNonElite = false;
     }
 
 	void killAdds()
@@ -82,11 +90,16 @@ struct MANGOS_DLL_DECL boss_antu_sulAI : public ScriptedAI
 
     void Aggro(Unit* /*pVictim*/)
     {
+		DoScriptText(SAY_AGGRO, m_creature);
 		for(int i = 0; i < 6; i++)
 		{
 			int random = urand(-5,5);
 			Creature* pTemp = m_creature->SummonCreature(NPC_NON_ELITE_BASILISK,m_creature->GetPositionX()+random,m_creature->GetPositionY()+random,m_creature->GetPositionZ(),0,TEMPSUMMON_CORPSE_DESPAWN,5000);
 			pTemp->SetInCombatWithZone();
+			
+			if (!m_bSayNonElite)
+				DoScriptText(SAY_NON_ELITE_BASILISK, m_creature);
+				m_bSayNonElite = true;
 		}
     }
 
@@ -107,6 +120,7 @@ struct MANGOS_DLL_DECL boss_antu_sulAI : public ScriptedAI
 
 			Creature* pTemp = m_creature->SummonCreature(NPC_ELITE_BASILISK,m_creature->GetPositionX(),m_creature->GetPositionY(),m_creature->GetPositionZ(),0,TEMPSUMMON_CORPSE_DESPAWN,5000);
 			pTemp->SetInCombatWithZone();
+			DoScriptText(SAY_ELITE_BASILISK, m_creature);
 		}
 
 		if (shock_timer < uiDiff)
