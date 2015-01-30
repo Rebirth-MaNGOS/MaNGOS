@@ -95,20 +95,35 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
 {
     boss_victor_nefariusAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        
         // Select the 2 different drakes that we are going to use until despawned
         // 5 possiblities for the first drake, 4 for the second, 20 total possiblites
+        
+        if (m_pInstance && m_pInstance->GetData(DRAKONID_1) && m_pInstance->GetData(DRAKONID_2))
+        {
+            m_uiDrakeTypeOne = m_pInstance->GetData(DRAKONID_1);
+            m_uiDrakeTypeTwo = m_pInstance->GetData(DRAKONID_2);
+        }
+        else
+        {
+            // select two different numbers between 0..MAX_DRAKES-1
+            uint8 uiPos1 = urand(0, MAX_DRAKES - 1);
+            uint8 uiPos2 = (uiPos1 + urand(1, MAX_DRAKES - 1)) % MAX_DRAKES;
 
-        // select two different numbers between 0..MAX_DRAKES-1
-        uint8 uiPos1 = urand(0, MAX_DRAKES - 1);
-        uint8 uiPos2 = (uiPos1 + urand(1, MAX_DRAKES - 1)) % MAX_DRAKES;
-
-        m_uiDrakeTypeOne = aPossibleDrake[uiPos1];
-        m_uiDrakeTypeTwo = aPossibleDrake[uiPos2];
-
+            m_uiDrakeTypeOne = aPossibleDrake[uiPos1];
+            m_uiDrakeTypeTwo = aPossibleDrake[uiPos2];
+            
+            if (m_pInstance)
+            {
+                m_pInstance->SetData(DRAKONID_1, m_uiDrakeTypeOne);
+                m_pInstance->SetData(DRAKONID_2, m_uiDrakeTypeTwo);
+            }
+        }
+        
         // Make him friendly from the start so you can talk to him.
         m_creature->setFaction(FACTION_FRIENDLY);
 
-        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
         Reset();
     }
 

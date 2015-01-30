@@ -314,6 +314,9 @@ void instance_blackwing_lair::OnObjectCreate(GameObject* pGo)
 
 void instance_blackwing_lair::SetData(uint32 uiType, uint32 uiData)
 {
+    if (uiType > TOTAL_SAVE_DATA)
+        return;
+        
     switch(uiType)
     {
     case TYPE_RAZORGORE:
@@ -359,15 +362,19 @@ void instance_blackwing_lair::SetData(uint32 uiType, uint32 uiData)
         m_auiEncounter[uiType] = uiData;
         DoUseDoorOrButton(GO_DOOR_NEFARIAN);
         break;
+    default:
+        m_auiEncounter[uiType] = uiData;
+        break;
     }
 
-    if (uiData == DONE)
+    if (uiData == DONE || uiData > 4) // uiData > 4 is the different Drakonid Types and breaths.
     {
         OUT_SAVE_INST_DATA;
 
         std::ostringstream saveStream;
         saveStream << m_auiEncounter[0] << " " << m_auiEncounter[1] << " " << m_auiEncounter[2] << " " << m_auiEncounter[3]
-                   << " " << m_auiEncounter[4] << " " << m_auiEncounter[5] << " " << m_auiEncounter[6] << " " << m_auiEncounter[7];
+                   << " " << m_auiEncounter[4] << " " << m_auiEncounter[5] << " " << m_auiEncounter[6] << " " << m_auiEncounter[7]
+                   << " " << m_auiEncounter[8] << " " << m_auiEncounter[9] << " " << m_auiEncounter[10] << " " << m_auiEncounter[11];
 
         m_strInstData = saveStream.str();
 
@@ -388,7 +395,8 @@ void instance_blackwing_lair::Load(const char* chrIn)
 
     std::istringstream loadStream(chrIn);
     loadStream >> m_auiEncounter[0] >> m_auiEncounter[1] >> m_auiEncounter[2] >> m_auiEncounter[3] >> m_auiEncounter[4]
-               >> m_auiEncounter[5] >> m_auiEncounter[6] >> m_auiEncounter[7];
+               >> m_auiEncounter[5] >> m_auiEncounter[6] >> m_auiEncounter[7] >> m_auiEncounter[8] >> m_auiEncounter[9]
+               >> m_auiEncounter[10] >> m_auiEncounter[11];
 
     for(uint8 i = 0; i < MAX_ENCOUNTER; ++i)
     {
@@ -401,7 +409,7 @@ void instance_blackwing_lair::Load(const char* chrIn)
 
 uint32 instance_blackwing_lair::GetData(uint32 uiType)
 {
-    if (uiType < MAX_ENCOUNTER)
+    if (uiType < TOTAL_SAVE_DATA)
         return m_auiEncounter[uiType];
 
     return 0;

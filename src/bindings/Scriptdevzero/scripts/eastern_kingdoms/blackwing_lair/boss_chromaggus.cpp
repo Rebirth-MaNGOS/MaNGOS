@@ -68,18 +68,32 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
 {
     boss_chromaggusAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
+         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        
         // Select the 2 different breaths that we are going to use until despawned
-        // 5 possiblities for the first breath, 4 for the second, 20 total possiblites
+        // 5 possiblities for the first breath, 4 for the second, 20 total possiblites.
 
-        // select two different numbers between 0..MAX_BREATHS-1
-        uint8 uiPos1 = urand(0, MAX_BREATHS - 1);
-        uint8 uiPos2 = (uiPos1 + urand(1, MAX_BREATHS - 1)) % MAX_BREATHS;
+        if (m_pInstance && m_pInstance->GetData(CHROM_BREATH_1) && m_pInstance->GetData(CHROM_BREATH_2))
+        {
+            m_uiBreathOneSpell = m_pInstance->GetData(CHROM_BREATH_1);
+            m_uiBreathTwoSpell = m_pInstance->GetData(CHROM_BREATH_2);
+        }
+        else
+        {
+            // select two different numbers between 0..MAX_BREATHS-1
+            uint8 uiPos1 = urand(0, MAX_BREATHS - 1);
+            uint8 uiPos2 = (uiPos1 + urand(1, MAX_BREATHS - 1)) % MAX_BREATHS;
 
-        m_uiBreathOneSpell = aPossibleBreaths[uiPos1];
-        m_uiBreathTwoSpell = aPossibleBreaths[uiPos2];
-
-        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-
+            m_uiBreathOneSpell = aPossibleBreaths[uiPos1];
+            m_uiBreathTwoSpell = aPossibleBreaths[uiPos2];
+            
+            if (m_pInstance)
+            {
+                m_pInstance->SetData(CHROM_BREATH_1, m_uiBreathOneSpell);
+                m_pInstance->SetData(CHROM_BREATH_2, m_uiBreathTwoSpell);
+            }
+        }
+        
         m_uiCurrentVulnerabilitySpell = 0;                  // We use this to store our last vulnerability spell so we can remove it later
 
         m_uiShimmerTimer    = 0;                            // Time till we change vurlnerabilites

@@ -35,6 +35,10 @@ enum
     TYPE_FLAMEGOR                       = 5,
     TYPE_CHROMAGGUS                     = 6,
     TYPE_NEFARIAN                       = 7,
+    CHROM_BREATH_1                      = 8,
+    CHROM_BREATH_2                      = 9,
+    DRAKONID_1                          = 10,
+    DRAKONID_2                          = 11,
 
     NPC_RAZORGORE                       = 12435,
     NPC_GRETHOK                         = 12557,
