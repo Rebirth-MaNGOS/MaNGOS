@@ -53,6 +53,7 @@ enum
     SPELL_HAMMEROFJUSTICE        = 5589,
     SPELL_LAYONHANDS             = 9257,
     SPELL_RETRIBUTIONAURA        = 8990,
+	SPELL_DIVINE_SHIELD			= 642,		
 
     // Whitemanes Spells
     SPELL_DEEP_SLEEP              = 9256,
@@ -76,6 +77,7 @@ struct MANGOS_DLL_DECL boss_scarlet_commander_mograineAI : public ScriptedAI
     uint32 m_uiCrusaderStrike_Timer;
     uint32 m_uiHammerOfJustice_Timer;
 
+	bool m_bHasBubbled;
     bool m_bHasDied;
     bool m_bHeal;
     bool m_bFakeDeath;
@@ -97,6 +99,7 @@ struct MANGOS_DLL_DECL boss_scarlet_commander_mograineAI : public ScriptedAI
         m_creature->SetUInt32Value(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_NONE);
         m_creature->SetStandState(UNIT_STAND_STATE_STAND);
 
+		m_bHasBubbled = false;
         m_bHasDied = false;
         m_bHeal = false;
         m_bFakeDeath = false;
@@ -181,6 +184,12 @@ struct MANGOS_DLL_DECL boss_scarlet_commander_mograineAI : public ScriptedAI
     {
 		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+
+		if (!m_bHasDied && !m_bHeal && !m_bHasBubbled && HealthBelowPct(25))			// Only bubble once and do it before first death
+		{
+			DoCastSpellIfCan(m_creature, SPELL_DIVINE_SHIELD);
+			m_bHasBubbled = true;
+		}	
 
         if (m_bHasDied && !m_bHeal && m_pInstance && m_pInstance->GetData(TYPE_MOGRAINE_AND_WHITE_EVENT) == SPECIAL)
         {
