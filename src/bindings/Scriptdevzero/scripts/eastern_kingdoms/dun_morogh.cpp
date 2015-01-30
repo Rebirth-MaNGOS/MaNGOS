@@ -91,6 +91,7 @@ enum JarvenThunderbrew
     QUEST_DISTRACTING_JARVEN = 308,
     GUARDED_BARREL = 269,
     UNGUARDED_BARREL = 270,
+    GUARDED_BARREL_GOSSIP = 12198,
 };
 
 static const float m_guardedBarrelCoords[3] = { -5607.48f, -547.992f, 392.986f };
@@ -167,7 +168,7 @@ bool GOuse_guarded_barrel (Player* pPlayer, GameObject* pGameobject)
 {
     if(pPlayer && pGameobject)
     {
-        pPlayer->SEND_GOSSIP_MENU(9027, pGameobject->GetGUID());
+        pPlayer->SEND_GOSSIP_MENU(GUARDED_BARREL_GOSSIP, pGameobject->GetGUID());
     }
 
     return false;
