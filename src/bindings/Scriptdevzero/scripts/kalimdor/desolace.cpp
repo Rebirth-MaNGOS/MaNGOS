@@ -404,6 +404,110 @@ bool go_use_demon_portal(Player* /*pPlayer*/, GameObject* pGo)
 	return false;
 }
 
+/*************
+** Magrami Ghost
+******/
+
+enum MagramiSpectre
+{
+    GAMEOBJECT_GHOST_MAGNET = 177746,
+    SPELL_CHILLING_TOUCH = 12531,
+    SPELL_CURSE_OF_THE_FALLEN_MAGRAM = 18159,
+};
+
+struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
+{
+    mob_magrami_spectre(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+
+    bool trapDetected;
+    bool hostile;
+    uint32 m_spellCdChilling;
+    uint32 m_spellCdCurse;
+
+    void Reset()
+    {
+        m_creature->setFaction(189);
+        m_creature->SetVisibility(VISIBILITY_OFF);
+        m_creature->UpdateVisibilityAndView();
+        trapDetected = false;
+        hostile = false;
+        m_spellCdChilling = 0;
+        m_spellCdCurse = 0;
+    }
+
+    void Aggro(Unit *pTarget)
+    {
+        m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(!hostile)
+        {
+            if(!trapDetected)
+            {
+                if(GameObject *ghostMagnet = GetClosestGameObjectWithEntry(m_creature, GAMEOBJECT_GHOST_MAGNET, 40.0f))
+                {
+                    if(ghostMagnet->GetRespawnTime() != 0)
+                    {
+                        m_creature->SetVisibility(VISIBILITY_ON);
+                        m_creature->UpdateVisibilityAndView();
+                        m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                        m_creature->GetMotionMaster()->MovePoint(0, ghostMagnet->GetPositionX(), ghostMagnet->GetPositionY(), ghostMagnet->GetPositionZ(), true);
+                        trapDetected = true;
+                    }
+                }
+            }
+            else
+            {
+                if(GameObject *ghostMagnet = GetClosestGameObjectWithEntry(m_creature, GAMEOBJECT_GHOST_MAGNET, 2.0f))
+                {
+                    if(ghostMagnet->GetRespawnTime() != 0)
+                    {
+                        m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                        m_creature->setFaction(21);
+                        hostile = true;
+                        m_spellCdCurse = 2000;
+                        m_spellCdChilling = urand(5000, 10000);
+                    }
+                }
+            }
+        }
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if(m_spellCdChilling)
+        {
+            if(m_spellCdChilling <= uiDiff)
+            {
+                DoCast(m_creature->getVictim(), SPELL_CHILLING_TOUCH);
+                m_spellCdChilling = urand(5000, 10000);
+            }
+            else
+                m_spellCdChilling -= uiDiff;
+        }
+
+        if(m_spellCdCurse)
+        {
+            if(m_spellCdChilling <= uiDiff)
+            {
+                DoCast(m_creature->getVictim(), SPELL_CURSE_OF_THE_FALLEN_MAGRAM);
+                m_spellCdCurse = 0;
+            }
+            else
+                m_spellCdCurse -= uiDiff;
+        }
+        DoMeleeAttackIfReady();
+    }
+
+};
+
+CreatureAI* GetAI_mob_magrami_spectre(Creature* pCreature)
+{
+    return new mob_magrami_spectre(pCreature);
+}
+
 /*######
 ## AddSC
 ######*/
@@ -439,5 +543,10 @@ void AddSC_desolace()
     pNewScript = new Script;
     pNewScript->Name = "go_demon_portal";
     pNewScript->pGOUse = &go_use_demon_portal;
+    pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "mob_magrami_spectre";
+    pNewScript->GetAI = &GetAI_mob_magrami_spectre;
     pNewScript->RegisterSelf();
 }
