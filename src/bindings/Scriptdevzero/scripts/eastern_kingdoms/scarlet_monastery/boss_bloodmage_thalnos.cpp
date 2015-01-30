@@ -69,8 +69,8 @@ struct MANGOS_DLL_DECL boss_bloodmage_thalnosAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        // If we are <35% hp
-        if (!bHpYell && HealthBelowPct(35))
+        // If we are <50% hp
+        if (!bHpYell && HealthBelowPct(50))
         {
             DoScriptText(SAY_HEALTH, m_creature);
             bHpYell = true;
