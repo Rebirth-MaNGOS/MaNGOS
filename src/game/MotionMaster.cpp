@@ -435,34 +435,35 @@ void MotionMaster::Mutate(MovementGenerator *m)
         switch(top()->GetMovementGeneratorType())
         {
             // HomeMovement is not that important, delete it if meanwhile a new comes
-            case HOME_MOTION_TYPE:
+        case HOME_MOTION_TYPE:
             // DistractMovement interrupted by any other movement
-            case DISTRACT_MOTION_TYPE:
-                MovementExpired(false);
-            default:
-                break;
+        case DISTRACT_MOTION_TYPE:
+            MovementExpired(false);
+        default:
+            break;
         }
 
         if (!empty())
             top()->Interrupt(*m_owner);
     }
 
-	//Formation movement for PointMovement
-	if (m->GetMovementGeneratorType() == POINT_MOTION_TYPE && m_owner->GetTypeId() == TYPEID_UNIT)
-	{
-		Creature* C = (Creature*)m_owner;
-		if (C && C->GetFormation() && C->GetFormation()->getLeader() == C)
-		{	
-			float x,y,z;
-			m->GetDestination(x,y,z);
-			C->GetFormation()->LeaderMoveTo(x,y,z);
-		}
-	}
+    //Formation movement for PointMovement
+    if (m->GetMovementGeneratorType() == POINT_MOTION_TYPE && m_owner->GetTypeId() == TYPEID_UNIT)
+    {
+        Creature* C = (Creature*)m_owner;
+        if (C && C->GetFormation() && C->GetFormation()->getLeader() == C)
+        {
+            float x,y,z;
+            m->GetDestination(x,y,z);
+            C->GetFormation()->LeaderMoveTo(x,y,z);
+        }
+    }
 
     m->Initialize(*m_owner);
+    
+    m_totalTravelTime = m->GetTotalTravelTime();
 
-	push(m);
-	
+    push(m);
 }
 
 void MotionMaster::propagateSpeedChange()

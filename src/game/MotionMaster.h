@@ -65,7 +65,7 @@ class MANGOS_DLL_SPEC MotionMaster : private std::stack<MovementGenerator *>
         typedef std::vector<MovementGenerator *> ExpireList;
     public:
 
-        explicit MotionMaster(Unit *unit) : m_owner(unit), m_expList(NULL), m_cleanFlag(MMCF_NONE), m_movementSuspended(false) {}
+        explicit MotionMaster(Unit *unit) : m_owner(unit), m_expList(NULL), m_cleanFlag(MMCF_NONE), m_totalTravelTime(0), m_movementSuspended(false) {}
         ~MotionMaster();
 
         void Initialize();
@@ -109,9 +109,9 @@ class MANGOS_DLL_SPEC MotionMaster : private std::stack<MovementGenerator *>
         void MoveTaxiFlight(uint32 path, uint32 pathnode);
         void MoveDistract(uint32 timeLimit);
 
-		void SuspendChaseMovement();
-		void ResumeChaseMovement();
-		bool IsMovementSuspended() { return m_movementSuspended; }
+        void SuspendChaseMovement();
+        void ResumeChaseMovement();
+        bool IsMovementSuspended() { return m_movementSuspended; }
 
         MovementGeneratorType GetCurrentMovementGeneratorType() const;
 
@@ -122,10 +122,12 @@ class MANGOS_DLL_SPEC MotionMaster : private std::stack<MovementGenerator *>
 
         bool GetDestination(float &x, float &y, float &z);
 
-	// Thread safe overrides of the stack modifying member functions.
-	std::stack<MovementGenerator *>::reference top() { return c.back(); }
-	void pop() { c.pop_back(); }
-	void push(MovementGenerator *generator) { c.push_back(generator); }
+        // Thread safe overrides of the stack modifying member functions.
+        std::stack<MovementGenerator *>::reference top() { return c.back(); }
+        void pop() { c.pop_back(); }
+        void push(MovementGenerator *generator) { c.push_back(generator); }
+        
+        uint32 GetTotalTravelTime() { return m_totalTravelTime; }
 
     private:
         void Mutate(MovementGenerator *m);                  // use Move* functions instead
@@ -139,6 +141,7 @@ class MANGOS_DLL_SPEC MotionMaster : private std::stack<MovementGenerator *>
         Unit       *m_owner;
         ExpireList *m_expList;
         uint8       m_cleanFlag;
+        uint32      m_totalTravelTime;
 
 		bool m_movementSuspended;
 };

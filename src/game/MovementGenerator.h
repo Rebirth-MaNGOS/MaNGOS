@@ -33,6 +33,8 @@ class MANGOS_DLL_SPEC MovementGenerator
 {
     public:
         virtual ~MovementGenerator();
+        
+        MovementGenerator() : totalTravelTime(0) {}
 
         // called before adding movement generator to motion stack
         virtual void Initialize(Unit &) = 0;
@@ -63,6 +65,11 @@ class MANGOS_DLL_SPEC MovementGenerator
         // used for check from Update call is movegen still be active (top movement generator)
         // after some not safe for this calls
         bool IsActive(Unit& u);
+        
+        // Contains the total travel time for the movement generator. Currently only works for the PointMovementGenerator.
+        uint32 GetTotalTravelTime() { return totalTravelTime; }
+        
+        uint32 totalTravelTime;
 };
 
 template<class T, class D>

@@ -13,6 +13,8 @@ npc_patrolAI::npc_patrolAI(Creature *pCreature, float orientation, bool usePathi
     // Loads all the waypoints from the DB.
     FillPointMovementListForCreature();
 
+    m_TargetPoint = WaypointList.begin();
+    
     // Reset the NPC to the first waypoint.
     if (!WaypointList.empty())
         m_creature->RelocateCreature(WaypointList.front().fX, WaypointList.front().fY, WaypointList.front().fZ, orientation);

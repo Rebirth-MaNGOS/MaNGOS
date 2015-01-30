@@ -108,7 +108,7 @@ static const uint32 m_ChildEntries[5] = { JOHN, JOSE, ARON, LISA, DANA };
 // The AI for the middle child.
 struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
 {
-    npc_creepy_child(Creature* pCreature) : npc_patrolAI(pCreature, 0.f, false)
+    npc_creepy_child(Creature* pCreature) : npc_patrolAI(pCreature, 0.f, true)
     {
         Reset();
     }
@@ -117,15 +117,18 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
     float direction;
     std::vector<Unit*> m_ChildList;
     
+    float m_ChildRotation;
+    
     uint32 m_uiChildCatchingTimer;
     
     void Reset()
     {
         npc_patrolAI::Reset();
         
-        m_uiChildCatchingTimer = 20000;
+        m_uiChildCatchingTimer = 8000;
         direction = 0;
         m_ChildList.clear();
+        m_ChildRotation = 0;
         
         InitialiseChildOffsets();
     }
@@ -152,10 +155,13 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
             else
                 m_uiChildCatchingTimer -= uiDiff;
         }
+        
+        m_ChildRotation += m_ChildRotation > 2 * PI ? -m_ChildRotation : PI * (uiDiff / 1000.f);
+        InitialiseChildOffsets(m_ChildRotation);
     }
     
     void MovementInform(uint32 movementType, uint32 pointId)
-    {
+    {        
         npc_patrolAI::MovementInform(movementType, pointId);
 
         //if(pointId == 15)
@@ -163,7 +169,7 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
         
         float origo[2] = { GetTargetWaypoint().fX, GetTargetWaypoint().fY };
         
-        m_creature->MonsterMove(GetTargetWaypoint().fX, GetTargetWaypoint().fY, GetTargetWaypoint().fZ, (sqrtf(m_creature->GetDistanceSqr(GetTargetWaypoint().fX, GetTargetWaypoint().fY, GetTargetWaypoint().fZ))/m_creature->GetSpeed(MOVE_RUN)) * 1000);
+        PositionChildren(origo);
     }
     
     void PositionChildren(float origo[2])
@@ -176,8 +182,10 @@ struct MANGOS_DLL_DECL npc_creepy_child : public npc_patrolAI
             float pos[2];
             
             CalculateChildPosFromOffset(origo, m_ChildOffsets[i], pos);
-            m_ChildList[i]->MonsterMove(pos[0], pos[1], GetTargetWaypoint().fZ, (sqrtf(m_ChildList[i]->GetDistanceSqr(GetTargetWaypoint().fX, GetTargetWaypoint().fY, GetTargetWaypoint().fZ))/m_ChildList[i]->GetSpeed(MOVE_RUN)) * 1000);
-           // m_ChildList[i]->GetMotionMaster()->MovePoint(0, pos[0], pos[1], GetTargetWaypoint().fZ, false);//>MonsterMove(pos[0], pos[1], GetTargetWaypoint().fZ, m_ChildList[i]->GetDistanceSqr(pos[0], pos[1], GetTargetWaypoint().fZ));//
+            
+            uint32 traveltime = m_creature->GetMotionMaster()->GetTotalTravelTime();
+             
+            m_ChildList[i]->MonsterMove(pos[0], pos[1], GetTargetWaypoint().fZ, traveltime);
         }
     }
     
