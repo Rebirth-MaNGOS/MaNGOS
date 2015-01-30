@@ -45,14 +45,14 @@ struct MANGOS_DLL_DECL boss_interrogator_vishasAI : public ScriptedAI
 
     instance_scarlet_monastery* m_pInstance;
 
-    bool bYell30;
-    bool bYell60;
+    bool bYell25;
+    bool bYell75;
     uint32 m_uiShadowWordPainTimer;
 
     void Reset()
     {
-        bYell30 = false;
-        bYell60 = false;
+        bYell25 = false;
+        bYell75 = false;
         m_uiShadowWordPainTimer = 5000;
     }
 
@@ -82,16 +82,16 @@ struct MANGOS_DLL_DECL boss_interrogator_vishasAI : public ScriptedAI
             return;
 
         // If we are low on hp Do sayings
-        if (!bYell60 && HealthBelowPct(60))
+        if (!bYell75 && HealthBelowPct(75))
         {
             DoScriptText(SAY_HEALTH1, m_creature);
-            bYell60 = true;
+            bYell75 = true;
         }
 
-        if (!bYell30 && HealthBelowPct(60))
+        if (!bYell25 && HealthBelowPct(25))
         {
             DoScriptText(SAY_HEALTH2, m_creature);
-            bYell30 = true;
+            bYell25 = true;
         }
 
         // Shadow word: Pain
