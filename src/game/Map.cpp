@@ -2210,6 +2210,8 @@ void Map::ScriptsProcess()
             go->SetRespawnTime(time_to_despawn);        //despawn object in ? seconds
 
             go->GetMap()->Add(go);
+            
+            go->UpdateVisibilityAndView();
             break;
         }
         case SCRIPT_COMMAND_TEMP_SUMMON_CREATURE:
