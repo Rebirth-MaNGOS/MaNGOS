@@ -638,7 +638,6 @@ struct MANGOS_DLL_DECL mob_rabid_thistle_bear : public ScriptedAI
 
     void Reset()
     {
-        m_creature->m_AuraFlags = UNIT_AURAFLAG_ALIVE_INVISIBLE;
 		trap = nullptr;
 		trapOwner = nullptr;
         tharnariun = nullptr;
