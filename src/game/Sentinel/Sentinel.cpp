@@ -164,7 +164,7 @@ void Sentinel::SetPlayerPosition(float new_x, float new_y)
 	m_uiTime = WorldTimer::getMSTime();
 }
 
-void Sentinel::UpdatePosition(float x, float y, float orientation)
+void Sentinel::UpdatePosition(float /*x*/, float /*y*/, float /*orientation*/)
 {
 	// Don't do bot detection in the capitols.
 	switch(m_pOwner->GetAreaId())
@@ -189,25 +189,27 @@ void Sentinel::UpdatePosition(float x, float y, float orientation)
 		break;
 	}
 
-	if (m_Points.empty())
-	{
-		m_Points.push_back(SentinelPoint(x, y, orientation));
-	}
-	else
-	{
-		SentinelPoint new_point(x, y, orientation);
+	// Disabled the bot detection until it can be reconfigured.
 
-
-		if (m_Points.back().GetDistanceToPoint(new_point) > 10.f && fabs(m_Points.back().orientation - orientation) > 2.f * PI / 5.f)
-		{
-			m_Points.push_back(new_point);
-		}
-
-		if (m_Points.size() >= MOVEMENT_POINTS_TO_ANALYSE)
-		{
-			sWorld.GetThreadPool()->schedule(boost::bind(&Sentinel::AnalyseMovement, this));
-		}
-	}
+// 	if (m_Points.empty())
+// 	{
+// 		m_Points.push_back(SentinelPoint(x, y, orientation));
+// 	}
+// 	else
+// 	{
+// 		SentinelPoint new_point(x, y, orientation);
+// 
+// 
+// 		if (m_Points.back().GetDistanceToPoint(new_point) > 10.f && fabs(m_Points.back().orientation - orientation) > 2.f * PI / 5.f)
+// 		{
+// 			m_Points.push_back(new_point);
+// 		}
+// 
+// 		if (m_Points.size() >= MOVEMENT_POINTS_TO_ANALYSE)
+// 		{
+// 			sWorld.GetThreadPool()->schedule(boost::bind(&Sentinel::AnalyseMovement, this));
+// 		}
+// 	}
 }
 
 bool Sentinel::ValidatePlayerMovement(float new_x, float new_y, uint32 current_time, OpcodesList opcode)
