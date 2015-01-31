@@ -426,6 +426,7 @@ struct MANGOS_DLL_DECL npc_ghost_magnet_dummy : public ScriptedAI
     bool m_summoned;
     uint32 m_initSummonCount;
     uint32 m_summonCount;
+    uint32 m_magnetResetTimer;
 
     void Reset()
     {
@@ -434,6 +435,7 @@ struct MANGOS_DLL_DECL npc_ghost_magnet_dummy : public ScriptedAI
         m_creature->UpdateVisibilityAndView();
         m_initSummonCount = 0;
         m_summonCount = 0;
+        m_magnetResetTimer = 90000;
         m_summoned = false;
 
         for(int i = 0; i < 4; i++)
@@ -445,41 +447,50 @@ struct MANGOS_DLL_DECL npc_ghost_magnet_dummy : public ScriptedAI
 
     bool GhostPositionAvailable(Creature *pGhost)
     {
-        if(pGhost)
-        {
-            if(m_initSummonCount < 4)
+            if(pGhost)
             {
-                pGhosts[m_initSummonCount] = pGhost;
-                
-                for(int i = 0; i < 4; i++)
+                if(m_initSummonCount < 4)
                 {
-                    switch(i)
+                    pGhosts[m_initSummonCount] = pGhost;
+                
+                    for(int i = 0; i < 4; i++)
                     {
-                    case 1:
-                        ghostPositions[m_initSummonCount][i] = pGhost->GetPositionX();
-                        break;
-                    case 2:
-                        ghostPositions[m_initSummonCount][i] = pGhost->GetPositionY();
-                        break;
-                    case 3:
-                        ghostPositions[m_initSummonCount][i] = pGhost->GetPositionZ();
-                        break;
+                        switch(i)
+                        {
+                        case 1:
+                            ghostPositions[m_initSummonCount][i] = pGhost->GetPositionX();
+                            break;
+                        case 2:
+                            ghostPositions[m_initSummonCount][i] = pGhost->GetPositionY();
+                            break;
+                        case 3:
+                            ghostPositions[m_initSummonCount][i] = pGhost->GetPositionZ();
+                            break;
+                        }
                     }
-                }
-                m_initSummonCount++;
-                m_summoned = true;
+                    m_initSummonCount++;
 
-                return true;
+                    return true;
+                }
+                else
+                    return false;
             }
-            else
-                return false;
-        }
 
         return false;
     }
 
-    void UpdateAI(const uint32 /*uiDiff*/)
-    {       
+    void UpdateAI(const uint32 uiDiff)
+    {   
+        if(m_magnetResetTimer)
+        {
+            if(m_magnetResetTimer <= uiDiff)
+            {
+                m_initSummonCount = 0;
+                m_magnetResetTimer = 0;
+            }
+            else
+                m_magnetResetTimer -= uiDiff;
+        }
     }
 
 };
@@ -494,28 +505,70 @@ struct MANGOS_DLL_DECL npc_magrim_spectre_dummy : public ScriptedAI
     npc_magrim_spectre_dummy(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
 
     Creature *pGhostSummoned;
+    uint32 m_ghostCleanupTimer;
 
     void Reset()
     {
         pGhostSummoned = nullptr;
+        m_ghostCleanupTimer = 1000;
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
         m_creature->SetVisibility(VISIBILITY_OFF);
         m_creature->UpdateVisibilityAndView();
         pGhostSummoned = m_creature->SummonCreature(MOB_MAGRAMI_SPECTRE, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
     }
 
-    void SummonedCreatureDespawn(Creature */*pSummoned*/)
+    void SummonedCreatureDespawn(Creature *pSummoned)
     {
         m_creature->SummonCreature(MOB_MAGRAMI_SPECTRE, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
     }
 
-    void SummonedCreatureJustDied(Creature */*pSummoned*/)
+    void SummonedCreatureJustDied(Creature *pSummoned)
     {
         m_creature->SummonCreature(MOB_MAGRAMI_SPECTRE, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+    }
+
+    void GhostCleanup()
+    {
+        bool first = true;
+        std::list<Creature*> ghostList;
+        GetCreatureListWithEntryInGrid(ghostList, m_creature, MOB_MAGRAMI_SPECTRE, 2.0f);
+
+        if(!ghostList.empty())
+        {
+            for (std::list<Creature*>::iterator iter = ghostList.begin(); iter != ghostList.end(); ++iter)
+			{
+				if (*iter)
+				{
+					Creature* ghost = (*iter);
+                    if(ghost)
+                    {     
+                        if(ghost->GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE && !ghost->isDead())
+                        {
+                            if(!first)
+                            {
+                                ghost->ForcedDespawn();
+                            }
+
+                            first = false;
+                        }
+                    }
+				}
+			}
+        }
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
+        if(m_ghostCleanupTimer)
+        {
+            if(m_ghostCleanupTimer <= uiDiff)
+            {
+                GhostCleanup();
+                m_ghostCleanupTimer = 1000;
+            }
+            else
+                m_ghostCleanupTimer -= uiDiff;
+        }
     }
 
 };
@@ -562,7 +615,7 @@ struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
         m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
     }
 
-    void JustDied(Unit */*pKiller*/)
+    void JustDied(Unit *pKiller)
     {
         if(summoned)
         {
@@ -585,6 +638,7 @@ struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
                 }
             }
         }
+        ScriptedAI::JustDied(pKiller);
     }
 
     void UpdateAI(const uint32 uiDiff)
