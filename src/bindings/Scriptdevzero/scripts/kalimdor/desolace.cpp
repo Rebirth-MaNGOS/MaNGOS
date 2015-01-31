@@ -413,7 +413,170 @@ enum MagramiSpectre
     GAMEOBJECT_GHOST_MAGNET = 177746,
     SPELL_CHILLING_TOUCH = 12531,
     SPELL_CURSE_OF_THE_FALLEN_MAGRAM = 18159,
+    MOB_MAGRAMI_SPECTRE = 11560,
+    GHOST_VISUAL = 16713,
 };
+
+struct MANGOS_DLL_DECL npc_ghost_magnet_dummy : public ScriptedAI
+{
+    npc_ghost_magnet_dummy(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+
+    Creature *pGhosts[4];
+    float ghostPositions[4][4];
+    bool m_summoned;
+    uint32 m_initSummonCount;
+    uint32 m_summonCount;
+    uint32 m_magnetResetTimer;
+
+    void Reset()
+    {
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+        m_creature->SetVisibility(VISIBILITY_OFF);
+        m_creature->UpdateVisibilityAndView();
+        m_initSummonCount = 0;
+        m_summonCount = 0;
+        m_magnetResetTimer = 90000;
+        m_summoned = false;
+
+        for(int i = 0; i < 4; i++)
+        {
+            ghostPositions[i][i] = 0.0f;
+            pGhosts[i] = nullptr;
+        }
+    }
+
+    bool GhostPositionAvailable(Creature *pGhost)
+    {
+            if(pGhost)
+            {
+                if(m_initSummonCount < 4)
+                {
+                    pGhosts[m_initSummonCount] = pGhost;
+                
+                    for(int i = 0; i < 4; i++)
+                    {
+                        switch(i)
+                        {
+                        case 1:
+                            ghostPositions[m_initSummonCount][i] = pGhost->GetPositionX();
+                            break;
+                        case 2:
+                            ghostPositions[m_initSummonCount][i] = pGhost->GetPositionY();
+                            break;
+                        case 3:
+                            ghostPositions[m_initSummonCount][i] = pGhost->GetPositionZ();
+                            break;
+                        }
+                    }
+                    m_initSummonCount++;
+
+                    return true;
+                }
+                else
+                    return false;
+            }
+
+        return false;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {   
+        if(m_magnetResetTimer)
+        {
+            if(m_magnetResetTimer <= uiDiff)
+            {
+                m_initSummonCount = 0;
+                m_magnetResetTimer = 0;
+            }
+            else
+                m_magnetResetTimer -= uiDiff;
+        }
+    }
+
+};
+
+CreatureAI* GetAI_npc_ghost_magnet_dummy(Creature* pCreature)
+{
+    return new npc_ghost_magnet_dummy(pCreature);
+}
+
+struct MANGOS_DLL_DECL npc_magrim_spectre_dummy : public ScriptedAI
+{
+    npc_magrim_spectre_dummy(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+
+    Creature *pGhostSummoned;
+    uint32 m_ghostCleanupTimer;
+
+    void Reset()
+    {
+        pGhostSummoned = nullptr;
+        m_ghostCleanupTimer = 1000;
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+        m_creature->SetVisibility(VISIBILITY_OFF);
+        m_creature->UpdateVisibilityAndView();
+        pGhostSummoned = m_creature->SummonCreature(MOB_MAGRAMI_SPECTRE, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+    }
+
+    void SummonedCreatureDespawn(Creature *pSummoned)
+    {
+        m_creature->SummonCreature(MOB_MAGRAMI_SPECTRE, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+    }
+
+    void SummonedCreatureJustDied(Creature *pSummoned)
+    {
+        m_creature->SummonCreature(MOB_MAGRAMI_SPECTRE, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+    }
+
+    void GhostCleanup()
+    {
+        bool first = true;
+        std::list<Creature*> ghostList;
+        GetCreatureListWithEntryInGrid(ghostList, m_creature, MOB_MAGRAMI_SPECTRE, 2.0f);
+
+        if(!ghostList.empty())
+        {
+            for (std::list<Creature*>::iterator iter = ghostList.begin(); iter != ghostList.end(); ++iter)
+			{
+				if (*iter)
+				{
+					Creature* ghost = (*iter);
+                    if(ghost)
+                    {     
+                        if(ghost->GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE && !ghost->isDead())
+                        {
+                            if(!first)
+                            {
+                                ghost->ForcedDespawn();
+                            }
+
+                            first = false;
+                        }
+                    }
+				}
+			}
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(m_ghostCleanupTimer)
+        {
+            if(m_ghostCleanupTimer <= uiDiff)
+            {
+                GhostCleanup();
+                m_ghostCleanupTimer = 1000;
+            }
+            else
+                m_ghostCleanupTimer -= uiDiff;
+        }
+    }
+
+};
+
+CreatureAI* GetAI_npc_magrim_spectre_dummy(Creature* pCreature)
+{
+    return new npc_magrim_spectre_dummy(pCreature);
+}
 
 struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
 {
@@ -421,56 +584,115 @@ struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
 
     bool trapDetected;
     bool hostile;
+    bool summoned;
     uint32 m_spellCdChilling;
     uint32 m_spellCdCurse;
+    uint32 m_summonedTiemr;
+    float x,y,z, targetX, targetY, targetZ;
 
     void Reset()
     {
+        x = m_creature->GetPositionX();
+        y = m_creature->GetPositionY();
+        z = m_creature->GetPositionZ();
+        targetX = 0;
+        targetY = 0;
+        targetZ = 0;
+        DoCast(m_creature, GHOST_VISUAL);
         m_creature->setFaction(189);
         m_creature->SetVisibility(VISIBILITY_OFF);
         m_creature->UpdateVisibilityAndView();
         trapDetected = false;
         hostile = false;
+        summoned = false;
         m_spellCdChilling = 0;
         m_spellCdCurse = 0;
+        m_summonedTiemr = 0;
     }
 
-    void Aggro(Unit *pTarget)
+    void Aggro(Unit* /*pTarget*/)
     {
         m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
     }
 
+    void JustDied(Unit *pKiller)
+    {
+        if(summoned)
+        {
+            if(x && y && z && targetX && targetY && targetZ)
+            {
+                Creature *summonedGhost = m_creature->SummonCreature(MOB_MAGRAMI_SPECTRE, x, y, z, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+                if(summonedGhost)
+                {
+                    mob_magrami_spectre *magramiAI = dynamic_cast<mob_magrami_spectre*>(summonedGhost->AI());
+
+                    if(magramiAI)
+                    {
+                        magramiAI->trapDetected = true;
+                        summonedGhost->SetVisibility(VISIBILITY_ON);
+                        summonedGhost->UpdateVisibilityAndView();
+                        summonedGhost->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                        summonedGhost->SetSpeedRate(MOVE_WALK, 0.5f, true);
+                        summonedGhost->GetMotionMaster()->MovePoint(0, targetX, targetY, targetZ, true);
+                    }
+                }
+            }
+        }
+        ScriptedAI::JustDied(pKiller);
+    }
+
     void UpdateAI(const uint32 uiDiff)
     {
+        if(m_summonedTiemr)
+        {
+            if(m_summonedTiemr <= uiDiff)
+            {
+                m_creature->SetVisibility(VISIBILITY_ON);
+                m_creature->UpdateVisibilityAndView();
+                m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                m_creature->GetMotionMaster()->MovePoint(0, x, y, z, true);  
+                m_summonedTiemr = 0;
+            }
+            else
+                m_summonedTiemr -= uiDiff;
+        }
         if(!hostile)
         {
             if(!trapDetected)
             {
-                if(GameObject *ghostMagnet = GetClosestGameObjectWithEntry(m_creature, GAMEOBJECT_GHOST_MAGNET, 40.0f))
+                if(Creature *ghostHandler = GetClosestCreatureWithEntry(m_creature, 800010, 35.0f))
                 {
-                    if(ghostMagnet->GetRespawnTime() != 0)
+                    if(npc_ghost_magnet_dummy *handlerAI = dynamic_cast<npc_ghost_magnet_dummy*>(ghostHandler->AI()))
                     {
-                        m_creature->SetVisibility(VISIBILITY_ON);
-                        m_creature->UpdateVisibilityAndView();
-                        m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);
-                        m_creature->GetMotionMaster()->MovePoint(0, ghostMagnet->GetPositionX(), ghostMagnet->GetPositionY(), ghostMagnet->GetPositionZ(), true);
-                        trapDetected = true;
+                        if(handlerAI->GhostPositionAvailable(m_creature))
+                        {
+                            targetX = ghostHandler->GetPositionX();
+                            targetY = ghostHandler->GetPositionY();
+                            targetZ = ghostHandler->GetPositionZ();
+                            m_creature->SetVisibility(VISIBILITY_ON);
+                            m_creature->UpdateVisibilityAndView();
+                            m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                            m_creature->SetSpeedRate(MOVE_WALK, 0.5f, true);
+                            m_creature->GetMotionMaster()->MovePoint(0, ghostHandler->GetPositionX(), ghostHandler->GetPositionY(), ghostHandler->GetPositionZ(), true);
+                            trapDetected = true;
+                            summoned = true;
+                        }   
                     }
                 }
             }
             else
             {
-                if(GameObject *ghostMagnet = GetClosestGameObjectWithEntry(m_creature, GAMEOBJECT_GHOST_MAGNET, 2.0f))
-                {
-                    if(ghostMagnet->GetRespawnTime() != 0)
+                    if(GameObject *ghostMagnet = GetClosestGameObjectWithEntry(m_creature, GAMEOBJECT_GHOST_MAGNET, 2.0f))
                     {
-                        m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-                        m_creature->setFaction(21);
-                        hostile = true;
-                        m_spellCdCurse = 2000;
-                        m_spellCdChilling = urand(5000, 10000);
+                        if(ghostMagnet->GetRespawnTime() != 0)
+                        {
+                            m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                            m_creature->setFaction(21);
+                            hostile = true;
+                            m_spellCdCurse = 2000;
+                            m_spellCdChilling = urand(5000, 10000);
+                        }
                     }
-                }
             }
         }
 
@@ -498,6 +720,7 @@ struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
             else
                 m_spellCdCurse -= uiDiff;
         }
+        
         DoMeleeAttackIfReady();
     }
 
@@ -549,4 +772,15 @@ void AddSC_desolace()
     pNewScript->Name = "mob_magrami_spectre";
     pNewScript->GetAI = &GetAI_mob_magrami_spectre;
     pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "npc_ghost_magnet_dummy";
+    pNewScript->GetAI = &GetAI_npc_ghost_magnet_dummy;
+    pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "npc_magrim_spectre_dummy";
+    pNewScript->GetAI = &GetAI_npc_magrim_spectre_dummy;
+    pNewScript->RegisterSelf();
+    
 }
