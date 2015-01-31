@@ -621,47 +621,61 @@ struct MANGOS_DLL_DECL mob_mobile_alert_systemAI : public ScriptedAI
 
     uint32 m_uiSummonTimer;
 	uint32 m_uiYellTimer;
+	uint32 m_uiSummonCount;
+	uint32 m_uiYellCount;
 
     void Reset()
     {
 		SetCombatMovement(false);
         m_uiSummonTimer = 10000;
 		m_uiYellTimer = 4000;
+		m_uiSummonCount = 0;
+		m_uiYellCount = 0;
     }
 
 	void Aggro(Unit* /*pAttacker*/)
 	{
 		DoScriptText(YELL_WARNING, m_creature);
+		++m_uiYellCount;
+	}
+
+	 void JustSummoned(Creature* pSummoned)	
+    {
+        ++m_uiSummonCount;
 	}
 
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
-		// Yell timer
-        if (m_uiYellTimer <= uiDiff)
+		if (m_uiYellCount < 3)	// max 3 Yell
         {
-			DoScriptText(YELL_WARNING, m_creature);		// Yell 3x before summon
-			m_uiYellTimer = 4000;
+			// Yell timer
+			if (m_uiYellTimer <= uiDiff)
+			{
+				DoScriptText(YELL_WARNING, m_creature);
+				m_uiYellTimer = 4000;
+				++m_uiYellCount;
+			}
+			else 
+				m_uiYellTimer -= uiDiff;
 		}
-		else 
-			m_uiYellTimer -= uiDiff;
-
-        // Summon timer
-        if (m_uiSummonTimer <= uiDiff)
+		if (m_uiSummonCount < 2)	// max 2 Adds
         {
-			float fX, fY, fZ;
-            m_creature->GetPosition(fX, fY, fZ);
-			for(uint8 i = 0; i < 2; ++i)
+			// Summon timer
+			if (m_uiSummonTimer <= uiDiff)
+			{
+				float fX, fY, fZ;
+				m_creature->GetPosition(fX, fY, fZ);
+				for(uint8 i = 0; i < 2; ++i)
                     if (Creature* pGuardian = m_creature->SummonCreature(NPC_MECHANIZED_GUARDIAN, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
                         pGuardian->SetInCombatWithZone();
 						
-			m_creature->ForcedDespawn();
-            m_uiSummonTimer = 900000;
-        }
-        else
-            m_uiSummonTimer -= uiDiff;
+				m_creature->ForcedDespawn();
+			}
+			else
+				m_uiSummonTimer -= uiDiff;
+		}
     }
 };
 
