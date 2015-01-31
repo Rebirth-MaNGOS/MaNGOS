@@ -316,7 +316,7 @@ bool Unit::IsTriggeredAtSpellProcEvent(Unit *pVictim, SpellAuraHolder* holder, S
     }
     
     // The shaman spell Flurry should not be consumed by extra attacks (ex. Windfury).
-    if (m_extraAttacks > 1)
+    if (m_extraAttacks > 0)
     {
         if (spellProto->Id == 16257)
                 return false;
