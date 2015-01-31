@@ -35,19 +35,6 @@ enum
     MODEL_HUMAN               = 3637
 };
 
-static Locations Move[]=
-{
-    {3690.27f,-3604.21f,138.386f,0},
-	{3712.78f,-3606.16f,141.341f,0},
-	{3777.16f,-3580.01f,142.348f,0},
-	{3811.69f,-3627.07f,145.202f,0},
-	{3895.91f,-3544.69,137.338,0},
-	{3997.96f,-3557.17f,124.946f,0},
-	{4045.33f,-3521.74f,121.727f,0},
-	{4072.01f,-3535.4f,123.252,0},
-	{4067.31,-3534.69,122.623,2.67143},
-};
-
 struct MANGOS_DLL_DECL boss_magistrate_barthilasAI : public ScriptedAI
 {
     boss_magistrate_barthilasAI(Creature* pCreature) : ScriptedAI(pCreature)
