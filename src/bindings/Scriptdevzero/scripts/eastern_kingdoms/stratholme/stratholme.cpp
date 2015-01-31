@@ -570,6 +570,7 @@ struct MANGOS_DLL_DECL mob_eye_of_naxxramasAI : public ScriptedAI
 
     uint32 m_uiSummonTimer;
 	uint32 m_uiChannelTimer;
+	uint32 m_uiSummonCount;
 
     void Reset()
     {
@@ -578,6 +579,7 @@ struct MANGOS_DLL_DECL mob_eye_of_naxxramasAI : public ScriptedAI
 		m_creature->RemoveAurasDueToSpell(SPELL_ROOT_SELF);
         m_uiSummonTimer = 9000;
 		m_uiChannelTimer = 500;
+		m_uiSummonCount = 0;
     }
 
 	void Aggro(Unit* /*pAttacker*/)
@@ -585,6 +587,11 @@ struct MANGOS_DLL_DECL mob_eye_of_naxxramasAI : public ScriptedAI
 		m_creature->RemoveAurasDueToSpell(SPELL_STEALTH);
 		m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
 		DoScriptText(YELL_LIVING, m_creature);
+	}
+
+	 void JustSummoned(Creature* pSummoned)	
+    {
+        ++m_uiSummonCount;
 	}
 
     void UpdateAI(const uint32 uiDiff)
@@ -600,21 +607,23 @@ struct MANGOS_DLL_DECL mob_eye_of_naxxramasAI : public ScriptedAI
 		else 
 			m_uiChannelTimer -= uiDiff;
 
-        // Summon timer
-        if (m_uiSummonTimer <= uiDiff)
+		if (m_uiSummonCount < 2)	// max 2 gargoyles
         {
-			float fX, fY, fZ;
-            m_creature->GetPosition(fX, fY, fZ);
-			for(uint8 i = 0; i < 2; ++i)
+			// Summon timer
+			if (m_uiSummonTimer <= uiDiff)
+			{
+				float fX, fY, fZ;
+				m_creature->GetPosition(fX, fY, fZ);
+				for(uint8 i = 0; i < 2; ++i)
                     if (Creature* pGargoyle = m_creature->SummonCreature(NPC_ROCKWING_GARGOYLE, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
                         pGargoyle->SetInCombatWithZone();
 						
-			m_creature->ForcedDespawn();
-            m_uiSummonTimer = 900000;
-        }
-        else
-            m_uiSummonTimer -= uiDiff;
-    }
+				m_creature->ForcedDespawn();
+			}
+			else
+				m_uiSummonTimer -= uiDiff;
+		}
+	}
 };
 
 CreatureAI* GetAI_mob_eye_of_naxxramas(Creature* pCreature)
