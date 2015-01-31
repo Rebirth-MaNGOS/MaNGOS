@@ -449,7 +449,7 @@ void instance_blackrock_spire::Update(uint32 uiDiff)
                     for (Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
                     {
                         Player* pPlayer = (itr)->getSource();
-                        if (pPlayer && pPlayer->IsWithinDist(pEgg, 3.0f))
+                        if (pPlayer && pPlayer->IsWithinDist(pEgg, 3.0f) && pEgg->GetGoState() == GO_STATE_READY)
                         {
                             float fX, fY, fZ;
                             pEgg->GetPosition(fX, fY, fZ);
