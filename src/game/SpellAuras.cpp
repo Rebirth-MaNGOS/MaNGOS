@@ -2694,7 +2694,7 @@ void Aura::HandleAuraTransform(bool apply, bool /*Real*/)
     }
 
     // Make sure you cannot do anything while affected by the wild polymorph.
-    if ( GetId() == 23603 )
+    if ( GetId() == 23603 && target->GetTypeId() == TYPEID_PLAYER )
     {
         if (apply)
             dynamic_cast<Player*>(target)->SetClientControl(target, 0);
