@@ -576,13 +576,25 @@ void Group::MasterLoot(Creature *creature, Loot* loot)
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
     {
         Player *looter = itr->getSource();
-        if (!looter->IsInWorld())
+        if (!looter || !looter->IsInWorld())
             continue;
 
-        if (looter->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
+        if (looter->isAlive())
         {
-            data << looter->GetObjectGuid();
-            ++real_count;
+            if (looter->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
+            {
+                data << looter->GetObjectGuid();
+                ++real_count;
+            }
+        }
+        else
+        {
+            Corpse* looterCorpse = looter->GetCorpse();
+            if (looterCorpse && looterCorpse->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
+            {
+                data << looter->GetObjectGuid();
+                ++real_count;
+            }
         }
     }
 

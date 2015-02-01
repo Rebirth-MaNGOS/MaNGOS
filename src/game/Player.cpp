@@ -7401,11 +7401,24 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                         for(GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
                         {
                             Player *looter = itr->getSource();
-                            if (!looter->IsInWorld())
+                            if (!looter || !looter->IsInWorld())
+                                continue;
+                            
+                            // Don't add players that have already been added.
+                            if (loot->IsAllowedLooter(looter->GetObjectGuid()))
                                 continue;
 
-                            if (looter->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
-                                loot->AddAllowedLooter(looter->GetObjectGuid());
+                            if (looter->isAlive())
+                            {
+                                if (looter->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
+                                    loot->AddAllowedLooter(looter->GetObjectGuid());
+                            }
+                            else
+                            {
+                                    Corpse* looterCorpse = looter->GetCorpse();
+                                    if (looterCorpse && looterCorpse->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
+                                        loot->AddAllowedLooter(looter->GetObjectGuid());
+                            }
                         }
                     }
                 }
