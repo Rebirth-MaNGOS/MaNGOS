@@ -638,11 +638,19 @@ struct MANGOS_DLL_DECL mob_rabid_thistle_bear : public ScriptedAI
 
     void Reset()
     {
+        if(m_creature->GetEntry() == CAPTURED_THISTLE_BEAR)
+        {
+            captured = true;
+        }
+        else
+        {
+            captured = false;
+            trapOwner = nullptr;
+            ui_despawnTimer = 0;
+        }
+
 		trap = nullptr;
-		trapOwner = nullptr;
         tharnariun = nullptr;
-		captured = false;
-		ui_despawnTimer = 0;
     }
 
     void UpdateAI(uint32 uiDiff)
@@ -661,7 +669,10 @@ struct MANGOS_DLL_DECL mob_rabid_thistle_bear : public ScriptedAI
 					{
 						captured = true;
 						trapOwner->KilledMonsterCredit(CAPTURED_THISTLE_BEAR);
-						m_creature->setFaction(FACTION_ESCORT_A_NEUTRAL_PASSIVE);
+                        m_creature->DeleteThreatList();
+                        m_creature->CombatStop(true);
+                        m_creature->setFaction(FACTION_ESCORT_A_PASSIVE);
+                        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
 						m_creature->SetEntry(CAPTURED_THISTLE_BEAR);
 						m_creature->SetDisplayId(CAPTURED_THISTLE_BEAR_DISPLAY_ID);
 						m_creature->UpdateVisibilityAndView();
