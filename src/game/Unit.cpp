@@ -6887,18 +6887,6 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
     bool creatureNotInCombat = GetTypeId()==TYPEID_UNIT && !HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IN_COMBAT);
 
     SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IN_COMBAT);
-    
-    // If this is an active object it should be added to the update list.
-    if(isActiveObject())
-    {
-        // Creatures that are patrolling should never stop updating.
-        Creature* creature = dynamic_cast<Creature*>(this);
-        if(creature &&
-           creature->GetMotionMaster()->GetCurrentMovementGeneratorType() != MovementGeneratorType::WAYPOINT_MOTION_TYPE)
-        {
-            GetMap()->AddActiveObjectToUpdate(this);
-        }
-    }
 
     if (isCharmed() || (GetTypeId()!=TYPEID_PLAYER && ((Creature*)this)->IsPet()))
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
@@ -6963,26 +6951,6 @@ void Unit::ClearInCombat()
 {
     m_CombatTimer = 0;
     RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IN_COMBAT);
-    
-    // If this is an active object it should be flagged for removal from the
-    // update list.
-    if(isActiveObject())
-    {
-        // Creatures that are patrolling should never stop updating.
-        Creature* creature = dynamic_cast<Creature*>(this);
-        if(creature)
-        {
-            // Pop the current movement generator to see what the previous one was.
-            auto tmp = creature->GetMotionMaster()->top();
-            creature->GetMotionMaster()->pop();
-            if (creature->GetMotionMaster()->GetCurrentMovementGeneratorType() != MovementGeneratorType::WAYPOINT_MOTION_TYPE)
-            {
-                if (GetMap())
-                    GetMap()->AddActiveObjectToRemove(this);
-            }
-            creature->GetMotionMaster()->push(tmp);
-        }
-    }
 
     if(isCharmed() || (GetTypeId()!=TYPEID_PLAYER && ((Creature*)this)->IsPet()))
         RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
@@ -8657,9 +8625,6 @@ void Unit::CleanupsBeforeDelete()
         RemoveAllAuras(AURA_REMOVE_BY_DELETE);
         GetMotionMaster()->Clear(false);                    // remove different non-standard movement generators.
     }
-    
-    if (GetMap())
-        GetMap()->RemoveFromAllActiveLists(this);
     
     WorldObject::CleanupsBeforeDelete();
 }

@@ -400,19 +400,6 @@ Map::Add(T *obj)
     }
 }
 
-void Map::AddActiveObjectToRemove(WorldObject* obj)
-{
-    if (std::find(m_activeNonPlayersRemoveList.begin(), m_activeNonPlayersRemoveList.end(), obj) == m_activeNonPlayersRemoveList.end())
-        m_activeNonPlayersRemoveList.push_back(obj);
-}
-
-void Map::AddActiveObjectToUpdate(WorldObject* obj)
-{
-    // Only add objects that aren't already in the list.
-    if (std::find(m_activeNonPlayers.begin(), m_activeNonPlayers.end(), obj) == m_activeNonPlayers.end())
-	m_activeNonPlayers.push_back(obj);
-}
-
 void Map::MessageBroadcast(Player *player, WorldPacket *msg, bool to_self)
 {
     CellPair p = MaNGOS::ComputeCellPair(player->GetPositionX(), player->GetPositionY());
@@ -599,28 +586,6 @@ void Map::Update(const uint32 &t_diff)
             }
         }
     }
-    
-    auto itr = m_activeNonPlayersRemoveList.begin();
-    while(itr != m_activeNonPlayersRemoveList.end())
-    {
-        if ((*itr)->IsInWorld())
-        {
-            // Only creatures that are no longer in evade mode should be removed.
-            Creature* current_creature = dynamic_cast<Creature*>(*itr);
-            if (current_creature)
-            {
-                if (current_creature->IsInEvadeMode())
-                    ++itr;
-                else
-                {
-                    m_activeNonPlayers.remove(*itr);
-                    itr = m_activeNonPlayersRemoveList.erase(itr);
-                }
-            }
-        }
-        else
-            itr = m_activeNonPlayersRemoveList.erase(itr);
-    }
 
     // Send world objects and item update field changes
     SendObjectUpdates();
@@ -739,17 +704,6 @@ Map::Remove(T *obj, bool remove)
         // Note: In case resurrectable corpse and pet its removed from global lists in own destructor
         delete obj;
     }
-}
-
-void Map::RemoveFromAllActiveLists(WorldObject* obj)
-{
-    auto loc = std::find(m_activeNonPlayers.begin(), m_activeNonPlayers.end(), obj);
-    if (loc != m_activeNonPlayers.end())
-        m_activeNonPlayers.erase(loc);
-    
-    loc = std::find(m_activeNonPlayersRemoveList.begin(), m_activeNonPlayersRemoveList.end(), obj);
-    if (loc != m_activeNonPlayersRemoveList.end())
-        m_activeNonPlayersRemoveList.erase(loc);
 }
 
 void

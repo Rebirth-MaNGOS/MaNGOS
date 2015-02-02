@@ -119,10 +119,7 @@ public:
     }
 
     virtual bool Add(Player *);
-    void AddActiveObjectToRemove(WorldObject* obj);
-    void AddActiveObjectToUpdate(WorldObject* obj);
     virtual void Remove(Player *, bool);
-    void RemoveFromAllActiveLists(WorldObject* obj);
     template<class T> void Add(T *);
     template<class T> void Remove(T *, bool);
 
@@ -359,10 +356,6 @@ protected:
 
     typedef std::list<WorldObject*> ActiveNonPlayers;
     ActiveNonPlayers m_activeNonPlayers;
-    
-    // List containing creatures that should be removed from the list
-    // when they exit evade mode.
-    ActiveNonPlayers m_activeNonPlayersRemoveList;
     
     MapStoredObjectTypesContainer m_objectsStore;
 
