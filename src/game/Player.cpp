@@ -7408,17 +7408,10 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                             if (loot->IsAllowedLooter(looter->GetObjectGuid()))
                                 continue;
 
-                            if (looter->isAlive())
-                            {
-                                if (looter->IsWithinDistInMap(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE) * 5, false))
-                                    loot->AddAllowedLooter(looter->GetObjectGuid());
-                            }
-                            else
-                            {
-                                    Corpse* looterCorpse = looter->GetCorpse();
-                                    if (looterCorpse && looterCorpse->IsWithinDistInMap(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE) * 5, false))
-                                        loot->AddAllowedLooter(looter->GetObjectGuid());
-                            }
+                            Corpse* looterCorpse = looter->GetCorpse();
+                            if (looter->IsWithinDistInMap(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE) * 5, false) || 
+                                (looterCorpse && looterCorpse->IsWithinDistInMap(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE) * 5, false)))
+                                loot->AddAllowedLooter(looter->GetObjectGuid());
                         }
                     }
                 }

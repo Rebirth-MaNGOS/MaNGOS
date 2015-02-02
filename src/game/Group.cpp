@@ -579,22 +579,12 @@ void Group::MasterLoot(Creature *creature, Loot* loot)
         if (!looter || !looter->IsInWorld())
             continue;
 
-        if (looter->isAlive())
+        Corpse* looterCorpse = looter->GetCorpse();
+        if (looter->IsWithinDistInMap(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE) * 5, false) || 
+            (looterCorpse && looterCorpse->IsWithinDistInMap(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE) * 5, false)))
         {
-            if (looter->IsWithinDistInMap(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE) * 5, false))
-            {
-                data << looter->GetObjectGuid();
-                ++real_count;
-            }
-        }
-        else
-        {
-            Corpse* looterCorpse = looter->GetCorpse();
-            if (looterCorpse && looterCorpse->IsWithinDistInMap(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE) * 5, false))
-            {
-                data << looter->GetObjectGuid();
-                ++real_count;
-            }
+            data << looter->GetObjectGuid();
+            ++real_count;
         }
     }
 
