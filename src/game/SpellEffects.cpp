@@ -950,6 +950,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         {
                             unitTarget->SetEntry(12299);
                             unitTarget->SetDisplayId(347);
+                            unitTarget->RemoveAurasDueToSpell(19502);
                             unitTarget->UpdateVisibilityAndView();
                         }
                     }
@@ -961,6 +962,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         {
                             unitTarget->SetEntry(12297);
                             unitTarget->SetDisplayId(1547);
+                            unitTarget->RemoveAurasDueToSpell(19502);
                             unitTarget->UpdateVisibilityAndView();
                         }
                     }
