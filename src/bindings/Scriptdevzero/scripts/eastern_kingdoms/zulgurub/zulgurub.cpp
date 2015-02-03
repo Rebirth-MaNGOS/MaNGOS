@@ -72,20 +72,30 @@ struct MANGOS_DLL_DECL mob_razzashi_venombroodAI : public ScriptedAI
 
     uint32 m_uiVenomTimer;
 	uint32 m_uiPoisonTimer;
+	uint32 m_uiSummonCount;
 
     void Reset()
     {
         m_uiVenomTimer = 5000;
 		m_uiPoisonTimer = 0;
+		m_uiSummonCount = 0;
     }
+
+	void JustSummoned(Creature* pSummoned)	
+    {
+        ++m_uiSummonCount;
+	}
 
 	void JustDied(Unit* /*pKiller*/)			// Spawn adds on death
     {
+		if (m_uiSummonCount < 5)	// max 5 Spiders
+        {
 		float fX, fY, fZ;
             m_creature->GetPosition(fX, fY, fZ);
 			for(uint8 i = 0; i < 5; ++i)
                     if (Creature* pSkitterer = m_creature->SummonCreature(NPC_RAZZASHI_SKITTERER, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
                         pSkitterer->AI()->AttackStart(m_creature->getVictim());
+		}
 	}
 
     void UpdateAI(const uint32 uiDiff)
