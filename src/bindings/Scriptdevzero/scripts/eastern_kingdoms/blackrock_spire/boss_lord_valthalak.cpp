@@ -16,8 +16,8 @@
 
 /* ScriptData
 SDName: Boss Lord Valthalak
-SD%Complete:
-SDComment:
+SD%Complete: 95%
+SDComment: Missing transition to phase 2, needs Yell + flag cannot target for 10sec while "he changes weapon".
 SDCategory: Blackrock Spire
 EndScriptData */
 
@@ -30,7 +30,9 @@ enum eLordValthalak
     ENRAGE                          = 1,
     AOE                             = 2,
 
-    SPELL_SHADOW_BOLT_VOLLEY        = 27382,
+	EQUIP_ID_STAFF2					= 34891,
+
+    SPELL_SHADOW_BOLT_VOLLEY        = 27383,
     SPELL_SHADOW_STAFF              = 27338,
     SPELL_SHADOW_WRATH              = 27286,
     SPELL_SUMMON_SPECTRAL_ASSASSIN  = 27249,
@@ -54,11 +56,12 @@ struct MANGOS_DLL_DECL boss_lord_valthalakAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiShadowBoltVolleyTimer = urand(4000,6000);
+        m_uiShadowBoltVolleyTimer = 1000;
         m_uiShadowStaffTimer = urand(6000,10000);
         m_uiShadowWrathTimer = urand(8000,12000);
         m_uiSummonTimer = urand(8000,10000);
         m_uiPhase = CASTER;
+		SetEquipmentSlots(true);
     }
 
     void JustReachedHome()
@@ -96,7 +99,14 @@ struct MANGOS_DLL_DECL boss_lord_valthalakAI : public ScriptedAI
             return; ;
 
         if (HealthBelowPct(40))
+		{
+			SetEquipmentSlots(false, EQUIP_ID_STAFF2, EQUIP_UNEQUIP, EQUIP_UNEQUIP);
+			const CreatureInfo* cinfo = m_creature->GetCreatureInfo();
+            m_creature->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, (cinfo->mindmg +((cinfo->mindmg/100) * 30)));
+            m_creature->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, (cinfo->maxdmg +((cinfo->maxdmg/100) * 30)));
+            m_creature->UpdateDamagePhysical(BASE_ATTACK);
             m_uiPhase = ENRAGE;
+		}
 
         if (HealthBelowPct(15))
             m_uiPhase = AOE;
@@ -146,8 +156,8 @@ struct MANGOS_DLL_DECL boss_lord_valthalakAI : public ScriptedAI
             {
                 Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
                 DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_SHADOW_BOLT_VOLLEY);
-                    
-                m_uiShadowBoltVolleyTimer = urand(4000,6000);
+				
+                m_uiShadowBoltVolleyTimer = 1500;
             }
             else
                 m_uiShadowBoltVolleyTimer -= uiDiff;
