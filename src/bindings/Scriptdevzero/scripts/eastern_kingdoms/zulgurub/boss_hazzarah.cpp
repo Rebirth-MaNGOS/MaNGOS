@@ -35,6 +35,7 @@ enum eHazzarah
     MODELID_ABOMINATION         = 1693,
     MODELID_LASHER              = 8172,
     MODELID_DEVILSAUR           = 5240,
+	MODELID_BARTHILAS			= 10433,
 };
 
 static Loc Summon[9]=
@@ -101,19 +102,22 @@ struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
                     {
                         // Summoned Illusion will to have a random model
                         uint32 m_uiNewDisplayId = 0;
-                        switch(rand()%4)
+                        switch(rand()%5)
                         {
                             case 0: m_uiNewDisplayId = MODELID_ABOMINATION;
-								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 2.0f);
+								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 3.0f);
 								break;
                             case 1: m_uiNewDisplayId = MODELID_LASHER;
-								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 2.0f);
+								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 3.0f);
 								break;
                             case 2: m_uiNewDisplayId = MODELID_FELGUARD;
-								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 2.0f);
+								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 3.0f);
 								break;
                             case 3: m_uiNewDisplayId = MODELID_DEVILSAUR; 
-								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
+								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 3.0f);
+								break;
+								case 4: m_uiNewDisplayId = MODELID_BARTHILAS; 
+								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 3.0f);
 								break;
                         }
 
