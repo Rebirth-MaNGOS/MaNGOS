@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Boss_Venoxis
 SD%Complete: 100
-SDComment:
+SDComment: To do, make the poison cloud give a debuff like 
 SDCategory: Zul'Gurub
 EndScriptData */
 
@@ -33,7 +33,7 @@ enum eVenoxis
     SPELL_FRENZY            = 8269,
     SPELL_HOLY_FIRE         = 23860,
     SPELL_HOLY_NOVA         = 23858,
-    SPELL_HOLY_WRATH        = 23979,
+    SPELL_HOLY_WRATH        = 28883,            //23979,
     SPELL_PARASITIC_SERPENT_SUMMON = 23866,
     SPELL_POISON_CLOUD      = 23861,
     SPELL_RENEW             = 23895,
@@ -72,8 +72,8 @@ struct MANGOS_DLL_DECL boss_venoxisAI : public ScriptedAI
         m_bFrenzied = false;
         m_bPhaseTwo = false;
 
-        m_uiHolyFireTimer = 10000;
-        m_uiHolyWrathTimer = 60500;
+        m_uiHolyFireTimer = urand(15000, 25000);
+        m_uiHolyWrathTimer = urand(15000, 25000);
         m_uiVenomSpitTimer = 5500;
         m_uiRenewTimer = 30500;
         m_uiPoisonCloudTimer = 2000;
@@ -168,16 +168,17 @@ struct MANGOS_DLL_DECL boss_venoxisAI : public ScriptedAI
             else
                 m_uiRenewTimer -= uiDiff;
 
-            if (m_uiHolyWrathTimer <= uiDiff)
+            if (m_uiHolyNovaTimer <= uiDiff)
             {
-                Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-                DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_HOLY_WRATH);
-                m_uiHolyWrathTimer = urand(8000, 10000);       // 15000, 25000
+                //Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+               // DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_HOLY_WRATH);
+				DoCastSpellIfCan(m_creature, SPELL_HOLY_NOVA);
+                m_uiHolyNovaTimer = urand(15000, 25000);       // 15000, 25000
             }
             else
-                m_uiHolyWrathTimer -= uiDiff;
+                m_uiHolyNovaTimer -= uiDiff;
 
-            if (m_uiHolyNovaTimer <= uiDiff)
+            if (m_uiHolyWrathTimer <= uiDiff)
             {
                 m_uiTargetsInRangeCount = 0;
                 for(uint8 i = 0; i < 10; ++i)
@@ -187,23 +188,26 @@ struct MANGOS_DLL_DECL boss_venoxisAI : public ScriptedAI
                             ++m_uiTargetsInRangeCount;
                 }
 
-                if (m_uiTargetsInRangeCount > 1)
+                if (m_uiTargetsInRangeCount > 3)
                 {
-                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_HOLY_NOVA);
-                    m_uiHolyNovaTimer = 1000;
+                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_HOLY_WRATH);
+                    m_uiHolyWrathTimer = 5000;
                 }
                 else
-                    m_uiHolyNovaTimer = 2000;
+				{
+					DoCastSpellIfCan(m_creature->getVictim(), SPELL_HOLY_WRATH);
+                    m_uiHolyWrathTimer = urand(10000,25000);
+				}
             }
             else
-                m_uiHolyNovaTimer -= uiDiff;
+                m_uiHolyWrathTimer -= uiDiff;
 
             if (m_uiHolyFireTimer <= uiDiff && m_uiTargetsInRangeCount < 3)
             {
-                Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0);
-                DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_HOLY_FIRE);
-
-                m_uiHolyFireTimer = 3000;       // 8000
+                //Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0);
+                //DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_HOLY_FIRE);
+				DoCastSpellIfCan(m_creature->getVictim(), SPELL_HOLY_FIRE);
+                m_uiHolyFireTimer = urand(10000,25000);       // 8000
             }
             else
                 m_uiHolyFireTimer -= uiDiff;
