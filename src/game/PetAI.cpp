@@ -320,12 +320,22 @@ void PetAI::UpdateAI(const uint32 diff)
                 std::advance(iter, random);
 
                 SpellEntry const *spellInfo = sSpellStore.LookupEntry(iter->first);
+                uint32 attempts = 0;
                 while(IsNonCombatSpell(spellInfo) || IsPositiveSpell(spellInfo) || spellInfo->RecoveryTime >= 600000)
                 {
                     iter = playerSpells.begin();
                     random = urand(0, playerSpells.size() - 1);
                     std::advance(iter, random);
                     spellInfo = sSpellStore.LookupEntry(iter->first);
+                    
+                    // Only make 10 attempts to find a spell to avoid an infinite loop.
+                    if (attempts < 10)
+                        ++attempts;
+                    else
+                    {
+                        controlledPlayer->SetCharmedCDTimer(3000);
+                        return;
+                    }
                 }
 
                 if(controlledPlayer->GetCharmedCDTimer() <= diff)  // Cast a spell every three seconds.
