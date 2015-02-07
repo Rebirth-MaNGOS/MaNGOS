@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include "ace/OS_NS_unistd.h"
 
@@ -876,6 +877,9 @@ void error_db_log(const char * str, ...)
 
 void Log::outWarden(const char * str, ...)
 {
+    std::stringstream ss("");
+    char buffer[1024];
+    
     if (!str)
         return;
 
@@ -885,11 +889,12 @@ void Log::outWarden(const char * str, ...)
     if (m_includeTime)
         outTime();
 
-    va_list ap;
-    va_start(ap, str);
-    vutf8printf(stdout, str, &ap);
-    va_end(ap);
-
+    {
+        va_list ap;
+        va_start(ap, str);
+        vutf8printf(stdout, str, &ap);
+        va_end(ap);
+    }
     printf("\n");
 
     if (wardenLogFile)
@@ -906,4 +911,15 @@ void Log::outWarden(const char * str, ...)
         fflush(wardenLogFile);
     }
     fflush(stdout);
+    
+    {
+        va_list ap;
+        va_start(ap, str);
+        vsnprintf(buffer, 1024, str, ap);
+        va_end(ap);
+        
+        ss << buffer;
+        
+        m_LastWardenMessage = ss.str();
+    }
 }

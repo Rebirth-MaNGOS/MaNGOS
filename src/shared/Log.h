@@ -164,6 +164,8 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
         bool IsIncludeTime() const { return m_includeTime; }
 
         static void WaitBeforeContinueIfNeed();
+        
+        std::string GetLastWardenMessage() { return m_LastWardenMessage; }
     private:
         FILE* openLogFile(char const* configFileName,char const* configTimeStampFlag, char const* mode);
         FILE* openGmlogPerAccount(uint32 account);
@@ -194,6 +196,8 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
         // gm log control
         bool m_gmlog_per_account;
         std::string m_gmlog_filename_format;
+        
+        std::string m_LastWardenMessage;
 };
 
 #define sLog MaNGOS::Singleton<Log>::Instance()

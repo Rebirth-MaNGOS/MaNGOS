@@ -350,7 +350,7 @@ void WardenWin::HandleData(ByteBuffer &buff)
     {
         buff.rpos(buff.wpos());
         sLog.outWarden("Invalid CheckSum for account Id %u", Client->GetAccountId());
-		sWorld.SendAntiCheatMessageToGMs(Client->GetPlayerName(), "A Warden check for Windows has failed! More info is available in the log.");
+        sWorld.SendAntiCheatMessageToGMs(Client->GetPlayerName(), "Invalid checksum in warden response!");
 
         if (sWorld.getConfig(CONFIG_FLOAT_WARDEN_KICK_BAN) == 1)
         {
@@ -511,7 +511,7 @@ void WardenWin::HandleData(ByteBuffer &buff)
 
     if (found)
     {
-		sWorld.SendAntiCheatMessageToGMs(Client->GetPlayerName(), "A Warden check for Windows has failed! More info is available in the log.");
+        sWorld.SendAntiCheatMessageToGMs(Client->GetPlayerName(), sLog.GetLastWardenMessage().c_str());
         if (sWorld.getConfig(CONFIG_FLOAT_WARDEN_KICK_BAN) == 1)
         {
             Client->KickPlayer();
