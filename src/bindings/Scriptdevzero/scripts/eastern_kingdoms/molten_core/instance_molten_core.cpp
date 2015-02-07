@@ -252,26 +252,28 @@ void instance_molten_core::RespawnBossAdds(GUIDList list)
 
 void instance_molten_core::StopSpawningAllTrashMobs(uint32 type)
 {
-	std::pair<std::multimap<uint32,ObjectGuid>::const_iterator,std::multimap<uint32,ObjectGuid>::const_iterator> creatureGuids = this->m_trashGuids.equal_range(type);
+    std::pair<std::multimap<uint32,ObjectGuid>::const_iterator,std::multimap<uint32,ObjectGuid>::const_iterator> creatureGuids = this->m_trashGuids.equal_range(type);
 
-	for(std::multimap<uint32,ObjectGuid>::const_iterator creatureGuid = creatureGuids.first;creatureGuid != creatureGuids.second; ++creatureGuid)
-	{
-		Creature *pCreature = instance->GetCreature((*creatureGuid).second);
+    for(std::multimap<uint32,ObjectGuid>::const_iterator creatureGuid = creatureGuids.first; creatureGuid != creatureGuids.second; ++creatureGuid)
+    {
+        Creature *pCreature = instance->GetCreature((*creatureGuid).second);
 
-		if (pCreature == NULL)
-		{
-			//Try to update the respawn time if the creature is dead in the db
-			//If it doesn't work, then the creature is not around because it's unloaded, and it will
-			//be fixed when it loads back in
-			instance->ExtendDeadCreatureRespawn((*creatureGuid).second.GetCounter(),604800);
-		} else if (!pCreature->isAlive())
-		{
-			//Push the respawn a week out
-			pCreature->SetRespawnTime(604800);
-			pCreature->SaveRespawnTime();
-		} else
-			pCreature->SetRespawnDelay(604800);
-	}
+        if (pCreature == NULL)
+        {
+            //Try to update the respawn time if the creature is dead in the db
+            //If it doesn't work, then the creature is not around because it's unloaded, and it will
+            //be fixed when it loads back in
+            instance->ExtendDeadCreatureRespawn((*creatureGuid).second.GetCounter(),604800);
+        } 
+        else
+        {
+            //Push the respawn a week out
+            pCreature->SetRespawnDelay(604800);
+            pCreature->SetRespawnTime(604800);
+            pCreature->SaveRespawnTime();
+        }
+
+    }
 }
 
 void instance_molten_core::OnPlayerEnter(Player* pPlayer)
@@ -364,37 +366,37 @@ void instance_molten_core::OnCreatureCreate(Creature* pCreature)
         case NPC_CORE_RAGER:
             lCoreRager.push_back(pCreature->GetObjectGuid());
             return;
-		case NPC_ANCIENT_CORE_HOUND:
-			//If magmadar is dead, give all core hounds a week respawn so they won't respawn
-			if (GetData(TYPE_MAGMADAR) >= DONE)
-			{
-				pCreature->SetRespawnDelay(604800);
-				if (!pCreature->isAlive())
-				{
-					pCreature->SetRespawnTime(604800);
-					pCreature->SaveRespawnTime();
-				}
-				else
-					pCreature->ForcedDespawn();
-			}
-			this->m_trashGuids.insert(std::pair<uint32,ObjectGuid>(pCreature->GetEntry(),pCreature->GetObjectGuid()));
-			break;
-		case NPC_LAVA_SURGER:
-			//Same with garr and lava surgers- a week respawn once he's dead so they won't come back
-			if (GetData(TYPE_GARR) >= DONE)
-			{
-				pCreature->SetRespawnDelay(604800);
-				if (!pCreature->isAlive())
-				{
-					pCreature->SetRespawnTime(604800);
-					pCreature->SaveRespawnTime();
-				}
-			}
-			this->m_trashGuids.insert(std::pair<uint32,ObjectGuid>(pCreature->GetEntry(),pCreature->GetObjectGuid()));
-			break;
+    case NPC_ANCIENT_CORE_HOUND:
+        //If magmadar is dead, give all core hounds a week respawn so they won't respawn
+        if (GetData(TYPE_MAGMADAR) >= DONE)
+        {
+            pCreature->SetRespawnDelay(604800);
+            if (!pCreature->isAlive())
+            {
+                pCreature->SetRespawnTime(604800);
+                pCreature->SaveRespawnTime();
+            }
+            else
+                pCreature->ForcedDespawn();
+        }
+        this->m_trashGuids.insert(std::pair<uint32,ObjectGuid>(pCreature->GetEntry(),pCreature->GetObjectGuid()));
+        break;
+    case NPC_LAVA_SURGER:
+        //Same with garr and lava surgers- a week respawn once he's dead so they won't come back
+        if (GetData(TYPE_GARR) >= DONE)
+        {
+            pCreature->SetRespawnDelay(604800);
+            if (!pCreature->isAlive())
+            {
+                pCreature->SetRespawnTime(604800);
+                pCreature->SaveRespawnTime();
+            }
+        }
+        this->m_trashGuids.insert(std::pair<uint32,ObjectGuid>(pCreature->GetEntry(),pCreature->GetObjectGuid()));
+        break;
     }
 
-	m_mNpcEntryGuidStore[pCreature->GetEntry()] = pCreature->GetObjectGuid();
+    m_mNpcEntryGuidStore[pCreature->GetEntry()] = pCreature->GetObjectGuid();
 }
 
 void instance_molten_core::OnCreatureDeath(Creature* pCreature)
@@ -596,11 +598,11 @@ void instance_molten_core::SetData(uint32 uiType, uint32 uiData)
             if (uiData == FAIL)
                 RespawnBossAdds(lFiresworn);
 
-			if (uiData == DONE)
-			{
-				//Set any already-dead ancient core hounds to not bother respawning
-				StopSpawningAllTrashMobs(NPC_LAVA_SURGER);
-			}
+        if (uiData == DONE)
+        {
+            //Set any already-dead ancient core hounds to not bother respawning
+            StopSpawningAllTrashMobs(NPC_LAVA_SURGER);
+        }
             break;
         case TYPE_SHAZZRAH:
             m_auiEncounter[4] = uiData;
