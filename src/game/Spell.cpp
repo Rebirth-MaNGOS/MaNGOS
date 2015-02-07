@@ -4455,8 +4455,8 @@ SpellCastResult Spell::CheckCast(bool strict)
             if (!target->GetAura(SPELL_AURA_PERIODIC_HEAL,SPELLFAMILY_DRUID,UI64LIT(0x50)))
                 return SPELL_FAILED_TARGET_AURASTATE;
         }
-		
-		// Fill possible dispel list
+
+        // Fill possible dispel list
         bool isDispell = false;
         bool isEmpty = true;
 
@@ -4466,68 +4466,83 @@ SpellCastResult Spell::CheckCast(bool strict)
             // Dispell Magic
             switch (m_spellInfo->Effect[i])
             {
-                case SPELL_EFFECT_DISPEL:
-                {
-                    // It is a dispell spell
-                    isDispell = true;
+            case SPELL_EFFECT_DISPEL:
+            {
+                // It is a dispell spell
+                isDispell = true;
 
-                    // Create dispel mask by dispel type
-                    uint32 dispel_type = m_spellInfo->EffectMiscValue[i];
-                    uint32 dispelMask = GetDispellMask(DispelType(dispel_type));
-                    Unit::SpellAuraHolderMap const& auras = target->GetSpellAuraHolderMap();
-                    for (Unit::SpellAuraHolderMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+                // Create dispel mask by dispel type
+                uint32 dispel_type = m_spellInfo->EffectMiscValue[i];
+                uint32 dispelMask = GetDispellMask(DispelType(dispel_type));
+                Unit::SpellAuraHolderMap const& auras = target->GetSpellAuraHolderMap();
+                for (Unit::SpellAuraHolderMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+                {
+                    SpellAuraHolder* holder = itr->second;
+                    uint32 disp = (1 << holder->GetSpellProto()->Dispel);
+                    if (disp & dispelMask)
                     {
-                        SpellAuraHolder* holder = itr->second;
-                        uint32 disp = (1 << holder->GetSpellProto()->Dispel);
-                        if (disp & dispelMask)
+                        if (holder->GetSpellProto()->Dispel == DISPEL_MAGIC)
                         {
-                            if (holder->GetSpellProto()->Dispel == DISPEL_MAGIC)
+                            bool positive = true;
+                            if (!holder->IsPositive())
                             {
-                                bool positive = true;
-                                if (!holder->IsPositive())
+                                positive = false;
+                            }
+                            else
+                            {
+                                positive = (holder->GetSpellProto()->AttributesEx & SPELL_ATTR_EX_NEGATIVE) == 0;
+                            }
+
+                            // do not remove positive auras if friendly target
+                            //               negative auras if non-friendly target
+                            if (positive && target->GetTypeId() == TYPEID_PLAYER) // Handle player targets separately since the PvP-tag needs to be checked.
+                            {
+                                Player* pTarget = dynamic_cast<Player*>(target);
+                                Player* pCaster = dynamic_cast<Player*>(m_caster);
+                                
+                                // If the players belong to different factions beneficial spells should be dispelable.
+                                if (pTarget && pCaster && pTarget->TeamForRace(pTarget->getRace()) != pCaster->TeamForRace(pCaster->getRace()) && pTarget->IsPvP())
                                 {
-                                    positive = false;
+                                    isEmpty = false;
+                                    break;
                                 }
                                 else
-                                {
-                                    positive = (holder->GetSpellProto()->AttributesEx & SPELL_ATTR_EX_NEGATIVE) == 0;
-                                }
-
-                                // do not remove positive auras if friendly target
-                                //               negative auras if non-friendly target
-                                if (positive == target->IsFriendlyTo(m_caster))			// if target is another faction and pvp-enabled while caster isn't pvp, should be able to dispel.(not working)
-									continue;
+                                    continue;
                             }
-							
-                            isEmpty = false;
-                            break;
+                            else if (positive == target->IsFriendlyTo(m_caster))			// if target is another faction and pvp-enabled while caster isn't pvp, should be able to dispel.
+                                continue;
                         }
+                        isEmpty = false;
+                        break;
                     }
-                    break;
                 }
+                break;
+            }
             }
         }
-		
-        // Ok if exist some buffs for dispel try dispel it
-		if (isDispell && isEmpty)			// If not abolish disease or abolish poison, stop cast.
-        {		
-			if (m_spellInfo->Id != 552)				// abolish disease initial cast
-				if (m_spellInfo->Id != 10872)			// abolish Disease effect
-					if (m_spellInfo->Id != 14253)			// abolish poison initial cast
-						if (m_spellInfo->Id != 3137)			// abolish poison effect
-							return SPELL_FAILED_NOTHING_TO_DISPEL;
-        }
-		
-		Player* pTarget = dynamic_cast<Player*>(target);
-		Player* pCaster = dynamic_cast<Player*>(m_caster);
 
-		if (pTarget && pCaster)
-		{
-			if (isDispell && pTarget->TeamForRace(pTarget->getRace()) != pCaster->TeamForRace(pCaster->getRace()) && !target->IsPvP()) // If target isn't pvp-enabled don't dispel(not needed for now, but needed when loop is fixed
-			{
-				return SPELL_FAILED_NOTHING_TO_DISPEL;
-			}
-		}
+        // If there's nothing to dispel the over time cures should still be allowed to be applied.
+        if (isDispell && isEmpty)
+        {
+            // abolish disease initial cast
+            // abolish Disease effect
+            // abolish poison initial cast
+            // abolish poison effect
+            if (m_spellInfo->Id != 552 && m_spellInfo->Id != 10872 &&
+                m_spellInfo->Id != 14253 && m_spellInfo->Id != 3137)
+                            return SPELL_FAILED_NOTHING_TO_DISPEL;
+        }
+
+        Player* pTarget = dynamic_cast<Player*>(target);
+        Player* pCaster = dynamic_cast<Player*>(m_caster);
+
+        if (pTarget && pCaster)
+        {
+            if (isDispell && pTarget->TeamForRace(pTarget->getRace()) != pCaster->TeamForRace(pCaster->getRace()) && !target->IsPvP()) // If target isn't pvp-enabled don't dispel(not needed for now, but needed when loop is fixed
+            {
+                return SPELL_FAILED_NOTHING_TO_DISPEL;
+            }
+        }
 
         if (!m_IsTriggeredSpell && IsDeathOnlySpell(m_spellInfo) && target->isAlive())
             return SPELL_FAILED_TARGET_NOT_DEAD;
