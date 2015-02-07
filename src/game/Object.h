@@ -215,6 +215,7 @@ class MANGOS_DLL_SPEC Object
             return *(((uint16*)&m_uint32Values[ index ])+offset);
         }
 
+        ObjectGuid const* GetGuidValuePtr(uint16 index) const { return reinterpret_cast<ObjectGuid const*>(&GetUInt64Value(index)); }
         ObjectGuid const& GetGuidValue( uint16 index ) const { return *reinterpret_cast<ObjectGuid const*>(&GetUInt64Value(index)); }
 
         void SetInt32Value(  uint16 index,        int32  value );

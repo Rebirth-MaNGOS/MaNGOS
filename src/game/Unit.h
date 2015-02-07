@@ -1393,7 +1393,7 @@ public:
         void SetCreatorGuid(ObjectGuid creator) { SetGuidValue(UNIT_FIELD_CREATEDBY, creator); }
         ObjectGuid const& GetPetGuid() const { return GetGuidValue(UNIT_FIELD_SUMMON); }
         void SetPetGuid(ObjectGuid pet) { SetGuidValue(UNIT_FIELD_SUMMON, pet); }
-        ObjectGuid const& GetCharmerGuid() const { return GetGuidValue(UNIT_FIELD_CHARMEDBY); }
+        ObjectGuid const GetCharmerGuid() const { return GetGuidValuePtr(UNIT_FIELD_CHARMEDBY) ? GetGuidValue(UNIT_FIELD_CHARMEDBY) : ObjectGuid(); }
         void SetCharmerGuid(ObjectGuid owner) { SetGuidValue(UNIT_FIELD_CHARMEDBY, owner); }
         ObjectGuid const& GetCharmGuid() const { return GetGuidValue(UNIT_FIELD_CHARM); }
         void SetCharmGuid(ObjectGuid charm) { SetGuidValue(UNIT_FIELD_CHARM, charm); }
@@ -1404,7 +1404,7 @@ public:
 
         virtual Pet* GetMiniPet() const { return NULL; }    // overwrited in Player
 
-        ObjectGuid const& GetCharmerOrOwnerGuid() const { return GetCharmerGuid() ? GetCharmerGuid() : GetOwnerGuid(); }
+        ObjectGuid const GetCharmerOrOwnerGuid() const { return GetCharmerGuid() ? GetCharmerGuid() : GetOwnerGuid(); }
         ObjectGuid const& GetCharmerOrOwnerOrOwnGuid() const
         {
             if (ObjectGuid const& guid = GetCharmerOrOwnerGuid())
