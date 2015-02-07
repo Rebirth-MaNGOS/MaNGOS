@@ -4533,17 +4533,6 @@ SpellCastResult Spell::CheckCast(bool strict)
                             return SPELL_FAILED_NOTHING_TO_DISPEL;
         }
 
-        Player* pTarget = dynamic_cast<Player*>(target);
-        Player* pCaster = dynamic_cast<Player*>(m_caster);
-
-        if (pTarget && pCaster)
-        {
-            if (isDispell && pTarget->TeamForRace(pTarget->getRace()) != pCaster->TeamForRace(pCaster->getRace()) && !target->IsPvP()) // If target isn't pvp-enabled don't dispel(not needed for now, but needed when loop is fixed
-            {
-                return SPELL_FAILED_NOTHING_TO_DISPEL;
-            }
-        }
-
         if (!m_IsTriggeredSpell && IsDeathOnlySpell(m_spellInfo) && target->isAlive())
             return SPELL_FAILED_TARGET_NOT_DEAD;
 
