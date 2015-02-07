@@ -3886,8 +3886,16 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
                     // some exceptions
                     switch (aurSpellInfo->Id)
                     {
-                    case 24322:			// Blood Siphon Heal
-                    case 24323:			// Blood Siphon Damage
+                    case 24322:                 // Blood Siphon Heal
+                    case 24323:                 // Blood Siphon Damage
+                    case 5143:                  // Arcane Missiles, rank 1 to
+                    case 5144:
+                    case 5145:
+                    case 8416:
+                    case 8417:
+                    case 10211:
+                    case 10212:
+                    case 25345:                 // Rank 8
                         break;
                     default:
                         RemoveSpellAuraHolder(foundHolder,AURA_REMOVE_BY_STACK);
