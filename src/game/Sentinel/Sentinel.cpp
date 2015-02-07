@@ -237,7 +237,7 @@ bool Sentinel::ValidatePlayerMovement(float new_x, float new_y, uint32 current_t
 	switch(m_pOwner->GetMap()->GetId())
 	{
 	case 369: // Deeprun Tram
-		// case 409: // Molten Core. This exception no longer needed since knockbacks give a 60 second grace time.
+        case 409: // Molten Core.
 		return true;
 	}
 
