@@ -12,7 +12,7 @@ extern void AddSC_patrol();
 
 //world
 extern void AddSC_areatrigger_scripts();
-//extern void AddSC_bosses_emerald_dragons();
+extern void AddSC_bosses_emerald_dragons();
 extern void AddSC_boss_lord_kazzak();
 extern void AddSC_generic_creature();
 extern void AddSC_go_scripts();
@@ -296,7 +296,7 @@ void AddScripts()
 
     //world
     AddSC_areatrigger_scripts();
-    //AddSC_bosses_emerald_dragons();
+    AddSC_bosses_emerald_dragons();
     AddSC_boss_lord_kazzak();
     AddSC_generic_creature();
     AddSC_spell_scripts();
