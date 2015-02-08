@@ -4529,7 +4529,7 @@ SpellCastResult Spell::CheckCast(bool strict)
             // abolish poison initial cast
             // abolish poison effect
             if (m_spellInfo->Id != 552 && m_spellInfo->Id != 10872 &&
-                m_spellInfo->Id != 14253 && m_spellInfo->Id != 3137)
+                m_spellInfo->Id != 2893 && m_spellInfo->Id != 3137)
                             return SPELL_FAILED_NOTHING_TO_DISPEL;
         }
 
