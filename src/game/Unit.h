@@ -1907,6 +1907,10 @@ public:
         void CastSpell(float x, float y, float z, uint32 spell, TR triggered);
         template <typename TR>
         void CastSpell(float x, float y, float z, SpellEntry const* spell, TR triggered);
+        
+    protected:
+        // Set if no more procs should be done on this attack.
+        bool m_NoMoreProcs;
 };
 
 template<typename Func>

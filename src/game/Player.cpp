@@ -6898,54 +6898,57 @@ void Player::CastItemCombatSpell(Unit* Target, WeaponAttackType attType)
                 continue;
             }
 
-			// Keep Windfury from proccing of itself.
-			if (GetAura(proc_spell_id, EFFECT_INDEX_0))
-				if (spellInfo->Effect[EFFECT_INDEX_1] == 19)
-					continue;
+            // Keep Windfury from proccing of itself.
+            if (GetAura(proc_spell_id, EFFECT_INDEX_0))
+                if (spellInfo->Effect[EFFECT_INDEX_1] == 19)
+                    continue;
 
             // Use first rank to access spell item enchant procs
             float ppmRate = sSpellMgr.GetItemEnchantProcChance(spellInfo->Id);
 
             float chance = ppmRate
-                ? GetPPMProcChance(proto->Delay, ppmRate)
-                : pEnchant->amount[s] != 0 ? float(pEnchant->amount[s]) : GetWeaponProcChance(attType);
+                           ? GetPPMProcChance(proto->Delay, ppmRate)
+                           : pEnchant->amount[s] != 0 ? float(pEnchant->amount[s]) : GetWeaponProcChance(attType);
 
 
             ApplySpellMod(spellInfo->Id,SPELLMOD_CHANCE_OF_SUCCESS, chance);
 
             if (roll_chance_f(chance))
             {
-				if (IsPositiveSpell(spellInfo->Id)) 
-				{
-					CastSpell(this, spellInfo->Id, true, item);
-					for (int i = 0; i < MAX_EFFECT_INDEX; i++)  //instantly do extra attacks, not on next swing!
-					{
-						if (spellInfo->Effect[i] == SPELL_EFFECT_ADD_EXTRA_ATTACKS)
-						{
-							if (m_extraAttacks > 0)
-							{
-								--m_extraAttacks;
-								AttackerStateUpdate(Target,BASE_ATTACK,false);
-							}
-							break;
-						}
-					}
-				}
+                if (IsPositiveSpell(spellInfo->Id))
+                {
+                    CastSpell(this, spellInfo->Id, true, item);
+                    for (int i = 0; i < MAX_EFFECT_INDEX; i++)  //instantly do extra attacks, not on next swing!
+                    {
+                        if (spellInfo->Effect[i] == SPELL_EFFECT_ADD_EXTRA_ATTACKS)
+                        {
+                            if (m_extraAttacks > 0)
+                            {
+                                // Set a flag that allows us to identify that we can use to see that the attacks are, in fact, extra atttacks.
+                                m_NoMoreProcs = true;
+                                --m_extraAttacks;
+                                AttackerStateUpdate(Target,BASE_ATTACK,false);
+                                m_NoMoreProcs = false;
+                            }
+                            break;
+                        }
+                    }
+                }
                 else
                     CastSpell(Target, spellInfo->Id, true, item);
 
-				//Take Charges
-				if(e_slot == int(TEMP_ENCHANTMENT_SLOT))
-				{
-					uint32 charges = item->GetEnchantmentCharges(TEMP_ENCHANTMENT_SLOT);
-					if(charges > 1)
-						item->SetEnchantmentCharges(TEMP_ENCHANTMENT_SLOT,charges-1);
-					else if(charges <= 1 && charges != 0)
-					{
-						ApplyEnchantment(item,TEMP_ENCHANTMENT_SLOT,false);
-						item->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
-					}
-				}
+                //Take Charges
+                if(e_slot == int(TEMP_ENCHANTMENT_SLOT))
+                {
+                    uint32 charges = item->GetEnchantmentCharges(TEMP_ENCHANTMENT_SLOT);
+                    if(charges > 1)
+                        item->SetEnchantmentCharges(TEMP_ENCHANTMENT_SLOT,charges-1);
+                    else if(charges <= 1 && charges != 0)
+                    {
+                        ApplyEnchantment(item,TEMP_ENCHANTMENT_SLOT,false);
+                        item->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+                    }
+                }
 
             }
         }
