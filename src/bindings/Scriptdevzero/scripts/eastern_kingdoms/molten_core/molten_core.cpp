@@ -465,7 +465,14 @@ CreatureAI* GetAI_mob_lava_elemental(Creature* pCreature)
 
 struct MANGOS_DLL_DECL mob_lava_surgerAI : public ScriptedAI
 {
-    mob_lava_surgerAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    mob_lava_surgerAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    {
+        instance_molten_core* pInstance = dynamic_cast<instance_molten_core*>(m_creature->GetInstanceData());
+        if (pInstance && pInstance->GetData(TYPE_GARR) >= DONE)
+            m_creature->SetRespawnDelay(DAY * 7);
+        
+        Reset();
+    }
 
     uint32 m_uiSurgeTimer;
     uint32 m_uiSuspendTimer; // Timer used to allow the charge animation to occur correctly.
@@ -473,16 +480,16 @@ struct MANGOS_DLL_DECL mob_lava_surgerAI : public ScriptedAI
     void Reset()
     {
         m_uiSurgeTimer = 5000;
-	m_uiSuspendTimer = 0;
+        m_uiSuspendTimer = 0;
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
-	if (m_uiSuspendTimer > uiDiff)
-	{
-		m_uiSuspendTimer -= uiDiff;
-		return;
-	}
+        if (m_uiSuspendTimer > uiDiff)
+        {
+            m_uiSuspendTimer -= uiDiff;
+            return;
+        }
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
@@ -491,11 +498,11 @@ struct MANGOS_DLL_DECL mob_lava_surgerAI : public ScriptedAI
         if (m_uiSurgeTimer <= uiDiff)
         {
             Player* pPlayer = GetPlayerFarthestAwayFromThreatlistWithinRange(40.f);
-            
-	    DoCastSpellIfCan(pPlayer ? pPlayer : m_creature->getVictim(), SPELL_SURGE);
-	    
-	    m_uiSuspendTimer = 2000;
-	    m_uiSurgeTimer = 8000;
+
+            DoCastSpellIfCan(pPlayer ? pPlayer : m_creature->getVictim(), SPELL_SURGE);
+
+            m_uiSuspendTimer = 2000;
+            m_uiSurgeTimer = 8000;
         }
         else
             m_uiSurgeTimer -= uiDiff;
