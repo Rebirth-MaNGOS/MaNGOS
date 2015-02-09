@@ -314,23 +314,29 @@ bool WorldSession::Update(PacketFilter& updater)
     if (m_Socket && m_Socket->IsClosed ())
     {
         m_Socket->RemoveReference ();
-        m_Socket = NULL;
+        m_Socket = nullptr;
     }
 
-	if (m_Socket && !m_Socket->IsClosed() && m_Warden)
-         m_Warden->Update();
+    if (m_Socket && !m_Socket->IsClosed() && m_Warden)
+        m_Warden->Update();
 
+    // If a player has disconnected it should be logged out after 20 seconds.
+    if ((!m_Socket || m_Socket->IsClosed()) && _logoutTime == 0)
+        _logoutTime = time(nullptr) + 20;
+    
     //check if we are safe to proceed with logout
     //logout procedure should happen only in World::UpdateSessions() method!!!
     if(updater.ProcessLogout())
     {
         ///- If necessary, log the player out
         time_t currTime = time(NULL);
-        if (!m_Socket || (ShouldLogOut(currTime) && !m_playerLoading))
+        if (ShouldLogOut(currTime) && !m_playerLoading)
+        {
             LogoutPlayer(true);
 
-        if (!m_Socket)
-            return false;                                       //Will remove this session from the world session map
+            if (!m_Socket)
+                return false;                                       //Will remove this session from the world session map
+        }
     }
 
     return true;
@@ -411,11 +417,6 @@ void WorldSession::LogoutPlayer(bool Save)
                 if((*itr)->GetTypeId()==TYPEID_PLAYER)
                     aset.insert((Player*)(*itr));
             }
-
-            _player->SetPvPDeath(!aset.empty());
-            _player->KillPlayer();
-            _player->BuildPlayerRepop();
-            _player->RepopAtGraveyard();
 
             // give honor to all attackers from set like group case
             for(std::set<Player*>::const_iterator itr = aset.begin(); itr != aset.end(); ++itr)
