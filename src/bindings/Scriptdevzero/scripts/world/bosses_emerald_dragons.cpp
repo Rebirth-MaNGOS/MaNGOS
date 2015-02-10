@@ -58,6 +58,7 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
 {
     boss_emerald_dragonAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
+		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
         Reset();
         lSummonList.clear();
     }
@@ -150,7 +151,7 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
         {
             DoCastSpellIfCan(m_creature, SPELL_SEEPING_FOG_R, CAST_TRIGGERED);
             DoCastSpellIfCan(m_creature, SPELL_SEEPING_FOG_L, CAST_TRIGGERED);
-            m_uiSeepingFogTimer = urand(2*MINUTE*IN_MILLISECONDS, 140*IN_MILLISECONDS);
+            m_uiSeepingFogTimer = urand(2*MINUTE*IN_MILLISECONDS, 3*MINUTE*IN_MILLISECONDS);
         }
         else
             m_uiSeepingFogTimer -= uiDiff;
@@ -313,7 +314,7 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
         fO = pPlayer->GetOrientation();
         if (Creature* pShade = m_creature->SummonCreature(NPC_SPIRIT_SHADE, fX, fY, fZ, fO, TEMPSUMMON_DEAD_DESPAWN, 0))
         {
-            pShade->CastSpell(pShade, SPELL_SPIRIT_SHADE_VISUAL, true);
+            pShade->CastSpell(pShade, SPELL_SPIRIT_SHADE_VISUAL, true);					// looks weird in combat log
             pShade->SetDisplayId(pPlayer->GetDisplayId());
             pShade->GetMotionMaster()->MoveFollow(m_creature, 1.0f, float(M_PI/2));
         }
@@ -358,7 +359,7 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
     bool UpdateDragonAI(const uint32 uiDiff)
     {
         // Shadow Bolt Whirl
-        if (m_uiShadowBoltWhirlTimer < uiDiff)
+        if (m_uiShadowBoltWhirlTimer < uiDiff)							// not working well
         {
             Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
             if (pTarget && DoCastSpellIfCan(pTarget, SPELL_SHADOW_BOLT_WHIRL) == CAST_OK)
@@ -411,8 +412,8 @@ struct MANGOS_DLL_DECL mob_spirit_shadeAI : public ScriptedAI
 
         return false;
     }
-
-    void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
+   
+	void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)				// not currently working
     {
         if (Spell* pSpell = pDoneBy->GetCurrentSpell(CURRENT_GENERIC_SPELL))
             if (IsAOESpell(pSpell->m_spellInfo))
@@ -425,7 +426,7 @@ struct MANGOS_DLL_DECL mob_spirit_shadeAI : public ScriptedAI
         if (m_uiLethonCheck < uiDiff)
         {
             Creature* pLethon = m_creature->GetMap()->GetCreature(m_uiLethonGUID);
-            if (pLethon && pLethon->IsWithinDist(m_creature, ATTACK_DISTANCE))
+            if (pLethon && pLethon->IsWithinDistInMap(m_creature, 2.0f))
             {
                 DoCastSpellIfCan(pLethon, SPELL_DARK_OFFERING, CAST_TRIGGERED);
                 m_creature->ForcedDespawn();
@@ -496,12 +497,19 @@ struct MANGOS_DLL_DECL boss_taerarAI : public boss_emerald_dragonAI
     // Summon 3 Shades at 75%, 50% and 25% and Banish Self
     bool DoSpecialDragonAbility()
     {
-        if (DoCastSpellIfCan(m_creature, SPELL_SELF_STUN) == CAST_OK)
+        if (DoCastSpellIfCan(m_creature, SPELL_SELF_STUN) == CAST_OK)				// Double check so the shades doesn't randomly respawn.
         {
-            // Summon the shades at boss position
+			float fX, fY, fZ;
+				m_creature->GetPosition(fX, fY, fZ);
+				for(uint8 i = 0; i < 3; ++i)
+                    if (Creature* pShade = m_creature->SummonCreature(NPC_SHADE_OF_TAERAR, fX+irand(-2,2), fY+irand(-2,2), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000))
+						if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
+							pShade->AI()->AttackStart(pTarget);
+
+           /* // Summon the shades at boss position
             DoCastSpellIfCan(m_creature, SPELL_SUMMON_SHADE_1, CAST_TRIGGERED);
             DoCastSpellIfCan(m_creature, SPELL_SUMMON_SHADE_2, CAST_TRIGGERED);
-            DoCastSpellIfCan(m_creature, SPELL_SUMMON_SHADE_3, CAST_TRIGGERED);
+            DoCastSpellIfCan(m_creature, SPELL_SUMMON_SHADE_3, CAST_TRIGGERED);*/
 
             // Make boss not selectable when banished
             m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
@@ -576,7 +584,11 @@ struct MANGOS_DLL_DECL boss_taerarAI : public boss_emerald_dragonAI
 // Shades of Taerar Script
 struct MANGOS_DLL_DECL mob_shade_of_taerarAI : public ScriptedAI
 {
-    mob_shade_of_taerarAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    mob_shade_of_taerarAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{
+		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);		// should they be immune to nature?
+		Reset();
+	}
 
     uint32 m_uiPoisonCloudTimer;
     uint32 m_uiPosionBreathTimer;
@@ -596,7 +608,7 @@ struct MANGOS_DLL_DECL mob_shade_of_taerarAI : public ScriptedAI
         if (m_uiPoisonCloudTimer < uiDiff)
         {
             DoCastSpellIfCan(m_creature->getVictim(), SPELL_POSION_CLOUD);
-            m_uiPoisonCloudTimer = 30000;
+            m_uiPoisonCloudTimer = urand(20000, 30000);
         }
         else
             m_uiPoisonCloudTimer -= uiDiff;
@@ -647,7 +659,7 @@ enum eYsondre
 // Ysondre script
 struct MANGOS_DLL_DECL boss_ysondreAI : public boss_emerald_dragonAI
 {
-    boss_ysondreAI(Creature* pCreature) : boss_emerald_dragonAI(pCreature) { Reset(); }
+    boss_ysondreAI(Creature* pCreature) : boss_emerald_dragonAI(pCreature) {Reset(); }
 
     uint32 m_uiLightningWaveTimer;
 
@@ -768,6 +780,7 @@ struct MANGOS_DLL_DECL mob_dream_fogAI : public ScriptedAI
     void Reset()
     {
         m_uiRoamTimer = 0;
+		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
 
         if (m_creature->IsTemporarySummon())
             BossGuid = ((TemporarySummon*)m_creature)->GetSummonerGuid();
@@ -796,8 +809,9 @@ struct MANGOS_DLL_DECL mob_dream_fogAI : public ScriptedAI
             }
 
             // Seeping fog movement is slow enough for a player to be able to walk backwards and still outpace it
-            m_creature->AddSplineFlag(SPLINEFLAG_WALKMODE);
-            m_creature->SetSpeedRate(MOVE_WALK, 0.75f);
+			// Changed speed in DB instead
+            //m_creature->AddSplineFlag(SPLINEFLAG_WALKMODE);
+            //m_creature->SetSpeedRate(MOVE_WALK, 0.3f);			// 0.75 before, not working still fast speed.
         }
         else
             m_uiRoamTimer -= uiDiff;
