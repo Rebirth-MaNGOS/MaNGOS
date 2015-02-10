@@ -94,7 +94,10 @@ struct MANGOS_DLL_DECL mob_razzashi_venombroodAI : public ScriptedAI
             m_creature->GetPosition(fX, fY, fZ);
 			for(uint8 i = 0; i < 5; ++i)
                     if (Creature* pSkitterer = m_creature->SummonCreature(NPC_RAZZASHI_SKITTERER, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
-                        pSkitterer->AI()->AttackStart(m_creature->getVictim());
+					{
+						pSkitterer->AI()->AttackStart(m_creature->getVictim());
+						pSkitterer->SetRespawnDelay(-10);				// to stop them from randomly respawning
+					}
 		}
 	}
 
