@@ -17,7 +17,8 @@
 /* ScriptData
 SDName: Burning_Steppes
 SD%Complete: 100
-SDComment: Quest support: 4224, 4866
+SDComment: Quest support: 4121(to do: ambushers + raiders need updated faction when they spawn, dragon won't fly around like it should, needs failsafe if player goes afk or dies so he despawns after X min), 
+								4122(disabled, needs work but most is there), 4224, 4866
 SDCategory: Burning Steppes
 EndScriptData */
 
@@ -26,6 +27,7 @@ npc_ragged_john
 EndContentData */
 
 #include "precompiled.h"
+#include "escort_ai.h"
 
 /*######
 ## npc_ragged_john
@@ -135,6 +137,438 @@ bool GossipSelect_npc_ragged_john(Player* pPlayer, Creature* pCreature, uint32 /
     return true;
 }
 
+/*######
+## npc_grark_lorkrub
+######*/
+
+enum
+{
+    SAY_START                   = -1000873,
+    SAY_PAY                     = -1000874,
+    SAY_FIRST_AMBUSH_START      = -1000875,
+    SAY_FIRST_AMBUSH_END        = -1000876,
+    SAY_SEC_AMBUSH_START        = -1000877,
+    SAY_SEC_AMBUSH_END          = -1000878,
+    SAY_THIRD_AMBUSH_START      = -1000879,
+    SAY_THIRD_AMBUSH_END        = -1000880,
+    EMOTE_LAUGH                 = -1000881,
+    SAY_LAST_STAND              = -1000882,
+    SAY_LEXLORT_1               = -1000883,
+    SAY_LEXLORT_2               = -1000884,
+    EMOTE_RAISE_AXE             = -1000885,
+    EMOTE_LOWER_HAND            = -1000886,
+    SAY_LEXLORT_3               = -1000887,
+    SAY_LEXLORT_4               = -1000888,
+
+    EMOTE_SUBMIT                = -1000889,
+    SAY_AGGRO                   = -1000890,
+
+    SPELL_CAPTURE_GRARK             = 14250,
+
+    NPC_BLACKROCK_AMBUSHER          = 9522,
+    NPC_BLACKROCK_RAIDER            = 9605,
+    NPC_FLAMESCALE_DRAGONSPAWN      = 7042,
+    NPC_SEARSCALE_DRAKE             = 7046,
+
+    NPC_GRARK_LORKRUB               = 9520,
+    NPC_HIGH_EXECUTIONER_NUZARK     = 9538,
+    NPC_SHADOW_OF_LEXLORT           = 9539,
+
+    FACTION_FRIENDLY                = 35,
+	FACTION_HOSTILE					= 40,
+
+	QUEST_ID_GRARK_LOKRUB			= 4122,
+    QUEST_ID_PRECARIOUS_PREDICAMENT = 4121
+};
+
+static const DialogueEntry aOutroDialogue[] =
+{
+    {SAY_LAST_STAND,    NPC_GRARK_LORKRUB,              5000},
+    {SAY_LEXLORT_1,     NPC_SHADOW_OF_LEXLORT,          3000},
+    {SAY_LEXLORT_2,     NPC_SHADOW_OF_LEXLORT,          5000},
+    {EMOTE_RAISE_AXE,   NPC_HIGH_EXECUTIONER_NUZARK,    4000},
+    {EMOTE_LOWER_HAND,  NPC_SHADOW_OF_LEXLORT,          3000},
+    {SAY_LEXLORT_3,     NPC_SHADOW_OF_LEXLORT,          3000},
+    {NPC_GRARK_LORKRUB, 0,                              5000},
+    {SAY_LEXLORT_4,     NPC_SHADOW_OF_LEXLORT,          0},
+    {0, 0, 0},
+};
+
+struct Loc
+{
+    float x, y, z;
+};
+
+static Loc Move[]=						// the dragons' movement, a circle
+{
+	{-7889.01f, -1100.01f, 209.01f},
+	{-7917.01f, -1111.01f, 209.01f},
+	{-7921.01f, -1135.01f, 209.01f},
+	{-7901.01f, -1151.01f, 209.01f},
+	{-7874.01f, -1145.01f, 209.01f},
+	{-7862.01f, -1121.01f, 209.01f}
+};
+
+/* TO DO: Quest 4121(the escort), the blackrock ambushers and raiders should have temp hostile faction when they spawn, atm they're friendly but attackable and they attack(all working well).
+									The dragons that spawn should pat in a circle(line 415), move points above. The dragons should fly and be like 10 yards up in the air, but that's already in the Move Loc
+									Z value 209 is in the air.
+*/
+
+struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private DialogueHelper
+{
+    npc_grark_lorkrubAI(Creature* pCreature) : npc_escortAI(pCreature),
+        DialogueHelper(aOutroDialogue)
+    {
+        Reset();
+    }
+
+    ObjectGuid m_nuzarkGuid;
+    ObjectGuid m_lexlortGuid;
+
+    GUIDList m_lSearscaleGuidList;
+
+    uint8 m_uiKilledCreatures;
+    bool m_bIsFirstSearScale;
+	/*bool m_bIsShackle;
+	bool m_bHealth;*/
+
+    void Reset()
+    {
+        if (!HasEscortState(STATE_ESCORT_ESCORTING))
+        {
+            m_uiKilledCreatures = 0;
+            m_bIsFirstSearScale = true;
+
+            m_lSearscaleGuidList.clear();
+
+            m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+			/*m_bIsShackle = false;
+			m_bHealth = false;
+			m_creature->ClearTemporaryFaction();*/
+        }
+    }
+
+    void Aggro(Unit* /*pWho*/)
+    {
+        if (!HasEscortState(STATE_ESCORT_ESCORTING))
+        {
+            DoScriptText(SAY_AGGRO, m_creature);
+        }
+    }
+
+	//void SpellHit(Unit* pCaster, SpellEntry const* pSpell)									// all these are for quest 4122 (the pre-q)
+ //   {
+ //       if (pSpell->Id == SPELL_CAPTURE_GRARK && !HasEscortState(STATE_ESCORT_ESCORTING))
+ //       {
+ //           m_creature->SetFactionTemporary(FACTION_HOSTILE, TEMPFACTION_RESTORE_RESPAWN);
+	//		m_creature->AI()->AttackStart(pCaster);
+	//		m_bIsShackle = true;
+	//	}
+	//}
+
+	//void UpdateAI(const uint32 uiDiff)							// For quest 4122
+ //   {
+ //       // Return since we have no target
+ //       if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+ //           return;
+
+	//	if (HealthBelowPct(25) && !HasEscortState(STATE_ESCORT_ESCORTING))
+	//	{
+	//		// The faction is guesswork - needs more research
+	//		DoScriptText(EMOTE_SUBMIT, m_creature);
+	//		m_creature->SetFactionTemporary(FACTION_FRIENDLY, TEMPFACTION_RESTORE_RESPAWN);
+	//		m_creature->RemoveAllAuras();
+ //           m_creature->AttackStop();
+	//		ResetToHome();
+	//		m_creature->SetEvadeMode(true);
+	//		m_bHealth = true;
+	//	}
+
+	//	if (m_bIsShackle && m_bHealth && !HasEscortState(STATE_ESCORT_ESCORTING))									// needs a better way to do this
+	//	{
+	//		Player* pPlayer = GetPlayerAtMinimumRange(20);
+	//		if (pPlayer->HasQuest(QUEST_ID_GRARK_LOKRUB) && QuestStatus(IN_PROGRESS));
+	//			pPlayer->GroupEventHappens(QUEST_ID_GRARK_LOKRUB, m_creature);				// give quest credit if player has used item to get him to aggro AND got him down to below 25% hp
+	//	}
+
+	//	DoMeleeAttackIfReady();
+	//}
+
+    void MoveInLineOfSight(Unit* pWho)
+    {
+        // No combat during escort
+        if (HasEscortState(STATE_ESCORT_ESCORTING))
+        {
+            return;
+        }
+
+        npc_escortAI::MoveInLineOfSight(pWho);
+    }
+
+    void WaypointReached(uint32 uiPointId)
+    {
+        switch (uiPointId)
+        {
+            case 1:
+                DoScriptText(SAY_START, m_creature);
+                break;
+            case 7:
+                DoScriptText(SAY_PAY, m_creature);
+                break;
+            case 12:
+                DoScriptText(SAY_FIRST_AMBUSH_START, m_creature);
+                SetEscortPaused(true);
+
+                m_creature->SummonCreature(NPC_BLACKROCK_AMBUSHER, -7844.3f, -1521.6f, 139.2f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);		// All ambusher + raiders should be faction hostile
+                m_creature->SummonCreature(NPC_BLACKROCK_AMBUSHER, -7860.4f, -1507.8f, 141.0f, 6.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);		// it's minor but looks weird with friendly mobs attacking
+                m_creature->SummonCreature(NPC_BLACKROCK_RAIDER,   -7845.6f, -1508.1f, 138.8f, 6.1f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_BLACKROCK_RAIDER,   -7859.8f, -1521.8f, 139.2f, 6.2f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                break;
+            case 24:
+                DoScriptText(SAY_SEC_AMBUSH_START, m_creature);
+                SetEscortPaused(true);
+
+                m_creature->SummonCreature(NPC_BLACKROCK_AMBUSHER,     -8035.3f, -1222.2f, 135.5f, 5.1f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_FLAMESCALE_DRAGONSPAWN, -8037.5f, -1216.9f, 135.8f, 5.1f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_BLACKROCK_AMBUSHER,     -8009.5f, -1222.1f, 139.2f, 3.9f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_FLAMESCALE_DRAGONSPAWN, -8007.1f, -1219.4f, 140.1f, 3.9f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                break;
+            case 28:
+                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7897.8f, -1123.1f, 233.4f, 3.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
+                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7898.8f, -1125.1f, 193.9f, 3.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
+                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7895.6f, -1119.5f, 194.5f, 3.1f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
+                break;
+            case 30:
+            {
+                SetEscortPaused(true);
+                DoScriptText(SAY_THIRD_AMBUSH_START, m_creature);
+
+                Player* pPlayer = GetPlayerForEscort();
+                if (!pPlayer)
+                {
+                    return;
+                }
+
+                //// Set all the dragons in combat
+                //for (GUIDList::const_iterator itr = m_lSearscaleGuidList.begin(); itr != m_lSearscaleGuidList.end(); ++itr)		// skip this for now, the dragon should pat around and not insta aggro
+                //{
+                //    if (Creature* pTemp = m_creature->GetMap()->GetCreature(*itr))
+                //    {
+                //        pTemp->AI()->AttackStart(pPlayer);
+                //    }
+                //}
+                break;
+            }
+            case 36:
+                DoScriptText(EMOTE_LAUGH, m_creature);
+                break;
+            case 45:
+                StartNextDialogueText(SAY_LAST_STAND);
+                SetEscortPaused(true);
+
+                m_creature->SummonCreature(NPC_HIGH_EXECUTIONER_NUZARK, -7532.3f, -1029.4f, 258.0f, 2.7f, TEMPSUMMON_TIMED_DESPAWN, 40000);
+                m_creature->SummonCreature(NPC_SHADOW_OF_LEXLORT,       -7532.8f, -1032.9f, 258.2f, 2.5f, TEMPSUMMON_TIMED_DESPAWN, 40000);
+                break;
+        }
+    }
+
+    void JustDidDialogueStep(int32 iEntry)
+    {
+        switch (iEntry)
+        {
+            case SAY_LEXLORT_1:
+                m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+                break;
+            case SAY_LEXLORT_3:
+                // Note: this part isn't very clear. Should he just simply attack him, or charge him?
+                if (Creature* pNuzark = m_creature->GetMap()->GetCreature(m_nuzarkGuid))
+                {
+                    pNuzark->HandleEmote(EMOTE_ONESHOT_ATTACK2HTIGHT);
+                }
+                break;
+            case NPC_GRARK_LORKRUB:
+                // Fake death creature when the axe is lowered. This will allow us to finish the event
+                m_creature->InterruptNonMeleeSpells(true);
+                m_creature->SetHealth(1);
+                m_creature->StopMoving();
+                m_creature->ClearComboPointHolders();
+                m_creature->RemoveAllAurasOnDeath();
+                m_creature->ModifyAuraState(AURA_STATE_HEALTHLESS_20_PERCENT, false);
+                m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                m_creature->ClearAllReactives();
+                m_creature->GetMotionMaster()->Clear();
+                m_creature->GetMotionMaster()->MoveIdle();
+                m_creature->SetStandState(UNIT_STAND_STATE_DEAD);
+                break;
+            case SAY_LEXLORT_4:
+                // Finish the quest
+                if (Player* pPlayer = GetPlayerForEscort())
+                {
+                    pPlayer->GroupEventHappens(QUEST_ID_PRECARIOUS_PREDICAMENT, m_creature);
+                }
+                // Kill self
+                m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+                break;
+        }
+    }
+
+	void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId, Creature* pSummoned)				// Get dragon(s) to fly around in a circle 
+    {
+		if (pSummoned->GetEntry() == NPC_SEARSCALE_DRAKE)
+	        switch(uiPointId)
+			{
+			case 0:
+				pSummoned->GetMotionMaster()->MovePoint(1, Move[1].x, Move[1].y, Move[1].z);
+				return;
+			case 1:
+				pSummoned->GetMotionMaster()->MovePoint(2, Move[2].x, Move[2].y, Move[2].z);
+				return;
+			case 2:
+				pSummoned->GetMotionMaster()->MovePoint(3, Move[3].x, Move[3].y, Move[3].z);
+				return;
+			case 3:
+				pSummoned->GetMotionMaster()->MovePoint(4, Move[4].x, Move[4].y, Move[4].z);
+				return;
+			case 4:
+				pSummoned->GetMotionMaster()->MovePoint(5, Move[5].x, Move[5].y, Move[5].z);
+				return;
+			case 5:
+				pSummoned->GetMotionMaster()->MovePoint(0, Move[0].x, Move[0].y, Move[0].z);
+				return;
+		}
+	}
+
+    void JustSummoned(Creature* pSummoned)
+    {
+        switch (pSummoned->GetEntry())
+        {
+            case NPC_HIGH_EXECUTIONER_NUZARK:
+                m_nuzarkGuid  = pSummoned->GetObjectGuid();
+				pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                break;
+            case NPC_SHADOW_OF_LEXLORT:
+                m_lexlortGuid = pSummoned->GetObjectGuid();
+				pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                break;
+            case NPC_SEARSCALE_DRAKE:
+                // If it's the flying drake allow him to move in circles
+                if (m_bIsFirstSearScale)
+                {
+                    m_bIsFirstSearScale = false;
+
+					pSummoned->SetHover(true);
+                    pSummoned->SetSplineFlags(SplineFlags(SPLINEFLAG_FLYING));					// none of these are working
+					//pSummoned->GetMotionMaster()->MovePoint(0, Move[0].x, Move[0].y, Move[0].z);			// Get the dragon into the circle path
+
+					// ToDo: this guy should fly in circles above the creature
+                }
+                m_lSearscaleGuidList.push_back(pSummoned->GetObjectGuid());
+                break;
+
+            default:
+                // The hostile mobs should attack the player only
+                if (Player* pPlayer = GetPlayerForEscort())
+                {
+                   pSummoned->AI()->AttackStart(pPlayer);
+                }
+                break;
+        }
+    }
+
+    void SummonedCreatureJustDied(Creature* /*pSummoned*/)
+    {
+        ++m_uiKilledCreatures;
+
+        switch (m_uiKilledCreatures)
+        {
+            case 4:
+                DoScriptText(SAY_FIRST_AMBUSH_END, m_creature);
+                SetEscortPaused(false);
+                break;
+            case 8:
+                DoScriptText(SAY_SEC_AMBUSH_END, m_creature);
+                SetEscortPaused(false);
+                break;
+            case 11:
+                DoScriptText(SAY_THIRD_AMBUSH_END, m_creature);
+                SetEscortPaused(false);
+                break;
+        }
+    }
+
+    Creature* GetSpeakerByEntry(uint32 uiEntry)
+    {
+        switch (uiEntry)
+        {
+            case NPC_GRARK_LORKRUB:
+                return m_creature;
+            case NPC_HIGH_EXECUTIONER_NUZARK:
+                return m_creature->GetMap()->GetCreature(m_nuzarkGuid);
+            case NPC_SHADOW_OF_LEXLORT:
+                return m_creature->GetMap()->GetCreature(m_lexlortGuid);
+
+            default:
+                return NULL;
+        }
+    }
+
+    void UpdateEscortAI(const uint32 uiDiff)
+    {
+        DialogueUpdate(uiDiff);
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+        {
+            return;
+        }
+
+        DoMeleeAttackIfReady();
+    }
+};
+	 
+
+CreatureAI* GetAI_npc_grark_lorkrub(Creature* pCreature)
+{
+    return new npc_grark_lorkrubAI(pCreature);
+}
+
+bool QuestAccept_npc_grark_lorkrub(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == QUEST_ID_PRECARIOUS_PREDICAMENT)
+    {
+        if (npc_grark_lorkrubAI* pEscortAI = dynamic_cast<npc_grark_lorkrubAI*>(pCreature->AI()))
+        {
+            pEscortAI->Start(false, pPlayer, pQuest);
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+//bool EffectDummyCreature_spell_capture_grark(Unit* /*pCaster*/, uint32 uiSpellId, SpellEffectIndex uiEffIndex, Creature* pCreatureTarget) //, ObjectGuid /*originalCasterGuid*/)		// unused D:
+//{
+//    // always check spellid and effectindex
+//    if (uiSpellId == SPELL_CAPTURE_GRARK && uiEffIndex == EFFECT_INDEX_0)
+//    {
+//        // Note: this implementation needs additional research! There is a lot of guesswork involved in this!
+//        if (pCreatureTarget->GetHealthPercent() > 25.0f)
+//        {
+//            return false;
+//        }
+//
+//        // The faction is guesswork - needs more research
+//        DoScriptText(EMOTE_SUBMIT, pCreatureTarget);
+//        pCreatureTarget->SetFactionTemporary(FACTION_FRIENDLY, TEMPFACTION_RESTORE_RESPAWN);
+//        pCreatureTarget->SetEvadeMode(true);
+//																						// Group event should happen here so they can turn in quest and start the escort
+//        // always return true when we are handling this spell and effect
+//        return true;
+//    }
+//
+//    //return false;								// this is for quest 4122(the pre-q)
+//}
+
 void AddSC_burning_steppes()
 {
     Script* pNewscript;
@@ -144,5 +578,12 @@ void AddSC_burning_steppes()
     pNewscript->GetAI = &GetAI_npc_ragged_john;
     pNewscript->pGossipHello =  &GossipHello_npc_ragged_john;
     pNewscript->pGossipSelect = &GossipSelect_npc_ragged_john;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_grark_lorkrub";
+    pNewscript->GetAI = &GetAI_npc_grark_lorkrub;
+    pNewscript->pQuestAcceptNPC = &QuestAccept_npc_grark_lorkrub;
+    //pNewscript->pEffectDummyNPC = &EffectDummyCreature_spell_capture_grark;
     pNewscript->RegisterSelf();
 }
