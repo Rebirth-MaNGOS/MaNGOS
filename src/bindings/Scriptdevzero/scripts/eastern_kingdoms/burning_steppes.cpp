@@ -175,7 +175,7 @@ enum
     NPC_SHADOW_OF_LEXLORT           = 9539,
 
     FACTION_FRIENDLY                = 35,
-	FACTION_HOSTILE					= 40,
+	FACTION_HOSTILE					= 103,
 
 	QUEST_ID_GRARK_LOKRUB			= 4122,
     QUEST_ID_PRECARIOUS_PREDICAMENT = 4121
@@ -184,7 +184,7 @@ enum
 static const DialogueEntry aOutroDialogue[] =
 {
     {SAY_LAST_STAND,    NPC_GRARK_LORKRUB,              5000},
-    {SAY_LEXLORT_1,     NPC_SHADOW_OF_LEXLORT,          3000},
+    //{SAY_LEXLORT_1,     NPC_SHADOW_OF_LEXLORT,          3000},		// not used
     {SAY_LEXLORT_2,     NPC_SHADOW_OF_LEXLORT,          5000},
     {EMOTE_RAISE_AXE,   NPC_HIGH_EXECUTIONER_NUZARK,    4000},
     {EMOTE_LOWER_HAND,  NPC_SHADOW_OF_LEXLORT,          3000},
@@ -194,20 +194,20 @@ static const DialogueEntry aOutroDialogue[] =
     {0, 0, 0},
 };
 
-struct Loc
-{
-    float x, y, z;
-};
+//struct Loc
+//{
+//    float x, y, z;
+//};
 
-static Loc Move[]=						// the dragons' movement, a circle
-{
-	{-7889.01f, -1100.01f, 209.01f},
-	{-7917.01f, -1111.01f, 209.01f},
-	{-7921.01f, -1135.01f, 209.01f},
-	{-7901.01f, -1151.01f, 209.01f},
-	{-7874.01f, -1145.01f, 209.01f},
-	{-7862.01f, -1121.01f, 209.01f}
-};
+//static Loc Move[]=						// the dragons' movement, a circle
+//{
+//	{-7889.01f, -1100.01f, 209.01f},					// unused for now
+//	{-7917.01f, -1111.01f, 209.01f},
+//	{-7921.01f, -1135.01f, 209.01f},
+//	{-7901.01f, -1151.01f, 209.01f},
+//	{-7874.01f, -1145.01f, 209.01f},
+//	{-7862.01f, -1121.01f, 209.01f}
+//};
 
 /* TO DO: Quest 4121(the escort), the blackrock ambushers and raiders should have temp hostile faction when they spawn, atm they're friendly but attackable and they attack(all working well).
 									The dragons that spawn should pat in a circle(line 415), move points above. The dragons should fly and be like 10 yards up in the air, but that's already in the Move Loc
@@ -219,6 +219,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
     npc_grark_lorkrubAI(Creature* pCreature) : npc_escortAI(pCreature),
         DialogueHelper(aOutroDialogue)
     {
+		m_creature->SetStandState(UNIT_STAND_STATE_STAND);			// make sure he isn't playing dead after quest is done and he respawns
         Reset();
     }
 
@@ -226,6 +227,8 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
     ObjectGuid m_lexlortGuid;
 
     GUIDList m_lSearscaleGuidList;
+
+	uint32 m_uiWaitTime;
 
     uint8 m_uiKilledCreatures;
     bool m_bIsFirstSearScale;
@@ -246,6 +249,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
 			m_bHealth = false;
 			m_creature->ClearTemporaryFaction();*/
         }
+		m_uiWaitTime = 10000;
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -271,7 +275,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
  //       // Return since we have no target
  //       if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
  //           return;
-
+	//}
 	//	if (HealthBelowPct(25) && !HasEscortState(STATE_ESCORT_ESCORTING))
 	//	{
 	//		// The faction is guesswork - needs more research
@@ -319,8 +323,8 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
                 DoScriptText(SAY_FIRST_AMBUSH_START, m_creature);
                 SetEscortPaused(true);
 
-                m_creature->SummonCreature(NPC_BLACKROCK_AMBUSHER, -7844.3f, -1521.6f, 139.2f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);		// All ambusher + raiders should be faction hostile
-                m_creature->SummonCreature(NPC_BLACKROCK_AMBUSHER, -7860.4f, -1507.8f, 141.0f, 6.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);		// it's minor but looks weird with friendly mobs attacking
+                m_creature->SummonCreature(NPC_BLACKROCK_AMBUSHER, -7844.3f, -1521.6f, 139.2f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_BLACKROCK_AMBUSHER, -7860.4f, -1507.8f, 141.0f, 6.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);	
                 m_creature->SummonCreature(NPC_BLACKROCK_RAIDER,   -7845.6f, -1508.1f, 138.8f, 6.1f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
                 m_creature->SummonCreature(NPC_BLACKROCK_RAIDER,   -7859.8f, -1521.8f, 139.2f, 6.2f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
                 break;
@@ -334,9 +338,9 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
                 m_creature->SummonCreature(NPC_FLAMESCALE_DRAGONSPAWN, -8007.1f, -1219.4f, 140.1f, 3.9f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
                 break;
             case 28:
-                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7897.8f, -1123.1f, 233.4f, 3.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
-                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7898.8f, -1125.1f, 193.9f, 3.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
-                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7895.6f, -1119.5f, 194.5f, 3.1f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
+                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7887.8f, -1129.1f, 196.71f, 2.8f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
+				m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7870.3f, -1142.1f, 202.4f, 2.6f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
+                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7868.0f, -1125.5f, 201.8f, 3.1f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
                 break;
             case 30:
             {
@@ -376,7 +380,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
     {
         switch (iEntry)
         {
-            case SAY_LEXLORT_1:
+            case SAY_LEXLORT_2:
                 m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
                 break;
             case SAY_LEXLORT_3:
@@ -412,36 +416,44 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
         }
     }
 
-	void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId, Creature* pSummoned)				// Get dragon(s) to fly around in a circle 
-    {
-		if (pSummoned->GetEntry() == NPC_SEARSCALE_DRAKE)
-	        switch(uiPointId)
-			{
-			case 0:
-				pSummoned->GetMotionMaster()->MovePoint(1, Move[1].x, Move[1].y, Move[1].z);
-				return;
-			case 1:
-				pSummoned->GetMotionMaster()->MovePoint(2, Move[2].x, Move[2].y, Move[2].z);
-				return;
-			case 2:
-				pSummoned->GetMotionMaster()->MovePoint(3, Move[3].x, Move[3].y, Move[3].z);
-				return;
-			case 3:
-				pSummoned->GetMotionMaster()->MovePoint(4, Move[4].x, Move[4].y, Move[4].z);
-				return;
-			case 4:
-				pSummoned->GetMotionMaster()->MovePoint(5, Move[5].x, Move[5].y, Move[5].z);
-				return;
-			case 5:
-				pSummoned->GetMotionMaster()->MovePoint(0, Move[0].x, Move[0].y, Move[0].z);
-				return;
-		}
-	}
+	//void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId, Creature* pSummoned)				// Get dragon(s) to fly around in a circle 
+ //   {
+	//	if (pSummoned->GetEntry() == NPC_SEARSCALE_DRAKE)
+	//        switch(uiPointId)
+	//		{
+	//		case 0:
+	//			pSummoned->GetMotionMaster()->MovePoint(1, Move[1].x, Move[1].y, Move[1].z);
+	//			return;
+	//		case 1:
+	//			pSummoned->GetMotionMaster()->MovePoint(2, Move[2].x, Move[2].y, Move[2].z);
+	//			return;
+	//		case 2:
+	//			pSummoned->GetMotionMaster()->MovePoint(3, Move[3].x, Move[3].y, Move[3].z);
+	//			return;
+	//		case 3:
+	//			pSummoned->GetMotionMaster()->MovePoint(4, Move[4].x, Move[4].y, Move[4].z);
+	//			return;
+	//		case 4:
+	//			pSummoned->GetMotionMaster()->MovePoint(5, Move[5].x, Move[5].y, Move[5].z);
+	//			return;
+	//		case 5:
+	//			pSummoned->GetMotionMaster()->MovePoint(0, Move[0].x, Move[0].y, Move[0].z);
+	//			return;
+	//	}
+	//}
 
     void JustSummoned(Creature* pSummoned)
     {
         switch (pSummoned->GetEntry())
         {
+			case NPC_BLACKROCK_AMBUSHER:
+			case NPC_BLACKROCK_RAIDER:
+				pSummoned->SetFactionTemporary(FACTION_HOSTILE);
+				if (Player* pPlayer = GetPlayerForEscort())
+                {
+                   pSummoned->AI()->AttackStart(pPlayer);
+                }
+				break;
             case NPC_HIGH_EXECUTIONER_NUZARK:
                 m_nuzarkGuid  = pSummoned->GetObjectGuid();
 				pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
@@ -455,13 +467,17 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
                 if (m_bIsFirstSearScale)
                 {
                     m_bIsFirstSearScale = false;
-
-					pSummoned->SetHover(true);
-                    pSummoned->SetSplineFlags(SplineFlags(SPLINEFLAG_FLYING));					// none of these are working
+					if (Player* pPlayer = GetPlayerForEscort())
+					{
+						pSummoned->AI()->AttackStart(pPlayer);
+					}
+				}
+					//pSummoned->SetHover(true);
+     //               pSummoned->SetSplineFlags(SplineFlags(SPLINEFLAG_FLYING));					// none of these are working
 					//pSummoned->GetMotionMaster()->MovePoint(0, Move[0].x, Move[0].y, Move[0].z);			// Get the dragon into the circle path
 
-					// ToDo: this guy should fly in circles above the creature
-                }
+					//// ToDo: this guy should fly in circles above the creature
+     //           }
                 m_lSearscaleGuidList.push_back(pSummoned->GetObjectGuid());
                 break;
 
@@ -524,7 +540,6 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
         DoMeleeAttackIfReady();
     }
 };
-	 
 
 CreatureAI* GetAI_npc_grark_lorkrub(Creature* pCreature)
 {
