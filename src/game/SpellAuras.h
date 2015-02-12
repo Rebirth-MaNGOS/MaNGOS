@@ -30,6 +30,11 @@ struct Modifier
     int32 m_amount;
     int32 m_miscvalue;
     uint32 periodictime;
+    
+    /* m_custom should be used to store custom values.
+     It can for example be used to store calculated values
+     for talents that modify an aura. Ex. hunters' Improved Scorpid Sting. */
+    float m_custom;
 };
 
 class Unit;

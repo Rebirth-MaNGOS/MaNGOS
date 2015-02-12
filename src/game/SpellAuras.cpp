@@ -4459,7 +4459,7 @@ void Aura::HandleAuraModStat(bool apply, bool /*Real*/)
         Unit* caster = GetCaster();
         if (caster)
         {
-            float effect;
+            float effect = 0;
             if (caster->HasAura(19491))
                 effect = 0.1f * m_modifier.m_amount;
             else if (caster->HasAura(19493))
@@ -4467,9 +4467,12 @@ void Aura::HandleAuraModStat(bool apply, bool /*Real*/)
             else if (caster->HasAura(19494))
                 effect = 0.3f * m_modifier.m_amount;
             
-            GetTarget()->HandleStatModifier(UnitMods(UNIT_MOD_STAT_START + STAT_STAMINA), TOTAL_VALUE, float(effect), apply);
+            if (apply)
+                m_modifier.m_custom = effect;
+            
+            GetTarget()->HandleStatModifier(UnitMods(UNIT_MOD_STAT_START + STAT_STAMINA), TOTAL_VALUE, float(m_modifier.m_custom), apply);
             if(GetTarget()->GetTypeId() == TYPEID_PLAYER)
-                ((Player*)GetTarget())->ApplyStatBuffMod(Stats(STAT_STAMINA), float(effect), apply);
+                ((Player*)GetTarget())->ApplyStatBuffMod(Stats(STAT_STAMINA), float(m_modifier.m_custom), apply);
         }
     }
     
