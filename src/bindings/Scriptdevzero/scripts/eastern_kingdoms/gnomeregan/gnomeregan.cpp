@@ -669,8 +669,10 @@ struct MANGOS_DLL_DECL mob_mobile_alert_systemAI : public ScriptedAI
 				m_creature->GetPosition(fX, fY, fZ);
 				for(uint8 i = 0; i < 2; ++i)
                     if (Creature* pGuardian = m_creature->SummonCreature(NPC_MECHANIZED_GUARDIAN, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
-                        pGuardian->SetInCombatWithZone();
-						
+					{ 
+						pGuardian->SetInCombatWithZone();
+						pGuardian->SetRespawnDelay(-10);				// to stop them from randomly respawning
+					}	
 				m_creature->ForcedDespawn();
 			}
 			else
