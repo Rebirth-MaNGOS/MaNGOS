@@ -22,6 +22,7 @@
 #include "Database/DatabaseEnv.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
+#include "World.h"
 #include "Opcodes.h"
 #include "Log.h"
 #include "ObjectMgr.h"
@@ -276,16 +277,28 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
         return;
 
     // can't be learn, cheat? Or double learn with lags...
-        uint32 reqLevel = 0; 
+    uint32 reqLevel = 0;
     if(!_player->IsSpellFitByClassAndRace(trainer_spell->spell, &reqLevel)) 
         return; 
 
-	reqLevel = trainer_spell->isProvidedReqLevel ? trainer_spell->reqLevel : std::max(reqLevel, trainer_spell->reqLevel); 
-    if (_player->GetTrainerSpellState(trainer_spell, reqLevel) != TRAINER_SPELL_GREEN) 
+    reqLevel = trainer_spell->isProvidedReqLevel ? trainer_spell->reqLevel : std::max(reqLevel, trainer_spell->reqLevel);
+    if (_player->GetTrainerSpellState(trainer_spell, reqLevel) != TRAINER_SPELL_GREEN)
         return;
 
     SpellEntry const *proto = sSpellStore.LookupEntry(trainer_spell->spell);
-
+    
+    // Make sure that the player isn't trying to exploit by manually sending learning requests.
+    if (IsPrimaryProfessionSkill(proto->EffectMiscValue[EFFECT_INDEX_1]))
+    {
+        if (_player->GetFreePrimaryProfessionPoints() == 0)
+        {
+            sWorld.SendAntiCheatMessageToGMs(_player->GetName(), "Tried to learn a new primary profession, but already has the maximum amount!");
+            sLog.outWarden("%s tried to learn a new primary profession, but already has the maximum amount!", _player->GetName());
+            
+            return;
+        }
+    }
+        
     // apply reputation discount
     uint32 nSpellCost = uint32(floor(trainer_spell->spellCost * _player->GetReputationPriceDiscount(unit)));
 
