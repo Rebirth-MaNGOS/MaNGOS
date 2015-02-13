@@ -42,11 +42,15 @@ struct MANGOS_DLL_DECL boss_ramstein_the_gorgerAI : public ScriptedAI
 
     uint32 m_uiTrampleTimer;
     uint32 m_uiKnockoutTimer;
+	uint32 m_uiKnockoutThreatTimer;
+	Unit* m_KnockoutTarget;
 
     void Reset()
     {
         m_uiTrampleTimer = urand(3000,4000);
-        m_uiKnockoutTimer = urand(8000,12000);
+        m_uiKnockoutTimer = urand(10000,20000);
+		m_uiKnockoutThreatTimer = 6000;
+		m_KnockoutTarget = NULL;
     }
 
     void JustDied(Unit* pKiller)
@@ -66,11 +70,43 @@ struct MANGOS_DLL_DECL boss_ramstein_the_gorgerAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+		// Temp threat reduction while tank is stunned
+        if (m_KnockoutTarget)
+        {
+            if (m_uiKnockoutThreatTimer <= uiDiff)
+            {
+                bool Knockout_found = false;
+                for (Aura* current_aura : m_KnockoutTarget->GetAurasByType(AuraType::SPELL_AURA_TRANSFORM))
+                    if (current_aura->GetSpellProto()->Id == SPELL_KNOCKOUT)
+                    {
+                        Knockout_found = true;
+                        break;
+                    }
+
+                if (!Knockout_found && m_creature->getThreatManager().getThreat(m_KnockoutTarget))
+                    m_creature->getThreatManager().modifyThreatPercent(m_KnockoutTarget, 500);
+
+                m_KnockoutTarget = NULL;
+                m_uiKnockoutThreatTimer = 6000;
+            }
+            else
+                m_uiKnockoutThreatTimer -= uiDiff;
+
+        }
         // Knockout spell
         if (m_uiKnockoutTimer <= uiDiff)
         {
+			if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_TOPAGGRO, 0))
+            {
             DoCastSpellIfCan(m_creature->getVictim(), SPELL_KNOCKOUT);
-            m_uiKnockoutTimer = urand(8000,12000);
+
+			if (m_creature->getThreatManager().getThreat(pTarget))
+                m_creature->getThreatManager().modifyThreatPercent(pTarget,-80);
+
+			m_KnockoutTarget = pTarget;
+            
+			}
+			m_uiKnockoutTimer = urand(10000,20000);
         }
         else
             m_uiKnockoutTimer -= uiDiff;
