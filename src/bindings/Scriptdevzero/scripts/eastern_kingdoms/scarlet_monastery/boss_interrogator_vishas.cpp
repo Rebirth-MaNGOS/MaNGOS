@@ -33,7 +33,6 @@ enum
     SAY_TRIGGER_VORREL      = -1189015,
 
     SPELL_SHADOW_WORD_PAIN  = 2767,
-	SPELL_IMMOLATE_MELEE	= 18542,
 };
 
 struct MANGOS_DLL_DECL boss_interrogator_vishasAI : public ScriptedAI
@@ -60,7 +59,6 @@ struct MANGOS_DLL_DECL boss_interrogator_vishasAI : public ScriptedAI
     void Aggro(Unit* /*pWho*/)
     {
         DoScriptText(SAY_AGGRO, m_creature);
-		DoCastSpellIfCan(m_creature, SPELL_IMMOLATE_MELEE, CAST_TRIGGERED);			// passive aura to procc Flame Lash on melee
     }
 
     void KilledUnit(Unit* /*pVictim*/)
