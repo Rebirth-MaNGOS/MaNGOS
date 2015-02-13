@@ -209,6 +209,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
     GUIDList m_lSearscaleGuidList;
 
     uint8 m_uiKilledCreatures;
+    uint32 m_startTimer;
     bool m_bIsFirstSearScale;
 	/*bool m_bIsShackle;
 	bool m_bHealth;*/
@@ -218,6 +219,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
         if (!HasEscortState(STATE_ESCORT_ESCORTING))
         {
             m_uiKilledCreatures = 0;
+            m_startTimer = 0;
             m_bIsFirstSearScale = true;
 
             m_lSearscaleGuidList.clear();
@@ -468,6 +470,20 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
 
     void UpdateEscortAI(const uint32 uiDiff)
     {
+        if(m_startTimer)
+        {
+            if(m_startTimer <= uiDiff)
+            {
+                SetEscortPaused(false);
+                m_startTimer = 0;
+            }
+            else
+            {
+                m_startTimer -= uiDiff;
+                return;
+            }
+        }
+
         DialogueUpdate(uiDiff);
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -491,6 +507,8 @@ bool QuestAccept_npc_grark_lorkrub(Player* pPlayer, Creature* pCreature, const Q
         if (npc_grark_lorkrubAI* pEscortAI = dynamic_cast<npc_grark_lorkrubAI*>(pCreature->AI()))
         {
             pEscortAI->Start(false, pPlayer, pQuest);
+            pEscortAI->SetEscortPaused(true);
+            pEscortAI->m_startTimer = urand(60000, 180000); // Start timer, 1 min - 3 min.
         }
 
         return true;
