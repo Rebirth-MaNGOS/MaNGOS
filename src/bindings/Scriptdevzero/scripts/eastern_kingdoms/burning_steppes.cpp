@@ -194,26 +194,6 @@ static const DialogueEntry aOutroDialogue[] =
     {0, 0, 0},
 };
 
-//struct Loc
-//{
-//    float x, y, z;
-//};
-
-//static Loc Move[]=						// the dragons' movement, a circle
-//{
-//	{-7889.01f, -1100.01f, 209.01f},					// unused for now
-//	{-7917.01f, -1111.01f, 209.01f},
-//	{-7921.01f, -1135.01f, 209.01f},
-//	{-7901.01f, -1151.01f, 209.01f},
-//	{-7874.01f, -1145.01f, 209.01f},
-//	{-7862.01f, -1121.01f, 209.01f}
-//};
-
-/* TO DO: Quest 4121(the escort), the blackrock ambushers and raiders should have temp hostile faction when they spawn, atm they're friendly but attackable and they attack(all working well).
-									The dragons that spawn should pat in a circle(line 415), move points above. The dragons should fly and be like 10 yards up in the air, but that's already in the Move Loc
-									Z value 209 is in the air.
-*/
-
 struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private DialogueHelper
 {
     npc_grark_lorkrubAI(Creature* pCreature) : npc_escortAI(pCreature),
@@ -227,8 +207,6 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
     ObjectGuid m_lexlortGuid;
 
     GUIDList m_lSearscaleGuidList;
-
-	uint32 m_uiWaitTime;
 
     uint8 m_uiKilledCreatures;
     bool m_bIsFirstSearScale;
@@ -249,7 +227,6 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
 			m_bHealth = false;
 			m_creature->ClearTemporaryFaction();*/
         }
-		m_uiWaitTime = 10000;
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -353,14 +330,6 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
                     return;
                 }
 
-                //// Set all the dragons in combat
-                //for (GUIDList::const_iterator itr = m_lSearscaleGuidList.begin(); itr != m_lSearscaleGuidList.end(); ++itr)		// skip this for now, the dragon should pat around and not insta aggro
-                //{
-                //    if (Creature* pTemp = m_creature->GetMap()->GetCreature(*itr))
-                //    {
-                //        pTemp->AI()->AttackStart(pPlayer);
-                //    }
-                //}
                 break;
             }
             case 36:
@@ -416,32 +385,6 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
         }
     }
 
-	//void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId, Creature* pSummoned)				// Get dragon(s) to fly around in a circle 
- //   {
-	//	if (pSummoned->GetEntry() == NPC_SEARSCALE_DRAKE)
-	//        switch(uiPointId)
-	//		{
-	//		case 0:
-	//			pSummoned->GetMotionMaster()->MovePoint(1, Move[1].x, Move[1].y, Move[1].z);
-	//			return;
-	//		case 1:
-	//			pSummoned->GetMotionMaster()->MovePoint(2, Move[2].x, Move[2].y, Move[2].z);
-	//			return;
-	//		case 2:
-	//			pSummoned->GetMotionMaster()->MovePoint(3, Move[3].x, Move[3].y, Move[3].z);
-	//			return;
-	//		case 3:
-	//			pSummoned->GetMotionMaster()->MovePoint(4, Move[4].x, Move[4].y, Move[4].z);
-	//			return;
-	//		case 4:
-	//			pSummoned->GetMotionMaster()->MovePoint(5, Move[5].x, Move[5].y, Move[5].z);
-	//			return;
-	//		case 5:
-	//			pSummoned->GetMotionMaster()->MovePoint(0, Move[0].x, Move[0].y, Move[0].z);
-	//			return;
-	//	}
-	//}
-
     void JustSummoned(Creature* pSummoned)
     {
         switch (pSummoned->GetEntry())
@@ -472,13 +415,8 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
 						pSummoned->AI()->AttackStart(pPlayer);
 					}
 				}
-					//pSummoned->SetHover(true);
-     //               pSummoned->SetSplineFlags(SplineFlags(SPLINEFLAG_FLYING));					// none of these are working
-					//pSummoned->GetMotionMaster()->MovePoint(0, Move[0].x, Move[0].y, Move[0].z);			// Get the dragon into the circle path
 
-					//// ToDo: this guy should fly in circles above the creature
-     //           }
-                m_lSearscaleGuidList.push_back(pSummoned->GetObjectGuid());
+				m_lSearscaleGuidList.push_back(pSummoned->GetObjectGuid());
                 break;
 
             default:
