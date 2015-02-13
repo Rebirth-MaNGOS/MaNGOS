@@ -32,6 +32,7 @@
 #include "ObjectMgr.h"
 #include "Spell.h"
 #include "Timer.h"
+#include "World.h"
 
 void WorldSession::HandleMoveWorldportAckOpcode( WorldPacket & /*recv_data*/ )
 {
@@ -322,9 +323,13 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     if (opcode == MSG_MOVE_SET_WALK_MODE || opcode == MSG_MOVE_SET_RUN_MODE)
         mover->UpdateWalkMode(mover, false);
 
-   
-    if (plMover)
-        mover->SendMovementOpcadeMessagesToSetExcept(plMover, plMover->GetPackGUID(), movementInfo, &recv_data);
+    
+    sWorld.GetThreadPool()->schedule([this, mover, plMover, movementInfo, recv_data]()
+    {
+        WorldPacket tmp(recv_data);
+        if (plMover)
+            mover->SendMovementOpcadeMessagesToSetExcept(plMover, plMover->GetPackGUID(), movementInfo, &tmp); 
+    });
 }
 
 void WorldSession::HandleForceSpeedChangeAckOpcodes(WorldPacket &recv_data)
