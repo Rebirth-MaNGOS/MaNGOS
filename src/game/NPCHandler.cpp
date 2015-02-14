@@ -290,7 +290,7 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
     // Make sure that the player isn't trying to exploit by manually sending learning requests.
     if (IsPrimaryProfessionSkill(proto->EffectMiscValue[EFFECT_INDEX_1]))
     {
-        if (_player->GetFreePrimaryProfessionPoints() == 0)
+        if (_player->GetFreePrimaryProfessionPoints() == 0 && !_player->HasSkill(proto->EffectMiscValue[EFFECT_INDEX_1]))
         {
             sWorld.SendAntiCheatMessageToGMs(_player->GetName(), "Tried to learn a new primary profession, but already has the maximum amount!");
             sLog.outWarden("%s tried to learn a new primary profession, but already has the maximum amount!", _player->GetName());
