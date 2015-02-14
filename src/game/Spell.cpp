@@ -4531,11 +4531,12 @@ SpellCastResult Spell::CheckCast(bool strict)
             // abolish poison effect
             Totem* pCasterT = dynamic_cast<Totem*>(m_caster);
 
-            if(m_caster && m_caster->getClass() != CLASS_WARRIOR && !pCasterT )
+            // Make sure that the dispel check is only applied on player targets. Warriors' Shield Bash should also be an exception.
+            if(m_caster && m_caster->getClass() != CLASS_WARRIOR && target->GetTypeId() != TYPEID_UNIT && !pCasterT )
             {
                 if (m_spellInfo->Id != 552 && m_spellInfo->Id != 10872 &&
                     m_spellInfo->Id != 2893 && m_spellInfo->Id != 3137)
-                                return SPELL_FAILED_NOTHING_TO_DISPEL;
+                    return SPELL_FAILED_NOTHING_TO_DISPEL;
             }
         }
 
