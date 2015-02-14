@@ -47,6 +47,7 @@
 #include "Util.h"
 #include "Chat.h"
 #include "Object.h"
+#include "Totem.h"
 
 #define SPELL_CHANNEL_UPDATE_INTERVAL (1 * IN_MILLISECONDS)
 
@@ -4528,9 +4529,14 @@ SpellCastResult Spell::CheckCast(bool strict)
             // abolish Disease effect
             // abolish poison initial cast
             // abolish poison effect
-            if (m_spellInfo->Id != 552 && m_spellInfo->Id != 10872 &&
-                m_spellInfo->Id != 2893 && m_spellInfo->Id != 3137)
-                            return SPELL_FAILED_NOTHING_TO_DISPEL;
+            Totem* pCasterT = dynamic_cast<Totem*>(m_caster);
+
+            if(m_caster && m_caster->getClass() != CLASS_WARRIOR && !pCasterT)
+            {
+                if (m_spellInfo->Id != 552 && m_spellInfo->Id != 10872 &&
+                    m_spellInfo->Id != 2893 && m_spellInfo->Id != 3137)
+                                return SPELL_FAILED_NOTHING_TO_DISPEL;
+            }
         }
 
         if (!m_IsTriggeredSpell && IsDeathOnlySpell(m_spellInfo) && target->isAlive())
