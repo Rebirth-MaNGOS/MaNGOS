@@ -4502,7 +4502,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                                 Player* pCaster = dynamic_cast<Player*>(m_caster);
                                 
                                 // If the players belong to different factions beneficial spells should be dispelable.
-                                if (pTarget && pCaster && pTarget->TeamForRace(pTarget->getRace()) != pCaster->TeamForRace(pCaster->getRace()) && pTarget->IsPvP())
+                                if (pTarget && pCaster && (pTarget->TeamForRace(pTarget->getRace()) != pCaster->TeamForRace(pCaster->getRace()) || pCaster->IsInDuelWith(pTarget)) && pTarget->IsPvP())
                                 {
                                     isEmpty = false;
                                     break;
@@ -4531,7 +4531,7 @@ SpellCastResult Spell::CheckCast(bool strict)
             // abolish poison effect
             Totem* pCasterT = dynamic_cast<Totem*>(m_caster);
 
-            if(m_caster && m_caster->getClass() != CLASS_WARRIOR && !pCasterT)
+            if(m_caster && m_caster->getClass() != CLASS_WARRIOR && !pCasterT )
             {
                 if (m_spellInfo->Id != 552 && m_spellInfo->Id != 10872 &&
                     m_spellInfo->Id != 2893 && m_spellInfo->Id != 3137)
