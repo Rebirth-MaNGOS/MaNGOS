@@ -324,12 +324,9 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         mover->UpdateWalkMode(mover, false);
 
     
-    sWorld.GetThreadPool()->schedule([this, mover, plMover, movementInfo, recv_data]()
-    {
-        WorldPacket tmp(recv_data);
-        if (plMover)
-            mover->SendMovementOpcadeMessagesToSetExcept(plMover, plMover->GetPackGUID(), movementInfo, &tmp); 
-    });
+
+    if (plMover)
+        mover->SendMovementOpcadeMessagesToSetExcept(plMover, plMover->GetPackGUID(), movementInfo, &recv_data); 
 }
 
 void WorldSession::HandleForceSpeedChangeAckOpcodes(WorldPacket &recv_data)
