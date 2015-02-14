@@ -135,8 +135,11 @@ void MovementOpcodeDeliverer::Visit(CameraMapType& m)
 {
     for (CameraMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
     {
-            Player* owner = iter->getSource()->GetOwner();
-            
+            Camera* pCamera = iter->getSource();
+            Player* owner;
+            if (pCamera)
+                owner = iter->getSource()->GetOwner();
+                
             if (owner == i_skipped_receiver)
                 continue;
             
