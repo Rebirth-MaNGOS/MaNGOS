@@ -4880,7 +4880,9 @@ void Aura::HandleModMeleeSpeedPct(bool apply, bool /*Real*/)
         if (cTarget)
         {
             ThreatManager& mgr = cTarget->getThreatManager();
-            mgr.addThreatDirectly(GetCaster(), 134.f);
+            Unit* caster = GetCaster();
+            if (caster)
+                mgr.addThreatDirectly(caster, 134.f);
         }
     }
     
