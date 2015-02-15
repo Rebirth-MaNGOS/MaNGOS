@@ -17,8 +17,7 @@
 /* ScriptData
 SDName: Burning_Steppes
 SD%Complete: 100
-SDComment: Quest support: 4121(to do: ambushers + raiders need updated faction when they spawn, dragon won't fly around like it should, needs failsafe if player goes afk or dies so he despawns after X min), 
-								4122(disabled, needs work but most is there), 4224, 4866
+SDComment: Quest support: 4121, 4122(disabled, needs work but most is there), 4224, 4866
 SDCategory: Burning Steppes
 EndScriptData */
 
@@ -184,7 +183,6 @@ enum
 static const DialogueEntry aOutroDialogue[] =
 {
     {SAY_LAST_STAND,    NPC_GRARK_LORKRUB,              5000},
-    //{SAY_LEXLORT_1,     NPC_SHADOW_OF_LEXLORT,          3000},		// not used
     {SAY_LEXLORT_2,     NPC_SHADOW_OF_LEXLORT,          5000},
     {EMOTE_RAISE_AXE,   NPC_HIGH_EXECUTIONER_NUZARK,    4000},
     {EMOTE_LOWER_HAND,  NPC_SHADOW_OF_LEXLORT,          3000},
@@ -199,7 +197,6 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
     npc_grark_lorkrubAI(Creature* pCreature) : npc_escortAI(pCreature),
         DialogueHelper(aOutroDialogue)
     {
-		m_creature->SetStandState(UNIT_STAND_STATE_STAND);			// make sure he isn't playing dead after quest is done and he respawns
         Reset();
     }
 
@@ -210,16 +207,20 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
 
     uint8 m_uiKilledCreatures;
     uint32 m_startTimer;
+	uint32 m_despawnTimer;
     bool m_bIsFirstSearScale;
 	/*bool m_bIsShackle;
 	bool m_bHealth;*/
 
     void Reset()
     {
+		m_creature->SetStandState(UNIT_STAND_STATE_STAND);			// make sure he isn't playing dead after quest is done and he respawns
+
         if (!HasEscortState(STATE_ESCORT_ESCORTING))
         {
             m_uiKilledCreatures = 0;
             m_startTimer = 0;
+			m_despawnTimer = 0;
             m_bIsFirstSearScale = true;
 
             m_lSearscaleGuidList.clear();
@@ -316,13 +317,12 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
                 m_creature->SummonCreature(NPC_BLACKROCK_AMBUSHER,     -8009.5f, -1222.1f, 139.2f, 3.9f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
                 m_creature->SummonCreature(NPC_FLAMESCALE_DRAGONSPAWN, -8007.1f, -1219.4f, 140.1f, 3.9f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
                 break;
-            case 28:
-                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7887.8f, -1129.1f, 196.71f, 2.8f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
-				m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7870.3f, -1142.1f, 202.4f, 2.6f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
-                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7868.0f, -1125.5f, 201.8f, 3.1f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
-                break;
             case 30:
             {
+				m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7887.8f, -1129.1f, 196.71f, 2.8f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
+				m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7870.3f, -1142.1f, 202.4f, 2.6f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
+                m_creature->SummonCreature(NPC_SEARSCALE_DRAKE, -7868.0f, -1125.5f, 201.8f, 3.1f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000);
+
                 SetEscortPaused(true);
                 DoScriptText(SAY_THIRD_AMBUSH_START, m_creature);
 
@@ -337,10 +337,13 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
             case 36:
                 DoScriptText(EMOTE_LAUGH, m_creature);
                 break;
+			case 44:
+				m_despawnTimer = 0;				// 0 so Dialogue text works
+				break;
             case 45:
                 StartNextDialogueText(SAY_LAST_STAND);
                 SetEscortPaused(true);
-
+				
                 m_creature->SummonCreature(NPC_HIGH_EXECUTIONER_NUZARK, -7532.3f, -1029.4f, 258.0f, 2.7f, TEMPSUMMON_TIMED_DESPAWN, 40000);
                 m_creature->SummonCreature(NPC_SHADOW_OF_LEXLORT,       -7532.8f, -1032.9f, 258.2f, 2.5f, TEMPSUMMON_TIMED_DESPAWN, 40000);
                 break;
@@ -484,6 +487,20 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
             }
         }
 
+		if (m_despawnTimer)
+		{
+			if(m_despawnTimer <= uiDiff)
+            {
+                m_creature->ForcedDespawn();
+                m_despawnTimer = 0;
+            }
+			else
+			{
+                m_despawnTimer -= uiDiff;
+                return;
+			}
+		}
+		
         DialogueUpdate(uiDiff);
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -509,6 +526,7 @@ bool QuestAccept_npc_grark_lorkrub(Player* pPlayer, Creature* pCreature, const Q
             pEscortAI->Start(false, pPlayer, pQuest);
             pEscortAI->SetEscortPaused(true);
             pEscortAI->m_startTimer = urand(60000, 180000); // Start timer, 1 min - 3 min.
+			pEscortAI->m_despawnTimer = 1800000; // despawn after 30min if he didn't reach the outro dialogue
         }
 
         return true;
