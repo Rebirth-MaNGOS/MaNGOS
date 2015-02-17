@@ -4343,7 +4343,10 @@ void Aura::HandleAuraModResistance(bool apply, bool /*Real*/)
         if (cTarget)
         {
             ThreatManager& mgr = cTarget->getThreatManager();
-            mgr.addThreatDirectly(GetCaster(), 216.f);
+            Unit* caster = GetCaster();
+            
+            if (caster)
+                mgr.addThreatDirectly(caster, 216.f);
         }
     }
 
@@ -4877,7 +4880,9 @@ void Aura::HandleModMeleeSpeedPct(bool apply, bool /*Real*/)
         if (cTarget)
         {
             ThreatManager& mgr = cTarget->getThreatManager();
-            mgr.addThreatDirectly(GetCaster(), 134.f);
+            Unit* caster = GetCaster();
+            if (caster)
+                mgr.addThreatDirectly(caster, 134.f);
         }
     }
     
