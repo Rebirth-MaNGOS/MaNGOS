@@ -694,6 +694,17 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
         return true;
     case 21153: // The Bonereaver's Edge effect should be positive.
         return true;
+	case 23260: // Klinfran the Crazed's Entropic Sting is not a positive effect.
+		return false;
+	case 23275: // Solenor the Slayer's Dreadful Fright is not a positive effect.
+		return false;
+	case 23298: // Artorius the Doombringer's Demoinc Doom is not a positive effect.
+		return false;
+	case 23299: // Artorius the Doombringer's Stinging Trauma should be positive effect.
+		return true;
+	case 23205: // Simone the Seductress' Temptress' Kiss is not a positive effect.
+		return false;
+
     }
             
     if ((spellproto->Attributes & SPELL_ATTR_HIDDEN) != 0)

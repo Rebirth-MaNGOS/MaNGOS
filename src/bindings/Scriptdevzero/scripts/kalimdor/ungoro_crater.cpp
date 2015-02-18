@@ -22,7 +22,7 @@ SDCategory: Un'Goro Crater
 EndScriptData */
 
 /* ContentData
-mob_simone_the_inconspicuous
+mob_simone_the_inconspicuous		// moved 
 npc_ame01
 npc_ringo
 npc_larkorwi_mate
@@ -33,358 +33,357 @@ EndContentData */
 #include "escort_ai.h"
 #include "follower_ai.h"
 
-/*######
-## mob_simone_the_inconspicuous
-######*/
-
-enum eSimoneTheInconspocuous
-{
-    SPELL_PRECIOUS_TRANSFORM_TO_FELHOUND_DND    = 23200,
-    SPELL_TEMPTRESS_KISS                        = 23205,    // Reduces ranged attack power by 1,500 for 45 seconds.
-    SPELL_LIGHTNING_BOLT                        = 15801,    // probably wrong id (~750 damage yet)
-    SPELL_FOOLS_PLIGHT                          = 23504,
-
-    NPC_SIMONE_THE_SEDUCTRESS                   = 14533,
-    NPC_THE_CLEANER                             = 14503,
-    NPC_PRECIOUS_THE_DEVOURER                   = 14538,
-
-    MODELID_SUCCUBUS                            = 2834,
-    QUEST_STAVE_OF_THE_ANCIENTS                 = 7636,
-    NPC_PRECIOUS                                = 14528,
-
-    SAY_FOOL_EFFECT                             = -1000666,
-};
-
-#define GOSSIP_ITEM_SIMONE_CHALLENGE "I came for your head demon. I challenge you!"
-
-struct MANGOS_DLL_DECL mob_simone_the_inconspicuousAI : public ScriptedAI
-{
-    mob_simone_the_inconspicuousAI(Creature* pCreature) : ScriptedAI(pCreature)
-    {
-        m_uiDefaultEntry    = pCreature->GetEntry();
-        m_uiResetOOCTimer   = 0;
-        m_uiDemonTransTimer = 0;
-		m_uiChallengerGUID.Clear();
-		m_uiPreciousPetGUID.Clear();
-        Reset();
-    }
-
-    uint32 m_uiDefaultEntry;
-    uint32 m_uiResetOOCTimer;
-    uint32 m_uiDemonTransTimer;
-    uint32 m_uiLightningBoltTimer;
-    uint32 m_uiTemptressKissTimer;
-
-	ObjectGuid m_uiChallengerGUID;
-    ObjectGuid m_uiPreciousPetGUID;
-
-    void Reset()
-    {
-        m_uiLightningBoltTimer = urand(2500, 4000);
-        m_uiTemptressKissTimer = 0;
-    }
-
-    void JustReachedHome()
-    {
-        CompleteSimoneChallenge();
-    }
-
-    void KilledUnit(Unit* /*pWho*/)
-    {
-        // Only one target can attacks Simone, so ..
-        CompleteSimoneChallenge();
-    }
-
-    void Aggro(Unit* pAttacker)
-    {
-        // The pAttacker must to be a player and must to be a hunter
-        // The hunter's pet is not allowed
-        if ((!pAttacker->IsCharmerOrOwnerPlayerOrPlayerItself()) || (pAttacker->getClass() != CLASS_HUNTER))
-        {
-            SummonTheCleaner();
-            return;
-        }
-        ScriptedAI::Aggro(pAttacker);
-    }
-
-    void JustDied(Unit* pKiller)
-    {
-        if (pKiller->GetObjectGuid() != m_uiChallengerGUID)
-            SummonTheCleaner();
-        m_creature->SetLootRecipient(NULL);
-    }
-
-    void DamageTaken(Unit* pDoneBy, uint32& /*uiDamage*/)
-    {
-        // Never trigger because not_attackable due to neutral faction??
-        if (m_creature->GetEntry() == m_uiDefaultEntry)
-        {
-            DoCastSpellIfCan(pDoneBy, SPELL_FOOLS_PLIGHT, CAST_FORCE_CAST);
-        }
-        else if (m_creature->GetEntry() == NPC_SIMONE_THE_SEDUCTRESS)
-        {
-            if (pDoneBy->GetObjectGuid() != m_uiChallengerGUID)
-            {
-                DoScriptText(SAY_FOOL_EFFECT, m_creature);
-                SummonTheCleaner();
-            }
-        }
-    }
-
-    void StartSimoneChallenge(ObjectGuid pChallengerGUID)
-    {
-        if (!pChallengerGUID)
-            return;
-
-        m_uiChallengerGUID = pChallengerGUID;
-
-        m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-        
-        m_uiDemonTransTimer = 3000;
-        m_uiResetOOCTimer   = 60000 + m_uiDemonTransTimer;
-    }
-
-    void CompleteSimoneChallenge(bool despawn = false)
-    {
-        if (despawn)
-        {
-            if (Creature* pPrecious = GetPreciousPet())
-            {
-                /*pPrecious->RemoveAllAuras();
-                pPrecious->SetObjectScale(pPrecious->GetCreatureInfo()->scale);
-                pPrecious->setFaction(pPrecious->GetCreatureInfo()->faction_A);*/
-                pPrecious->UpdateEntry(NPC_PRECIOUS);   // restore default entry
-                pPrecious->ForcedDespawn();
-            }
-			m_uiChallengerGUID.Clear();
-			m_uiPreciousPetGUID.Clear();
-            m_uiDemonTransTimer = 0;
-            m_uiResetOOCTimer   = 0;
-            m_creature->UpdateEntry(m_uiDefaultEntry);
-            m_creature->ForcedDespawn();
-        }
-        else
-        {
-            if (Creature* pPrecious = GetPreciousPet())
-            {
-                if (pPrecious->isAlive())
-                {
-                    if (pPrecious->isInCombat())
-                        pPrecious->AI()->ResetToHome();
-                    pPrecious->SetDeathState(JUST_DIED);
-                    pPrecious->SetHealth(0);
-                }
-                pPrecious->UpdateEntry(NPC_PRECIOUS);
-                pPrecious->Respawn();
-            }
-
-			m_uiChallengerGUID.Clear();
-			m_uiPreciousPetGUID.Clear();
-            m_uiDemonTransTimer = 0;
-            m_uiResetOOCTimer   = 0;
-
-            m_creature->UpdateEntry(m_uiDefaultEntry);
-            /*m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);
-            m_creature->SetDisplayId(m_creature->GetCreatureInfo()->ModelId[0]);
-            m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);*/
-            m_creature->SetHealth(0);
-            m_creature->SetDeathState(JUST_DIED);
-            m_creature->Respawn();
-        }
-    }
-
-    Creature* GetPreciousPet()
-    {
-        Creature* pPrecious = NULL;
-
-        if (m_uiPreciousPetGUID)
-            pPrecious = m_creature->GetMap()->GetCreature(m_uiPreciousPetGUID);
-        
-        if (!pPrecious)
-            pPrecious = GetClosestCreatureWithEntry(m_creature, NPC_PRECIOUS, DEFAULT_VISIBILITY_DISTANCE);
-
-        if (!pPrecious)
-            pPrecious = GetClosestCreatureWithEntry(m_creature, NPC_PRECIOUS_THE_DEVOURER, DEFAULT_VISIBILITY_DISTANCE);
-
-        return pPrecious;
-    }
-
-    void SummonTheCleaner()
-    {
-        m_creature->SummonCreature(NPC_THE_CLEANER, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), m_creature->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000);
-        CompleteSimoneChallenge(true);
-    }
-
-    void UpdateAI(const uint32 uiDiff)
-    {
-        if (m_uiDemonTransTimer)
-        {
-            // Transformation into Demon (event start)
-            if (m_uiDemonTransTimer <= uiDiff)
-            {
-                m_uiDemonTransTimer = 0;
-
-                if (Player* pChallenger = m_creature->GetMap()->GetPlayer(m_uiChallengerGUID))
-                {
-                    if (!pChallenger)
-                    {
-                        CompleteSimoneChallenge();
-                        return;
-                    }
-                }
-
-                //m_creature->SetEntry(NPC_SIMONE_THE_SEDUCTRESS);
-                //m_creature->SetDisplayId(MODELID_SUCCUBUS);
-                //m_creature->setFaction(54);
-                m_creature->UpdateEntry(NPC_SIMONE_THE_SEDUCTRESS);
-                
-                if (Creature* pPrecious = GetPreciousPet())
-                {
-					m_uiPreciousPetGUID = pPrecious->GetObjectGuid();
-                    pPrecious->UpdateEntry(NPC_PRECIOUS_THE_DEVOURER);
-                    pPrecious->CastSpell(pPrecious, SPELL_PRECIOUS_TRANSFORM_TO_FELHOUND_DND, false);
-                    //pPrecious->SetObjectScale(pPrecious->GetCreatureInfo()->scale * 3.0f);
-                    //pPrecious->setFaction(54);
-                }
-                else
-                    error_log("SD0: UnGoro: Hunter epic quest challenge event started, but Simone's pet Precious has been not handled.");
-            }
-            else
-                m_uiDemonTransTimer -= uiDiff;
-        }
-
-        if (m_uiResetOOCTimer)
-        {
-            // Reset "Out of Combat"
-            if (m_uiResetOOCTimer <= uiDiff)
-            {
-                if (!m_creature->isInCombat())
-                {
-                    m_uiResetOOCTimer = 0;
-                    CompleteSimoneChallenge();
-                }
-                else
-                    m_uiResetOOCTimer = 60000;
-            }
-            else
-                m_uiResetOOCTimer -= uiDiff;
-        }
-
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
-        // Despawn Simone and spawn The Cleaner,
-        // when Simone or her pet is attacked by another attacker
-        if (m_creature->getThreatManager().getThreatList().size() > 1)
-        {
-            SummonTheCleaner();
-            return;
-        }
-        else if (Creature* pPrecious = GetPreciousPet())
-        {
-            if (pPrecious->getThreatManager().getThreatList().size() > 1)
-            {
-                SummonTheCleaner();
-                return;
-            }
-        }
-
-        // Temptress Kiss (reduce range attack power)
-        if (m_uiTemptressKissTimer <= uiDiff)
-        {
-            DoCastSpellIfCan(m_creature->getVictim(), SPELL_TEMPTRESS_KISS);
-            m_uiTemptressKissTimer = 45000;
-        }
-        else
-            m_uiTemptressKissTimer -= uiDiff;
-
-        // Lightning Bolt
-        if (m_uiLightningBoltTimer <= uiDiff)
-        {
-            if (DoCastSpellIfCan(m_creature->getVictim(), SPELL_LIGHTNING_BOLT) == CAST_OK)
-                m_uiLightningBoltTimer = 4000;
-        }
-        else
-            m_uiLightningBoltTimer -= uiDiff;
-        
-        DoMeleeAttackIfReady();
-    }
-};
-
-CreatureAI* GetAI_mob_simone_the_inconspicuous(Creature* pCreature)
-{
-    return new mob_simone_the_inconspicuousAI(pCreature);
-}
-
-bool GossipHello_mob_simone_the_inconspicuous(Player* pPlayer, Creature* pCreature)
-{
-    if (pCreature->isQuestGiver())
-        pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
-
-    if (pPlayer->GetQuestStatus(QUEST_STAVE_OF_THE_ANCIENTS) == QUEST_STATUS_INCOMPLETE)
-        pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_SIMONE_CHALLENGE, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
-
-    pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetObjectGuid());
-    return true;
-}
-
-bool GossipSelect_mob_simone_the_inconspicuous(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
-{
-    if (uiSender == GOSSIP_SENDER_MAIN && uiAction == (GOSSIP_ACTION_INFO_DEF + 1))
-        if (mob_simone_the_inconspicuousAI* pSimoneAI = dynamic_cast<mob_simone_the_inconspicuousAI*>(pCreature->AI()))
-			pSimoneAI->StartSimoneChallenge(pPlayer->GetObjectGuid());
-
-    pPlayer->CLOSE_GOSSIP_MENU();
-    return true;
-}
-
-/*######
-## mob_precious
-######*/
-
-struct MANGOS_DLL_DECL mob_preciousAI : public ScriptedAI
-{
-    mob_preciousAI(Creature* pCreature) : ScriptedAI(pCreature)
-    {
-        m_uiDefaultEntry = pCreature->GetEntry();
-        Reset();
-    }
-
-    uint32 m_uiDefaultEntry;
-
-    void Reset()
-    {
-        m_creature->RemoveAllAuras();
-        m_creature->UpdateEntry(m_uiDefaultEntry);
-        /*m_creature->SetObjectScale(m_creature->GetCreatureInfo()->scale);
-        m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);*/
-    }
-
-    void Aggro(Unit* pAttacker)
-    {
-        if (Creature* pSimone = GetClosestCreatureWithEntry(m_creature, NPC_SIMONE_THE_SEDUCTRESS, DEFAULT_VISIBILITY_DISTANCE))
-        {
-            if (mob_simone_the_inconspicuousAI* pSimoneAI = dynamic_cast<mob_simone_the_inconspicuousAI*>(pSimone->AI()))
-            {
-                if (!pSimone->SelectHostileTarget() && !m_creature->getVictim())
-                    pSimoneAI->Aggro(pAttacker);
-                //m_creature->UpdateEntry(NPC_PRECIOUS_THE_DEVOURER);
-            }
-        }
-        ScriptedAI::Aggro(pAttacker);
-    }
-
-    void JustDied(Unit* pKiller)
-    {
-        Reset();
-        ScriptedAI::JustDied(pKiller);
-    }
-};
-
-CreatureAI* GetAI_mob_precious(Creature* pCreature)
-{
-    return new mob_preciousAI(pCreature);
-}
+///*######
+//## mob_simone_the_inconspicuous
+//######*/
+//
+//enum eSimoneTheInconspocuous
+//{
+//    SPELL_PRECIOUS_TRANSFORM_TO_FELHOUND_DND    = 23200,
+//    SPELL_TEMPTRESS_KISS                        = 23205,    // Reduces ranged attack power by 1,500 for 45 seconds.
+//    SPELL_LIGHTNING_BOLT                        = 15801,    // probably wrong id (~750 damage yet)
+//    SPELL_FOOLS_PLIGHT                          = 23504,
+//
+//    NPC_SIMONE_THE_SEDUCTRESS                   = 14533,
+//    NPC_THE_CLEANER                             = 14503,
+//    NPC_PRECIOUS_THE_DEVOURER                   = 14538,
+//
+//    MODELID_SUCCUBUS                            = 2834,
+//    QUEST_STAVE_OF_THE_ANCIENTS                 = 7636,
+//    NPC_PRECIOUS                                = 14528,
+//
+//    SAY_FOOL_EFFECT                             = -1000666,
+//};
+//
+//#define GOSSIP_ITEM_SIMONE_CHALLENGE "I came for your head demon. I challenge you!"
+//
+//struct MANGOS_DLL_DECL mob_simone_the_inconspicuousAI : public ScriptedAI
+//{
+//    mob_simone_the_inconspicuousAI(Creature* pCreature) : ScriptedAI(pCreature)
+//    {
+//        m_uiDefaultEntry    = pCreature->GetEntry();
+//        m_uiResetOOCTimer   = 0;
+//        m_uiDemonTransTimer = 0;
+//		m_uiChallengerGUID.Clear();
+//		m_uiPreciousPetGUID.Clear();
+//        Reset();
+//    }
+//
+//    uint32 m_uiDefaultEntry;
+//    uint32 m_uiResetOOCTimer;
+//    uint32 m_uiDemonTransTimer;
+//    uint32 m_uiLightningBoltTimer;
+//    uint32 m_uiTemptressKissTimer;
+//
+//	ObjectGuid m_uiChallengerGUID;
+//    ObjectGuid m_uiPreciousPetGUID;
+//
+//    void Reset()
+//    {
+//        m_uiLightningBoltTimer = urand(2500, 4000);
+//        m_uiTemptressKissTimer = 0;
+//    }
+//
+//    void JustReachedHome()
+//    {
+//        CompleteSimoneChallenge();
+//    }
+//
+//    void KilledUnit(Unit* /*pWho*/)
+//    {
+//        // Only one target can attacks Simone, so ..
+//        CompleteSimoneChallenge();
+//    }
+//
+//    void Aggro(Unit* pAttacker)
+//    {
+//        // The pAttacker must to be a player and must to be a hunter
+//        // The hunter's pet is not allowed
+//        if ((!pAttacker->IsCharmerOrOwnerPlayerOrPlayerItself()) || (pAttacker->getClass() != CLASS_HUNTER))
+//        {
+//            SummonTheCleaner();
+//            return;
+//        }
+//        ScriptedAI::Aggro(pAttacker);
+//    }
+//
+//    void JustDied(Unit* pKiller)
+//    {
+//        if (pKiller->GetObjectGuid() != m_uiChallengerGUID)
+//            SummonTheCleaner();
+//        m_creature->SetLootRecipient(NULL);
+//    }
+//
+//    void DamageTaken(Unit* pDoneBy, uint32& /*uiDamage*/)
+//    {
+//        // Never trigger because not_attackable due to neutral faction??
+//        if (m_creature->GetEntry() == m_uiDefaultEntry)
+//        {
+//            DoCastSpellIfCan(pDoneBy, SPELL_FOOLS_PLIGHT, CAST_FORCE_CAST);
+//        }
+//        else if (m_creature->GetEntry() == NPC_SIMONE_THE_SEDUCTRESS)
+//        {
+//            if (pDoneBy->GetObjectGuid() != m_uiChallengerGUID)
+//            {
+//                DoScriptText(SAY_FOOL_EFFECT, m_creature);
+//                SummonTheCleaner();
+//            }
+//        }
+//    }
+//
+//    void StartSimoneChallenge(ObjectGuid pChallengerGUID)
+//    {
+//        if (!pChallengerGUID)
+//            return;
+//
+//        m_uiChallengerGUID = pChallengerGUID;
+//
+//        m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+//        
+//        m_uiDemonTransTimer = 3000;
+//        m_uiResetOOCTimer   = 60000 + m_uiDemonTransTimer;
+//    }
+//
+//    void CompleteSimoneChallenge(bool despawn = false)
+//    {
+//        if (despawn)
+//        {
+//            if (Creature* pPrecious = GetPreciousPet())
+//            {
+//                /*pPrecious->RemoveAllAuras();
+//                pPrecious->SetObjectScale(pPrecious->GetCreatureInfo()->scale);
+//                pPrecious->setFaction(pPrecious->GetCreatureInfo()->faction_A);*/
+//                pPrecious->UpdateEntry(NPC_PRECIOUS);   // restore default entry
+//                pPrecious->ForcedDespawn();
+//            }
+//			m_uiChallengerGUID.Clear();
+//			m_uiPreciousPetGUID.Clear();
+//            m_uiDemonTransTimer = 0;
+//            m_uiResetOOCTimer   = 0;
+//            m_creature->UpdateEntry(m_uiDefaultEntry);
+//            m_creature->ForcedDespawn();
+//        }
+//        else
+//        {
+//            if (Creature* pPrecious = GetPreciousPet())
+//            {
+//                if (pPrecious->isAlive())
+//                {
+//                    if (pPrecious->isInCombat())
+//                        pPrecious->AI()->ResetToHome();
+//                    pPrecious->SetDeathState(JUST_DIED);
+//                    pPrecious->SetHealth(0);
+//                }
+//                pPrecious->UpdateEntry(NPC_PRECIOUS);
+//                pPrecious->Respawn();
+//            }
+//
+//			m_uiChallengerGUID.Clear();
+//			m_uiPreciousPetGUID.Clear();
+//            m_uiDemonTransTimer = 0;
+//            m_uiResetOOCTimer   = 0;
+//
+//            m_creature->UpdateEntry(m_uiDefaultEntry);
+//            /*m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);
+//            m_creature->SetDisplayId(m_creature->GetCreatureInfo()->ModelId[0]);
+//            m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);*/
+//            m_creature->SetHealth(0);
+//            m_creature->SetDeathState(JUST_DIED);
+//            m_creature->Respawn();
+//        }
+//    }
+//
+//    Creature* GetPreciousPet()
+//    {
+//        Creature* pPrecious = NULL;
+//
+//        if (m_uiPreciousPetGUID)
+//            pPrecious = m_creature->GetMap()->GetCreature(m_uiPreciousPetGUID);
+//        
+//        if (!pPrecious)
+//            pPrecious = GetClosestCreatureWithEntry(m_creature, NPC_PRECIOUS, DEFAULT_VISIBILITY_DISTANCE);
+//
+//        if (!pPrecious)
+//            pPrecious = GetClosestCreatureWithEntry(m_creature, NPC_PRECIOUS_THE_DEVOURER, DEFAULT_VISIBILITY_DISTANCE);
+//
+//        return pPrecious;
+//    }
+//
+//    void SummonTheCleaner()
+//    {
+//        m_creature->SummonCreature(NPC_THE_CLEANER, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), m_creature->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000);
+//        CompleteSimoneChallenge(true);
+//    }
+//
+//    void UpdateAI(const uint32 uiDiff)
+//    {
+//        if (m_uiDemonTransTimer)
+//        {
+//            // Transformation into Demon (event start)
+//            if (m_uiDemonTransTimer <= uiDiff)
+//            {
+//                m_uiDemonTransTimer = 0;
+//
+//                if (Player* pChallenger = m_creature->GetMap()->GetPlayer(m_uiChallengerGUID))
+//                {
+//                    if (!pChallenger)
+//                    {
+//                        CompleteSimoneChallenge();
+//                        return;
+//                    }
+//                }
+//
+//                //m_creature->SetEntry(NPC_SIMONE_THE_SEDUCTRESS);
+//                //m_creature->SetDisplayId(MODELID_SUCCUBUS);
+//                //m_creature->setFaction(54);
+//                m_creature->UpdateEntry(NPC_SIMONE_THE_SEDUCTRESS);
+//                
+//                if (Creature* pPrecious = GetPreciousPet())
+//                {
+//					m_uiPreciousPetGUID = pPrecious->GetObjectGuid();
+//                    pPrecious->UpdateEntry(NPC_PRECIOUS_THE_DEVOURER);
+//                    pPrecious->CastSpell(pPrecious, SPELL_PRECIOUS_TRANSFORM_TO_FELHOUND_DND, false);
+//                    //pPrecious->SetObjectScale(pPrecious->GetCreatureInfo()->scale * 3.0f);
+//                    //pPrecious->setFaction(54);
+//                }
+//                else
+//                    error_log("SD0: UnGoro: Hunter epic quest challenge event started, but Simone's pet Precious has been not handled.");
+//            }
+//            else
+//                m_uiDemonTransTimer -= uiDiff;
+//        }
+//
+//        if (m_uiResetOOCTimer)
+//        {
+//            // Reset "Out of Combat"
+//            if (m_uiResetOOCTimer <= uiDiff)
+//            {
+//                if (!m_creature->isInCombat())
+//                {
+//                    m_uiResetOOCTimer = 0;
+//                    CompleteSimoneChallenge();
+//                }
+//                else
+//                    m_uiResetOOCTimer = 60000;
+//            }
+//            else
+//                m_uiResetOOCTimer -= uiDiff;
+//        }
+//
+//        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+//            return;
+//
+//        // Despawn Simone and spawn The Cleaner,
+//        // when Simone or her pet is attacked by another attacker
+//        if (m_creature->getThreatManager().getThreatList().size() > 1)
+//        {
+//            SummonTheCleaner();
+//            return;
+//        }
+//        else if (Creature* pPrecious = GetPreciousPet())
+//        {
+//            if (pPrecious->getThreatManager().getThreatList().size() > 1)
+//            {
+//                SummonTheCleaner();
+//                return;
+//            }
+//        }
+//
+//        // Temptress Kiss (reduce range attack power)
+//        if (m_uiTemptressKissTimer <= uiDiff)
+//        {
+//            DoCastSpellIfCan(m_creature->getVictim(), SPELL_TEMPTRESS_KISS);
+//            m_uiTemptressKissTimer = 45000;
+//        }
+//        else
+//            m_uiTemptressKissTimer -= uiDiff;
+//
+//        // Lightning Bolt
+//        if (m_uiLightningBoltTimer <= uiDiff)
+//        {
+//            if (DoCastSpellIfCan(m_creature->getVictim(), SPELL_LIGHTNING_BOLT) == CAST_OK)
+//                m_uiLightningBoltTimer = 4000;
+//        }
+//        else
+//            m_uiLightningBoltTimer -= uiDiff;
+//        
+//        DoMeleeAttackIfReady();
+//    }
+//};
+//
+//CreatureAI* GetAI_mob_simone_the_inconspicuous(Creature* pCreature)
+//{
+//    return new mob_simone_the_inconspicuousAI(pCreature);
+//}
+//
+//bool GossipHello_mob_simone_the_inconspicuous(Player* pPlayer, Creature* pCreature)
+//{
+//    if (pCreature->isQuestGiver())
+//        pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
+//
+//    if (pPlayer->GetQuestStatus(QUEST_STAVE_OF_THE_ANCIENTS) == QUEST_STATUS_INCOMPLETE)
+//        pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_SIMONE_CHALLENGE, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+//
+//    pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetObjectGuid());
+//    return true;
+//}
+//
+//bool GossipSelect_mob_simone_the_inconspicuous(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
+//{
+//    if (uiSender == GOSSIP_SENDER_MAIN && uiAction == (GOSSIP_ACTION_INFO_DEF + 1))
+//        if (mob_simone_the_inconspicuousAI* pSimoneAI = dynamic_cast<mob_simone_the_inconspicuousAI*>(pCreature->AI()))
+//			pSimoneAI->StartSimoneChallenge(pPlayer->GetObjectGuid());
+//
+//    pPlayer->CLOSE_GOSSIP_MENU();
+//    return true;
+//}
+//
+///*######
+//## mob_precious
+//######*/
+//
+//struct MANGOS_DLL_DECL mob_preciousAI : public ScriptedAI
+//{
+//    mob_preciousAI(Creature* pCreature) : ScriptedAI(pCreature)
+//    {
+//        m_uiDefaultEntry = pCreature->GetEntry();
+//        Reset();
+//    }
+//
+//    uint32 m_uiDefaultEntry;
+//
+//    void Reset()
+//    {
+//        m_creature->RemoveAllAuras();
+//        m_creature->UpdateEntry(m_uiDefaultEntry);
+//        /*m_creature->SetObjectScale(m_creature->GetCreatureInfo()->scale);
+//        m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);*/
+//    }
+//
+//    void Aggro(Unit* pAttacker)
+//    {
+//        if (Creature* pSimone = GetClosestCreatureWithEntry(m_creature, NPC_SIMONE_THE_SEDUCTRESS, DEFAULT_VISIBILITY_DISTANCE))
+//        {
+//            if (mob_simone_the_inconspicuousAI* pSimoneAI = dynamic_cast<mob_simone_the_inconspicuousAI*>(pSimone->AI()))
+//            {
+//                if (!pSimone->SelectHostileTarget() && !m_creature->getVictim())
+//                    pSimoneAI->Aggro(pAttacker);
+//            }
+//        }
+//        ScriptedAI::Aggro(pAttacker);
+//    }
+//
+//    void JustDied(Unit* pKiller)
+//    {
+//        Reset();
+//        ScriptedAI::JustDied(pKiller);
+//    }
+//};
+//
+//CreatureAI* GetAI_mob_precious(Creature* pCreature)
+//{
+//    return new mob_preciousAI(pCreature);
+//}
 
 /*######
 ## npc_ame01
@@ -888,7 +887,7 @@ void AddSC_ungoro_crater()
     Script* pNewscript;
 
     pNewscript = new Script;
-    pNewscript->Name = "mob_simone_the_inconspicuous";
+  /*  pNewscript->Name = "mob_simone_the_inconspicuous";
     pNewscript->GetAI = &GetAI_mob_simone_the_inconspicuous;
     pNewscript->pGossipHello = &GossipHello_mob_simone_the_inconspicuous;
     pNewscript->pGossipSelect = &GossipSelect_mob_simone_the_inconspicuous;
@@ -897,7 +896,7 @@ void AddSC_ungoro_crater()
     pNewscript = new Script;
     pNewscript->Name = "mob_precious";
     pNewscript->GetAI = &GetAI_mob_precious;
-    pNewscript->RegisterSelf();
+    pNewscript->RegisterSelf();*/
         
     pNewscript = new Script;
     pNewscript->Name = "npc_ame01";

@@ -260,6 +260,7 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
     }
 
     uint32 m_uiDelayTimer;
+	uint32 m_despawnTimer;
 
     ObjectGuid m_firstPriestessGuid;
     ObjectGuid m_secondPriestessGuid;
@@ -267,11 +268,24 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
     ObjectGuid m_voiceEluneGuid;
     ObjectGuid m_altarGuid;
 
-    void Reset() override
+    void Reset()
     {
 		m_creature->SetStandState(UNIT_STAND_STATE_STAND);
         m_uiDelayTimer = 0;
+		m_despawnTimer = 0;
+		if (GameObject* pGo = GetClosestGameObjectWithEntry(m_creature, GO_ELUNE_ALTAR, 500.0f))				// reset the altar so the quest can be done
+		{
+			pGo->SetGoState(GO_STATE_READY);
+			pGo->SetLootState(GO_JUST_DEACTIVATED);
+			pGo->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NO_INTERACT);
+			pGo->UpdateVisibilityAndView();
+		}
     }
+
+	void JustDied(Unit* /*pKiller*/)
+	{
+		m_despawnTimer = 0;
+	}
 
     // Called when the player activates the torch / altar
     void DoContinueEscort(bool bIsAltarWaypoint = false)
@@ -358,6 +372,7 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
         {
             return;
         }
+		m_despawnTimer = 0;			// stop despawn timer so dialogue text works, despawn timer shouldn't be needed anymore
 
         // Start the dialogue when the priestess reach the altar (they should both reach the point in the same time)
         StartNextDialogueText(SAY_PRIESTESS_ALTAR_3);
@@ -562,6 +577,20 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
             }
         }
 
+		if (m_despawnTimer)
+		{
+			if(m_despawnTimer <= uiDiff)
+            {
+                m_creature->ForcedDespawn();
+                m_despawnTimer = 0;
+            }
+			else
+			{
+                m_despawnTimer -= uiDiff;
+                return;
+			}
+		}
+
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         {
             return;
@@ -586,6 +615,7 @@ bool QuestAccept_npc_ranshalla(Player* pPlayer, Creature* pCreature, const Quest
         if (npc_ranshallaAI* pEscortAI = dynamic_cast<npc_ranshallaAI*>(pCreature->AI()))
         {
             pEscortAI->Start(false, pPlayer, pQuest, true);
+			pEscortAI->m_despawnTimer = 1800000; // despawn after 30min if she is standing somewhere random
         }
 
         return true;
