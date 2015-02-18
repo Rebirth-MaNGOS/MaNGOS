@@ -53,6 +53,10 @@ Generator command line args
                                     this command will build the map regardless of --skip* option settings
                                     if you do not specify a map number, builds all maps that pass the filters specified by --skip* options
 
+--dumpTile			[true|false]	Dump the specified tile to a file called "dumpfile.obj" that can be imported into Blender.
+
+--objectBuild		[true|false]	Build the movemaps from the data files in "manual_entries".
+
 
 examples:
 
@@ -84,3 +88,14 @@ If all the geometry can't easily be made in one poly-file the movemap generator 
 .
 469.face.n
 469.node.n
+
+To used exported object files from Blender put them in the same folder as the generator in a subfolder called manual_entries. BWL example:
+469.obj
+469.obj.1
+.
+.
+.
+.
+469.obj.n
+
+Only geometry from the object files will be used and any geometry in the files will be marked as walkable.
