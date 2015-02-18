@@ -1098,7 +1098,7 @@ void MapBuilder::writeSingleTileToDumpFile(MeshData& meshData)
         return;
     }
     
-    for (size_t i = 0; i < meshData.solidVerts.size(); i++)
+    for (size_t i = 0; i < meshData.solidVerts.size() / 3; i++)
     {
         file << "v " << meshData.solidVerts.getCArray()[i * 3] << " " << meshData.solidVerts.getCArray()[i * 3 + 1] << " " << meshData.solidVerts.getCArray()[i * 3 + 2] << endl;
     }

@@ -285,6 +285,6 @@ int main(int argc, char** argv)
 //     else
 //         builder.buildAllMaps();
 
-    builder.dumpSingleTile(000, 32, 50);
+    builder.dumpSingleTile(489, 29, 29);
     return silent ? 1 : finish("Movemap build is complete!", 1);
 }
