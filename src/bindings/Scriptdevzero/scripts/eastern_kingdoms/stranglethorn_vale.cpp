@@ -400,6 +400,7 @@ struct MANGOS_DLL_DECL npc_molthor : public ScriptedAI
 {
     explicit npc_molthor(Creature* pCreature) : ScriptedAI(pCreature)
     {
+        m_creature->SetActiveObjectState(true);
         Reset();
     }
     
