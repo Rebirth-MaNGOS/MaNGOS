@@ -73,6 +73,7 @@ bool handleArgs(int argc, char** argv,
                bool &bigBaseUnit,
 	       bool &manualOverwriteGeometry,
                bool &dumpTile,
+               bool &objectBuild,
                char* &offMeshInputPath)
 {
     char* param = NULL;
@@ -220,6 +221,19 @@ bool handleArgs(int argc, char** argv,
             else
                 printf("invalid option for '--dumpTile', using default false\n");
         }
+        else if (strcmp(argv[i], "--objectBuild") == 0)
+        {
+            param = argv[++i];
+            if (!param)
+                return false;
+            
+            if (strcmp(param, "true") == 0)
+                objectBuild = true;
+            else if (strcmp(param, "false") == 0)
+                objectBuild = false;
+            else
+                printf("invalid option for '--objectBuild', using default false\n");
+        }
         else if (strcmp(argv[i], "--offMeshInput") == 0)
         {
             param = argv[++i];
@@ -264,13 +278,15 @@ int main(int argc, char** argv)
          silent = false,
          bigBaseUnit = false,
 	 manualOverwriteGeometry = false,
-         dumpTile = false;
+         dumpTile = false,
+         objectBuild = false;
     char* offMeshInputPath = NULL;
 
     bool validParam = handleArgs(argc, argv, mapnum,
                                  tileX, tileY, maxAngle,
                                  skipLiquid, skipContinents, skipJunkMaps, skipBattlegrounds,
-                                 debugOutput, silent, bigBaseUnit, manualOverwriteGeometry, dumpTile, offMeshInputPath);
+                                 debugOutput, silent, bigBaseUnit, manualOverwriteGeometry, dumpTile,
+                                 objectBuild, offMeshInputPath);
 
     if (!validParam)
         return silent ? -1 : finish("You have specified invalid parameters", -1);
@@ -293,6 +309,8 @@ int main(int argc, char** argv)
     MapBuilder builder(maxAngle, skipLiquid, skipContinents, skipJunkMaps,
                        skipBattlegrounds, debugOutput, bigBaseUnit, manualOverwriteGeometry, offMeshInputPath);
 
+    
+    
     if (dumpTile)
     {
         if (tileX > -1 && tileY > -1 && mapnum >= 0)
@@ -305,12 +323,20 @@ int main(int argc, char** argv)
             return -1;
         }
     }
+    else if (objectBuild)
+    {
+        if (tileX > -1 && tileY > -1 && mapnum >= 0)
+            builder.buildSingleTileFromObjects(mapnum, tileX, tileY);
+        else if (mapnum >= 0)
+            builder.buildMapFromObjects(uint32(mapnum));
+    }
     else if (tileX > -1 && tileY > -1 && mapnum >= 0)
         builder.buildSingleTile(mapnum, tileX, tileY);
     else if (mapnum >= 0)
         builder.buildMap(uint32(mapnum));
     else
         builder.buildAllMaps();
+    
 
     return silent ? 1 : finish("Movemap build is complete!", 1);
 }
