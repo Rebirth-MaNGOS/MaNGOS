@@ -72,6 +72,7 @@ bool handleArgs(int argc, char** argv,
                bool &silent,
                bool &bigBaseUnit,
 	       bool &manualOverwriteGeometry,
+               bool &dumpTile,
                char* &offMeshInputPath)
 {
     char* param = NULL;
@@ -206,6 +207,19 @@ bool handleArgs(int argc, char** argv,
             else
                 printf("invalid option for '--manualOverwriteGeometry', using default false\n");
         }
+        else if (strcmp(argv[i], "--dumpTile") == 0)
+        {
+            param = argv[++i];
+            if (!param)
+                return false;
+            
+            if (strcmp(param, "true") == 0)
+                dumpTile = true;
+            else if (strcmp(param, "false") == 0)
+                dumpTile = false;
+            else
+                printf("invalid option for '--dumpTile', using default false\n");
+        }
         else if (strcmp(argv[i], "--offMeshInput") == 0)
         {
             param = argv[++i];
@@ -249,13 +263,14 @@ int main(int argc, char** argv)
          debugOutput = false,
          silent = false,
          bigBaseUnit = false,
-	 manualOverwriteGeometry = false;
+	 manualOverwriteGeometry = false,
+         dumpTile = false;
     char* offMeshInputPath = NULL;
 
     bool validParam = handleArgs(argc, argv, mapnum,
                                  tileX, tileY, maxAngle,
                                  skipLiquid, skipContinents, skipJunkMaps, skipBattlegrounds,
-                                 debugOutput, silent, bigBaseUnit, manualOverwriteGeometry, offMeshInputPath);
+                                 debugOutput, silent, bigBaseUnit, manualOverwriteGeometry, dumpTile, offMeshInputPath);
 
     if (!validParam)
         return silent ? -1 : finish("You have specified invalid parameters", -1);
@@ -278,13 +293,24 @@ int main(int argc, char** argv)
     MapBuilder builder(maxAngle, skipLiquid, skipContinents, skipJunkMaps,
                        skipBattlegrounds, debugOutput, bigBaseUnit, manualOverwriteGeometry, offMeshInputPath);
 
-//     if (tileX > -1 && tileY > -1 && mapnum >= 0)
-//         builder.buildSingleTile(mapnum, tileX, tileY);
-//     else if (mapnum >= 0)
-//         builder.buildMap(uint32(mapnum));
-//     else
-//         builder.buildAllMaps();
+    if (dumpTile)
+    {
+        if (tileX > -1 && tileY > -1 && mapnum >= 0)
+        {
+            builder.dumpSingleTile(mapnum, tileX, tileY);
+        }
+        else
+        {
+            printf("Error: When dump tile is used a map and tile have to be specified on the command line!\n");
+            return -1;
+        }
+    }
+    else if (tileX > -1 && tileY > -1 && mapnum >= 0)
+        builder.buildSingleTile(mapnum, tileX, tileY);
+    else if (mapnum >= 0)
+        builder.buildMap(uint32(mapnum));
+    else
+        builder.buildAllMaps();
 
-    builder.dumpSingleTile(489, 29, 29);
     return silent ? 1 : finish("Movemap build is complete!", 1);
 }
