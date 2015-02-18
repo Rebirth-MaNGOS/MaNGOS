@@ -38,111 +38,113 @@ using namespace VMAP;
 // G3D namespace typedefs conflicts with ACE typedefs
 
 namespace MMAP
-{  
-	struct ManualAreaEntry
-	{
-		G3D::Array<float> vertices;
-		int verticeCount;
+{
+struct ManualAreaEntry
+{
+    G3D::Array<float> vertices;
+    int verticeCount;
 
-		G3D::Array<int> triangleIndices;
-		int indicesCount;
+    G3D::Array<int> triangleIndices;
+    int indicesCount;
 
-		ManualAreaEntry() { verticeCount = 0, indicesCount = 0; }
-	};
+    ManualAreaEntry() {
+        verticeCount = 0, indicesCount = 0;
+    }
+};
 
-	typedef map<uint32,set<uint32>*> TileList;
-	struct Tile
-	{
-		Tile() : chf(NULL), solid(NULL), cset(NULL), pmesh(NULL), dmesh(NULL) {}
-		~Tile()
-		{
-			rcFreeCompactHeightfield(chf);
-			rcFreeContourSet(cset);
-			rcFreeHeightField(solid);
-			rcFreePolyMesh(pmesh);
-			rcFreePolyMeshDetail(dmesh);
-		}
-		rcCompactHeightfield* chf;
-		rcHeightfield* solid;
-		rcContourSet* cset;
-		rcPolyMesh* pmesh;
-		rcPolyMeshDetail* dmesh;
-	};
+typedef map<uint32,set<uint32>*> TileList;
+struct Tile
+{
+    Tile() : chf(NULL), solid(NULL), cset(NULL), pmesh(NULL), dmesh(NULL) {}
+    ~Tile()
+    {
+        rcFreeCompactHeightfield(chf);
+        rcFreeContourSet(cset);
+        rcFreeHeightField(solid);
+        rcFreePolyMesh(pmesh);
+        rcFreePolyMeshDetail(dmesh);
+    }
+    rcCompactHeightfield* chf;
+    rcHeightfield* solid;
+    rcContourSet* cset;
+    rcPolyMesh* pmesh;
+    rcPolyMeshDetail* dmesh;
+};
 
-	class MapBuilder
-	{
-	public:
-		MapBuilder(float maxWalkableAngle   = 60.f,
-			bool skipLiquid          = false,
-			bool skipContinents      = false,
-			bool skipJunkMaps        = true,
-			bool skipBattlegrounds   = false,
-			bool debugOutput         = false,
-			bool bigBaseUnit         = false,
-			bool manualOverwriteGeometry = false,
-			const char* offMeshFilePath = NULL);
+class MapBuilder
+{
+public:
+    MapBuilder(float maxWalkableAngle   = 60.f,
+               bool skipLiquid          = false,
+               bool skipContinents      = false,
+               bool skipJunkMaps        = true,
+               bool skipBattlegrounds   = false,
+               bool debugOutput         = false,
+               bool bigBaseUnit         = false,
+               bool manualOverwriteGeometry = false,
+               const char* offMeshFilePath = NULL);
 
-		~MapBuilder();
+    ~MapBuilder();
 
-		// builds all mmap tiles for the specified map id (ignores skip settings)
-		void buildMap(uint32 mapID);
+    // builds all mmap tiles for the specified map id (ignores skip settings)
+    void buildMap(uint32 mapID);
 
-		// builds an mmap tile for the specified map and its mesh
-		void buildSingleTile(uint32 mapID, uint32 tileX, uint32 tileY);
+    // builds an mmap tile for the specified map and its mesh
+    void buildSingleTile(uint32 mapID, uint32 tileX, uint32 tileY);
 
-		// builds list of maps, then builds all of mmap tiles (based on the skip settings)
-		void buildAllMaps();
+    // builds list of maps, then builds all of mmap tiles (based on the skip settings)
+    void buildAllMaps();
 
-		ManualAreaEntry LoadManualAreaEntries(uint32 mapID);
+    ManualAreaEntry LoadManualAreaEntries(uint32 mapID);
 
-	private:
-		// detect maps and tiles
-		void discoverTiles();
-		set<uint32>* getTileList(uint32 mapID);
+private:
+    // detect maps and tiles
+    void discoverTiles();
+    set<uint32>* getTileList(uint32 mapID);
 
-		void buildNavMesh(uint32 mapID, dtNavMesh* &navMesh);
+    void buildNavMesh(uint32 mapID, dtNavMesh* &navMesh);
 
-		void buildTile(uint32 mapID, uint32 tileX, uint32 tileY, dtNavMesh* navMesh, ManualAreaEntry& manualAreas);
+    void buildTile(uint32 mapID, uint32 tileX, uint32 tileY, dtNavMesh* navMesh, ManualAreaEntry& manualAreas);
 
-		ManualAreaEntry LoadSpecificManualAreaFile(uint32 mapID, uint32 extension);
+    ManualAreaEntry LoadSpecificManualAreaFile(uint32 mapID, uint32 extension);
 
-		// move map building
-		void buildMoveMapTile(uint32 mapID,
-			uint32 tileX,
-			uint32 tileY,
-			MeshData &meshData,
-			float bmin[3],
-			float bmax[3],
-			dtNavMesh* navMesh,
-			ManualAreaEntry& manualAreas);
+    // move map building
+    void buildMoveMapTile(uint32 mapID,
+                          uint32 tileX,
+                          uint32 tileY,
+                          MeshData &meshData,
+                          float bmin[3],
+                          float bmax[3],
+                          dtNavMesh* navMesh,
+                          ManualAreaEntry& manualAreas);
 
-		void getTileBounds(uint32 tileX, uint32 tileY,
-			float* verts, int vertCount,
-			float* bmin, float* bmax);
-		void getGridBounds(uint32 mapID, uint32 &minX, uint32 &minY, uint32 &maxX, uint32 &maxY);
+    void getTileBounds(uint32 tileX, uint32 tileY,
+                       float* verts, int vertCount,
+                       float* bmin, float* bmax);
+    void getGridBounds(uint32 mapID, uint32 &minX, uint32 &minY, uint32 &maxX, uint32 &maxY);
 
-		bool shouldSkipMap(uint32 mapID);
-		bool isTransportMap(uint32 mapID);
-		bool shouldSkipTile(uint32 mapID, uint32 tileX, uint32 tileY);
+    bool shouldSkipMap(uint32 mapID);
+    bool isTransportMap(uint32 mapID);
+    bool shouldSkipTile(uint32 mapID, uint32 tileX, uint32 tileY);
 
-		TerrainBuilder* m_terrainBuilder;
-		TileList m_tiles;
+    TerrainBuilder* m_terrainBuilder;
+    TileList m_tiles;
 
-		bool m_debugOutput;
+    bool m_debugOutput;
 
-		const char* m_offMeshFilePath;
-		bool m_skipContinents;
-		bool m_skipJunkMaps;
-		bool m_skipBattlegrounds;
+    const char* m_offMeshFilePath;
+    bool m_skipContinents;
+    bool m_skipJunkMaps;
+    bool m_skipBattlegrounds;
 
-		float m_maxWalkableAngle;
-		bool m_bigBaseUnit;
+    float m_maxWalkableAngle;
+    bool m_bigBaseUnit;
 
-		bool m_manualOverwriteGeometry;
+    bool m_manualOverwriteGeometry;
 
-		// build performance - not really used for now
-		rcContext* m_rcContext;
-	};
+    // build performance - not really used for now
+    rcContext* m_rcContext;
+};
 }
 
 #endif
