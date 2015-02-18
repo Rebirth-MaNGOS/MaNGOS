@@ -306,6 +306,29 @@ void MapBuilder::buildTile(uint32 mapID, uint32 tileX, uint32 tileY, dtNavMesh* 
     buildMoveMapTile(mapID, tileX, tileY, meshData, bmin, bmax, navMesh, manualAreas);
 }
 
+void MapBuilder::dumpSingleTile(uint32 mapID, uint32 tileX, uint32 tileY)
+{
+    printf("Dumping map %03u, tile [%02u,%02u]\n", mapID, tileX, tileY);
+    
+    MeshData meshData;
+    
+    // get heightmap data
+    m_terrainBuilder->loadMap(mapID, tileX, tileY, meshData);
+
+    // get model data
+    m_terrainBuilder->loadVMap(mapID, tileY, tileX, meshData);
+
+    // if there is no data, give up now
+    if (!meshData.solidVerts.size() && !meshData.liquidVerts.size())
+        return;
+
+    // remove unused vertices
+    TerrainBuilder::cleanVertices(meshData.solidVerts, meshData.solidTris);
+    TerrainBuilder::cleanVertices(meshData.liquidVerts, meshData.liquidTris);
+    
+    writeSingleTileToDumpFile(meshData);
+}
+
 /**************************************************************************/
 void MapBuilder::buildNavMesh(uint32 mapID, dtNavMesh* &navMesh)
 {
@@ -1063,5 +1086,28 @@ ManualAreaEntry MapBuilder::LoadSpecificManualAreaFile(uint32 mapID, uint32 exte
     printf("Loaded %lu faces.\r\n", faceCount);
 
     return result;
+}
+
+void MapBuilder::writeSingleTileToDumpFile(MeshData& meshData)
+{
+    std::ofstream file;
+    file.open("dumpfile.obj", std::ifstream::out);
+    if (!file.is_open())
+    {
+        printf("Error: Could not open dumpfile.obj!\n");
+        return;
+    }
+    
+    for (size_t i = 0; i < meshData.solidVerts.size(); i++)
+    {
+        file << "v " << meshData.solidVerts.getCArray()[i * 3] << " " << meshData.solidVerts.getCArray()[i * 3 + 1] << " " << meshData.solidVerts.getCArray()[i * 3 + 2] << endl;
+    }
+    
+    for (size_t i = 0; i < meshData.solidTris.size() / 3; i++)
+    {
+        file << "f " << meshData.solidTris.getCArray()[i * 3] + 1 << " " << meshData.solidTris.getCArray()[i * 3 + 1] + 1 << " " << meshData.solidTris.getCArray()[i * 3 + 2] + 1 << endl;
+    }
+    
+    file.close();
 }
 }

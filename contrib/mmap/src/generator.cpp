@@ -278,12 +278,13 @@ int main(int argc, char** argv)
     MapBuilder builder(maxAngle, skipLiquid, skipContinents, skipJunkMaps,
                        skipBattlegrounds, debugOutput, bigBaseUnit, manualOverwriteGeometry, offMeshInputPath);
 
-    if (tileX > -1 && tileY > -1 && mapnum >= 0)
-        builder.buildSingleTile(mapnum, tileX, tileY);
-    else if (mapnum >= 0)
-        builder.buildMap(uint32(mapnum));
-    else
-        builder.buildAllMaps();
+//     if (tileX > -1 && tileY > -1 && mapnum >= 0)
+//         builder.buildSingleTile(mapnum, tileX, tileY);
+//     else if (mapnum >= 0)
+//         builder.buildMap(uint32(mapnum));
+//     else
+//         builder.buildAllMaps();
 
+    builder.dumpSingleTile(000, 32, 50);
     return silent ? 1 : finish("Movemap build is complete!", 1);
 }

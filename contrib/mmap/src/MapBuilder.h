@@ -91,6 +91,8 @@ public:
 
     // builds an mmap tile for the specified map and its mesh
     void buildSingleTile(uint32 mapID, uint32 tileX, uint32 tileY);
+    
+    void dumpSingleTile(uint32 mapID, uint32 tileX, uint32 tileY);
 
     // builds list of maps, then builds all of mmap tiles (based on the skip settings)
     void buildAllMaps();
@@ -107,6 +109,8 @@ private:
     void buildTile(uint32 mapID, uint32 tileX, uint32 tileY, dtNavMesh* navMesh, ManualAreaEntry& manualAreas);
 
     ManualAreaEntry LoadSpecificManualAreaFile(uint32 mapID, uint32 extension);
+    
+    void writeSingleTileToDumpFile(MeshData& meshData);
 
     // move map building
     void buildMoveMapTile(uint32 mapID,
