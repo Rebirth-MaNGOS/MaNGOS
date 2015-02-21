@@ -323,10 +323,10 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     if (opcode == MSG_MOVE_SET_WALK_MODE || opcode == MSG_MOVE_SET_RUN_MODE)
         mover->UpdateWalkMode(mover, false);
 
-    
+    if (!plMover)
+        plMover = GetPlayer();
 
-    if (plMover)
-        mover->SendMovementOpcadeMessagesToSetExcept(plMover, plMover->GetPackGUID(), movementInfo, &recv_data); 
+    mover->SendMovementOpcodeMessagesToSetExcept(plMover, mover->GetPackGUID(), movementInfo, &recv_data);
 }
 
 void WorldSession::HandleForceSpeedChangeAckOpcodes(WorldPacket &recv_data)

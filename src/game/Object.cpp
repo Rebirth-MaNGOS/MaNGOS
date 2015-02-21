@@ -1420,7 +1420,7 @@ void WorldObject::SendMessageToSetExcept(WorldPacket *data, Player const* skippe
     }
 }
 
-void WorldObject::SendMovementOpcadeMessagesToSetExcept(const Player* mover, PackedGuid guid, MovementInfo info, WorldPacket* received_movement)
+void WorldObject::SendMovementOpcodeMessagesToSetExcept(const Unit* mover, PackedGuid guid, MovementInfo info, WorldPacket* received_movement)
 {
     if (IsInWorld())
     {
