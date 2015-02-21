@@ -131,15 +131,15 @@ class LinkedListElement
 
 class LinkedListHead
 {
+    public:
+        std::mutex mLock; // The mutex should be declared first so that it is destroyed last.
+ 
     private:
-
         LinkedListElement iFirst;
         LinkedListElement iLast;
         uint32 iSize;
-
+    
     public:
-        std::mutex mLock;
-        
         LinkedListHead()
         {
             // create empty list
