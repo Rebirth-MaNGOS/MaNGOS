@@ -21,6 +21,8 @@
 #define _LINKEDLIST
 
 #include "Common.h"
+#include <mutex>
+#include <functional>
 
 //============================================
 class LinkedListHead;
@@ -33,6 +35,9 @@ class LinkedListElement
 
         LinkedListElement* iNext;
         LinkedListElement* iPrev;
+        
+        std::function<void()> modLock;
+        std::function<void()> modUnlock;
 
     public:
 
@@ -52,9 +57,29 @@ class LinkedListElement
         LinkedListElement const* nocheck_next() const { return iNext; }
         LinkedListElement      * nocheck_prev()       { return iPrev; }
         LinkedListElement const* nocheck_prev() const { return iPrev; }
+ 
+    private:
+        void passLambdas(LinkedListElement* pElem)
+        {
+            if (pElem->modLock.target_type() == typeid(void))
+                pElem->modLock = modLock;
+            
+            if (pElem->modUnlock.target_type() == typeid(void))
+                pElem->modUnlock = modUnlock;
+        }
 
+    public:
         void delink()
         {
+            try
+            {
+                modLock();
+            }
+            catch (...)
+            {
+                // No mutex. Do nothing.
+            }
+            
             if (isInList())
             {
                 iNext->iPrev = iPrev;
@@ -62,22 +87,43 @@ class LinkedListElement
                 iNext = NULL;
                 iPrev = NULL;
             }
+            
+            try
+            {
+                modUnlock();
+            }
+            catch (...)
+            {
+                // No mutex. Do nothing.
+            }
         }
 
         void insertBefore(LinkedListElement* pElem)
-        {
+        { 
+            modLock();
+            
+            passLambdas(pElem);
+            
             pElem->iNext = this;
             pElem->iPrev = iPrev;
             iPrev->iNext = pElem;
             iPrev = pElem;
+            
+            modUnlock();
         }
 
         void insertAfter(LinkedListElement* pElem)
         {
+            modLock();
+
+            passLambdas(pElem);
+            
             pElem->iPrev = this;
             pElem->iNext = iNext;
             iNext->iPrev = pElem;
             iNext = pElem;
+            
+            modUnlock();
         }
 };
 
@@ -92,11 +138,15 @@ class LinkedListHead
         uint32 iSize;
 
     public:
-
+        std::mutex mLock;
+        
         LinkedListHead()
         {
             // create empty list
 
+            passLambdas(&iLast);
+            passLambdas(&iFirst);
+            
             iFirst.iNext = &iLast;
             iLast.iPrev = &iFirst;
             iSize = 0;
@@ -109,14 +159,25 @@ class LinkedListHead
 
         LinkedListElement      * getLast()        { return (isEmpty() ? NULL : iLast.iPrev); }
         LinkedListElement const* getLast() const  { return (isEmpty() ? NULL : iLast.iPrev); }
+    private:
+        void passLambdas(LinkedListElement* pElem)
+        {
+            pElem->modLock = [this]() { mLock.lock(); };
+            pElem->modUnlock = [this]() { mLock.unlock(); };
+        }
 
+    public:
         void insertFirst(LinkedListElement* pElem)
         {
+            passLambdas(pElem);
+            
             iFirst.insertAfter(pElem);
         }
 
         void insertLast(LinkedListElement* pElem)
         {
+            passLambdas(pElem);
+            
             iLast.insertBefore(pElem);
         }
 

@@ -59,12 +59,24 @@ namespace ACE_Based
                 ACE_Guard<LockType> g(this->_lock);
                 _queue.push_back(item);
             }
+            
+            //! Adds an item to the queue. Does NOT lock the queue; do it manually!
+            void unsafe_add(const T& item)
+            {
+                _queue.push_back(item);
+            }
 
             //! Gets the next result in the queue, if any.
             bool next(T& result)
             {
                 ACE_GUARD_RETURN (LockType, g, this->_lock, false);
 
+                return unsafe_next(result);
+            }
+            
+            //! Gets the next result in the queue, if any. Does NOT lock the queue; do it manually!
+            bool unsafe_next(T& result)
+            {
                 if (_queue.empty())
                     return false;
 

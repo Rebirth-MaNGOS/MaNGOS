@@ -117,9 +117,9 @@ BindIP = "0.0.0.0"
 #        Default: 0 (do not update mob AIs when no players are near)
 #                 1 (update mob AIs at all times)
 #
-#    ActiveMobUpdateThreads
-#    	How many threads should be globally spawned to update mobs set to active.
-#    	Default: 1 (one worker thread per map)
+#    ThreadPoolThreads
+#    	How many threads should be globally spawned to execute tasks in the thread pool.
+#    	Default: 1 (one global worker thread)
 #
 #    GridCleanUpDelay
 #        Grid clean up delay (in milliseconds)
@@ -216,7 +216,7 @@ SaveRespawnTimeImmediately = 1
 MaxOverspeedPings = 2
 GridUnload = 1
 ActiveContinentMobs = 0
-ActiveMobUpdateThreads = 1
+ThreadPoolThreads = 1
 GridCleanUpDelay = 300000
 MapUpdateInterval = 100
 ChangeWeatherInterval = 600000

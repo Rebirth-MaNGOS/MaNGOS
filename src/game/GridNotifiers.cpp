@@ -133,17 +133,40 @@ void MessageDelivererExcept::Visit(CameraMapType &m)
 
 void MovementOpcodeDeliverer::Visit(CameraMapType& m)
 {
-    for (CameraMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
+    std::unique_lock<std::mutex> lock(m.mLock, std::defer_lock);
+    bool updating = true;
+    
+    lock.lock();
+    CameraMapType::iterator iter = m.begin();
+    if (m.begin() == m.end())
+        return;
+    lock.unlock();
+    
+    while (updating)
     {
             Camera* pCamera = iter->getSource();
             
             if (!pCamera)
+            {
+                // Lock the lists mutex when we increment.
+                lock.lock();
+                ++iter;
+                updating = iter != m.end();
+                lock.unlock();
                 continue;
+            }
             
             Player* owner = pCamera->GetOwner();
                 
             if (owner == i_skipped_receiver)
+            {
+                // Lock the lists mutex when we increment.
+                lock.lock();
+                ++iter;
+                updating = iter != m.end();
+                lock.unlock();
                 continue;
+            }
             
             
             if (WorldSession* session = owner->GetSession())
@@ -156,6 +179,12 @@ void MovementOpcodeDeliverer::Visit(CameraMapType& m)
                 
                 session->SendPacket(&data);
             }
+            
+            // Lock the lists mutex when we increment.
+            lock.lock();
+            ++iter;
+            updating = iter != m.end();
+            lock.unlock();
     }
 }
 

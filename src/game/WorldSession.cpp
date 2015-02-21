@@ -21,6 +21,10 @@
     \ingroup u2w
 */
 
+#include <thread>
+#include <chrono>
+#include <queue>
+
 #include "WorldSocket.h"                                    // must be first to make ACE happy with ACE includes in it
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
@@ -93,6 +97,9 @@ m_latency(0), m_tutorialState(TUTORIALDATA_UNCHANGED)
     {
         m_Address = sock->GetRemoteAddress ();
         sock->AddReference ();
+        
+        std::thread movementUpdater([this]() { MovementOpcodeWorker(); });
+        movementUpdater.detach();
     }
 }
 
@@ -212,6 +219,8 @@ void WorldSession::LogUnprocessedTail(WorldPacket *packet)
 /// Update the WorldSession (triggered by World update)
 bool WorldSession::Update(PacketFilter& updater)
 {
+    std::queue<WorldPacket*> unhandledPackets;
+    
     ///- Retrieve packets from the receive queue and call the appropriate handlers
     /// not process packets if socket already closed
     WorldPacket* packet;
@@ -236,8 +245,18 @@ bool WorldSession::Update(PacketFilter& updater)
                             LogUnexpectedOpcode(packet, "the player has not logged in yet");
                     }
                     else if(_player->IsInWorld())
-                        ExecuteOpcode(opHandle, packet);
-
+                    {
+                        // We handle movement in WorldSession::MovementOpcodeWorker.
+                        if (opHandle == opcodeTable[MSG_MOVE_START_FORWARD])
+                        {
+                            unhandledPackets.push(packet);
+                            packet = nullptr;
+                        }
+                        else
+                        {
+                            ExecuteOpcode(opHandle, packet);
+                        }
+                    }
                     // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
                     break;
                 case STATUS_LOGGEDIN_OR_RECENTLY_LOGGEDOUT:
@@ -308,6 +327,12 @@ bool WorldSession::Update(PacketFilter& updater)
         }
 
         delete packet;
+    }
+    
+    while (!unhandledPackets.empty())
+    {
+        _recvQueue.add(unhandledPackets.front());
+        unhandledPackets.pop();
     }
 
     ///- Cleanup socket pointer if need
@@ -756,4 +781,75 @@ void WorldSession::ExecuteOpcode( OpcodeHandler const& opHandle, WorldPacket* pa
 
     if (packet->rpos() < packet->wpos() && sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG))
         LogUnprocessedTail(packet);
+}
+
+void WorldSession::MovementOpcodeWorker()
+{
+    std::queue<WorldPacket*> unhandledPackets;
+    
+    while (m_Socket && !m_Socket->IsClosed())
+    {
+        auto startTime = std::chrono::high_resolution_clock::now();
+        
+        _recvQueue.lock();
+        WorldPacket* packet = nullptr;
+        while (_recvQueue.unsafe_next(packet))
+        {
+            OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
+            try
+            {
+                if(!_player)
+                {
+                    // If we have no player we can't handle any movement so pass it on to the normal packet handling.
+                     unhandledPackets.push(packet);
+                     packet = nullptr;
+                }
+                else if(_player->IsInWorld()) 
+                {
+                    // Only process opcodes that have the MovementHandler::HandleMovementOpcodes handler.
+                    if (opHandle == opcodeTable[MSG_MOVE_START_FORWARD])
+                        ExecuteOpcode(opHandle, packet);
+                    else
+                    {
+                        unhandledPackets.push(packet);
+                        packet = nullptr;
+                    }
+
+                }
+            }
+            catch (ByteBufferException &)
+            {
+                sLog.outError("WorldSession::Update ByteBufferException occured while parsing a packet (opcode: %u) from client %s, accountid=%i.",
+                        packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
+                if (sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG))
+                {
+                    DEBUG_LOG("Dumping error causing packet:");
+                    packet->hexlike();
+                }
+
+                if (sWorld.getConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET))
+                {
+                    DETAIL_LOG("Disconnecting session [account id %u / address %s] for badly formatted packet.",
+                        GetAccountId(), GetRemoteAddress().c_str());
+
+                    KickPlayer();
+                }
+            }
+            
+            delete packet;
+            packet = nullptr;
+        }
+
+        
+        while (!unhandledPackets.empty())
+        {
+            _recvQueue.unsafe_add(unhandledPackets.front());
+            unhandledPackets.pop();
+        }
+        _recvQueue.unlock();
+        
+        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
+        if (diff < 100)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100 - diff));
+    }
 }

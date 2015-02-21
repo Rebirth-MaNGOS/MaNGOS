@@ -973,6 +973,8 @@ struct OpcodeHandler
     SessionStatus status;
     PacketProcessing packetProcessing;
     void (WorldSession::*handler)(WorldPacket& recvPacket);
+    
+    bool operator==(const OpcodeHandler &rhs) const { return handler == rhs.handler; }
 };
 
 typedef std::map< uint16, OpcodeHandler> OpcodeMap;

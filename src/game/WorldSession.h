@@ -148,7 +148,7 @@ class MANGOS_DLL_SPEC WorldSession
         std::string const& GetRemoteAddress() { return m_Address; }
         void SetPlayer(Player *plr) { _player = plr; }
 
-		void InitWarden(BigNumber *K, std::string os);
+        void InitWarden(BigNumber *K, std::string os);
 
         /// Session in auth.queue currently
         void SetInQueue(bool state) { m_inQueue = state; }
@@ -649,6 +649,8 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleMoverRelocation(MovementInfo& movementInfo);
 
         void ExecuteOpcode( OpcodeHandler const& opHandle, WorldPacket* packet );
+        
+        void MovementOpcodeWorker();
 
         // logging helper
         void LogUnexpectedOpcode(WorldPacket *packet, const char * reason);

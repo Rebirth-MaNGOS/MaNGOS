@@ -222,7 +222,7 @@ void Creature::AddToWorld()
 
     Unit::AddToWorld();
     
-    if (sWorld.getConfig(CONFIG_BOOL_ACTIVE_CONTINENT_MOBS) && (GetMap()->GetId() == 1 || GetMap()->GetId() == 0))
+    if (sWorld.getConfig(CONFIG_BOOL_THREAD_POOL_THREADS) && (GetMap()->GetId() == 1 || GetMap()->GetId() == 0))
         m_isActiveObject = true;
 }
 
