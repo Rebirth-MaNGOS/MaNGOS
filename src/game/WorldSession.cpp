@@ -23,7 +23,6 @@
 
 #include <thread>
 #include <chrono>
-#include <queue>
 
 #include "WorldSocket.h"                                    // must be first to make ACE happy with ACE includes in it
 #include "Common.h"
@@ -198,6 +197,12 @@ void WorldSession::QueuePacket(WorldPacket* new_packet)
     _recvQueue.add(new_packet);
 }
 
+/// Add an incoming movement related packet to the correct queue.
+void WorldSession::QueueMovementPacket(WorldPacket* new_packet)
+{
+    _recvMovementQueue.add(new_packet);
+}
+
 /// Logging helper for unexpected opcodes
 void WorldSession::LogUnexpectedOpcode(WorldPacket* packet, const char *reason)
 {
@@ -218,9 +223,7 @@ void WorldSession::LogUnprocessedTail(WorldPacket *packet)
 
 /// Update the WorldSession (triggered by World update)
 bool WorldSession::Update(PacketFilter& updater)
-{
-    std::queue<WorldPacket*> unhandledPackets;
-    
+{   
     ///- Retrieve packets from the receive queue and call the appropriate handlers
     /// not process packets if socket already closed
     WorldPacket* packet;
@@ -245,18 +248,8 @@ bool WorldSession::Update(PacketFilter& updater)
                             LogUnexpectedOpcode(packet, "the player has not logged in yet");
                     }
                     else if(_player->IsInWorld())
-                    {
-                        // We handle movement in WorldSession::MovementOpcodeWorker.
-                        if (opHandle == opcodeTable[MSG_MOVE_START_FORWARD])
-                        {
-                            unhandledPackets.push(packet);
-                            packet = nullptr;
-                        }
-                        else
-                        {
                             ExecuteOpcode(opHandle, packet);
-                        }
-                    }
+                    
                     // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
                     break;
                 case STATUS_LOGGEDIN_OR_RECENTLY_LOGGEDOUT:
@@ -327,12 +320,6 @@ bool WorldSession::Update(PacketFilter& updater)
         }
 
         delete packet;
-    }
-    
-    while (!unhandledPackets.empty())
-    {
-        _recvQueue.add(unhandledPackets.front());
-        unhandledPackets.pop();
     }
 
     ///- Cleanup socket pointer if need
@@ -785,37 +772,18 @@ void WorldSession::ExecuteOpcode( OpcodeHandler const& opHandle, WorldPacket* pa
 
 void WorldSession::MovementOpcodeWorker()
 {
-    std::queue<WorldPacket*> unhandledPackets;
-    
     while (m_Socket && !m_Socket->IsClosed())
     {
         auto startTime = std::chrono::high_resolution_clock::now();
         
-        _recvQueue.lock();
         WorldPacket* packet = nullptr;
-        while (_recvQueue.unsafe_next(packet))
+        while (_recvMovementQueue.next(packet))
         {
             OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
             try
             {
-                if(!_player)
-                {
-                    // If we have no player we can't handle any movement so pass it on to the normal packet handling.
-                     unhandledPackets.push(packet);
-                     packet = nullptr;
-                }
-                else if(_player->IsInWorld()) 
-                {
-                    // Only process opcodes that have the MovementHandler::HandleMovementOpcodes handler.
-                    if (opHandle == opcodeTable[MSG_MOVE_START_FORWARD])
-                        ExecuteOpcode(opHandle, packet);
-                    else
-                    {
-                        unhandledPackets.push(packet);
-                        packet = nullptr;
-                    }
-
-                }
+                if(_player && _player->IsInWorld()) 
+                    ExecuteOpcode(opHandle, packet);
             }
             catch (ByteBufferException &)
             {
@@ -837,16 +805,7 @@ void WorldSession::MovementOpcodeWorker()
             }
             
             delete packet;
-            packet = nullptr;
         }
-
-        
-        while (!unhandledPackets.empty())
-        {
-            _recvQueue.unsafe_add(unhandledPackets.front());
-            unhandledPackets.pop();
-        }
-        _recvQueue.unlock();
         
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
         if (diff < 100)

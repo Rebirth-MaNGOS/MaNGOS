@@ -172,6 +172,7 @@ class MANGOS_DLL_SPEC WorldSession
         void KickPlayer();
 
         void QueuePacket(WorldPacket* new_packet);
+        void QueueMovementPacket(WorldPacket* new_packet);
 
         bool Update(PacketFilter& updater);
 
@@ -678,6 +679,7 @@ class MANGOS_DLL_SPEC WorldSession
         uint32 m_Tutorials[8];
         TutorialDataState m_tutorialState;
         ACE_Based::LockedQueue<WorldPacket*, ACE_Thread_Mutex> _recvQueue;
+        ACE_Based::LockedQueue<WorldPacket*, ACE_Thread_Mutex> _recvMovementQueue;
 };
 #endif
 /// @}
