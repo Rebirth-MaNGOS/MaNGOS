@@ -256,6 +256,7 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
     npc_ranshallaAI(Creature* pCreature) : npc_escortAI(pCreature),
         DialogueHelper(aIntroDialogue)
     {
+		m_creature->SetActiveObjectState(true); 
         Reset();
     }
 

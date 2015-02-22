@@ -197,6 +197,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
     npc_grark_lorkrubAI(Creature* pCreature) : npc_escortAI(pCreature),
         DialogueHelper(aOutroDialogue)
     {
+		m_creature->SetActiveObjectState(true);
         Reset();
     }
 
