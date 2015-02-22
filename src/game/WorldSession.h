@@ -643,6 +643,8 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleCancelTempEnchantmentOpcode(WorldPacket& recv_data);
 
         void HandleSetTaxiBenchmarkOpcode(WorldPacket& recv_data);
+        
+        void MovementOpcodeWorker();
 
     private:
         // private trade methods
@@ -653,7 +655,6 @@ class MANGOS_DLL_SPEC WorldSession
 
         void ExecuteOpcode( OpcodeHandler const& opHandle, WorldPacket* packet );
         
-        void MovementOpcodeWorker();
 
         // logging helper
         void LogUnexpectedOpcode(WorldPacket *packet, const char * reason);

@@ -96,9 +96,6 @@ m_latency(0), m_tutorialState(TUTORIALDATA_UNCHANGED)
     {
         m_Address = sock->GetRemoteAddress ();
         sock->AddReference ();
-        
-        std::thread movementUpdater([this]() { MovementOpcodeWorker(); });
-        movementUpdater.detach();
     }
 }
 
@@ -772,61 +769,56 @@ void WorldSession::ExecuteOpcode( OpcodeHandler const& opHandle, WorldPacket* pa
 
 void WorldSession::MovementOpcodeWorker()
 {
-    while (m_Socket && !m_Socket->IsClosed())
+    // If we don't have a valid socket we can't send data.
+    if (!m_Socket || m_Socket->IsClosed())
+        return;
+    
+    // Don't do anything unless we have a player pointer.
+    if (!_player || !_player->GetMap()) 
+        return;
+    
+    if (_player->GetMap()->m_isUpdatingSessions)
     {
-        // Don't do anything unless we have a player pointer.
-        while (!_player || !_player->GetMap()) 
-        { 
-            std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
-            continue; 
-        }
-        
-        if (_player->GetMap()->m_isUpdatingSessions)
-        {
-            std::unique_lock<std::mutex> lock(_player->GetMap()->m_SessionUpdateMutex);
-            _player->GetMap()->m_SessionUpdateNotifier.wait(lock, [this] { return !_player->GetMap()->m_isUpdatingSessions; });
-        }
-        
-        // Increase the thread counter to keep the map from updating sessions while the threads are working.
-        ++_player->GetMap()->m_updatingThreads;
-        
-        auto startTime = std::chrono::high_resolution_clock::now();
-        
-        WorldPacket* packet = nullptr;
-        while (_recvMovementQueue.next(packet))
-        {
-            OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
-            try
-            {
-                if(_player && _player->IsInWorld()) 
-                    ExecuteOpcode(opHandle, packet);
-            }
-            catch (ByteBufferException &)
-            {
-                sLog.outError("WorldSession::Update ByteBufferException occured while parsing a packet (opcode: %u) from client %s, accountid=%i.",
-                        packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
-                if (sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG))
-                {
-                    DEBUG_LOG("Dumping error causing packet:");
-                    packet->hexlike();
-                }
-
-                if (sWorld.getConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET))
-                {
-                    DETAIL_LOG("Disconnecting session [account id %u / address %s] for badly formatted packet.",
-                        GetAccountId(), GetRemoteAddress().c_str());
-
-                    KickPlayer();
-                }
-            }
-            
-            delete packet;
-        }
-        
-
-        --_player->GetMap()->m_updatingThreads;
-        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
-        if (diff < 100)
-            std::this_thread::sleep_for(std::chrono::milliseconds(100 - diff));
+        std::unique_lock<std::mutex> lock(_player->GetMap()->m_SessionUpdateMutex);
+        _player->GetMap()->m_SessionUpdateNotifier.wait(lock, [this] { return !_player->GetMap()->m_isUpdatingSessions; });
     }
+    
+    // Increase the thread counter to keep the map from updating sessions while the threads are working.
+    ++_player->GetMap()->m_updatingThreads;
+    
+    WorldPacket* packet = nullptr;
+    while (_recvMovementQueue.next(packet))
+    {
+        OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
+        try
+        {
+            if(_player && _player->IsInWorld())
+            {
+                ExecuteOpcode(opHandle, packet);
+            }
+        }
+        catch (ByteBufferException &)
+        {
+            sLog.outError("WorldSession::Update ByteBufferException occured while parsing a packet (opcode: %u) from client %s, accountid=%i.",
+                    packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
+            if (sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG))
+            {
+                DEBUG_LOG("Dumping error causing packet:");
+                packet->hexlike();
+            }
+
+            if (sWorld.getConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET))
+            {
+                DETAIL_LOG("Disconnecting session [account id %u / address %s] for badly formatted packet.",
+                    GetAccountId(), GetRemoteAddress().c_str());
+
+                KickPlayer();
+            }
+        }
+        
+        delete packet;
+    }
+    
+
+    --_player->GetMap()->m_updatingThreads;
 }

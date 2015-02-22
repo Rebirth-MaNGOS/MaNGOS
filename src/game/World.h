@@ -34,6 +34,7 @@
 #include <map>
 #include <set>
 #include <list>
+#include <mutex>
 
 class Object;
 class WorldPacket;
@@ -176,7 +177,7 @@ enum eConfigUInt32Values
     CONFIG_UINT32_SENTINEL_BAN_TIME,
     CONFIG_UINT32_SENTINEL_ACTION_LEVEL,
     CONFIG_BOOL_THREAD_POOL_THREADS,
-    CONFIG_UINT32_ACTIVE_MOB_UPDATE_THREADS,
+    CONFIG_UINT32_THREAD_POOL_THREADS,
     CONFIG_UINT32_VALUE_COUNT,
 };
 
@@ -392,6 +393,8 @@ struct CliCommandHolder
 class World
 {
     public:
+        std::mutex m_SessionListMutex;
+        
         static volatile uint32 m_worldLoopCounter;
 
         World();

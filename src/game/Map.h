@@ -109,7 +109,8 @@ protected:
     Map(uint32 id, time_t, uint32 InstanceId);
 
 public:
-    std::mutex m_SessionUpdateMutex;
+    std::mutex m_RelocationMutex;    // Mutex to protect the grid from corruption when the worker threads need to do relocation.
+    std::mutex m_SessionUpdateMutex; // Mutex to stop movement worker threads when seesions need to be updated.
     std::condition_variable m_SessionUpdateNotifier;
     std::atomic_bool m_isUpdatingSessions;
     std::atomic_uint m_updatingThreads;

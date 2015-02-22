@@ -67,6 +67,8 @@
 #include "extras/Mod.h"
 #include "Warden/WardenDataStorage.h"
 
+#include <thread>
+
 INSTANTIATE_SINGLETON_1( World );
 
 volatile bool World::m_stopEvent = false;
@@ -111,7 +113,7 @@ World::World()
     for(int i = 0; i < CONFIG_BOOL_VALUE_COUNT; ++i)
         m_configBoolValues[i] = false;
 
-	thread_pool = nullptr;
+    thread_pool = nullptr;   
 }
 
 /// World destructor
@@ -506,7 +508,7 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_BOOL_CLEAN_CHARACTER_DB, "CleanCharacterDB", true);
     setConfig(CONFIG_BOOL_GRID_UNLOAD, "GridUnload", true);
     setConfig(CONFIG_BOOL_THREAD_POOL_THREADS, "ActiveContinentMobs", false);
-    setConfig(CONFIG_UINT32_ACTIVE_MOB_UPDATE_THREADS, "ThreadPoolThreads", 1);
+    setConfig(CONFIG_UINT32_THREAD_POOL_THREADS, "ThreadPoolThreads", 1);
     setConfig(CONFIG_UINT32_INTERVAL_SAVE, "PlayerSave.Interval", 15 * MINUTE * IN_MILLISECONDS);
     setConfigMinMax(CONFIG_UINT32_MIN_LEVEL_STAT_SAVE, "PlayerSave.Stats.MinLevel", 0, 0, MAX_LEVEL);
     setConfig(CONFIG_BOOL_STATS_SAVE_ONLY_ON_LOGOUT, "PlayerSave.Stats.SaveOnlyOnLogout", true);
@@ -1296,8 +1298,48 @@ void World::SetInitialWorldSettings()
     uint32 nextGameEvent = sGameEventMgr.Initialize();
     m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);    //depend on next event
 
-    sLog.outBasic("Creating a thread pool with %u threads for map updating...", getConfig(CONFIG_UINT32_ACTIVE_MOB_UPDATE_THREADS));
-    thread_pool = new boost::threadpool::pool(getConfig(CONFIG_UINT32_ACTIVE_MOB_UPDATE_THREADS));
+    sLog.outBasic("Creating a thread pool with %u threads for map updating...", getConfig(CONFIG_UINT32_THREAD_POOL_THREADS));
+    thread_pool = new boost::threadpool::pool(getConfig(CONFIG_UINT32_THREAD_POOL_THREADS));
+    
+    sLog.outBasic("Creating a thread for scheduling movement updates...");
+    // Start a thread that handles dispatching 
+    std::thread movementThread([this]() 
+    {
+        while (!sWorld.IsStopped())
+        {  
+            std::unique_lock<std::mutex> lock(m_SessionListMutex);
+            for(std::pair<const unsigned int, WorldSession*> &sessionPair : m_sessions)
+            {
+                WorldSession* session = sessionPair.second;
+                Player* plr = session->GetPlayer();
+                if ( plr && plr->IsInWorld())
+                {
+                    
+                    sWorld.GetThreadPool()->schedule([session]()
+                    {
+                        session->MovementOpcodeWorker();
+                    });
+                }
+            }
+            lock.unlock();
+            
+            using namespace std::chrono;
+            auto start = high_resolution_clock::now();
+           
+            // If we're overloaded we sleep until the tasks are cleared.
+            sWorld.GetThreadPool()->wait(sWorld.GetActiveSessionCount());
+            
+            auto diff =  high_resolution_clock::now() - start;
+            
+            // Only sleep if the processing took less than one second.
+            if (diff < milliseconds(100))
+            {
+                auto sleep = milliseconds(100) - milliseconds(duration_cast<milliseconds>(diff).count());
+                std::this_thread::sleep_for(sleep);
+            }  
+        }
+    });
+    movementThread.detach();
     
     sLog.outString("Deleting old instance reset quotas...");
     CharacterDatabase.PExecute("DELETE FROM character_instance_quota WHERE time < '%lu'", time(0) - 3600);
@@ -1845,6 +1887,8 @@ void World::SendServerMessage(ServerMessageType type, const char *text, Player* 
 
 void World::UpdateSessions( uint32 /*diff*/ )
 {
+    std::lock_guard<std::mutex> guard(m_SessionListMutex);
+    
     ///- Add new sessions
     WorldSession* sess;
     while(addSessQueue.next(sess))

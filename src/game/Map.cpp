@@ -512,7 +512,7 @@ void Map::Update(const uint32 &t_diff)
             pSession->Update(updater);
         }
     }
-    
+
     // Notify the worker threads that it's safe to start working again.
     std::unique_lock<std::mutex> lock(m_SessionUpdateMutex);
     m_isUpdatingSessions = false;
@@ -555,6 +555,7 @@ void Map::Update(const uint32 &t_diff)
         {
             for(uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
             {
+                std::lock_guard<std::mutex> guard(m_RelocationMutex);
                 // marked cells are those that have been visited
                 // don't visit the same cell twice
                 uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
@@ -583,6 +584,7 @@ void Map::Update(const uint32 &t_diff)
         {
             for(uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
             {
+                std::lock_guard<std::mutex> guard(m_RelocationMutex);
                 // marked cells are those that have been visited
                 // don't visit the same cell twice
                 uint32 cell_id =(y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
@@ -723,6 +725,8 @@ void
 Map::PlayerRelocation(Player *player, float x, float y, float z, float orientation)
 {
     MANGOS_ASSERT(player);
+    
+    std::lock_guard<std::mutex> guard(m_RelocationMutex);
 
     CellPair old_val = MaNGOS::ComputeCellPair(player->GetPositionX(), player->GetPositionY());
     CellPair new_val = MaNGOS::ComputeCellPair(x, y);
@@ -761,7 +765,7 @@ Map::PlayerRelocation(Player *player, float x, float y, float z, float orientati
 void Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang)
 {
     MANGOS_ASSERT(CheckGridIntegrity(creature,false));
-
+    
     Cell new_cell(MaNGOS::ComputeCellPair(x, y));
 
     // do move or do move to respawn or remove creature if previous all fail
