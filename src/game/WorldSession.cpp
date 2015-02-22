@@ -774,6 +774,22 @@ void WorldSession::MovementOpcodeWorker()
 {
     while (m_Socket && !m_Socket->IsClosed())
     {
+        // Don't do anything unless we have a player pointer.
+        while (!_player || !_player->GetMap()) 
+        { 
+            std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
+            continue; 
+        }
+        
+        if (_player->GetMap()->m_isUpdatingSessions)
+        {
+            std::unique_lock<std::mutex> lock(_player->GetMap()->m_SessionUpdateMutex);
+            _player->GetMap()->m_SessionUpdateNotifier.wait(lock, [this] { return !_player->GetMap()->m_isUpdatingSessions; });
+        }
+        
+        // Increase the thread counter to keep the map from updating sessions while the threads are working.
+        ++_player->GetMap()->m_updatingThreads;
+        
         auto startTime = std::chrono::high_resolution_clock::now();
         
         WorldPacket* packet = nullptr;
@@ -807,6 +823,8 @@ void WorldSession::MovementOpcodeWorker()
             delete packet;
         }
         
+
+        --_player->GetMap()->m_updatingThreads;
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
         if (diff < 100)
             std::this_thread::sleep_for(std::chrono::milliseconds(100 - diff));

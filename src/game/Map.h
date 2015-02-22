@@ -43,6 +43,8 @@
 #include <stack>
 #include <set>
 #include <unordered_map>
+#include <condition_variable>
+#include <atomic>
 
 struct CreatureInfo;
 class Creature;
@@ -107,6 +109,11 @@ protected:
     Map(uint32 id, time_t, uint32 InstanceId);
 
 public:
+    std::mutex m_SessionUpdateMutex;
+    std::condition_variable m_SessionUpdateNotifier;
+    std::atomic_bool m_isUpdatingSessions;
+    std::atomic_uint m_updatingThreads;
+    
     virtual ~Map();
 
     // currently unused for normal maps
