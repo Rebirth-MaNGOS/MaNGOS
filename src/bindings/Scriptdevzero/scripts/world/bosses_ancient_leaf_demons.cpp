@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: bosses_ancient_leaf_demons
 SD%Complete: 90
-SDComment:
+SDComment: They reset to start after transform into demon, should continue D:
 SDCategory: Ancient Leaf Demons
 EndScriptData */
 
@@ -67,6 +67,8 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
 		m_uiChallengerGUID.Clear();
 		m_uiThreatListSize = 0;
 		m_bDoneSpecial = false;			// otherwise they'll keep despawning at respawn
+		m_bCanWaypoint = true;
+		m_creature->SetActiveObjectState(true);
 
         Reset();
     }
@@ -83,6 +85,7 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
 	bool m_bCanSay;
 	bool m_bCleanerSay;
 	bool m_bDoneSpecial;
+	bool m_bCanWaypoint;
 
     void Reset()					// only do these once
     {
@@ -125,6 +128,7 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
         
         m_uiDemonTransTimer = 5000;
         m_uiResetOOCTimer   = 60000 + m_uiDemonTransTimer;
+		m_bCanWaypoint = false;
     }
 
 	void CompleteDemonChallenge(bool despawn = false)
@@ -168,8 +172,22 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
             m_creature->SetDeathState(JUST_DIED);
             m_creature->Respawn();
         }
+		m_bCanWaypoint = true;
 		Reset();
     }
+
+	void OocTimerEndEvent()					// transform back from demon and continue waypointmovement and don't reset
+	{
+		m_uiChallengerGUID.Clear();
+		m_uiPreciousPetGUID.Clear();
+        m_uiDemonTransTimer = 0;
+        m_uiResetOOCTimer   = 0;
+		m_creature->UpdateEntry(m_uiDefaultEntry);
+		m_bCanWaypoint = true;
+		
+		if (Creature* pPrecious = GetPreciousPet())
+                pPrecious->UpdateEntry(NPC_PRECIOUS);   // restore default entry
+	}
 
 	Creature* GetPreciousPet()
     {
@@ -223,7 +241,8 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
                 {
                     if (!pChallenger)
                     {
-                        CompleteDemonChallenge();
+						OocTimerEndEvent();
+                        //CompleteDemonChallenge();
 						return;
                     }
                 }
@@ -259,8 +278,7 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
                 if (!m_creature->isInCombat())
                 {
                     m_uiResetOOCTimer = 0;
-                    CompleteDemonChallenge();
-
+                    OocTimerEndEvent();
                 }
                 else
                     m_uiResetOOCTimer = 60000;
@@ -268,6 +286,18 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
             else
                 m_uiResetOOCTimer -= uiDiff;
         }
+
+		if (m_bCanWaypoint)													// Only move if in human form
+			m_creature->GetMotionMaster()->MoveWaypoint();
+
+		if (!m_bCanWaypoint)
+		{
+			if (m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == WAYPOINT_MOTION_TYPE)
+			{
+				m_creature->GetMotionMaster()->MovementExpired();
+				m_creature->GetMotionMaster()->MoveIdle();
+			}
+		}
 
 		// Return since we have no target
 		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
