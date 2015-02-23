@@ -18426,17 +18426,26 @@ BattleGroundBracketId Player::GetBattleGroundBracketIdFromLevel(BattleGroundType
     return BattleGroundBracketId(bracket_id);
 }
 
-float Player::GetReputationPriceDiscount( Creature const* pCreature ) const
+float Player::GetReputationPriceDiscount(Creature const* pCreature) const
 {
     FactionTemplateEntry const* vendor_faction = pCreature->getFactionTemplateEntry();
-    if(!vendor_faction || !vendor_faction->faction)
+    if (!vendor_faction || !vendor_faction->faction)
         return 1.0f;
+    
+    uint32 discount = 100;
+    ReputationRank rank = GetReputationRank(vendor_faction->faction);   // get repution rank for that specific vendor faction
+    if (rank >= REP_HONORED)                                            // give 10% reduction if rank is at least honored
+        discount -= 10;
 
-    ReputationRank rank = GetReputationRank(vendor_faction->faction);
-    if(rank <= REP_FRIENDLY)
-        return 1.0f;
-
-    return 0.9f;  // If Honored or above, 10% discount
+    if (GetHonorRankInfo().visualRank >= 3)                             // get pvp rank
+    {
+        if (FactionTemplateEntry const* player_faction = getFactionTemplateEntry())
+        {
+            if (player_faction->IsFriendlyTo(*vendor_faction))          // check if its friendly faction (not neutral)
+                discount -=10;                                      // give 10% discount if rank is at least sergeant
+        }
+    }
+    return float (discount / 100.0f);
 }
 
 /**
