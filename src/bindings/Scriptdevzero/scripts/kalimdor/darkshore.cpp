@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Darkshore
 SD%Complete: 100
-SDComment: Quest support: 731, 2078, 5321
+SDComment: Quest support: 731, 2078, 5321, 5713(all scripted but not doing melee or bow event)
 SDCategory: Darkshore
 EndScriptData */
 
@@ -552,7 +552,7 @@ struct MANGOS_DLL_DECL npc_grimclaw : public ScriptedAI
         }
     }
 
-    void UpdateAI(uint32 uiDiff)
+    void UpdateAI(const uint32 uiDiff)
     {
         if(ui_sniffTimer)
         {
@@ -653,7 +653,7 @@ struct MANGOS_DLL_DECL mob_rabid_thistle_bear : public ScriptedAI
         tharnariun = nullptr;
     }
 
-    void UpdateAI(uint32 uiDiff)
+    void UpdateAI(const uint32 uiDiff)
     {
 		if(!captured)
 		{
@@ -711,6 +711,338 @@ CreatureAI* GetAI_mob_rabid_thistle_bear(Creature* pCreature)
     return new mob_rabid_thistle_bear(pCreature);
 }
 
+/*######
+## npc_sentinel_aynasha
+######*/
+
+enum SentinelAynasha
+{
+	SAY_START							= -1720003,
+	SAY_ARROWS							= -1720004,
+	SAY_END_1							= -1720005,
+	SAY_END_2							= -1720006,
+	SAY_END_3							= -1720007,
+
+	SPELL_AYNASHAS_BOW					= 19767,
+
+	NPC_SENTINEL_AYNASHA				= 11711,
+	NPC_BLACKWOOD_TRACKER				= 11713,
+	NPC_MAROSH_THE_DEVIOUS				= 11714,
+
+	WAVE_ONE							= 1,
+	WAVE_TWO							= 2,
+	WAVE_BOSS							= 3,
+
+	QUEST_ONE_SHOT_ONE_KILL				= 5713,
+};
+
+struct Loc
+{
+    float x, y, z;
+};
+
+static Loc aMobSpawnLoc[]= 
+{
+	{4369.34f, -25.11f, 71.27f},
+	{4363.90f, -27.64f, 71.47f},
+	{4368.92f, -30.12f, 72.40f},
+};
+
+struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
+{
+    npc_sentinel_aynashaAI(Creature* pCreature) : npc_escortAI(pCreature)
+    {
+		m_uiPlayerGUID = ObjectGuid();
+		m_creature->SetActiveObjectState(true);
+        Reset();
+    }
+
+    uint8 m_uiKilledCreatures;
+	uint8 m_uiPhase;
+	uint8 m_uiCurrentWave;
+	uint8 m_uiSpeechStep;
+
+    uint32 m_startTimer;
+	uint32 m_uiEventTimer;
+	uint32 m_despawnTimer;
+	uint32 m_uiSpeechTimer;
+
+	uint32 m_uiCanShootTimer;
+	uint32 m_uiShootTimer;
+
+	ObjectGuid m_uiPlayerGUID;
+
+	bool m_bCanShoot;
+	bool m_bOutro;
+
+    void Reset()
+    {
+		SetCombatMovement(false);
+		m_uiSpeechTimer		= 0;
+		m_uiEventTimer      = 0;
+        m_uiKilledCreatures = 0;
+		m_uiPhase           = 0;
+		m_uiCurrentWave     = 0;
+        m_startTimer		= 0;
+		m_uiCanShootTimer	= 0;
+		m_uiShootTimer		= 0;
+		m_despawnTimer		= 0;
+		m_uiPlayerGUID.Clear();
+		m_bCanShoot			= true;
+		m_bOutro			= false;
+		m_uiSpeechStep		= 1;
+    }
+
+	void WaypointReached(uint32 uiPoint)
+    {
+	}
+
+	void DoSummonWave(uint32 uiSummonId = 0)
+    {
+        if (uiSummonId == WAVE_ONE)
+        {
+            for (uint8 i = 0; i < 2; ++i)
+            {
+                m_creature->SummonCreature(NPC_BLACKWOOD_TRACKER, aMobSpawnLoc[i].x, aMobSpawnLoc[i].y, aMobSpawnLoc[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+            }
+
+            ++m_uiCurrentWave;
+        }
+        else if (uiSummonId == WAVE_TWO)
+        {
+            for (uint8 i = 0; i < 3; ++i)
+            {
+                m_creature->SummonCreature(NPC_BLACKWOOD_TRACKER, aMobSpawnLoc[i].x, aMobSpawnLoc[i].y, aMobSpawnLoc[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+            }
+			++m_uiCurrentWave;
+        }
+        else if (uiSummonId == WAVE_BOSS)
+        {
+            for (uint8 i = 0; i < 1; ++i)
+            {
+                m_creature->SummonCreature(NPC_MAROSH_THE_DEVIOUS, aMobSpawnLoc[i].x, aMobSpawnLoc[i].y, aMobSpawnLoc[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+            }
+			++m_uiCurrentWave;
+        }
+    }
+
+	void AttackStart(Unit* pWho)
+    {
+        if (!pWho)
+            return;
+
+        if (m_creature->Attack(pWho, false))
+        {
+            m_creature->AddThreat(pWho);
+            m_creature->SetInCombatWith(pWho);
+            pWho->SetInCombatWith(m_creature);
+
+            m_creature->GetMotionMaster()->MoveChase(pWho, 30.0f);
+        }
+    }
+
+	void JustDied(Unit* /*pKiller*/)			// fail quest if aynasha dies
+	{
+		if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
+        {
+			pPlayer->FailQuest(QUEST_ONE_SHOT_ONE_KILL);
+			m_uiEventTimer = 0;						// don't spawn more waves
+        }
+	}
+
+    void JustSummoned(Creature* pSummoned)
+    {
+        pSummoned->AI()->AttackStart(m_creature);
+		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
+    }
+
+	void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        if (pSummoned->GetEntry() == NPC_BLACKWOOD_TRACKER || pSummoned->GetEntry() == NPC_MAROSH_THE_DEVIOUS)
+        {
+            ++m_uiKilledCreatures;
+		}
+		
+		// Event ended
+        if (m_uiKilledCreatures >= 6 && m_uiCurrentWave == 3)
+        {
+			if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))			// give quest credit when all waves are dead
+			{
+				pPlayer->AreaExploredOrEventHappens(QUEST_ONE_SHOT_ONE_KILL);
+			
+			}
+			m_despawnTimer = 0;			// despawn timer shouldn't be needed anymore
+			m_bOutro = true;
+			m_uiSpeechTimer = 4000;
+        }
+	}
+
+	ObjectGuid DoStartEvent(ObjectGuid player_guid)
+	{
+		if (m_uiPlayerGUID)
+            return ObjectGuid();
+
+        m_startTimer = 3000; // Do say and start event after 3 sec
+		m_uiEventTimer = 5000;
+		m_despawnTimer = 600000; // despawn after 10min if she didn't reach the outro RP
+		m_uiShootTimer = 1000;			// not working
+		m_uiCanShootTimer = urand(45000, 60000);
+		m_bCanShoot	= true;
+
+		m_uiPlayerGUID = player_guid;
+        
+        return m_uiPlayerGUID;
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
+        {
+			if(m_startTimer)
+			{
+				if(m_startTimer <= uiDiff)
+				{
+					DoScriptText(SAY_START, m_creature);
+					m_startTimer = 0;
+				}
+				else
+				{
+					m_startTimer -= uiDiff;
+					return;
+				}
+			}
+
+			if (m_uiEventTimer)					// summon waves every 60 sec
+			{
+				if (m_uiEventTimer <= uiDiff)
+				{
+					switch (m_uiPhase)
+					{
+						case 0:
+							DoSummonWave(WAVE_ONE);
+							m_uiEventTimer = 60000;
+							break;
+						case 1:
+							DoSummonWave(WAVE_TWO);
+							m_uiEventTimer = 60000;
+							break;
+						case 2:
+							DoSummonWave(WAVE_BOSS);
+							m_uiEventTimer = 0;
+							break;
+					}
+				++m_uiPhase;
+				}
+				else
+				{
+					m_uiEventTimer -= uiDiff;
+				}
+			}
+
+			if (m_despawnTimer)							// despawn after 5min if quest somehow bugged
+			{
+				if(m_despawnTimer <= uiDiff)
+				{
+					m_creature->ForcedDespawn();
+					m_despawnTimer = 0;
+				}
+				else
+				{
+					m_despawnTimer -= uiDiff;
+					return;
+				}
+			}
+
+			/*if (m_uiCanShootTimer)					// not working
+			{
+				if (m_uiCanShootTimer < uiDiff)
+				{
+					DoScriptText(SAY_ARROWS, m_creature);
+					m_uiCanShootTimer = 0;
+					m_bCanShoot = false;
+				}
+				else
+					m_uiShootTimer -= uiDiff;
+			}
+
+			if (m_bCanShoot)						// not working
+			{
+				if (m_uiShootTimer < uiDiff)
+				{
+					m_uiShootTimer = 1000;
+
+					if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))			// can crash server
+						DoCastSpellIfCan(m_creature->getVictim(), SPELL_AYNASHAS_BOW);
+				}
+				else
+					m_uiShootTimer -= uiDiff;
+			}*/
+		}
+
+		if (m_bOutro)							// handle RP at the end
+        {
+            if (!m_uiSpeechStep)
+                return;
+
+            if (m_uiSpeechTimer < uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {
+                    case 1:
+                        DoScriptText(SAY_END_1, m_creature);
+                        m_uiSpeechTimer = 5000;
+                        break;
+					case 2:
+						DoScriptText(SAY_END_2, m_creature);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 3:
+						DoScriptText(SAY_END_3, m_creature);
+						m_bOutro = false;
+                    default:
+                        m_uiSpeechStep = 0;
+                        return;
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+
+            return;
+        }
+
+		// Return since we have no target
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+		{
+			return;
+		}
+
+        DoMeleeAttackIfReady();				// not working
+		
+	}
+};
+
+CreatureAI* GetAI_npc_sentinel_aynasha(Creature* pCreature)
+{
+    return new npc_sentinel_aynashaAI(pCreature);
+}
+
+bool QuestAccept_npc_sentinel_aynasha(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == QUEST_ONE_SHOT_ONE_KILL)
+    {
+        if (npc_sentinel_aynashaAI* pEscortAI = dynamic_cast<npc_sentinel_aynashaAI*>(pCreature->AI()))
+        {
+            pEscortAI->Start(false, pPlayer, pQuest);
+			pEscortAI->DoStartEvent(pPlayer->GetGUID());
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 void AddSC_darkshore()
 {
     Script* pNewscript;
@@ -748,5 +1080,11 @@ void AddSC_darkshore()
 	pNewscript = new Script;
     pNewscript->Name = "mob_rabid_thistle_bear";
     pNewscript->GetAI = &GetAI_mob_rabid_thistle_bear;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_sentinel_aynasha";
+    pNewscript->GetAI = &GetAI_npc_sentinel_aynasha;
+    pNewscript->pQuestAcceptNPC = &QuestAccept_npc_sentinel_aynasha;
     pNewscript->RegisterSelf();
 }
