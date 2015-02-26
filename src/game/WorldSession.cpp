@@ -776,7 +776,7 @@ void WorldSession::MovementOpcodeWorker()
     // Don't do anything unless we have a player pointer.
     if (!_player || !_player->GetMap()) 
         return;
-    
+     
     if (_player->GetMap()->m_isUpdatingSessions)
     {
         std::unique_lock<std::mutex> lock(_player->GetMap()->m_SessionUpdateMutex);

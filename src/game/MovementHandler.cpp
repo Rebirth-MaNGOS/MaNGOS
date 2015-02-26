@@ -326,7 +326,12 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     if (!plMover)
         plMover = GetPlayer();
 
-    mover->SendMovementOpcodeMessagesToSetExcept(plMover, mover->GetPackGUID(), movementInfo, &recv_data);
+    if (mover->GetMap())
+    {
+        std::lock_guard<std::mutex> guard(mover->GetMap()->m_RelocationMutex);
+        
+        mover->SendMovementOpcodeMessagesToSetExcept(plMover, mover->GetPackGUID(), movementInfo, &recv_data);
+    }
 }
 
 void WorldSession::HandleForceSpeedChangeAckOpcodes(WorldPacket &recv_data)
