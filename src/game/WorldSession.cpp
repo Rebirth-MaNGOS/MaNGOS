@@ -224,6 +224,135 @@ bool WorldSession::Update(PacketFilter& updater)
     ///- Retrieve packets from the receive queue and call the appropriate handlers
     /// not process packets if socket already closed
     WorldPacket* packet;
+    
+    // Handle all movement packages that have been queued here as well to avoid strange effects.
+    while (m_Socket && !m_Socket->IsClosed() && _recvMovementQueue.next(packet))
+    {
+        OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
+        try
+        {
+            if(_player && _player->IsInWorld())
+            {
+                ExecuteOpcode(opHandle, packet);
+            }
+        }
+        catch (ByteBufferException &)
+        {
+            sLog.outError("WorldSession::Update ByteBufferException occured while parsing a packet (opcode: %u) from client %s, accountid=%i.",
+                    packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
+            if (sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG))
+            {
+                DEBUG_LOG("Dumping error causing packet:");
+                packet->hexlike();
+            }
+
+            if (sWorld.getConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET))
+            {
+                DETAIL_LOG("Disconnecting session [account id %u / address %s] for badly formatted packet.",
+                    GetAccountId(), GetRemoteAddress().c_str());
+
+                KickPlayer();
+            }
+        }
+        
+        delete packet;
+    }
+    
+    while (m_Socket && !m_Socket->IsClosed() && _recvQueue.next(packet, updater))
+    {
+        /*#if 1
+        sLog.outError( "MOEP: %s (0x%.4X)",
+                        LookupOpcodeName(packet->GetOpcode()),
+                        packet->GetOpcode());
+        #endif*/
+
+        OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
+        try
+        {
+            switch (opHandle.status)
+            {
+                case STATUS_LOGGEDIN:
+                    if(!_player)
+                    {
+                        // skip STATUS_LOGGEDIN opcode unexpected errors if player logout sometime ago - this can be network lag delayed packets
+                        if(!m_playerRecentlyLogout)
+                            LogUnexpectedOpcode(packet, "the player has not logged in yet");
+                    }
+                    else if(_player->IsInWorld())
+                            ExecuteOpcode(opHandle, packet);
+                    
+                    // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
+                    break;
+                case STATUS_LOGGEDIN_OR_RECENTLY_LOGGEDOUT:
+                    if(!_player && !m_playerRecentlyLogout)
+                    {
+                        LogUnexpectedOpcode(packet, "the player has not logged in yet and not recently logout");
+                    }
+                    else
+                        // not expected _player or must checked in packet hanlder
+                        ExecuteOpcode(opHandle, packet);
+                    break;
+                case STATUS_TRANSFER:
+                    if(!_player)
+                        LogUnexpectedOpcode(packet, "the player has not logged in yet");
+                    else if(_player->IsInWorld())
+                        LogUnexpectedOpcode(packet, "the player is still in world");
+                    else
+                        ExecuteOpcode(opHandle, packet);
+                    break;
+                case STATUS_AUTHED:
+                    // prevent cheating with skip queue wait
+                    if(m_inQueue)
+                    {
+                        LogUnexpectedOpcode(packet, "the player not pass queue yet");
+                        break;
+                    }
+
+                    // single from authed time opcodes send in to after logout time
+                    // and before other STATUS_LOGGEDIN_OR_RECENTLY_LOGGOUT opcodes.
+                    m_playerRecentlyLogout = false;
+
+                    ExecuteOpcode(opHandle, packet);
+                    break;
+                case STATUS_NEVER:
+                    sLog.outError( "SESSION: received not allowed opcode %s (0x%.4X)",
+                        opHandle.name,
+                        packet->GetOpcode());
+                    break;
+                case STATUS_UNHANDLED:
+                    DEBUG_LOG("SESSION: received not handled opcode %s (0x%.4X)",
+                        opHandle.name,
+                        packet->GetOpcode());
+                    break;
+                default:
+                    sLog.outError("SESSION: received wrong-status-req opcode %s (0x%.4X)",
+                        opHandle.name,
+                        packet->GetOpcode());
+                    break;
+            }
+        }
+        catch (ByteBufferException &)
+        {
+            sLog.outError("WorldSession::Update ByteBufferException occured while parsing a packet (opcode: %u) from client %s, accountid=%i.",
+                    packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
+            if (sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG))
+            {
+                DEBUG_LOG("Dumping error causing packet:");
+                packet->hexlike();
+            }
+
+            if (sWorld.getConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET))
+            {
+                DETAIL_LOG("Disconnecting session [account id %u / address %s] for badly formatted packet.",
+                    GetAccountId(), GetRemoteAddress().c_str());
+
+                KickPlayer();
+            }
+        }
+
+        delete packet;
+    }
+    
     while (m_Socket && !m_Socket->IsClosed() && _recvQueue.next(packet, updater))
     {
         /*#if 1
