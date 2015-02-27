@@ -803,10 +803,6 @@ void WorldSession::ExecuteOpcode( OpcodeHandler const& opHandle, WorldPacket* pa
 
 void WorldSession::MovementOpcodeWorker()
 {
-    // If we don't have a valid socket we can't send data.
-    if (!m_Socket || m_Socket->IsClosed())
-        return;
-    
     // Don't do anything unless we have a player pointer.
     if (!_player || !_player->GetMap()) 
         return;
@@ -824,7 +820,7 @@ void WorldSession::MovementOpcodeWorker()
     ++pMap->m_updatingThreads;
     
     WorldPacket* packet = nullptr;
-    while (_recvMovementQueue.next(packet))
+    while (_player->GetMap() && m_Socket && !m_Socket->IsClosed() && _recvMovementQueue.next(packet))
     {
         OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
         try
