@@ -115,7 +115,7 @@ bool AreaTrigger_at_bastion(Player* pPlayer, AreaTriggerEntry const* /*pAt*/)
     if (!m_pInstance || m_pInstance->GetData(TYPE_TIMMY_THE_CRUEL) != NOT_STARTED)
         return false;
 
-    for (uint32 i = 0; i < sizeof(CrimsonEntries); ++i)
+    for (uint32 i = 0; i < 4; ++i)
     {
         std::list<Creature*> m_lScarlet;
         GetCreatureListWithEntryInGrid(m_lScarlet, pPlayer, CrimsonEntries[i], 70.0f);
