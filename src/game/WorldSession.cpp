@@ -810,15 +810,18 @@ void WorldSession::MovementOpcodeWorker()
     // Don't do anything unless we have a player pointer.
     if (!_player || !_player->GetMap()) 
         return;
-     
-    if (_player->GetMap()->m_isUpdatingSessions)
+  
+    // Save the player's map if the player unloads we want to be able to still reduce the counter and handle mutexes.
+    Map* pMap = _player->GetMap(); 
+    
+    if (pMap->m_isUpdatingSessions)
     {
-        std::unique_lock<std::mutex> lock(_player->GetMap()->m_SessionUpdateMutex);
-        _player->GetMap()->m_SessionUpdateNotifier.wait(lock, [this] { return !_player->GetMap()->m_isUpdatingSessions; });
+        std::unique_lock<std::mutex> lock(pMap->m_SessionUpdateMutex);
+        pMap->m_SessionUpdateNotifier.wait(lock, [pMap]() -> bool { return pMap->m_isUpdatingSessions; });
     }
     
     // Increase the thread counter to keep the map from updating sessions while the threads are working.
-    ++_player->GetMap()->m_updatingThreads;
+    ++pMap->m_updatingThreads;
     
     WorldPacket* packet = nullptr;
     while (_recvMovementQueue.next(packet))
@@ -854,5 +857,5 @@ void WorldSession::MovementOpcodeWorker()
     }
     
 
-    --_player->GetMap()->m_updatingThreads;
+    --pMap->m_updatingThreads;
 }
