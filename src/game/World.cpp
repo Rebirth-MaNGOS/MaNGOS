@@ -67,8 +67,6 @@
 #include "extras/Mod.h"
 #include "Warden/WardenDataStorage.h"
 
-#include <thread>
-
 INSTANTIATE_SINGLETON_1( World );
 
 volatile bool World::m_stopEvent = false;
@@ -1300,46 +1298,6 @@ void World::SetInitialWorldSettings()
 
     sLog.outBasic("Creating a thread pool with %u threads for map updating...", getConfig(CONFIG_UINT32_THREAD_POOL_THREADS));
     thread_pool = new boost::threadpool::pool(getConfig(CONFIG_UINT32_THREAD_POOL_THREADS));
-    
-    sLog.outBasic("Creating a thread for scheduling movement updates...");
-    // Start a thread that handles dispatching 
-    std::thread movementThread([this]() 
-    {
-        while (!sWorld.IsStopped())
-        {  
-            std::unique_lock<std::mutex> lock(m_SessionListMutex);
-            for(std::pair<const unsigned int, WorldSession*> &sessionPair : m_sessions)
-            {
-                WorldSession* session = sessionPair.second;
-                Player* plr = session->GetPlayer();
-                if ( plr && plr->IsInWorld())
-                {
-                    
-                    sWorld.GetThreadPool()->schedule([session]()
-                    {
-                        session->MovementOpcodeWorker();
-                    });
-                }
-            }
-            lock.unlock();
-            
-            using namespace std::chrono;
-            auto start = high_resolution_clock::now();
-           
-            // If we're overloaded we sleep until the tasks are cleared.
-            sWorld.GetThreadPool()->wait(sWorld.GetActiveSessionCount());
-            
-            auto diff =  high_resolution_clock::now() - start;
-            
-            // Only sleep if the processing took less than one second.
-            if (diff < milliseconds(100))
-            {
-                auto sleep = milliseconds(100) - milliseconds(duration_cast<milliseconds>(diff).count());
-                std::this_thread::sleep_for(sleep);
-            }  
-        }
-    });
-    movementThread.detach();
     
     sLog.outString("Deleting old instance reset quotas...");
     CharacterDatabase.PExecute("DELETE FROM character_instance_quota WHERE time < '%lu'", time(0) - 3600);
