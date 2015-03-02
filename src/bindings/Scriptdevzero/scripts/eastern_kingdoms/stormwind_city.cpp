@@ -264,7 +264,7 @@ struct MANGOS_DLL_DECL npc_marzon_the_silent_pladeAI : public ScriptedAI
 		m_creature->ForcedDespawn();
 	}
 
-    void UpdateAI(uint32 uiDiff)
+    void UpdateAI(const uint32 uiDiff)
     {
        if (m_creature->SelectHostileTarget() || m_creature->getVictim())
 			DoMeleeAttackIfReady();
@@ -2180,7 +2180,6 @@ bool GossipSelect_npc_squire_rowe(Player* pPlayer, Creature* pCreature, uint32 /
 
 enum eRiftSpawn
 {
-    SPELL_FREEZE                            = 0,
     SPELL_CREATE_CONTAINMENT_COFFER         = 9082,
     SPELL_CREATE_FILLED_CONTAINMENT_COFFER  = 9010,
     SPELL_CANTATION_OF_MANIFESTATION        = 9095,
@@ -2204,6 +2203,7 @@ struct MANGOS_DLL_DECL mob_rift_spawnAI : public ScriptedAI
     bool m_bVisible;
     bool m_bFreezed;
     bool m_bDefeated;
+	bool m_bCanAttack;
 
     ObjectGuid m_uiUnfilledChestGUID;
     ObjectGuid m_uiFreezerGUID;
@@ -2219,6 +2219,7 @@ struct MANGOS_DLL_DECL mob_rift_spawnAI : public ScriptedAI
         m_bVisible = false;
         m_bFreezed = false;
         m_bDefeated = false;
+		m_bCanAttack = true;
 
 		m_uiUnfilledChestGUID.Clear();
 		m_uiFreezerGUID.Clear();
@@ -2233,7 +2234,7 @@ struct MANGOS_DLL_DECL mob_rift_spawnAI : public ScriptedAI
         if (m_bVisible)
         {
             m_bCanReset = true;
-            ResetToHome();
+            //ResetToHome();
         }
     }
 
@@ -2314,18 +2315,19 @@ struct MANGOS_DLL_DECL mob_rift_spawnAI : public ScriptedAI
 
         m_bFreezed = true;
 
-        //DoCastSpellIfCan(m_creature, SPELL_FREEZE);
         if (m_creature->getVictim())
             m_creature->getVictim()->AttackStop();
         m_creature->AttackStop();
         m_creature->StopMoving();
-        m_creature->addUnitState(UNIT_STAT_STUNNED);
+		m_creature->addUnitState(UNIT_STAT_ROOT);
+		m_bCanAttack = false;
+        //m_creature->addUnitState(UNIT_STAT_STUNNED);
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (m_uiCreateFilledChestTimer)
-	{
+		if (m_uiCreateFilledChestTimer)
+		{
             if (m_uiCreateFilledChestTimer <= uiDiff)
             {
                 m_creature->CastSpell(m_creature, SPELL_CREATE_FILLED_CONTAINMENT_COFFER, false);
@@ -2333,7 +2335,7 @@ struct MANGOS_DLL_DECL mob_rift_spawnAI : public ScriptedAI
             }
             else
                 m_uiCreateFilledChestTimer -= uiDiff;
-	}
+		}
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         {
@@ -2342,15 +2344,15 @@ struct MANGOS_DLL_DECL mob_rift_spawnAI : public ScriptedAI
                 if (m_uiMakeInvisibleOOCTimer <= uiDiff)
                 {
                     m_bCanReset = true;
-                    ResetToHome();
+                    //ResetToHome();
                 }
                 else
                     m_uiMakeInvisibleOOCTimer -= uiDiff;
 	    }
             return;
         }
-
-        DoMeleeAttackIfReady();
+		if (m_bCanAttack)
+			DoMeleeAttackIfReady();
     }
 };
 
