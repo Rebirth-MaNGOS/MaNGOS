@@ -50,25 +50,39 @@ enum Spells
     SPELL_WHIRLWIND       = 15589
 };
 
+struct Locd
+{
+    float x, y, z, o;
+};
+
 static uint32 auiWave[8][5] =
 {
     {NPC_CHROMATIC_DRAGONSPAWN, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, 0},
-    {NPC_CHROMATIC_DRAGONSPAWN, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, 0},
-    {NPC_FIRE_TONGUE, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, NPC_BLACKHAND_DRAGON_HANDLER, 0},
-    {NPC_FIRE_TONGUE, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, NPC_BLACKHAND_DRAGON_HANDLER, 0},
-    {NPC_FIRE_TONGUE, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, NPC_BLACKHAND_DRAGON_HANDLER},
-    {NPC_CHROMATIC_DRAGONSPAWN, NPC_FIRE_TONGUE, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, NPC_BLACKHAND_DRAGON_HANDLER},
-    {NPC_CHROMATIC_DRAGONSPAWN, NPC_FIRE_TONGUE, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, NPC_BLACKHAND_DRAGON_HANDLER},
+    {NPC_CHROMATIC_DRAGONSPAWN, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP, 0, 0},
+    {NPC_CHROMATIC_WHELP, NPC_CHROMATIC_DRAGONSPAWN, NPC_BLACKHAND_DRAGON_HANDLER, NPC_CHROMATIC_WHELP, 0},
+    {NPC_CHROMATIC_WHELP, NPC_CHROMATIC_DRAGONSPAWN, NPC_BLACKHAND_DRAGON_HANDLER, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP},
+    {NPC_CHROMATIC_WHELP, NPC_CHROMATIC_DRAGONSPAWN, NPC_BLACKHAND_DRAGON_HANDLER, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP},
+    {NPC_BLACKHAND_DRAGON_HANDLER, NPC_CHROMATIC_DRAGONSPAWN, NPC_CHROMATIC_DRAGONSPAWN, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP},
+    {NPC_BLACKHAND_DRAGON_HANDLER,NPC_CHROMATIC_DRAGONSPAWN, NPC_CHROMATIC_DRAGONSPAWN, NPC_CHROMATIC_WHELP, NPC_CHROMATIC_WHELP},
     {NPC_GYTH, 0, 0, 0, 0}
 };
 
-static Loc aWaveMove[]=
+static Loc aWaveMove[]=		// give each mob a unique first wp so they won't stand on top of each other
 {
-    {133.73f,-409.99f,110.86f},
-    {132.43f,-431.69f,110.86f},
-    {144.51f,-420.32f,110.47f},
-    {148.66f,-432.76f,110.86f},
-    {146.56f,-406.03f,110.86f}
+	{200.41f,-420.35f,110.89f},			// front
+	{202.069f,-420.32f,110.89f},		// back left
+	{202.069f,-421.32f,110.89f},		// back right
+	{202.069f,-418.32f,110.89f},		// far back mid
+	{204.49f,-420.35f,110.89f},			// middle of all
+    {175.51f,-420.32f,110.47f},			// start of arena floor
+	{144.51f,-420.32f,110.47f},			// further in
+};
+
+static Locd aWaveSpawn[]=
+{
+    {210.22f,-411.35f,110.95f,3.96f},				// left side
+    {210.20f,-429.31f,110.91f,2.289f},				// right side
+	{210.02f,-420.45f,110.94f,3.11},				// middle
 };
 
 struct MANGOS_DLL_DECL boss_rend_blackhandAI : public ScriptedAI
@@ -80,6 +94,8 @@ struct MANGOS_DLL_DECL boss_rend_blackhandAI : public ScriptedAI
     }
 
     instance_blackrock_spire* m_pInstance;
+
+	float fX, fY, fZ;
 
     bool m_bEvent;
     bool m_bEventReset;
@@ -143,23 +159,27 @@ struct MANGOS_DLL_DECL boss_rend_blackhandAI : public ScriptedAI
                 if (GameObject* pPort = m_pInstance->GetSingleGameObjectFromStorage(GO_STADIUM_PORTCULLIS))
                     pPort->SetGoState(GO_STATE_ACTIVE);
 
-                m_uiPortcullisTimer = 5500;
+                m_uiPortcullisTimer = 8000;//5500;		// give them some time to walk out
                 m_bPortcullis = true;
             }
         }
     }
 
-    void HandleSummon(uint32 aWave[])
+    void HandleSummon(uint32 aWave[], uint32 Side = 0)				// Side, 0 = left spawn, 1 = right spawn, 2 = middle
     {
         for(uint32 i = 0; i < 5; ++i)
         {
             if (aWave[i] == 0)
                 break;
 
-            if (Creature* pSummoned = m_creature->SummonCreature(aWave[i], 210.02f, -420.45f, 110.94f, 3.14f, TEMPSUMMON_DEAD_DESPAWN, 120000))
+			m_creature->GetRandomPoint(aWaveSpawn[Side].x, aWaveSpawn[Side].y, aWaveSpawn[Side].z, 7.0f, fX, fY, fZ);
+			fX = std::min(aWaveSpawn[Side].x, fX);    // Spread them out a bit
+			fY = std::min(aWaveSpawn[Side].y, fY);    // Spread them out some more
+
+			if (Creature* pSummoned = m_creature->SummonCreature(aWave[i], fX, fY, fZ, 0,TEMPSUMMON_DEAD_DESPAWN, 120000))
             {
                 pSummoned->GetMotionMaster()->MovePoint(0, aWaveMove[i].x, aWaveMove[i].y, aWaveMove[i].z);
-                CreatureCreatePos pos(pSummoned->GetMap(), aWaveMove[i].x, aWaveMove[i].y, aWaveMove[i].z, 0);
+                CreatureCreatePos pos(pSummoned->GetMap(), aWaveMove[6].x, aWaveMove[6].y, aWaveMove[6].z, 0);			// point in the middle of the arena
                 pSummoned->SetSummonPoint(pos);
             }
 
@@ -185,7 +205,9 @@ struct MANGOS_DLL_DECL boss_rend_blackhandAI : public ScriptedAI
     {
         ++m_uiSummonCount;
         m_uiSummonList.push_front(pSummoned->GetObjectGuid());
-        pSummoned->SetInCombatWithZone();
+
+		if (pSummoned->GetEntry() != NPC_GYTH && pSummoned->GetEntry() != NPC_WARCHIEF_REND_BLACKHAND)				// make all waves walk slowly into the center at the same speed
+			pSummoned->SetSpeedRate(MOVE_WALK, 1.0f);
 
         if (pSummoned->GetEntry() == NPC_GYTH)
             m_creature->RemoveFromWorld();
@@ -193,9 +215,20 @@ struct MANGOS_DLL_DECL boss_rend_blackhandAI : public ScriptedAI
 
     void SummonedMovementInform(Creature* pSummoned, uint32 uiMotionType, uint32 uiPointId)
     {
-        if (uiMotionType == POINT_MOTION_TYPE && uiPointId == 0)
-            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
+		switch (uiPointId)
+		{
+		case 0:
+			pSummoned->GetRandomPoint(aWaveMove[5].x, aWaveMove[5].y, aWaveMove[5].z, 5.0f, fX, fY, fZ);
+			fX = std::min(aWaveMove[5].x, fX);    // Spread them out a bit
+			fY = std::min(aWaveMove[5].y, fY);    // Spread them out some more
+			pSummoned->GetMotionMaster()->MovePoint(5, fX, fY, fZ);
+			return;
+		case 5:
+			pSummoned->SetInCombatWithZone();
+			if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
                 pSummoned->AI()->AttackStart(pTarget);
+			break;
+		}
     }
 
     void SummonedCreatureJustDied(Creature* pSummoned)
@@ -203,8 +236,8 @@ struct MANGOS_DLL_DECL boss_rend_blackhandAI : public ScriptedAI
         --m_uiSummonCount;
         m_uiSummonList.remove(pSummoned->GetObjectGuid());
 
-        if (m_uiSummonCount == 0 && m_uiEventTimer > 5000)
-            m_uiEventTimer = 5000;
+        if (m_uiSummonCount == 0 && m_uiEventTimer > 1000)
+            m_uiEventTimer = 1000;
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -216,33 +249,33 @@ struct MANGOS_DLL_DECL boss_rend_blackhandAI : public ScriptedAI
                 switch(++m_uiEventPhase)
                 {
                     case 1:
-                        HandleSummon(auiWave[0]);
+                        HandleSummon(auiWave[0], 0);
                         HandleYell(SAY_NEFARIAN_1);
                         break;
                     case 2:
-                        HandleSummon(auiWave[1]); 
+                        HandleSummon(auiWave[1], 1); 
                         HandleYell(SAY_NEFARIAN_2);
                         break;
                     case 3:
-                        HandleSummon(auiWave[2]);
+                        HandleSummon(auiWave[2], 0);
                         HandleYell(SAY_NEFARIAN_3);
                         DoScriptText(SAY_REND_1, m_creature);
                         break;
                     case 4:
-                        HandleSummon(auiWave[3]);
+                        HandleSummon(auiWave[3], 1);
                         HandleYell(SAY_NEFARIAN_4);
                         break;
                     case 5:
-                        HandleSummon(auiWave[4]);
+                        HandleSummon(auiWave[4], 0);
                         HandleYell(SAY_NEFARIAN_5);
                         break;
                     case 6:
-                        HandleSummon(auiWave[5]);
+                        HandleSummon(auiWave[5], 1);
                         HandleYell(SAY_NEFARIAN_6);
                         DoScriptText(SAY_REND_2, m_creature);
                         break;
                     case 7:
-                        HandleSummon(auiWave[6]);
+                        HandleSummon(auiWave[6], 0);
                         DoScriptText(SAY_REND_3, m_creature);
                         HandleYell(SAY_NEFARIAN_7);
                         break;
@@ -257,7 +290,7 @@ struct MANGOS_DLL_DECL boss_rend_blackhandAI : public ScriptedAI
                         m_creature->SetVisibility(VISIBILITY_OFF);
                         break;
                     case 11:
-                        HandleSummon(auiWave[7]);
+                        HandleSummon(auiWave[7], 2);
                         HandleYell(SAY_NEFARIAN_10);
                         break;
                     default:
