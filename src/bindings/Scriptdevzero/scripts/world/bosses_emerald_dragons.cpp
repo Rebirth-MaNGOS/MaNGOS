@@ -292,13 +292,9 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
 {
     boss_lethonAI(Creature* pCreature) : boss_emerald_dragonAI(pCreature) { Reset(); }
 
-    uint32 m_uiShadowBoltWhirlTimer;
-
     void Reset()
     {
         boss_emerald_dragonAI::Reset();
-
-        m_uiShadowBoltWhirlTimer = 12000;
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -356,21 +352,11 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
 
         return false;
     }
-
-    bool UpdateDragonAI(const uint32 uiDiff)							// has to apply a new whirl buff, it stops after 7 spells(about 45sec) so keep it refreshing
+	
+    bool UpdateDragonAI(const uint32 uiDiff)
     {
-        // Shadow Bolt Whirl											// every 5 sec cast a new bolt, so refresh every 20, refresh -> then he starts from right side again and has 5 sec before first cast
-        if (m_uiShadowBoltWhirlTimer < uiDiff)							// not working well
-        {
-            /*Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-            if (pTarget && DoCastSpellIfCan(pTarget, SPELL_SHADOW_BOLT_WHIRL) == CAST_OK)
-                m_uiShadowBoltWhirlTimer = urand(7000, 12000);*/
-			
-			DoCastSpellIfCan(m_creature, SPELL_SHADOW_BOLT_WHIRL, CAST_TRIGGERED);		// cast on self
-			m_uiShadowBoltWhirlTimer = 20000;
-        }
-        else
-            m_uiShadowBoltWhirlTimer -= uiDiff;
+		if (!m_creature->HasAura(SPELL_SHADOW_BOLT_WHIRL))
+			DoCastSpellIfCan(m_creature, SPELL_SHADOW_BOLT_WHIRL, CAST_TRIGGERED);		// reapply aura if boss somehow doesn't have it
 
         return true;
     }
