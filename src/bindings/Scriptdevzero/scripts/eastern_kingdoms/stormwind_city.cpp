@@ -138,8 +138,21 @@ CreatureAI* GetAI_npc_bartleby(Creature* pCreature)
 
 enum
 {
+	SAY_DASHEL_END				= -1720016,
     QUEST_MISSING_DIPLO_PT8     = 1447,
-    FACTION_HOSTILE             = 168
+    FACTION_HOSTILE             = 168,
+	NPC_DASHELS_FRIEND			= 4969,
+};
+
+struct Loc
+{
+    float x, y, z, o;
+};
+
+static Loc aFriendSpawnLoc[]= 
+{
+	{-8672.33, 442.88, 99.98,3.5},
+	{-8691.59, 441.66, 99.41,6.1},
 };
 
 struct MANGOS_DLL_DECL npc_dashel_stonefistAI : public ScriptedAI
@@ -151,11 +164,38 @@ struct MANGOS_DLL_DECL npc_dashel_stonefistAI : public ScriptedAI
     }
 
     uint32 m_uiNormalFaction;
+	GUIDList lDashelFriends;
+	bool m_bFriendSummoned;
 
     void Reset()
     {
         if (m_creature->getFaction() != m_uiNormalFaction)
             m_creature->setFaction(m_uiNormalFaction);
+		m_bFriendSummoned = false;
+
+        lDashelFriends.clear();
+    }
+
+	void JustSummoned(Creature* pSummoned)
+    {
+        if (pSummoned->GetEntry() == NPC_DASHELS_FRIEND)
+        {
+			lDashelFriends.push_back(pSummoned->GetObjectGuid());
+			pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn randomly
+        }
+    }
+
+	void DespawnDashelFriends()
+    {
+        if (!lDashelFriends.empty())
+            for(GUIDList::iterator itr = lDashelFriends.begin(); itr != lDashelFriends.end(); ++itr)
+                if (Creature* pDashelFriend = m_creature->GetMap()->GetCreature(*itr))
+                {
+                    if (pDashelFriend->isInCombat())
+                        pDashelFriend->AI()->ResetToHome();
+                    pDashelFriend->setFaction(35);
+					pDashelFriend->ForcedDespawn(5000);
+                }
     }
 
     void AttackedBy(Unit* pAttacker)
@@ -178,6 +218,8 @@ struct MANGOS_DLL_DECL npc_dashel_stonefistAI : public ScriptedAI
             if (pDoneBy->GetTypeId() == TYPEID_PLAYER)
                 ((Player*)pDoneBy)->AreaExploredOrEventHappens(QUEST_MISSING_DIPLO_PT8);
 
+			DoScriptText(SAY_DASHEL_END, m_creature);
+			DespawnDashelFriends();
             ResetToHome();
         }
     }
@@ -189,6 +231,10 @@ bool QuestAccept_npc_dashel_stonefist(Player* pPlayer, Creature* pCreature, cons
     {
         pCreature->setFaction(FACTION_HOSTILE);
         pCreature->AI()->AttackStart(pPlayer);
+		for(uint8 i = 0; i < 2; ++i)
+		{
+			pCreature->SummonCreature(NPC_DASHELS_FRIEND, aFriendSpawnLoc[i].x, aFriendSpawnLoc[i].y, aFriendSpawnLoc[i].z, aFriendSpawnLoc[i].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
+		}
     }
     return true;
 }
