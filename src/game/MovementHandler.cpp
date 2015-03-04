@@ -271,12 +271,17 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     MovementInfo movementInfo;
     movementInfo.Read(recv_data);
     
+   
+    sLog.outDebug("Movement Client milliseconds: %u, Server time: %u", movementInfo.GetTime(), WorldTimer::getMSTime());
 
+    // Update the timestamp.
+    movementInfo.UpdateTime(WorldTimer::getMSTime());
+    
     if (plMover)
     {
-        WorldSession* pSession = plMover->GetSession();
-        if (pSession)
-            movementInfo.UpdateTime(movementInfo.GetTime() + pSession->GetLatency());
+        WorldSession* plSession = plMover->GetSession();
+        if (plSession)
+            movementInfo.UpdateTime(movementInfo.GetTime() + plSession->GetLatency());
     }
     
     if (!VerifyMovementInfo(movementInfo))
