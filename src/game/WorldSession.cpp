@@ -813,7 +813,7 @@ void WorldSession::MovementOpcodeWorker()
     if (pMap->m_isUpdatingSessions)
     {
         std::unique_lock<std::mutex> lock(pMap->m_SessionUpdateMutex);
-        pMap->m_SessionUpdateNotifier.wait(lock, [pMap]() -> bool { return pMap->m_isUpdatingSessions; });
+        pMap->m_SessionUpdateNotifier.wait(lock, [pMap]() -> bool { return !pMap->m_isUpdatingSessions; });
     }
     
     // Increase the thread counter to keep the map from updating sessions while the threads are working.
