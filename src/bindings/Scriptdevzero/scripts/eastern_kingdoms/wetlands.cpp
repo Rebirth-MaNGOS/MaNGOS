@@ -39,19 +39,23 @@ enum
     SAY_SLIM_DEFEAT             = -1720013,
     SAY_FRIEND_DEFEAT           = -1720014,
     SAY_SLIM_NOTES              = -1720015,
+	SAY_END_BRAWL				= -1720019,
 
     QUEST_MISSING_DIPLO_PT11    = 1249,
     FACTION_ENEMY               = 168,
+	//FACTION_NEUTRAL				= ,						// should actually be yellow and not hostile
     SPELL_STEALTH               = 1785,
     SPELL_CALL_FRIENDS          = 16457,                    //summons 1x friend
     NPC_SLIMS_FRIEND            = 4971,
-    NPC_TAPOKE_SLIM_JAHN        = 4962
+    NPC_TAPOKE_SLIM_JAHN        = 4962,
+	NPC_MIKHAIL					= 4963,
 };
 
 static const DialogueEntry aDiplomatDialogue[] =
 {
     {SAY_SLIM_DEFEAT,           NPC_TAPOKE_SLIM_JAHN,   4000},
-    {SAY_SLIM_NOTES,            NPC_TAPOKE_SLIM_JAHN,   7000},
+    {SAY_SLIM_NOTES,            NPC_TAPOKE_SLIM_JAHN,   12000},
+	{SAY_END_BRAWL,				NPC_MIKHAIL,			12000},
     {0, 0, 0},
 };
 
@@ -64,6 +68,7 @@ struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI, private Dia
 	bool m_bEventComplete;
 
     GUIDList lSlimFriends;
+	ObjectGuid m_mikhail;
 
     void Reset()
     {
@@ -166,7 +171,10 @@ struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI, private Dia
                 m_creature->CombatStop(true);
 
 				DoScriptText(SAY_FRIEND_DEFEAT, m_creature);
+				
 				StartNextDialogueText(SAY_SLIM_DEFEAT);
+				if (Creature* pMikhail = GetClosestCreatureWithEntry(m_creature, NPC_MIKHAIL, 50.0f))
+					m_mikhail = pMikhail->GetObjectGuid();
 
                 SetRun(false);
             }
@@ -188,6 +196,8 @@ struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI, private Dia
     {
         if (uiEntry == NPC_TAPOKE_SLIM_JAHN)
             return m_creature;
+		if (uiEntry == NPC_MIKHAIL)
+            return m_creature->GetMap()->GetCreature(m_mikhail);
 
         return NULL;
     }
