@@ -23,6 +23,8 @@ EndScriptData */
 
 /* ContentData
 npc_lady_jaina_proudmoore
+npc_pained
+npc_archmage_tervosh
 npc_morokk
 npc_nat_pagle
 npc_ogron
@@ -45,6 +47,30 @@ enum
 
 #define GOSSIP_ITEM_JAINA "I know this is rather silly but i have a young ward who is a bit shy and would like your autograph."
 
+struct MANGOS_DLL_DECL npc_lady_jaina_proudmooreAI : public ScriptedAI
+{
+    npc_lady_jaina_proudmooreAI(Creature* pCreature) : ScriptedAI(pCreature)
+	{ Reset();	}
+
+	void Reset() 
+	{
+	}
+	void UpdateAI(const uint32 uiDiff)
+	{
+    if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+    {
+        return;
+    }
+
+    DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_lady_jaina_proudmoore(Creature* pCreature)
+{
+    return new npc_lady_jaina_proudmooreAI(pCreature);
+}
+
 bool GossipHello_npc_lady_jaina_proudmoore(Player* pPlayer, Creature* pCreature)
 {
     if (pCreature->isQuestGiver())
@@ -66,6 +92,79 @@ bool GossipSelect_npc_lady_jaina_proudmoore(Player* pPlayer, Creature* pCreature
         pPlayer->CastSpell(pPlayer, SPELL_JAINAS_AUTOGRAPH, false);
     }
     return true;
+}
+
+/*######
+## npc_pained
+######*/
+
+struct MANGOS_DLL_DECL npc_painedAI : public ScriptedAI							// used for missing diplomat
+{
+    npc_painedAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    void Reset()
+    {
+    }
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_pained(Creature* pCreature)
+{
+    return new npc_painedAI(pCreature);
+}
+
+/*######
+## npc_archmage_tervosh
+######*/
+
+enum
+{
+	SPELL_PROUDMOORES_DEFENCE			= 11971,
+};
+
+struct MANGOS_DLL_DECL npc_archmage_tervoshAI : public ScriptedAI							// used for missing diplomat
+{
+    npc_archmage_tervoshAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+	uint32 m_uiProudmooresDefenceTimer;
+
+    void Reset()
+    {
+		m_uiProudmooresDefenceTimer = 1000;
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		 // Proudmoore's Defence 
+        if (m_uiProudmooresDefenceTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature, SPELL_PROUDMOORES_DEFENCE, CAST_TRIGGERED);
+            m_uiProudmooresDefenceTimer = 1800000;
+        }
+        else
+            m_uiProudmooresDefenceTimer -= uiDiff;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_archmage_tervosh(Creature* pCreature)
+{
+    return new npc_archmage_tervoshAI(pCreature);
 }
 
 /*######
@@ -532,26 +631,101 @@ enum
     SAY_PROGRESS_2_HEN          = -1000412,
     SAY_PROGRESS_3_TER          = -1000413,
     SAY_PROGRESS_4_TER          = -1000414,
+	SAY_BYE						= -1720017,
+	SAY_AGGRO					= -1720018,
     EMOTE_SURRENDER             = -1000415,
+
+    SPELL_ENCAGE				= 7081,						// this is the only spell that is right, but it looks ok
+	SPELL_CAST_VISUAL           = 6421,						// unlock spell from SFK
+	SPELL_IVUS_TELEPORT_VISUAL	= 21649,
 
     QUEST_MISSING_DIPLO_PT16    = 1324,
     FACTION_HOSTILE             = 168,                      //guessed, may be different
 
     NPC_SENTRY                  = 5184,                     //helps hendel
     NPC_JAINA                   = 4968,                     //appears once hendel gives up
-    NPC_TERVOSH                 = 4967
+    NPC_TERVOSH                 = 4967,
+	NPC_HENDEL					= 4966,
+	NPC_PAINED					= 4965,
 };
+
+struct Loc
+{
+    float x, y, z, o;
+};
+
+static Loc aSpawnLoc[]= 
+{
+	{-2875.6f, -3344.6f, 35.91f, 3.42f},	// tervosh
+	{-2873.53f, -3340.4f, 36.28f, 3.49f},	// pained
+	{-2872.49f, -3347.04f, 35.79f, 3.62f},	// jaina
+};
+
+static Loc aMoveLoc[]= 
+{
+	{-2883.25f, -3346.68f, 33.53f, 3.39f},		// tervosh
+	{-2881.74f, -3344.78f, 34.03f, 3.39f},		// pained
+	{-2880.99f, -3348.48f, 34.31f, 3.39f},		// jaina
+};	
 
 //TODO: develop this further, end event not created
 struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
 {
-    npc_private_hendelAI(Creature* pCreature) : ScriptedAI(pCreature) { Reset(); }
+    npc_private_hendelAI(Creature* pCreature) : ScriptedAI(pCreature)
+	{ 
+		m_uiPlayerGUID.Clear();
+		m_bOutro = false;
+		//m_creature->SetVisibility(VISIBILITY_ON);
+		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+		Reset(); 
+	}
+
+	uint32 m_uiSpeechTimer;
+    uint8 m_uiSpeechStep;
+
+	ObjectGuid m_uiPlayerGUID;
+
+	bool m_bOutro;
 
     void Reset()
     {
+		m_uiSpeechTimer = 0;
+        m_uiSpeechStep = 1;
+
+		m_creature->SetVisibility(VISIBILITY_ON);
+
         if (m_creature->getFaction() != m_creature->GetCreatureInfo()->faction_A)
             m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);
+
+		if (Creature* pSentry = GetClosestCreatureWithEntry(m_creature, NPC_SENTRY, 40.0f))
+			if (pSentry->getFaction() != pSentry->GetCreatureInfo()->faction_A)
+				pSentry->setFaction(pSentry->GetCreatureInfo()->faction_A);
     }
+
+	void Aggro(Unit* /*pWho*/)
+    {
+        DoScriptText(SAY_AGGRO, m_creature);
+    }
+
+	void JustSummoned(Creature* pSummoned)
+    {
+        switch(pSummoned->GetEntry())
+        {
+		case NPC_TERVOSH:
+			pSummoned->GetMotionMaster()->MovePoint(0, aMoveLoc[0].x, aMoveLoc[0].y, aMoveLoc[0].z);
+			pSummoned->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+			pSummoned->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+			break;
+		case NPC_PAINED:
+			pSummoned->GetMotionMaster()->MovePoint(0, aMoveLoc[1].x, aMoveLoc[1].y, aMoveLoc[1].z);
+			break;
+        case NPC_JAINA:
+			pSummoned->GetMotionMaster()->MovePoint(0, aMoveLoc[2].x, aMoveLoc[2].y, aMoveLoc[2].z);
+			pSummoned->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+			break;
+		}
+		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn randomly
+	}
 
     void AttackedBy(Unit* pAttacker)
     {
@@ -564,26 +738,159 @@ struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
         AttackStart(pAttacker);
     }
 
+	void SummonOutro()
+	{
+		m_creature->SummonCreature(NPC_TERVOSH, aSpawnLoc[0].x, aSpawnLoc[0].y,aSpawnLoc[0].z,aSpawnLoc[0].o, TEMPSUMMON_CORPSE_DESPAWN, 5000, true);
+		m_creature->SummonCreature(NPC_PAINED, aSpawnLoc[1].x, aSpawnLoc[1].y,aSpawnLoc[1].z,aSpawnLoc[1].o, TEMPSUMMON_CORPSE_DESPAWN, 5000, true);
+		m_creature->SummonCreature(NPC_JAINA, aSpawnLoc[2].x, aSpawnLoc[2].y,aSpawnLoc[2].z,aSpawnLoc[2].o, TEMPSUMMON_CORPSE_DESPAWN, 5000, true);
+	}
+
     void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
     {
         if (uiDamage > m_creature->GetHealth() || HealthBelowPct(20))
         {
             uiDamage = 0;
 
-            if (Player* pPlayer = pDoneBy->GetCharmerOrOwnerPlayerOrPlayerItself())
-                pPlayer->GroupEventHappens(QUEST_MISSING_DIPLO_PT16, m_creature);
+			if (Creature* pSentry = GetClosestCreatureWithEntry(m_creature, NPC_SENTRY, 40.0f))		// reset the sentries
+			{
+				if (pSentry->getFaction() != pSentry->GetCreatureInfo()->faction_A)
+					pSentry->setFaction(pSentry->GetCreatureInfo()->faction_A);
+				pSentry->AttackStop();
+				pSentry->CombatStop();
+				pSentry->GetMotionMaster()->MoveTargetedHome();				
+			}
 
+			m_bOutro = true;
             DoScriptText(EMOTE_SURRENDER, m_creature);
             ResetToHome();
         }
     }
+
+	void StartEvent(ObjectGuid uiPlayerGUID)
+    {
+		m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        m_uiPlayerGUID  = uiPlayerGUID;
+		m_creature->setFaction(FACTION_HOSTILE);
+
+		if (Creature* pSentry = GetClosestCreatureWithEntry(m_creature, NPC_SENTRY, 20.0f))
+			pSentry->SetFactionTemporary(FACTION_HOSTILE);
+
+	}
+
+	void UpdateAI(const uint32 uiDiff)					// handle Rp at end of Missing diplomat
+    {
+		if (m_bOutro)
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer < uiDiff)
+			{
+				Creature* pTervosh = GetClosestCreatureWithEntry(m_creature, NPC_TERVOSH, 40.0f);
+				Creature* pJaina = GetClosestCreatureWithEntry(m_creature, NPC_JAINA, 40.0f);
+				Creature* pPained = GetClosestCreatureWithEntry(m_creature, NPC_PAINED, 40.0f);
+				Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+
+				switch(m_uiSpeechStep)
+				{
+					case 1:					// spawn the 3 of them + move forward
+						SummonOutro();
+						m_creature->HandleEmoteState(EMOTE_STATE_STUN);
+						m_creature->SetFacingTo(0.29f);			// face towards tervosh
+						m_uiSpeechTimer = 3000;
+						break;
+					case 2:					// archmage cast spell on hendel
+						if (npc_archmage_tervoshAI* pTervoshAI = dynamic_cast<npc_archmage_tervoshAI*>(pTervosh->AI()))
+							pTervosh->CastSpell(m_creature, SPELL_ENCAGE, false);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 3:
+						DoScriptText(SAY_PROGRESS_1_TER, pTervosh);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 4:
+						DoScriptText(SAY_PROGRESS_2_HEN, m_creature);
+						m_uiSpeechTimer = 1000;
+						break;
+					case 5:						// cast spell to "teleport" hendel, then give quest credit FIND A SPELL WITH SHORTER CAST, 1sec~~! Full cast for now
+						if (npc_archmage_tervoshAI* pTervoshAI = dynamic_cast<npc_archmage_tervoshAI*>(pTervosh->AI()))
+							pTervosh->CastSpell(pTervosh, SPELL_CAST_VISUAL, true);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 6:						// hendel disapears
+						pPlayer->GroupEventHappens(QUEST_MISSING_DIPLO_PT16, m_creature);
+						m_creature->SetVisibility(VISIBILITY_OFF);
+						m_creature->HandleEmoteState(EMOTE_STATE_NONE);
+
+						pTervosh->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						pJaina->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_uiSpeechTimer = 4000;
+						break;
+					case 7:
+						DoScriptText(SAY_PROGRESS_3_TER, pTervosh);
+						m_uiSpeechTimer = 8000;
+						break;
+					case 8:
+						DoScriptText(SAY_PROGRESS_4_TER, pTervosh);
+						m_uiSpeechTimer = urand(60000, 90000);			// long time until they despawn
+						break;
+					case 9:																// despawn event
+						DoScriptText(SAY_BYE, pTervosh);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 10:
+						pJaina->HandleEmote(EMOTE_ONESHOT_WAVE);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 11:
+						if (npc_lady_jaina_proudmooreAI* pJainaAI = dynamic_cast<npc_lady_jaina_proudmooreAI*>(pJaina->AI()))
+							pJaina->CastSpell(pJaina, SPELL_IVUS_TELEPORT_VISUAL, false);
+						
+						if (npc_painedAI* pPainedAI = dynamic_cast<npc_painedAI*>(pPained->AI()))
+							pPained->CastSpell(pPained, SPELL_IVUS_TELEPORT_VISUAL, false);
+
+						if (npc_archmage_tervoshAI* pTervoshAI = dynamic_cast<npc_archmage_tervoshAI*>(pTervosh->AI()))
+							pTervosh->CastSpell(pTervosh, SPELL_IVUS_TELEPORT_VISUAL, false);
+
+						m_uiSpeechTimer = 2000;
+						break;
+					case 12:
+						pTervosh->SetVisibility(VISIBILITY_OFF);
+						pTervosh->ForcedDespawn(1000);
+
+						pJaina->SetVisibility(VISIBILITY_OFF);
+						pJaina->ForcedDespawn(1000);
+
+						pPained->SetVisibility(VISIBILITY_OFF);
+						pPained->ForcedDespawn(1000);
+
+						m_creature->ForcedDespawn(5000);
+
+						m_bOutro = false;
+						m_uiSpeechStep = 0;
+						return;
+					default:
+						m_uiSpeechStep = 0;
+						return;
+				}
+				++m_uiSpeechStep;
+			}
+			else
+				m_uiSpeechTimer -= uiDiff;
+		}
+		
+		DoMeleeAttackIfReady();
+	}
 };
 
-bool QuestAccept_npc_private_hendel(Player* /*pPlayer*/, Creature* pCreature, const Quest* pQuest)
+bool QuestAccept_npc_private_hendel(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
 {
     if (pQuest->GetQuestId() == QUEST_MISSING_DIPLO_PT16)
-        pCreature->setFaction(FACTION_HOSTILE);
-
+	{ 
+		if (npc_private_hendelAI* pHendelAI = dynamic_cast<npc_private_hendelAI*>(pCreature->AI()))
+			pHendelAI->StartEvent(pPlayer->GetObjectGuid());		
+	}
+	
     return true;
 }
 
@@ -879,9 +1186,20 @@ void AddSC_dustwallow_marsh()
 
     pNewScript = new Script;
     pNewScript->Name = "npc_lady_jaina_proudmoore";
+	pNewScript->GetAI = &GetAI_npc_lady_jaina_proudmoore;
     pNewScript->pGossipHello = &GossipHello_npc_lady_jaina_proudmoore;
     pNewScript->pGossipSelect = &GossipSelect_npc_lady_jaina_proudmoore;
     pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+	pNewScript->Name = "npc_pained";
+	pNewScript->GetAI = &GetAI_npc_pained;
+	pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+	pNewScript->Name = "npc_archmage_tervosh";
+	pNewScript->GetAI = &GetAI_npc_archmage_tervosh;
+	pNewScript->RegisterSelf();
 
     pNewScript = new Script;
     pNewScript->Name = "npc_morokk";

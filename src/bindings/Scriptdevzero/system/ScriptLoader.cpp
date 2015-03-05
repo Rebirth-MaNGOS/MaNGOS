@@ -183,6 +183,7 @@ extern void AddSC_blasted_lands();
 extern void AddSC_boss_kruul();
 extern void AddSC_burning_steppes();
 extern void AddSC_dun_morogh();
+extern void AddSC_duskwood();
 extern void AddSC_eastern_plaguelands();
 extern void AddSC_elwynn_forest();
 extern void AddSC_hillsbrad_foothills();
@@ -467,6 +468,7 @@ void AddScripts()
     AddSC_blasted_lands();
     AddSC_burning_steppes();
     AddSC_dun_morogh();
+	AddSC_duskwood();
     AddSC_eastern_plaguelands();
     AddSC_elwynn_forest();
     AddSC_hillsbrad_foothills();

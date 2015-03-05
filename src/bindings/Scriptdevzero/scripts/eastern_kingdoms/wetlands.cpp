@@ -35,21 +35,40 @@ EndContentData */
 
 enum
 {
+	SAY_SLIM_AGGRO              = -1720012,
+    SAY_SLIM_DEFEAT             = -1720013,
+    SAY_FRIEND_DEFEAT           = -1720014,
+    SAY_SLIM_NOTES              = -1720015,
+	SAY_END_BRAWL				= -1720019,
+
     QUEST_MISSING_DIPLO_PT11    = 1249,
     FACTION_ENEMY               = 168,
+	//FACTION_NEUTRAL				= ,						// should actually be yellow and not hostile
     SPELL_STEALTH               = 1785,
     SPELL_CALL_FRIENDS          = 16457,                    //summons 1x friend
     NPC_SLIMS_FRIEND            = 4971,
-    NPC_TAPOKE_SLIM_JAHN        = 4962
+    NPC_TAPOKE_SLIM_JAHN        = 4962,
+	NPC_MIKHAIL					= 4963,
 };
 
-struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI
+static const DialogueEntry aDiplomatDialogue[] =
 {
-    npc_tapoke_slim_jahnAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+    {SAY_SLIM_DEFEAT,           NPC_TAPOKE_SLIM_JAHN,   4000},
+    {SAY_SLIM_NOTES,            NPC_TAPOKE_SLIM_JAHN,   12000},
+	{SAY_END_BRAWL,				NPC_MIKHAIL,			12000},
+    {0, 0, 0},
+};
+
+struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI, private DialogueHelper
+{
+    npc_tapoke_slim_jahnAI(Creature* pCreature) : npc_escortAI(pCreature),
+        DialogueHelper(aDiplomatDialogue) {Reset();}
 
     bool m_bFriendSummoned;
+	bool m_bEventComplete;
 
     GUIDList lSlimFriends;
+	ObjectGuid m_mikhail;
 
     void Reset()
     {
@@ -85,6 +104,7 @@ struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI
                 //m_creature->CastSpell(m_creature, SPELL_CALL_FRIENDS, true);
                 DoSpawnCreature(NPC_SLIMS_FRIEND, irand(-3,3), irand(-3,3), 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
 
+			DoScriptText(SAY_SLIM_AGGRO, m_creature);
             m_bFriendSummoned = true;
         }
     }
@@ -100,6 +120,7 @@ struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI
                 pSummoned->setFaction(FACTION_ENEMY);
                 pSummoned->AI()->AttackStart(pPlayer);
             }
+			pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn randomly
         }
     }
 
@@ -118,6 +139,7 @@ struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI
                     if (pSlimFriend->isInCombat())
                         pSlimFriend->AI()->ResetToHome();
                     pSlimFriend->setFaction(35);
+					pSlimFriend->ForcedDespawn(5000);
                 }
     }
 
@@ -148,10 +170,47 @@ struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI
                 m_creature->DeleteThreatList();
                 m_creature->CombatStop(true);
 
+				DoScriptText(SAY_FRIEND_DEFEAT, m_creature);
+				
+				StartNextDialogueText(SAY_SLIM_DEFEAT);
+				if (Creature* pMikhail = GetClosestCreatureWithEntry(m_creature, NPC_MIKHAIL, 50.0f))
+					m_mikhail = pMikhail->GetObjectGuid();
+
                 SetRun(false);
             }
         }
     }
+
+    void JustDidDialogueStep(int32 iEntry)
+    {
+		switch (iEntry)
+        {
+            case SAY_SLIM_NOTES:
+            // despawn and respawn at inn
+            m_creature->ForcedDespawn(5000);
+            m_creature->SetRespawnDelay(2);
+        }
+    }
+
+    Creature* GetSpeakerByEntry(uint32 uiEntry)
+    {
+        if (uiEntry == NPC_TAPOKE_SLIM_JAHN)
+            return m_creature;
+		if (uiEntry == NPC_MIKHAIL)
+            return m_creature->GetMap()->GetCreature(m_mikhail);
+
+        return NULL;
+    }
+
+    void UpdateEscortAI(const uint32 uiDiff)
+    {
+        DialogueUpdate(uiDiff);
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
 };
 
 CreatureAI* GetAI_npc_tapoke_slim_jahn(Creature* pCreature)
