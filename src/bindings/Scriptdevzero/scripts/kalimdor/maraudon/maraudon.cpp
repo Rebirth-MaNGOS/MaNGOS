@@ -313,6 +313,77 @@ CreatureAI* GetAI_boss_tueftler_gizlock(Creature* pCreature)
     return new boss_tueftler_gizlockAI(pCreature);
 }
 
+/*######
+## mob_theradrim_guardian
+######*/
+
+enum aTheradrimGuardian
+{
+	NPC_THERADRIM_SHARDLING		= 11783,
+	SPELL_KNOCKDOWN				= 16790,
+};
+
+struct MANGOS_DLL_DECL mob_theradrim_guardianAI : public ScriptedAI
+{
+    mob_theradrim_guardianAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiKnockdownTimer;
+	uint32 m_uiSummonCount;
+
+    void Reset()
+    {
+		m_uiKnockdownTimer = 5000;
+		m_uiSummonCount = 0;
+    }
+
+	void JustSummoned(Creature* pSummoned)	
+    {
+        ++m_uiSummonCount;
+	}
+
+	void JustDied(Unit* /*pKiller*/)			// Spawn adds on death
+    {
+		if (m_uiSummonCount < 3)	// max 3 Shardlings
+        {
+			float fX, fY, fZ;
+            m_creature->GetPosition(fX, fY, fZ);
+			for(uint8 i = 0; i < 3; ++i)
+				if (Creature* pShardling = m_creature->SummonCreature(NPC_THERADRIM_SHARDLING, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 20000))
+				{
+					pShardling->AI()->AttackStart(m_creature->getVictim());
+					pShardling->SetRespawnDelay(-10);				// to stop them from randomly respawning
+				}
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		// Knockdown timer
+        if (m_uiKnockdownTimer <= uiDiff)
+        {
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_TOPAGGRO, 0);
+			if (pTarget)
+				DoCastSpellIfCan(pTarget, SPELL_KNOCKDOWN);
+			m_uiKnockdownTimer = urand(7000, 12000);
+		}
+		else 
+			m_uiKnockdownTimer -= uiDiff;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_mob_theradrim_guardian(Creature* pCreature)
+{
+    return new mob_theradrim_guardianAI(pCreature);
+}
+
 void AddSC_maraudon()
 {
     Script *newscript;
@@ -332,4 +403,9 @@ void AddSC_maraudon()
     newscript->Name = "boss_lord_schlangenzunge";
     newscript->GetAI = &GetAI_boss_lord_schlangenzunge;
     newscript->RegisterSelf();
+
+	newscript = new Script;
+	newscript->Name = "mob_theradrim_guardian";
+	newscript->GetAI = &GetAI_mob_theradrim_guardian;
+	newscript->RegisterSelf();
 }
