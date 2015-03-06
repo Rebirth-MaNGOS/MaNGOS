@@ -32,6 +32,7 @@ mob_precious
 EndContentData */
 
 #include "precompiled.h"
+#include "patrol_AI.h"
 
 /*######
 ## bosses_ancient_leaf_demons -- Superclass for the four demons
@@ -57,18 +58,18 @@ enum eAncientLeafDemons
 
 #define GOSSIP_ITEM_DEMON_CHALLENGE "I came for your head demon. I challenge you!"
 
-struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
+struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
 {
-    bosses_ancient_leaf_demonsAI(Creature* pCreature) : ScriptedAI(pCreature)
+    bosses_ancient_leaf_demonsAI(Creature* pCreature) : npc_patrolAI(pCreature, 0.f, true)
     {
 		m_uiDefaultEntry    = pCreature->GetEntry();
+		m_creature->SetActiveObjectState(true);				// gotta be active!
         m_uiResetOOCTimer   = 0;
         m_uiDemonTransTimer = 0;
 		m_uiChallengerGUID.Clear();
 		m_uiThreatListSize = 0;
 		m_bDoneSpecial = false;			// otherwise they'll keep despawning at respawn
-		m_bCanWaypoint = true;
-		m_creature->SetActiveObjectState(true);
+		StartPatrol(1, false);	
 
         Reset();
     }
@@ -85,13 +86,16 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
 	bool m_bCanSay;
 	bool m_bCleanerSay;
 	bool m_bDoneSpecial;
-	bool m_bCanWaypoint;
+	//bool hasStart;
 
     void Reset()					// only do these once
     {
+		npc_patrolAI::Reset();
+		m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);				// make sure they don't run after OoC reset
 		m_uiSummonCount = 0;
 		m_bCanSay = true;
 		m_bCleanerSay = true;
+		//hasStart = false;
     }
 
     void JustReachedHome()
@@ -106,6 +110,12 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
 
     void Aggro(Unit* pAttacker)
     {
+		//if (!hasStart)				// do spell + despawn if demon challenge didn't start
+		//{
+		//	DoCastSpellIfCan(pAttacker, SPELL_FOOLS_PLIGHT, CAST_TRIGGERED);			// not needed for now since they're friendly
+		//	if (!m_bDoneSpecial)
+		//		DoSpecialDemonAbility();
+		//}
         // The pAttacker has to be a player and must be a hunter
         // The hunter's pet is not allowed
         if ((!pAttacker->IsCharmerOrOwnerPlayerOrPlayerItself()) || (pAttacker->getClass() != CLASS_HUNTER))
@@ -126,9 +136,14 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
 
         m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         
-        m_uiDemonTransTimer = 5000;
+        m_uiDemonTransTimer = 3000;
         m_uiResetOOCTimer   = 60000 + m_uiDemonTransTimer;
-		m_bCanWaypoint = false;
+		m_creature->GetMotionMaster()->MovementExpired();
+		m_creature->GetMotionMaster()->MoveIdle();
+
+		//hasStart = true;
+
+		PausePatrol(true);
     }
 
 	void CompleteDemonChallenge(bool despawn = false)
@@ -172,7 +187,6 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
             m_creature->SetDeathState(JUST_DIED);
             m_creature->Respawn();
         }
-		m_bCanWaypoint = true;
 		Reset();
     }
 
@@ -183,10 +197,10 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
         m_uiDemonTransTimer = 0;
         m_uiResetOOCTimer   = 0;
 		m_creature->UpdateEntry(m_uiDefaultEntry);
-		m_bCanWaypoint = true;
+		PausePatrol(false);
 		
 		if (Creature* pPrecious = GetPreciousPet())
-                pPrecious->UpdateEntry(NPC_PRECIOUS);   // restore default entry
+            pPrecious->UpdateEntry(NPC_PRECIOUS);   // restore default entry
 	}
 
 	Creature* GetPreciousPet()
@@ -286,18 +300,6 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public ScriptedAI
             else
                 m_uiResetOOCTimer -= uiDiff;
         }
-
-		if (m_bCanWaypoint)													// Only move if in human form
-			m_creature->GetMotionMaster()->MoveWaypoint();
-
-		if (!m_bCanWaypoint)
-		{
-			if (m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == WAYPOINT_MOTION_TYPE)
-			{
-				m_creature->GetMotionMaster()->MovementExpired();
-				m_creature->GetMotionMaster()->MoveIdle();
-			}
-		}
 
 		// Return since we have no target
 		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -859,6 +861,7 @@ struct MANGOS_DLL_DECL mob_preciousAI : public ScriptedAI
     mob_preciousAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_uiDefaultEntry = pCreature->GetEntry();
+		m_creature->SetActiveObjectState(true); 
         Reset();
     }
 
