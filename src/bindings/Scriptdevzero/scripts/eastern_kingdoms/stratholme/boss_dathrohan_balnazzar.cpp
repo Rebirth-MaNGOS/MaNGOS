@@ -83,6 +83,7 @@ struct MANGOS_DLL_DECL boss_dathrohan_balnazzarAI : public ScriptedAI
     void Reset()
     {
         m_bTransformed = false;
+		SetEquipmentSlots(true);
         m_uiCrusadersHammerTimer = urand(3000,6000);
         m_uiCrusaderStrikeTimer = urand(9000,11000);
         m_uiMindBlastTimer = urand(1000,2000);
@@ -168,6 +169,7 @@ struct MANGOS_DLL_DECL boss_dathrohan_balnazzarAI : public ScriptedAI
                 if (DoCastSpellIfCan(m_creature, SPELL_BALNAZZAR_TRANSFORM, CAST_INTERRUPT_PREVIOUS + CAST_TRIGGERED) == CAST_OK)
                 {
                     m_creature->UpdateEntry(NPC_BALNAZZAR);
+					SetEquipmentSlots(false, EQUIP_UNEQUIP, EQUIP_UNEQUIP, EQUIP_UNEQUIP);		// remove his sword
                     DoScriptText(SAY_TRANSFORM, m_creature);
                     m_bTransformed = true;
                 }
