@@ -193,6 +193,7 @@ extern void AddSC_loch_modan();
 extern void AddSC_redridge_mountains();
 extern void AddSC_searing_gorge();
 extern void AddSC_silverpine_forest();
+extern void AddSC_southshore();
 extern void AddSC_stormwind_city();
 extern void AddSC_stranglethorn_vale();
 extern void AddSC_swamp_of_sorrows();
@@ -478,6 +479,7 @@ void AddScripts()
     AddSC_redridge_mountains();
     AddSC_searing_gorge();
     AddSC_silverpine_forest();
+	AddSC_southshore();
     AddSC_stormwind_city();
     AddSC_stranglethorn_vale();
     AddSC_swamp_of_sorrows();
