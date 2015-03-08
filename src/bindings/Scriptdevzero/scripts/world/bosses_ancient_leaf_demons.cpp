@@ -32,7 +32,7 @@ mob_precious
 EndContentData */
 
 #include "precompiled.h"
-#include "patrol_AI.h"
+#include "patrol_ai.h"
 
 /*######
 ## bosses_ancient_leaf_demons -- Superclass for the four demons
