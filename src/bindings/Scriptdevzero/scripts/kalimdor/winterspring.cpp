@@ -257,6 +257,7 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
         DialogueHelper(aIntroDialogue)
     {
 		m_creature->SetActiveObjectState(true); 
+		m_despawnTimer = 0;			// don't reset despawn timer if just got out of combat
         Reset();
     }
 
@@ -273,7 +274,6 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
     {
 		m_creature->SetStandState(UNIT_STAND_STATE_STAND);
         m_uiDelayTimer = 0;
-		m_despawnTimer = 0;
 		if (GameObject* pGo = GetClosestGameObjectWithEntry(m_creature, GO_ELUNE_ALTAR, 500.0f))				// reset the altar so the quest can be done
 		{
 			pGo->SetGoState(GO_STATE_READY);
@@ -367,7 +367,7 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
         }
     }
 
-    void SummonedMovementInform(Creature* pSummoned, uint32 uiType, uint32 uiPointId) override
+    void SummonedMovementInform(Creature* pSummoned, uint32 uiType, uint32 uiPointId)
     {
         if (uiType != POINT_MOTION_TYPE || pSummoned->GetEntry() != NPC_PRIESTESS_ELUNE || uiPointId != 1)
         {
@@ -586,10 +586,7 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
                 m_despawnTimer = 0;
             }
 			else
-			{
                 m_despawnTimer -= uiDiff;
-                return;
-			}
 		}
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())

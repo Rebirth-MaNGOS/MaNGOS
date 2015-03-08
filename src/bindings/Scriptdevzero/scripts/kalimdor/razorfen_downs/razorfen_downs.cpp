@@ -105,13 +105,11 @@ struct MANGOS_DLL_DECL npc_belnistraszAI : public npc_escortAI
     {
         m_uiRitualPhase = 0;
         m_uiRitualTimer = 1000;
-        m_bAggro = false;
         Reset();
     }
 
     uint8 m_uiRitualPhase;
     uint32 m_uiRitualTimer;
-    bool m_bAggro;
 
     uint32 m_uiFireballTimer;
     uint32 m_uiFrostNovaTimer;
@@ -122,22 +120,11 @@ struct MANGOS_DLL_DECL npc_belnistraszAI : public npc_escortAI
         m_uiFrostNovaTimer = 6000;
     }
 
-    void AttackedBy(Unit* pAttacker)
+	void Aggro(Unit* pAttacker)			// not working
     {
-        if (HasEscortState(STATE_ESCORT_PAUSED))
-        {
-            if (!m_bAggro)
-            {
-                DoScriptText(urand(0,1) ? SAY_BELNISTRASZ_AGGRO_1 : SAY_BELNISTRASZ_AGGRO_1, m_creature, pAttacker);
-                m_bAggro = true;
-            }
-
-            return;
-        }
-
-        ScriptedAI::AttackedBy(pAttacker);
-    }
-
+		DoScriptText(urand(0,1) ? SAY_BELNISTRASZ_AGGRO_1 : SAY_BELNISTRASZ_AGGRO_2, m_creature, pAttacker);
+	}
+ 
     void SpawnerSummon(Creature* pSummoner)
     {
 		Creature* pTemp;
@@ -181,6 +168,7 @@ struct MANGOS_DLL_DECL npc_belnistraszAI : public npc_escortAI
     void JustSummoned(Creature* pSummoned)
     {
         SpawnerSummon(pSummoned);
+		pSummoned->SetRespawnDelay(-10);		// don't randomly respawn ever, better safe than sorry
     }
 
     void DoSummonSpawner(int32 iType)
@@ -218,7 +206,7 @@ struct MANGOS_DLL_DECL npc_belnistraszAI : public npc_escortAI
                         m_uiRitualTimer = 20000;
                         break;
                     case 3:
-                        DoScriptText(SAY_BELNISTRASZ_3_MIN, m_creature, m_creature);
+                        DoScriptText(SAY_BELNISTRASZ_3_MIN, m_creature);
                         m_uiRitualTimer = 20000;
                         break;
                     case 4:
@@ -227,7 +215,7 @@ struct MANGOS_DLL_DECL npc_belnistraszAI : public npc_escortAI
                         break;
                     case 5:
                         DoSummonSpawner(irand(1, 3));
-                        DoScriptText(SAY_BELNISTRASZ_2_MIN, m_creature, m_creature);
+                        DoScriptText(SAY_BELNISTRASZ_2_MIN, m_creature);
                         m_uiRitualTimer = 40000;
                         break;
                     case 6:
@@ -235,7 +223,7 @@ struct MANGOS_DLL_DECL npc_belnistraszAI : public npc_escortAI
                         m_uiRitualTimer = 20000;
                         break;
                     case 7:
-                        DoScriptText(SAY_BELNISTRASZ_1_MIN, m_creature, m_creature);
+                        DoScriptText(SAY_BELNISTRASZ_1_MIN, m_creature);
                         m_uiRitualTimer = 40000;
                         break;
                     case 8:
@@ -243,7 +231,7 @@ struct MANGOS_DLL_DECL npc_belnistraszAI : public npc_escortAI
                         m_uiRitualTimer = 20000;
                         break;
                     case 9:
-                        DoScriptText(SAY_BELNISTRASZ_FINISH, m_creature, m_creature);
+                        DoScriptText(SAY_BELNISTRASZ_FINISH, m_creature);
                         m_uiRitualTimer = 3000;
                         break;
                     case 10:
@@ -261,7 +249,6 @@ struct MANGOS_DLL_DECL npc_belnistraszAI : public npc_escortAI
                                 }
                             }
                         }
-
                         m_creature->RemoveAurasDueToSpell(SPELL_IDOL_SHUTDOWN);
                         SetEscortPaused(false);
                         break;
