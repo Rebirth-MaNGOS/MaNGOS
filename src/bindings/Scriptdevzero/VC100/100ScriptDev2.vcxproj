@@ -292,6 +292,7 @@
     <ClCompile Include="..\scripts\eastern_kingdoms\deadmines\deadmines.cpp" />
     <ClCompile Include="..\scripts\eastern_kingdoms\deadmines\instance_deadmines.cpp" />
     <ClCompile Include="..\scripts\eastern_kingdoms\dun_morogh.cpp" />
+    <ClCompile Include="..\scripts\eastern_kingdoms\duskwood.cpp" />
     <ClCompile Include="..\scripts\eastern_kingdoms\eastern_plaguelands.cpp" />
     <ClCompile Include="..\scripts\eastern_kingdoms\elwynn_forest.cpp" />
     <ClCompile Include="..\scripts\eastern_kingdoms\gnomeregan\boss_mekgineer_thermaplug.cpp" />
@@ -361,6 +362,7 @@
     <ClCompile Include="..\scripts\eastern_kingdoms\shadowfang_keep\instance_shadowfang_keep.cpp" />
     <ClCompile Include="..\scripts\eastern_kingdoms\shadowfang_keep\shadowfang_keep.cpp" />
     <ClCompile Include="..\scripts\eastern_kingdoms\silverpine_forest.cpp" />
+    <ClCompile Include="..\scripts\eastern_kingdoms\southshore.cpp" />
     <ClCompile Include="..\scripts\eastern_kingdoms\stormwind_city.cpp" />
     <ClCompile Include="..\scripts\eastern_kingdoms\stranglethorn_vale.cpp" />
     <ClCompile Include="..\scripts\eastern_kingdoms\stratholme\boss_baroness_anastari.cpp" />
@@ -494,6 +496,7 @@
     <ClCompile Include="..\scripts\kalimdor\zulfarrak\instance_zulfarrak.cpp" />
     <ClCompile Include="..\scripts\kalimdor\zulfarrak\zulfarrak.cpp" />
     <ClCompile Include="..\scripts\world\areatrigger_scripts.cpp" />
+    <ClCompile Include="..\scripts\world\bosses_ancient_leaf_demons.cpp" />
     <ClCompile Include="..\scripts\world\bosses_emerald_dragons.cpp" />
     <ClCompile Include="..\scripts\world\boss_lord_kazzak.cpp" />
     <ClCompile Include="..\scripts\world\dungeon_set2.cpp" />
