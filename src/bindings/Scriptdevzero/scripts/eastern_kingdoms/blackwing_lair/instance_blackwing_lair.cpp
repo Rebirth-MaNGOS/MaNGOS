@@ -339,7 +339,7 @@ void instance_blackwing_lair::SetData(uint32 uiType, uint32 uiData)
         
         GameObject* razorgoreDoorExit = GetSingleGameObjectFromStorage(GO_DOOR_RAZORGORE_EXIT);
         if (razorgoreDoorExit)
-            razorgoreDoorExit->SetGoState(uiData == DONE ? GO_STATE_ACTIVE: GO_STATE_READY);
+            razorgoreDoorExit->SetGoState(uiData == DONE || uiData == SPECIAL ? GO_STATE_ACTIVE: GO_STATE_READY);
 
         if (uiData == DONE)
             DoUseDoorOrButton(GO_DOOR_VAELASTRASZ);

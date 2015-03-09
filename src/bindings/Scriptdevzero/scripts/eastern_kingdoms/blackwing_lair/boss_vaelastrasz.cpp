@@ -58,9 +58,9 @@ enum
 
     AREATRIGGER_VAEL_INTRO      = 3626,
 
-	MOB_BLACKWING_TECHNICIAN	= 13996,
+    MOB_BLACKWING_TECHNICIAN	= 13996,
 
-	FACTION_ENEMY				= 54
+    FACTION_ENEMY				= 54
 };
 
 struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
@@ -69,9 +69,9 @@ struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
     {
         m_pInstance = (instance_blackwing_lair*)pCreature->GetInstanceData();
 
-		m_bIsCorrupted = false;
-		m_bIsBeingCorrupted = false;
-		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_FIRE, true);
+        m_bIsCorrupted = false;
+        m_bIsBeingCorrupted = false;
+        m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_FIRE, true);
 
         Reset();
 
@@ -96,7 +96,7 @@ struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
     uint32 m_uiBurningAdrenalineTankTimer;
     uint32 m_uiTailSweepTimer;
     bool m_bHasYelled;
-	bool m_bIsCorrupted, m_bIsBeingCorrupted;
+    bool m_bIsCorrupted, m_bIsBeingCorrupted;
 
     void Reset()
     {
@@ -114,15 +114,15 @@ struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
         m_uiTailSweepTimer               = 20000;
         m_bHasYelled = false;
 
-		// Remove flags so you cannot talk to vael.
-		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+        // Remove flags so you cannot talk to vael.
+        m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
 
         // Creature should have only 1/3 of hp
         if (m_bIsCorrupted)
-			m_creature->SetHealth(uint32(m_creature->GetMaxHealth()*.3)); // Nefarian has to corrupt him.
-		else
-			m_creature->SetHealth(m_creature->GetMaxHealth());
+            m_creature->SetHealth(uint32(m_creature->GetMaxHealth()*.3)); // Nefarian has to corrupt him.
+        else
+            m_creature->SetHealth(m_creature->GetMaxHealth());
     }
 
     void BeginIntro()
@@ -136,9 +136,9 @@ struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
 
     void BeginSpeech(Player* pTarget)
     {
-		// Remove the flags so you can no longer talk to Vael.
-		 m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-         m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+        // Remove the flags so you can no longer talk to Vael.
+        m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+        m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
 
         // Stand up and begin speach
         m_playerGuid = pTarget->GetObjectGuid();
@@ -200,65 +200,64 @@ struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
             {
                 switch (m_uiIntroPhase)
                 {
-                    case 0:
-						if (m_pInstance)
-							DoScriptText(SAY_TECHNICIAN_RUN, m_pInstance->GetGoblinGroup1()->front());
+                case 0:
+                    if (m_pInstance)
+                        DoScriptText(SAY_TECHNICIAN_RUN, m_pInstance->GetGoblinGroup1()->front());
 
-                        m_creature->SummonCreature(NPC_LORD_NEFARIAN, aNefariusSpawnLoc[0], aNefariusSpawnLoc[1], aNefariusSpawnLoc[2], aNefariusSpawnLoc[3], TEMPSUMMON_TIMED_DESPAWN, 25000);
-                        m_uiIntroTimer = 1000;
-                        break;
-                    case 1:
-                        if (Creature* pNefarius = m_creature->GetMap()->GetCreature(m_nefariusGuid))
-                        {
-							m_creature->SetPassiveToSpells(true);
+                    m_creature->SummonCreature(NPC_LORD_NEFARIAN, aNefariusSpawnLoc[0], aNefariusSpawnLoc[1], aNefariusSpawnLoc[2], aNefariusSpawnLoc[3], TEMPSUMMON_TIMED_DESPAWN, 25000);
+                    m_uiIntroTimer = 1000;
+                    break;
+                case 1:
+                    if (Creature* pNefarius = m_creature->GetMap()->GetCreature(m_nefariusGuid))
+                    {
+                        m_creature->SetPassiveToSpells(true);
 
-							pNefarius->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
-							pNefarius->GetMotionMaster()->Clear();
-							pNefarius->GetMotionMaster()->MoveIdle();
-							pNefarius->SetFacingToObject(m_creature);
+                        pNefarius->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
+                        pNefarius->GetMotionMaster()->Clear();
+                        pNefarius->GetMotionMaster()->MoveIdle();
+                        pNefarius->SetFacingToObject(m_creature);
 
-							pNefarius->CastSpell(m_creature, SPELL_NEFARIUS_CORRUPTION, false);
-							
-							
-							m_bIsBeingCorrupted = true;
-                            DoScriptText(SAY_NEFARIUS_CORRUPT_1, pNefarius);
-                        }
-                        m_uiIntroTimer = 16000;
-                        break;
-                    case 2:
-                        if (Creature* pNefarius = m_creature->GetMap()->GetCreature(m_nefariusGuid))
-						{
-                            DoScriptText(SAY_NEFARIUS_CORRUPT_2, pNefarius);
-							pNefarius->InterruptSpell(CURRENT_CHANNELED_SPELL, false);
-							pNefarius->RemoveAllAttackers();
-							pNefarius->getThreatManager().clearReferences();
-							pNefarius->CombatStop(true);
-						}
+                        pNefarius->CastSpell(m_creature, SPELL_NEFARIUS_CORRUPTION, false);
 
-						m_creature->SetPassiveToSpells(false);
 
-						m_bIsBeingCorrupted = false;
-						m_bIsCorrupted = true;
+                        m_bIsBeingCorrupted = true;
+                        DoScriptText(SAY_NEFARIUS_CORRUPT_1, pNefarius);
+                    }
+                    m_uiIntroTimer = 16000;
+                    break;
+                case 2:
+                    if (Creature* pNefarius = m_creature->GetMap()->GetCreature(m_nefariusGuid))
+                    {
+                        DoScriptText(SAY_NEFARIUS_CORRUPT_2, pNefarius);
+                        pNefarius->InterruptSpell(CURRENT_CHANNELED_SPELL, false);
+                        pNefarius->RemoveAllAttackers();
+                        pNefarius->getThreatManager().clearReferences();
+                        pNefarius->CombatStop(true);
+                    }
 
-						m_creature->SetHealth((uint32)(m_creature->GetMaxHealth() * .3f));
+                    m_creature->SetPassiveToSpells(false);
 
-                        // Set npc flags now
-                        m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-                        m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                        m_uiIntroTimer = 0;
-                        break;
+                    m_bIsBeingCorrupted = false;
+                    m_bIsCorrupted = true;
+
+                    m_creature->SetHealth((uint32)(m_creature->GetMaxHealth() * .3f));
+
+                    // Set npc flags now
+                    m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                    m_uiIntroTimer = 0;
+                    break;
                 }
                 ++m_uiIntroPhase;
             }
             else
                 m_uiIntroTimer -= uiDiff;
-        
-			// Linearly remove Vaelastrasz health while he's being corrupted.
-			if (m_bIsBeingCorrupted)
-				m_creature->SetHealth((uint32)(m_creature->GetMaxHealth() * (0.00004375f * m_uiIntroTimer + 0.3f)));
-		}
 
-		
+            // Linearly remove Vaelastrasz health while he's being corrupted.
+            if (m_bIsBeingCorrupted)
+                m_creature->SetHealth((uint32)(m_creature->GetMaxHealth() * (0.00004375f * m_uiIntroTimer + 0.3f)));
+        }
+
 
         // Speech
         if (m_uiSpeechTimer)
@@ -267,28 +266,28 @@ struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
             {
                 switch (m_uiSpeechNum)
                 {
-                    case 0:
-                        // 16 seconds till next line
-                        DoScriptText(SAY_LINE_2, m_creature);
-                        m_uiSpeechTimer = 16000;
-                        ++m_uiSpeechNum;
-                        break;
-                    case 1:
-                        // This one is actually 16 seconds but we only go to 10 seconds because he starts attacking after he says "I must fight this!"
-                        DoScriptText(SAY_LINE_3, m_creature);
-                        m_uiSpeechTimer = 10000;
-                        ++m_uiSpeechNum;
-                        break;
-                    case 2:
-                        m_creature->setFaction(FACTION_HOSTILE);
+                case 0:
+                    // 16 seconds till next line
+                    DoScriptText(SAY_LINE_2, m_creature);
+                    m_uiSpeechTimer = 16000;
+                    ++m_uiSpeechNum;
+                    break;
+                case 1:
+                    // This one is actually 16 seconds but we only go to 10 seconds because he starts attacking after he says "I must fight this!"
+                    DoScriptText(SAY_LINE_3, m_creature);
+                    m_uiSpeechTimer = 10000;
+                    ++m_uiSpeechNum;
+                    break;
+                case 2:
+                    m_creature->setFaction(FACTION_HOSTILE);
 
-                        if (m_playerGuid)
-                        {
-                            if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_playerGuid))
-                                AttackStart(pPlayer);
-                        }
-                        m_uiSpeechTimer = 0;
-                        break;
+                    if (m_playerGuid)
+                    {
+                        if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_playerGuid))
+                            AttackStart(pPlayer);
+                    }
+                    m_uiSpeechTimer = 0;
+                    break;
                 }
             }
             else
@@ -332,7 +331,7 @@ struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
             // Scan for mana targets in threat list
             ThreatList const& tList = m_creature->getThreatManager().getThreatList();
             vManaPlayers.reserve(tList.size());
-            for (ThreatList::const_iterator iter = tList.begin();iter != tList.end(); ++iter)
+            for (ThreatList::const_iterator iter = tList.begin(); iter != tList.end(); ++iter)
             {
                 Unit* pTempTarget = m_creature->GetMap()->GetUnit((*iter)->getUnitGuid());
 
@@ -341,12 +340,12 @@ struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
             }
 
             if (!vManaPlayers.empty())
-			{
-				Unit* pTarget = vManaPlayers[urand(0, vManaPlayers.size() - 1)];
-				pTarget->CastSpell(pTarget, SPELL_BURNING_ADRENALINE, true, NULL, NULL, m_creature->GetObjectGuid());
+            {
+                Unit* pTarget = vManaPlayers[urand(0, vManaPlayers.size() - 1)];
+                pTarget->CastSpell(pTarget, SPELL_BURNING_ADRENALINE, true, NULL, NULL, m_creature->GetObjectGuid());
 
-				m_uiBurningAdrenalineCasterTimer = 15000;
-			}
+                m_uiBurningAdrenalineCasterTimer = 15000;
+            }
         }
         else
             m_uiBurningAdrenalineCasterTimer -= uiDiff;
@@ -389,15 +388,15 @@ bool GossipSelect_boss_vaelastrasz(Player* pPlayer, Creature* pCreature, uint32 
 {
     switch (uiAction)
     {
-        case GOSSIP_ACTION_INFO_DEF + 1:
-            pPlayer->ADD_GOSSIP_ITEM_ID(GOSSIP_ICON_CHAT, GOSSIP_ITEM_VAEL_2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 2);
-            pPlayer->SEND_GOSSIP_MENU(GOSSIP_TEXT_VAEL_2, pCreature->GetObjectGuid());
-            break;
-        case GOSSIP_ACTION_INFO_DEF + 2:
-            pPlayer->CLOSE_GOSSIP_MENU();
-            if (boss_vaelastraszAI* pVaelAI = dynamic_cast<boss_vaelastraszAI*>(pCreature->AI()))
-                pVaelAI->BeginSpeech(pPlayer);
-            break;
+    case GOSSIP_ACTION_INFO_DEF + 1:
+        pPlayer->ADD_GOSSIP_ITEM_ID(GOSSIP_ICON_CHAT, GOSSIP_ITEM_VAEL_2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 2);
+        pPlayer->SEND_GOSSIP_MENU(GOSSIP_TEXT_VAEL_2, pCreature->GetObjectGuid());
+        break;
+    case GOSSIP_ACTION_INFO_DEF + 2:
+        pPlayer->CLOSE_GOSSIP_MENU();
+        if (boss_vaelastraszAI* pVaelAI = dynamic_cast<boss_vaelastraszAI*>(pCreature->AI()))
+            pVaelAI->BeginSpeech(pPlayer);
+        break;
     }
 
     return true;
@@ -421,11 +420,11 @@ CreatureAI* GetAI_boss_vaelastrasz(Creature* pCreature)
 
 bool AreaTrigger_at_vaelastrasz(Player* pPlayer, AreaTriggerEntry const* pAt)
 {
-	const float goblin_spawn_points[6][3] = {{ -7501.f, -1026.f, 409.f }, { -7496.f, -1023.f, 409.f }, { -7499.f, -1020.f, 409.f },
-											 { -7479.f, -1010.f, 409.f }, { -7473.f, -1007.f, 409.f }, { -7477.f, -1006.f, 409.f }};
-	
-	const float stairs1[3] = { -7487.f, -1071.f, 409.f };
-	const float stairs2[3] = { -7431.f, -1032.f, 409.f };
+    const float goblin_spawn_points[6][3] = {{ -7501.f, -1026.f, 409.f }, { -7496.f, -1023.f, 409.f }, { -7499.f, -1020.f, 409.f },
+                                             { -7479.f, -1010.f, 409.f }, { -7473.f, -1007.f, 409.f }, { -7477.f, -1006.f, 409.f }};
+
+    const float stairs1[3] = { -7487.f, -1071.f, 409.f };
+    const float stairs2[3] = { -7431.f, -1032.f, 409.f };
 
     if (pAt->id == AREATRIGGER_VAEL_INTRO)
     {
@@ -439,36 +438,36 @@ bool AreaTrigger_at_vaelastrasz(Player* pPlayer, AreaTriggerEntry const* pAt)
             if (pInstance->GetData(TYPE_VAELASTRASZ) == NOT_STARTED)
             {
                 if (Creature* pVaelastrasz = pInstance->GetSingleCreatureFromStorage(NPC_VAELASTRASZ))
-				{
-					for (int i = 0; i < 6; i++)
-					{
-						Creature* summoned_goblin = pVaelastrasz->SummonCreature(MOB_BLACKWING_TECHNICIAN, goblin_spawn_points[i][0], goblin_spawn_points[i][1], goblin_spawn_points[i][2], 0.f, TEMPSUMMON_MANUAL_DESPAWN, 0);
-						if (summoned_goblin)
-						{
-							summoned_goblin->setFaction(103);
-							summoned_goblin->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-							summoned_goblin->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
+                {
+                    for (int i = 0; i < 6; i++)
+                    {
+                        Creature* summoned_goblin = pVaelastrasz->SummonCreature(MOB_BLACKWING_TECHNICIAN, goblin_spawn_points[i][0], goblin_spawn_points[i][1], goblin_spawn_points[i][2], 0.f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                        if (summoned_goblin)
+                        {
+                            summoned_goblin->setFaction(103);
+                            summoned_goblin->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                            summoned_goblin->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
 
-							if (i < 3)
-							{
-								summoned_goblin->GetMotionMaster()->MovePoint(0, stairs1[0], stairs1[1], stairs1[2]);
-								pInstance->GetGoblinGroup1()->push_back(summoned_goblin);
-							}
-							else
-							{
-								summoned_goblin->GetMotionMaster()->MovePoint(1, stairs2[0], stairs2[1], stairs2[2]);
-								pInstance->GetGoblinGroup2()->push_back(summoned_goblin);
-							}
+                            if (i < 3)
+                            {
+                                summoned_goblin->GetMotionMaster()->MovePoint(0, stairs1[0], stairs1[1], stairs1[2]);
+                                pInstance->GetGoblinGroup1()->push_back(summoned_goblin);
+                            }
+                            else
+                            {
+                                summoned_goblin->GetMotionMaster()->MovePoint(1, stairs2[0], stairs2[1], stairs2[2]);
+                                pInstance->GetGoblinGroup2()->push_back(summoned_goblin);
+                            }
 
-						}
+                        }
 
-					}
+                    }
 
-					if (boss_vaelastraszAI* pVaelAI = dynamic_cast<boss_vaelastraszAI*>(pVaelastrasz->AI()))
+                    if (boss_vaelastraszAI* pVaelAI = dynamic_cast<boss_vaelastraszAI*>(pVaelastrasz->AI()))
                         pVaelAI->BeginIntro();
 
-					
-				}
+
+                }
             }
 
         }
