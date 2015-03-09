@@ -2706,26 +2706,21 @@ void Aura::HandleAuraTransform(bool apply, bool /*Real*/)
         }
     }
 
-    // Make sure you cannot do anything while affected by the wild polymorph.
-    if ( GetId() == 23603 && target->GetTypeId() == TYPEID_PLAYER )
+    // Make sure you cannot do anything while affected by the wild polymorph. (Nefarian's mage class call.)
+    if ( GetId() == 23603 )
+        target->SetConfused(apply, GetCasterGuid(), GetId());
+
+    // The Discombobulator Ray should dismount the player.
+    if (apply && GetId() == 4060)
     {
-        if (apply)
-            dynamic_cast<Player*>(target)->SetClientControl(target, 0);
-        else
-            dynamic_cast<Player*>(target)->SetClientControl(target, 1);
+        Player* player = dynamic_cast<Player*>(target);
+        if (player)
+        {
+            player->Unmount(true);
+            player->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+        }
+
     }
-
-	// The Discombobulator Ray should dismount the player.
-	if (apply && GetId() == 4060)
-	{
-		Player* player = dynamic_cast<Player*>(target);
-		if (player)
-		{
-			player->Unmount(true);
-			player->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
-		}
-
-	}
 
 
 
