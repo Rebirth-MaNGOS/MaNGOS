@@ -225,7 +225,7 @@ struct MANGOS_DLL_DECL PatAI : public ScriptedAI
 {
 	PatAI(Creature* creature);
 
-	std::vector<Creature*> Adds;
+	std::vector<ObjectGuid> Adds;
 	uint32 updatetimer;
 	bool init;
 

@@ -708,11 +708,16 @@ void PatAI::Reset()
     updatetimer = 500;
     for(uint8 i = 0; i < Adds.size(); ++i)
     {
-        if (Adds[i] && Adds[i]->IsInWorld() && Adds[i]->isAlive())
+        Creature* currentAdd = m_creature->GetMap()->GetCreature(Adds[i]);
+        
+        if (currentAdd)
         {
-            //Adds[i]->GetMotionMaster()->Clear(false,false);
-            if (Adds[i]->GetOwnerGuid() == m_creature->GetObjectGuid())
-                Adds[i]->SetOwnerGuid(ObjectGuid());
+            if (currentAdd && currentAdd->IsInWorld() && currentAdd->isAlive())
+            {
+                //currentAdd->GetMotionMaster()->Clear(false,false);
+                if (currentAdd->GetOwnerGuid() == m_creature->GetObjectGuid())
+                    currentAdd->SetOwnerGuid(ObjectGuid());
+            }
         }
     }
 }
@@ -721,8 +726,13 @@ void PatAI::Aggro(Unit* /*U*/)
 {
     for(uint8 i = 0; i < Adds.size(); ++i)
     {
-        if (Adds[i] && Adds[i]->isAlive() && !Adds[i]->GetCharmerOrOwner())
-            Adds[i]->SetOwnerGuid(m_creature->GetObjectGuid());
+        Creature* currentAdd = m_creature->GetMap()->GetCreature(Adds[i]);
+        
+        if (currentAdd)
+        {
+            if (currentAdd && currentAdd->isAlive() && !currentAdd->GetCharmerOrOwner())
+                currentAdd->SetOwnerGuid(m_creature->GetObjectGuid());
+        }
     }
 }
 
@@ -736,19 +746,24 @@ void PatAI::UpdateAI(const uint32 diff)
             Creature* C = 0;
             for(uint8 i = 0; i < Adds.size(); ++i)
             {
-                if (!Adds[i] || !Adds[i]->IsInWorld() || !Adds[i]->isAlive() || Adds[i]->GetVisibility() == VISIBILITY_OFF
-                        || (Adds[i]->GetCharmerOrOwner() && Adds[i]->GetCharmerOrOwner() != m_creature) )
-                    n++;
-                else
+                Creature* currentAdd = m_creature->GetMap()->GetCreature(Adds[i]);
+        
+                if (currentAdd)
                 {
-                    if (!C)
-                        C = Adds[i];
-                    //if (Adds[i]->GetVisibility() == VISIBILITY_OFF && Adds[i]->GetDistance(m_creature) < 8.0f)
-                    //	Adds[i]->SetVisibility(VISIBILITY_ON);
-                    if (m_creature->getFaction() != 35 && (!m_creature->SelectHostileTarget() || !m_creature->getVictim()))
+                    if (!currentAdd || !currentAdd->IsInWorld() || !currentAdd->isAlive() || currentAdd->GetVisibility() == VISIBILITY_OFF
+                            || (currentAdd->GetCharmerOrOwner() && currentAdd->GetCharmerOrOwner() != m_creature) )
+                        n++;
+                    else
                     {
-                        if (Adds[i]->SelectHostileTarget() && Adds[i]->getVictim()) //enter combat if add is in combat
-                            AttackStart(Adds[i]->getVictim());
+                        if (!C)
+                            C = currentAdd;
+                        //if (currentAdd->GetVisibility() == VISIBILITY_OFF && currentAdd->GetDistance(m_creature) < 8.0f)
+                        //	currentAdd->SetVisibility(VISIBILITY_ON);
+                        if (m_creature->getFaction() != 35 && (!m_creature->SelectHostileTarget() || !m_creature->getVictim()))
+                        {
+                            if (currentAdd->SelectHostileTarget() && currentAdd->getVictim()) //enter combat if add is in combat
+                                AttackStart(currentAdd->getVictim());
+                        }
                     }
                 }
             }
@@ -784,7 +799,13 @@ void PatAI::UpdateAI(const uint32 diff)
             }
         }
         else //List empty, get adds from Formation Data
-            m_creature->GetFormationMembers(Adds);
+        {
+            std::vector<Creature*> members;
+            m_creature->GetFormationMembers(members);
+            
+            for (Creature* member : members)
+                Adds.push_back(member->GetObjectGuid());
+        }
 
         updatetimer = 1500;
     }
