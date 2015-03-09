@@ -1969,6 +1969,17 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case 28599:			// Shadowbolt Volley
             radius = 60.0f;
             break;
+        case 23410:                 // Nefarian's class calls.
+        case 23397:
+        case 23398:
+        case 23401:
+        case 23418:
+        case 23425:
+        case 23427:
+        case 23436:
+        case 23414:
+            radius = 300.f;
+            break;
         default:
             break;
         }
