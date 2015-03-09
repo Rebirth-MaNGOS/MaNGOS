@@ -183,9 +183,12 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
         instance_blackwing_lair* blackwing_lair = dynamic_cast<instance_blackwing_lair*>(m_pInstance);
         if (blackwing_lair)
         {
-            for ( Creature* current_drakanoid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+            for ( ObjectGuid current_drakanoid_guid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+            {
+                Creature* current_drakanoid = m_creature->GetMap()->GetCreature(current_drakanoid_guid);
                 if (current_drakanoid)
                     ((TemporarySummon*) current_drakanoid)->UnSummon();
+            }
 
             blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
         }
@@ -357,7 +360,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                     if (blackwing_lair && summoned_drakonoid)
                     {
                         summoned_drakonoid->setFaction(FACTION_BLACK_DRAGON);
-                        blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid);
+                        blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid->GetObjectGuid());
                     }
 
                     summoned_drakonoid = m_creature->SummonCreature(m_uiDrakeTypeTwo, aNefarianLocs[1].m_fX, aNefarianLocs[1].m_fY, aNefarianLocs[1].m_fZ,
@@ -366,7 +369,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                     if (blackwing_lair && summoned_drakonoid)
                     {
                         summoned_drakonoid->setFaction(FACTION_BLACK_DRAGON);
-                        blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid);
+                        blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid->GetObjectGuid());
                     }
 
                     if (m_uiSpawnWaveCounter <= 20)
@@ -391,7 +394,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                         if (summoned_drakonid)
                         {
                             summoned_drakonid->setFaction(FACTION_BLACK_DRAGON);
-                            blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonid);
+                            blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonid->GetObjectGuid());
                         }
 
                         m_uiSpawnChromaticTimer = 60000; // TODO: This time needs to be verified.

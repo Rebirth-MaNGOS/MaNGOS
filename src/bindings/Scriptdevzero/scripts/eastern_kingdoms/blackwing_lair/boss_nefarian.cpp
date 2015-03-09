@@ -137,9 +137,12 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
         instance_blackwing_lair* blackwing_lair = dynamic_cast<instance_blackwing_lair*>(m_pInstance);
         if (blackwing_lair)
         {
-            for (Creature* current_spawn : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+            for (ObjectGuid current_spawn_guid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+            {
+                Creature* current_spawn = m_creature->GetMap()->GetCreature(current_spawn_guid);
                 if (current_spawn)
                     ((TemporarySummon*) current_spawn)->UnSummon();
+            }
 
             blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
         }
@@ -277,9 +280,11 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
             instance_blackwing_lair* blackwing_lair = dynamic_cast<instance_blackwing_lair*>(m_pInstance);
             if (blackwing_lair)
             {
-                std::vector<Creature*> tmp_list;
+                std::vector<ObjectGuid> tmp_list;
 
-                for (Creature* current_drakonoid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+                for (ObjectGuid current_drakonoid_guid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+                {
+                    Creature* current_drakonoid = m_creature->GetMap()->GetCreature(current_drakonoid_guid);
                     if (current_drakonoid)
                     {
                         float x, y, z;
@@ -296,11 +301,12 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
                             bone_construct->Attack(rnd_player ? rnd_player : m_creature->getVictim(), true);
                             bone_construct->GetMotionMaster()->MoveChase(rnd_player ? rnd_player : m_creature->getVictim());
 
-                            tmp_list.push_back(bone_construct);
+                            tmp_list.push_back(bone_construct->GetObjectGuid());
                         }
 
                         ((TemporarySummon*) current_drakonoid)->UnSummon();
                     }
+                }
 
                 blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
                 blackwing_lair->GetDrakonoidsAndBoneConstructs() = tmp_list;
