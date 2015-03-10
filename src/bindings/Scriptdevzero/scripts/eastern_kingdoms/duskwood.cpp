@@ -198,7 +198,6 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 		m_creature->SetActiveObjectState(true); 
 		DoScriptText(YELL_SPAWN, m_creature);			// yell on spawn
 		m_bFirstGuardDown = false;
-		m_bStitchesDown = false;					// don't reset these 
 
         Reset();
     }
@@ -207,7 +206,6 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 	uint32 m_uiYellTimer;
 
 	bool m_bFirstGuardDown;
-	bool m_bStitchesDown;
 
     void Reset()
     {
@@ -223,11 +221,13 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 	void JustSummoned(Creature* pSummoned)
     {
 		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn randomly
+		if (pSummoned->GetEntry() == NPC_DUMMY_TOWN_CRIER)
+			DoScriptText(YELL_STITCHES_DOWN, pSummoned);
 	}
 
 	void JustDied(Unit* /*pKiller*/)
     {
-		HandleYell(YELL_STITCHES_DOWN);
+		m_creature->SummonCreature(NPC_DUMMY_TOWN_CRIER, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, 1000);
 	}
 	void SummonedCreatureJustDied(Creature* pSummoned)
     {
@@ -244,10 +244,10 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 				m_creature->SummonCreature(NPC_WATCHER_CUTFORD, aDarkshireSpawnLoc[1].x, aDarkshireSpawnLoc[1].y, aDarkshireSpawnLoc[1].z, aDarkshireSpawnLoc[1].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
 				break;
 			case 14:			// move guards from the camp up to the road
-				if (Creature* pDodds = GetClosestCreatureWithEntry(m_creature, NPC_WATCHER_DODDS, 100.0f))		// only working SOME TIMES and if player is near, even tho they have activeobject
+				if (Creature* pDodds = GetClosestCreatureWithEntry(m_creature, NPC_WATCHER_DODDS, 100.0f))		// not working, even tho they have activeobject
 					pDodds->GetMotionMaster()->MovePoint(1,-10903.0f, -391.0f, 40.93f);
 
-				if (Creature* pPaige = GetClosestCreatureWithEntry(m_creature, NPC_WATCHER_PAIGE, 100.0f))		// only working SOME TIMES and if player is near, even tho they have activeobject
+				if (Creature* pPaige = GetClosestCreatureWithEntry(m_creature, NPC_WATCHER_PAIGE, 100.0f))		// not working, even tho they have activeobject
 					pPaige->GetMotionMaster()->MovePoint(1,-10905.0f, -391.45f, 40.93f);
 
 				break;
@@ -275,7 +275,7 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 		}
 	}
 
-	void HandleYell(uint32 uiYellId = 0)			// handle the yells, THIS CAN CRASH THE SERVER!
+	void HandleYell(uint32 uiYellId = 0)
 	{		
 		{	
 			if (uiYellId == YELL_GUARD_DOWN && !m_bFirstGuardDown)
@@ -285,15 +285,6 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 				if (pCrier)
 					DoScriptText(YELL_GUARD_DOWN, pCrier);
 				m_bFirstGuardDown = true;
-			}
-
-			if (uiYellId == YELL_STITCHES_DOWN && !m_bStitchesDown)
-			{
-				Creature* pCrier = GetClosestCreatureWithEntry(m_creature, NPC_TOWN_CRIER, 100.0f); 			// get the real deal in the town	
-
-				if (pCrier)
-					DoScriptText(YELL_STITCHES_DOWN, pCrier);											// Not working, crier won't yell unless within a short distance under 100yrds
-				m_bStitchesDown = true;
 			}
 		}
 	}
