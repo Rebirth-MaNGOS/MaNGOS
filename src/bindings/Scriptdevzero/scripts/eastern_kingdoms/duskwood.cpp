@@ -153,6 +153,7 @@ enum
 	NPC_WATCHER_SARYS					= 1203,
 
 	NPC_TOWN_CRIER						= 468,
+	NPC_DUMMY_TOWN_CRIER				= 800468,
 	NPC_STITCHES						= 412,
 };
 
@@ -195,14 +196,9 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
     mob_stitchesAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
 		m_creature->SetActiveObjectState(true); 
-		//m_creature->MonsterYellToZone(YELL_SPAWN, LANG_UNIVERSAL, NULL);			// no need to force zone yell, it's in DB for all the ones that should
 		DoScriptText(YELL_SPAWN, m_creature);			// yell on spawn
 		m_bFirstGuardDown = false;
 		m_bStitchesDown = false;					// don't reset these 
-
-		Creature* pStitch = GetClosestCreatureWithEntry(m_creature, NPC_STITCHES, 1000.0f);			// not working, can spawn an army of stitches!
-			if (pStitch)
-				pStitch->ForcedDespawn();
 
         Reset();
     }
@@ -235,7 +231,7 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 	}
 	void SummonedCreatureJustDied(Creature* pSummoned)
     {
-		if (pSummoned->GetEntry() == aFirstWatcherID[0,1])
+		if (pSummoned->GetEntry() == NPC_WATCHER_BLOMBERG || NPC_WATCHER_HUTCHINS)
 			if (!m_bFirstGuardDown)
 				HandleYell(YELL_GUARD_DOWN);
 	}
@@ -280,24 +276,23 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 	}
 
 	void HandleYell(uint32 uiYellId = 0)			// handle the yells, THIS CAN CRASH THE SERVER!
-	{
-		Creature* pCrier = GetClosestCreatureWithEntry(m_creature, NPC_TOWN_CRIER, 1000.0f); 			// make sure we get him! that's one hell of a distance		
+	{		
 		{	
 			if (uiYellId == YELL_GUARD_DOWN && !m_bFirstGuardDown)
 			{
-				/*if (npc_town_crierAI* pCrierAI = dynamic_cast<npc_town_crierAI*>(pCrier->AI()))*/	 // this crashes server lol
-				//pCrier->MonsterYellToZone(YELL_GUARD_DOWN, LANG_UNIVERSAL, NULL);
+				Creature* pCrier = GetClosestCreatureWithEntry(m_creature, NPC_DUMMY_TOWN_CRIER, 50.0f); 			// get the dummy at the camp
+
 				if (pCrier)
-					DoScriptText(YELL_GUARD_DOWN, pCrier);												// Not working, crier won't yell unless within a short distance(around rotting orchard, max)
+					DoScriptText(YELL_GUARD_DOWN, pCrier);
 				m_bFirstGuardDown = true;
 			}
 
 			if (uiYellId == YELL_STITCHES_DOWN && !m_bStitchesDown)
 			{
-				/*if (npc_town_crierAI* pCrierAI = dynamic_cast<npc_town_crierAI*>(pCrier->AI()))*/
-				//pCrier->MonsterYellToZone(YELL_STITCHES_DOWN, LANG_UNIVERSAL, NULL);
+				Creature* pCrier = GetClosestCreatureWithEntry(m_creature, NPC_TOWN_CRIER, 100.0f); 			// get the real deal in the town	
+
 				if (pCrier)
-					DoScriptText(YELL_STITCHES_DOWN, pCrier);											// Not working, crier won't yell unless within a short distance(around rotting orchard, max)
+					DoScriptText(YELL_STITCHES_DOWN, pCrier);											// Not working, crier won't yell unless within a short distance under 100yrds
 				m_bStitchesDown = true;
 			}
 		}
