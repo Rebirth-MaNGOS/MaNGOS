@@ -88,15 +88,9 @@ public:
 
     // builds all mmap tiles for the specified map id (ignores skip settings)
     void buildMap(uint32 mapID);
-    
-    // Only use imported data from obj-files to build the maps for mapID.
-    void buildMapFromObjects(uint32 mapID);
 
     // builds an mmap tile for the specified map and its mesh
     void buildSingleTile(uint32 mapID, uint32 tileX, uint32 tileY);
-    
-    // Build a single tile using data from imported obj-files.
-    void buildSingleTileFromObjects(uint32 mapID, uint32 tileX, uint32 tileY);
     
     void dumpSingleTile(uint32 mapID, uint32 tileX, uint32 tileY);
 
@@ -116,9 +110,6 @@ private:
 
     void buildTile(uint32 mapID, uint32 tileX, uint32 tileY, dtNavMesh* navMesh, ManualAreaEntry& manualAreas);
     
-    void buildTileFromObjects(uint32 mapID, uint32 tileX, uint32 tileY, dtNavMesh* navMesh, ManualAreaEntry& manualAreas);
-
-    ManualAreaEntry LoadSpecificManualAreaFile(uint32 mapID, uint32 extension);
     
     void writeSingleTileToDumpFile(MeshData& meshData);
     ManualAreaEntry ImportSpecificObjFile(uint32 mapID, uint32 extension);
@@ -132,14 +123,7 @@ private:
                           float bmax[3],
                           dtNavMesh* navMesh,
                           ManualAreaEntry& manualAreas);
-    
-    void buildMoveMapTileFromObjData(uint32 mapID,
-                          uint32 tileX,
-                          uint32 tileY,
-                          float bmin[3],
-                          float bmax[3],
-                          dtNavMesh* navMesh,
-                          ManualAreaEntry& manualAreas);
+
 
     void getTileBounds(uint32 tileX, uint32 tileY,
                        float* verts, int vertCount,
