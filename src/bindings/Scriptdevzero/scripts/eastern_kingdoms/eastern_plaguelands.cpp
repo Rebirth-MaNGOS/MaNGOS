@@ -989,7 +989,7 @@ struct MANGOS_DLL_DECL mob_eris_havenfireAI : public ScriptedAI
         m_uiEventTimer = 3000;
 		if (GameObject* pLight = GetClosestGameObjectWithEntry(m_creature, GO_PEASNT_LIGHT_TRAP, 40.0f))
         {
-			pLight->SetRespawnTime(600000);			// despawn after 10 min or when event is done
+			pLight->SetRespawnTime(6*MINUTE);			// despawn after 5 min (or when event is done, needs implementation)
 			pLight->Refresh();
 			pLight->UpdateVisibilityAndView();
         }
@@ -1027,14 +1027,13 @@ struct MANGOS_DLL_DECL mob_eris_havenfireAI : public ScriptedAI
                     target->ForcedDespawn();
 		m_uiPlayerGUID.Clear();
 
-		if (GameObject* pLight = GetClosestGameObjectWithEntry(m_creature, GO_PEASNT_LIGHT_TRAP, 40.0f))
+		/*if (GameObject* pLight = GetClosestGameObjectWithEntry(m_creature, GO_PEASNT_LIGHT_TRAP, 40.0f))			// would be good with a despawn of the light, for now on timer
         {
 			if (pLight->isSpawned())
 			{
-				pLight->Respawn();			// despawn the light, needs rework
 				pLight->UpdateVisibilityAndView();
 			}
-		}
+		}*/
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -1226,17 +1225,17 @@ struct MANGOS_DLL_DECL npc_injured_peasantAI : public npc_escortAI
     npc_injured_peasantAI(Creature* pCreature) : npc_escortAI(pCreature)
     {
         pCreature->SetSpeedRate(MOVE_WALK, frand(0.5f, 0.6f));
-		m_bDoneCleaner = false;
-		m_uiThreatListSize = 0;
+		//m_bDoneCleaner = false;
+		//m_uiThreatListSize = 0;
         Reset();
         Start();
     }
 
     uint32 m_uiWalkRandomSay;
 	uint32 m_uiSummonCount;
-	uint32 m_uiThreatListSize;
+	//uint32 m_uiThreatListSize;
 
-		bool m_bDoneCleaner;
+	//bool m_bDoneCleaner;
 
     void Reset()
     {
