@@ -152,7 +152,7 @@ void PetAI::UpdateAI(const uint32 diff)
 
         bool meleeReach = m_creature->CanReachWithMeleeAttack(m_creature->getVictim());
 
-        if (m_creature->IsStopped() || meleeReach)
+        if ((m_creature->IsStopped() || meleeReach) && m_creature->GetNativeDisplayId() != 4449) // Warlock Imps should not have melee attacks.
         {
             // required to be stopped cases
             if (m_creature->IsStopped() && m_creature->IsNonMeleeSpellCasted(false))
