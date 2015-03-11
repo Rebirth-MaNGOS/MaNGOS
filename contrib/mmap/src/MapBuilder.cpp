@@ -199,6 +199,24 @@ void MapBuilder::getGridBounds(uint32 mapID, uint32 &minX, uint32 &minY, uint32 
 /**************************************************************************/
 void MapBuilder::buildSingleTile(uint32 mapID, uint32 tileX, uint32 tileY)
 {
+    set<uint32>* tiles = getTileList(mapID);
+    
+    // make sure we process maps which don't have tiles
+    if (!tiles->size())
+    {
+        // convert coord bounds to grid bounds
+        uint32 minX, minY, maxX, maxY;
+        getGridBounds(mapID, minX, minY, maxX, maxY);
+
+        // add all tiles within bounds to tile list.
+        for (uint32 i = minX; i <= maxX; ++i)
+            for (uint32 j = minY; j <= maxY; ++j)
+                tiles->insert(StaticMapTree::packTileID(i, j));
+    }
+
+    if (!tiles->size())
+        return;
+    
     dtNavMesh* navMesh = NULL;
     buildNavMesh(mapID, navMesh);
     if (!navMesh)
