@@ -688,6 +688,8 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
     {
     case 12042: // Arcane power should be a positive effect.
         return true;
+	case 17246: // Baroness Anastari's Possess is not a positive effect.
+		return false;
     case 23603: // The Wild Polymorph spell is not a positive effect.
         return false;
     case 19451: // Magmadar's Frenzy should be a positive effect.
@@ -704,7 +706,6 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
 		return true;
 	case 23205: // Simone the Seductress' Temptress' Kiss is not a positive effect.
 		return false;
-
     }
             
     if ((spellproto->Attributes & SPELL_ATTR_HIDDEN) != 0)
