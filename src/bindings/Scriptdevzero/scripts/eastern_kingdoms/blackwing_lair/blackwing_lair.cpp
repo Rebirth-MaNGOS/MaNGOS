@@ -384,7 +384,7 @@ struct MANGOS_DLL_DECL npc_death_talon_triggerAI : public ScriptedAI
                 for (Creature* current_creature : m_vecDragonList)
                 {
                     if (current_creature->isAlive() && !current_creature->isInCombat())
-						current_creature->Attack(target, false);
+						current_creature->Attack(target, true);
                 }	
             }
 
@@ -462,6 +462,7 @@ struct MANGOS_DLL_DECL npc_technician_pack_triggerAI : public ScriptedAI
         m_prevCombatFlag = false;
 
         m_uiDisableTimer = 900000;
+        m_uiDelayedPickUp = 1000;
 		m_packSpawned = false;
     }
 
@@ -472,6 +473,7 @@ struct MANGOS_DLL_DECL npc_technician_pack_triggerAI : public ScriptedAI
 
     bool m_isActive, m_prevCombatFlag, m_packSpawned;
     uint32 m_uiDisableTimer;
+    uint32 m_uiDelayedPickUp;
 
 
     void Reset()
@@ -574,10 +576,15 @@ struct MANGOS_DLL_DECL npc_technician_pack_triggerAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-		if(!m_packSpawned)
+		if (!m_packSpawned)
 		{
-			SpawnPack();
-			m_packSpawned = true;
+			if (m_uiDelayedPickUp <= uiDiff)
+            {
+                SpawnPack();
+			    m_packSpawned = true;
+            }
+            else 
+                m_uiDelayedPickUp -= uiDiff;
 		}
 
         if (m_isActive)
@@ -629,7 +636,7 @@ struct MANGOS_DLL_DECL npc_technician_pack_triggerAI : public ScriptedAI
                 {
                     if (current_creature->isAlive() && !current_creature->isInCombat())
 					{
-                        current_creature->Attack(target, false);
+                        current_creature->Attack(target, true);
 					}
                 }
             }
