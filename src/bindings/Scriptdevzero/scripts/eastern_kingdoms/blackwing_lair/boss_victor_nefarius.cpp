@@ -96,10 +96,10 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
     boss_victor_nefariusAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        
+
         // Select the 2 different drakes that we are going to use until despawned
         // 5 possiblities for the first drake, 4 for the second, 20 total possiblites
-        
+
         if (m_pInstance && m_pInstance->GetData(DRAKONID_1) && m_pInstance->GetData(DRAKONID_2))
         {
             m_uiDrakeTypeOne = m_pInstance->GetData(DRAKONID_1);
@@ -113,16 +113,20 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
 
             m_uiDrakeTypeOne = aPossibleDrake[uiPos1];
             m_uiDrakeTypeTwo = aPossibleDrake[uiPos2];
-            
+
             if (m_pInstance)
             {
                 m_pInstance->SetData(DRAKONID_1, m_uiDrakeTypeOne);
                 m_pInstance->SetData(DRAKONID_2, m_uiDrakeTypeTwo);
             }
         }
-        
+
         // Make him friendly from the start so you can talk to him.
         m_creature->setFaction(FACTION_FRIENDLY);
+
+        // Make visible if needed
+        if (m_creature->GetVisibility() != VISIBILITY_ON)
+            m_creature->SetVisibility(VISIBILITY_ON);
 
         Reset();
     }
@@ -153,16 +157,13 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
         m_uiMindControlTimer = 15000;
         m_uiShadowBlinkTimer0 = 20000;
         m_uiShadowBlinkTimer1 = 0;
-        m_uiResetTimer      = 15 * MINUTE * IN_MILLISECONDS;
+        m_uiResetTimer = 0;
         m_uiKilledAdds = 0;
         m_bIsNefarianSpawned = false;
 
         // set gossip flag to begin the event
         m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
 
-        // Make visible if needed
-        if (m_creature->GetVisibility() != VISIBILITY_ON)
-            m_creature->SetVisibility(VISIBILITY_ON);
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -192,6 +193,10 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
 
             blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
         }
+
+        // Set a 15 minute reset timer.
+        m_uiResetTimer = time(nullptr) + 15 * MINUTE;
+        m_creature->SetVisibility(VISIBILITY_OFF);
 
     }
 
@@ -244,6 +249,15 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+        if (m_uiResetTimer)
+        {
+            if (time(nullptr) >= m_uiResetTimer)
+            {
+                m_creature->SetVisibility(VISIBILITY_ON);
+                m_uiResetTimer = 0;
+            }
+        }
+
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
@@ -355,7 +369,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                     Creature* summoned_drakonoid;
 
                     summoned_drakonoid = m_creature->SummonCreature(m_uiDrakeTypeOne, aNefarianLocs[0].m_fX, aNefarianLocs[0].m_fY, aNefarianLocs[0].m_fZ,
-                                                                    5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
+                                         5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
 
                     if (blackwing_lair && summoned_drakonoid)
                     {
@@ -378,7 +392,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                     }
                     else
                         m_uiAddSpawnTimer = 6000;
-                    
+
                     ++m_uiSpawnWaveCounter;
                 }
                 else
@@ -390,7 +404,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                     {
                         Creature* summoned_drakonid;
                         summoned_drakonid = m_creature->SummonCreature(NPC_CHROMATIC_DRAKANOID, aNefarianLocs[i].m_fX, aNefarianLocs[i].m_fY, aNefarianLocs[i].m_fZ,
-                                                                       5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
+                                            5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
                         if (summoned_drakonid)
                         {
                             summoned_drakonid->setFaction(FACTION_BLACK_DRAGON);
