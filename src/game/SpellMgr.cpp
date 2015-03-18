@@ -3671,6 +3671,7 @@ SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spell
         // a trinket in alterac valley allows to teleport to the boss
         case 22564:                                         // recall
         case 22563:                                         // recall
+		case 23696:											// Alterac Heavy Runecloth Bandage
         {
             if (!player)
                 return SPELL_FAILED_REQUIRES_AREA;
