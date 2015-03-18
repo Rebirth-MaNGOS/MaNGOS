@@ -1321,13 +1321,14 @@ void World::SetInitialWorldSettings()
                     });
                 }
             }
-            lock.unlock();
             
             using namespace std::chrono;
             auto start = high_resolution_clock::now();
            
             // If we're overloaded we sleep until the tasks are cleared.
             sWorld.GetThreadPool()->wait(sWorld.GetActiveSessionCount());
+            
+            lock.unlock();
             
             auto diff =  high_resolution_clock::now() - start;
             
