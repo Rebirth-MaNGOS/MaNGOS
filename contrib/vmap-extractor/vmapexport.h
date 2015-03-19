@@ -22,51 +22,68 @@
  * and lore are copyrighted by Blizzard Entertainment, Inc.
  */
 
-#ifndef _VMAPFACTORY_H
-#define _VMAPFACTORY_H
+#ifndef VMAPEXPORT_H
+#define VMAPEXPORT_H
 
-#include "IVMapManager.h"
+#include <string>
+#include <set>
 
 /**
-This is the access point to the VMapManager.
-*/
+ * @brief
+ *
+ */
+typedef std::set<std::string> StringSet;
 
-namespace VMAP
+/**
+ * @brief
+ *
+ */
+enum ModelFlags
 {
-    //===========================================================
+    MOD_M2 = 1,
+    MOD_WORLDSPAWN = 1 << 1,
+    MOD_HAS_BOUND = 1 << 2
+};
 
-    /**
-     * @brief
-     *
-     */
-    class VMapFactory
-    {
-        public:
-            /**
-             * @brief
-             *
-             * @return IVMapManager
-             */
-            static IVMapManager* createOrGetVMapManager();
-            /**
-             * @brief
-             *
-             */
-            static void clear();
+extern const char* szWorkDirWmo; /**< TODO */
+extern const char* szRawVMAPMagic; /**< vmap magic string for extracted raw vmap data */
 
-            /**
-             * @brief
-             *
-             * @param pSpellIdString
-             */
-            static void preventSpellsFromBeingTestedForLoS(const char* pSpellIdString);
-            /**
-             * @brief
-             *
-             * @param pSpellId
-             * @return bool
-             */
-            static bool checkSpellForLoS(unsigned int pSpellId);
-    };
-}
+/**
+ * @brief
+ *
+ * @param file
+ * @return bool
+ */
+bool FileExists(const char* file);
+/**
+ * @brief
+ *
+ * @param str
+ */
+void strToLower(char* str);
+
+/**
+ * @brief
+ *
+ * @param fname
+ * @return bool
+ */
+bool ExtractSingleWmo(std::string& fname);
+
+/**
+ * @brief
+ *
+ * @param origPath original path of the model, cleaned with fixnamen and fixname2
+ * @param fixedName will store the translated name (if changed)
+ * @param failedPaths Set to collect errors
+ * @return bool
+ */
+bool ExtractSingleModel(std::string& origPath, std::string& fixedName, StringSet& failedPaths);
+
+/**
+ * @brief
+ *
+ */
+void ExtractGameobjectModels();
+
 #endif

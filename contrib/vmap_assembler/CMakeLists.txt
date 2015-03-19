@@ -28,6 +28,7 @@ ADD_DEFINITIONS("-DNO_CORE_FUNCS")
 ADD_DEFINITIONS("-Wall")
 ADD_DEFINITIONS("-ggdb")
 ADD_DEFINITIONS("-O3")
+ADD_DEFINITIONS("-std=c++11")
 
 include_directories(../../src/shared)
 include_directories(../../src/game/vmap/)

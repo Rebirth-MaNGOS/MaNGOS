@@ -22,51 +22,60 @@
  * and lore are copyrighted by Blizzard Entertainment, Inc.
  */
 
-#ifndef _VMAPFACTORY_H
-#define _VMAPFACTORY_H
+#ifndef WDTFILE_H
+#define WDTFILE_H
 
-#include "IVMapManager.h"
+#include "mpq_libmpq.h"
+#include "wmo.h"
+#include <string>
+#include "stdlib.h"
+
+class ADTFile;
 
 /**
-This is the access point to the VMapManager.
-*/
-
-namespace VMAP
+ * @brief
+ *
+ */
+class WDTFile
 {
-    //===========================================================
+    public:
+        /**
+         * @brief
+         *
+         * @param file_name
+         * @param file_name1
+         */
+        WDTFile(char* file_name, char* file_name1);
+        /**
+         * @brief
+         *
+         */
+        ~WDTFile(void);
+        /**
+         * @brief
+         *
+         * @param map_id
+         * @param mapID
+         * @return bool
+         */
+        bool init(char* map_id, unsigned int mapID);
 
-    /**
-     * @brief
-     *
-     */
-    class VMapFactory
-    {
-        public:
-            /**
-             * @brief
-             *
-             * @return IVMapManager
-             */
-            static IVMapManager* createOrGetVMapManager();
-            /**
-             * @brief
-             *
-             */
-            static void clear();
+        string* gWmoInstansName; /**< TODO */
+        int gnWMO, nMaps; /**< TODO */
 
-            /**
-             * @brief
-             *
-             * @param pSpellIdString
-             */
-            static void preventSpellsFromBeingTestedForLoS(const char* pSpellIdString);
-            /**
-             * @brief
-             *
-             * @param pSpellId
-             * @return bool
-             */
-            static bool checkSpellForLoS(unsigned int pSpellId);
-    };
-}
+        /**
+         * @brief
+         *
+         * @param x
+         * @param z
+         * @return ADTFile
+         */
+        ADTFile* GetMap(int x, int z);
+
+    private:
+        MPQFile WDT; /**< TODO */
+        bool maps[64][64]; /**< TODO */
+        string filename; /**< TODO */
+};
+
 #endif

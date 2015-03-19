@@ -1,6 +1,8 @@
-/*
- * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2009-2011 MaNGOSZero <https://github.com/mangos-zero>
+/**
+ * mangos-zero is a full featured server for World of Warcraft in its vanilla
+ * version, supporting clients for patch 1.12.x.
+ *
+ * Copyright (C) 2005-2014  MaNGOS project <http://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * World of Warcraft, and all World of Warcraft or Warcraft art, images,
+ * and lore are copyrighted by Blizzard Entertainment, Inc.
  */
 
 #include "ModelInstance.h"
@@ -27,10 +32,10 @@ using G3D::Ray;
 
 namespace VMAP
 {
-    ModelInstance::ModelInstance(const ModelSpawn &spawn, WorldModel *model): ModelSpawn(spawn), iModel(model)
+    ModelInstance::ModelInstance(const ModelSpawn& spawn, WorldModel* model): ModelSpawn(spawn), iModel(model)
     {
-        iInvRot = G3D::Matrix3::fromEulerAnglesZYX(G3D::pi()*iRot.y/180.f, G3D::pi()*iRot.x/180.f, G3D::pi()*iRot.z/180.f).inverse();
-        iInvScale = 1.f/iScale;
+        iInvRot = G3D::Matrix3::fromEulerAnglesZYX(G3D::pi() * iRot.y / 180.f, G3D::pi() * iRot.x / 180.f, G3D::pi() * iRot.z / 180.f).inverse();
+        iInvScale = 1.f / iScale;
     }
 
     bool ModelInstance::intersectRay(const G3D::Ray& pRay, float& pMaxDist, bool pStopAtFirstHit) const
@@ -55,7 +60,7 @@ namespace VMAP
         Ray modRay(p, iInvRot * pRay.direction());
         float distance = pMaxDist * iInvScale;
         bool hit = iModel->IntersectRay(modRay, distance, pStopAtFirstHit);
-        if(hit)
+        if (hit)
         {
             distance *= iScale;
             pMaxDist = distance;
@@ -63,7 +68,7 @@ namespace VMAP
         return hit;
     }
 
-    void ModelInstance::intersectPoint(const G3D::Vector3& p, AreaInfo &info) const
+    void ModelInstance::intersectPoint(const G3D::Vector3& p, AreaInfo& info) const
     {
         if (!iModel)
         {
@@ -75,9 +80,9 @@ namespace VMAP
 
         // M2 files don't contain area info, only WMO files
         if (flags & MOD_M2)
-            return;
+            { return; }
         if (!iBound.contains(p))
-            return;
+            { return; }
         // child bounds are defined in object space:
         Vector3 pModel = iInvRot * (p - iPos) * iInvScale;
         Vector3 zDirModel = iInvRot * Vector3(0.f, 0.f, -1.f);
@@ -97,7 +102,7 @@ namespace VMAP
         }
     }
 
-    bool ModelInstance::GetLocationInfo(const G3D::Vector3& p, LocationInfo &info) const
+    bool ModelInstance::GetLocationInfo(const G3D::Vector3& p, LocationInfo& info) const
     {
         if (!iModel)
         {
@@ -109,9 +114,9 @@ namespace VMAP
 
         // M2 files don't contain area info, only WMO files
         if (flags & MOD_M2)
-            return false;
+            { return false; }
         if (!iBound.contains(p))
-            return false;
+            { return false; }
         // child bounds are defined in object space:
         Vector3 pModel = iInvRot * (p - iPos) * iInvScale;
         Vector3 zDirModel = iInvRot * Vector3(0.f, 0.f, -1.f);
@@ -133,11 +138,11 @@ namespace VMAP
         return false;
     }
 
-    bool ModelInstance::GetLiquidLevel(const G3D::Vector3& p, LocationInfo &info, float &liqHeight) const
+    bool ModelInstance::GetLiquidLevel(const G3D::Vector3& p, LocationInfo& info, float& liqHeight) const
     {
         // child bounds are defined in object space:
         Vector3 pModel = iInvRot * (p - iPos) * iInvScale;
-        //Vector3 zDirModel = iInvRot * Vector3(0.f, 0.f, -1.f);
+        // Vector3 zDirModel = iInvRot * Vector3(0.f, 0.f, -1.f);
         float zLevel;
         if (info.hitModel->GetLiquidLevel(pModel, zLevel))
         {
@@ -151,15 +156,15 @@ namespace VMAP
         return false;
     }
 
-    bool ModelSpawn::readFromFile(FILE *rf, ModelSpawn &spawn)
+    bool ModelSpawn::readFromFile(FILE* rf, ModelSpawn& spawn)
     {
-        uint32 check=0, nameLen;
+        uint32 check = 0, nameLen;
         check += fread(&spawn.flags, sizeof(uint32), 1, rf);
         // EoF?
         if (!check)
         {
             if (ferror(rf))
-                ERROR_LOG("Error reading ModelSpawn!");
+                { ERROR_LOG("Error reading ModelSpawn!"); }
             return false;
         }
         check += fread(&spawn.adtId, sizeof(uint16), 1, rf);
@@ -176,13 +181,13 @@ namespace VMAP
             spawn.iBound = G3D::AABox(bLow, bHigh);
         }
         check += fread(&nameLen, sizeof(uint32), 1, rf);
-        if(check != (has_bound ? 17 : 11))
+        if (check != uint32(has_bound ? 17 : 11))
         {
             ERROR_LOG("Error reading ModelSpawn!");
             return false;
         }
         char nameBuff[500];
-        if (nameLen>500) // file names should never be that long, must be file error
+        if (nameLen > 500) // file names should never be that long, must be file error
         {
             ERROR_LOG("Error reading ModelSpawn, file name too long!");
             return false;
@@ -197,9 +202,9 @@ namespace VMAP
         return true;
     }
 
-    bool ModelSpawn::writeToFile(FILE *wf, const ModelSpawn &spawn)
+    bool ModelSpawn::writeToFile(FILE* wf, const ModelSpawn& spawn)
     {
-        uint32 check=0;
+        uint32 check = 0;
         check += fwrite(&spawn.flags, sizeof(uint32), 1, wf);
         check += fwrite(&spawn.adtId, sizeof(uint16), 1, wf);
         check += fwrite(&spawn.ID, sizeof(uint32), 1, wf);
@@ -207,17 +212,16 @@ namespace VMAP
         check += fwrite(&spawn.iRot, sizeof(float), 3, wf);
         check += fwrite(&spawn.iScale, sizeof(float), 1, wf);
         bool has_bound = (spawn.flags & MOD_HAS_BOUND);
-        if(has_bound) // only WMOs have bound in MPQ, only available after computation
+        if (has_bound) // only WMOs have bound in MPQ, only available after computation
         {
             check += fwrite(&spawn.iBound.low(), sizeof(float), 3, wf);
             check += fwrite(&spawn.iBound.high(), sizeof(float), 3, wf);
         }
         uint32 nameLen = spawn.name.length();
         check += fwrite(&nameLen, sizeof(uint32), 1, wf);
-        if(check != (has_bound ? 17 : 11)) return false;
+        if (check != uint32(has_bound ? 17 : 11)) { return false; }
         check = fwrite(spawn.name.c_str(), sizeof(char), nameLen, wf);
-        if(check != nameLen) return false;
+        if (check != nameLen) { return false; }
         return true;
     }
-
 }
