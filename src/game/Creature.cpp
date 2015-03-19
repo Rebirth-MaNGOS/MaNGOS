@@ -2107,8 +2107,11 @@ bool Creature::IsOutOfThreatArea(Unit* pVictim) const
     if(sMapStore.LookupEntry(GetMapId())->IsDungeon())
         return false;
 
-    // Only allow the mob to reset if the leash timers have run out.
-    if (m_noPlayerHitResetTimer == 0 && m_noCreatureMeleeHitResetTimer == 0)
+    Map* pMap = GetMap();
+
+    // Only allow the mob to reset if the leash timers have run out 
+    // and the current map is one of the world continents.
+    if (m_noPlayerHitResetTimer == 0 && m_noCreatureMeleeHitResetTimer == 0 && pMap && pMap->GetId() <= 1)
     {
         float AttackDist = GetAttackDistance(pVictim);
         float ThreatRadius = sWorld.getConfig(CONFIG_FLOAT_THREAT_RADIUS);
