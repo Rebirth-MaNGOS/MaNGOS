@@ -405,7 +405,8 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                         Creature* summoned_drakonid;
                         summoned_drakonid = m_creature->SummonCreature(NPC_CHROMATIC_DRAKANOID, aNefarianLocs[i].m_fX, aNefarianLocs[i].m_fY, aNefarianLocs[i].m_fZ,
                                             5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
-                        if (summoned_drakonid)
+                        
+                        if (blackwing_lair && summoned_drakonid)
                         {
                             summoned_drakonid->setFaction(FACTION_BLACK_DRAGON);
                             blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonid->GetObjectGuid());
