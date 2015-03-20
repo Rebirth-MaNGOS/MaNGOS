@@ -1240,7 +1240,7 @@ struct MANGOS_DLL_DECL npc_cerellean_whiteclawAI : public npc_escortAI
 						break;
 					case 7:
 						DoScriptText(CERELLAN_SAY_5, m_creature);
-						m_uiSpeechTimer = 5000;
+						m_uiSpeechTimer = 40000;
 						break;
 					case 8:
 						m_creature->SetStandState(UNIT_STAND_STATE_STAND);
@@ -1255,7 +1255,6 @@ struct MANGOS_DLL_DECL npc_cerellean_whiteclawAI : public npc_escortAI
                 m_uiSpeechTimer -= uiDiff;
 		}
 	}
-
 };
 
 CreatureAI* GetAI_npc_cerellean_whiteclaw(Creature* pCreature)
