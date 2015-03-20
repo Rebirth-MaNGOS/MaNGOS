@@ -27,7 +27,7 @@ ADD_DEFINITIONS( -DNO_vsnprintf )
 #ADD_DEFINITIONS("-ggdb")
 #ADD_DEFINITIONS("-O3")
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} " -g -std=c++11")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} " -g -std=c++11 -O3")
 
 include_directories(
     ../../src
