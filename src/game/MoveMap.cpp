@@ -403,11 +403,6 @@ namespace MMAP
 
         filter.setIncludeFlags(flags);
         
-		const int maxPath = 64;
-        float rayLength, normal[3];
-        int pathLength;
-        dtPolyRef polyPath[maxPath];
-
 		// Check if the current path will cross a barrier.
 		bool had_intersection = false;
 		std::vector<PathingBarrier> const& barriers = sObjectMgr.GetPathingBarrier(mapId);
@@ -443,8 +438,10 @@ namespace MMAP
 
 		float fromPoint[3] = { startY, startZ, startX };
         float toPoint[3] = { endY, endZ, endX };
+        dtPolyRef visited[10];
+        int visitedCount;
 
-        if (query->raycast(unitPoly,fromPoint,toPoint,&filter, &rayLength, normal, polyPath, &pathLength, maxPath) != DT_SUCCESS)
+        if (query->moveAlongSurface(unitPoly,fromPoint,toPoint,&filter, toPoint, visited, &visitedCount, 10) != DT_SUCCESS)
         {
             endX = startX;
             endY = startY;
@@ -452,27 +449,11 @@ namespace MMAP
             return false;
         }
 
-        if (rayLength <= 1)
+        float h = 0;
+        if (query->getPolyHeight(visited[visitedCount - 1], toPoint, &h) == DT_SUCCESS)
         {
-            endX = startX + (endX - startX) * (rayLength-0.001f);
-            endY = startY + (endY - startY) * (rayLength-0.001f);
-            endZ = startZ + (endZ - startZ) * (rayLength-0.001f);
+            endZ = h;
         }
-
-        if (pathLength)
-		{
-            float contactPosition[3] = {endY, endZ, endX};
-			float h = 0;
-
-            for (int polygonIndex = pathLength-1; polygonIndex >= 0; polygonIndex--)
-            {
-			    if (query->getPolyHeight(polyPath[polygonIndex], contactPosition, &h) == DT_SUCCESS)
-                {
-			        endZ = h;
-                    break;
-                }
-            }
-		}
 
         return true;
     }
