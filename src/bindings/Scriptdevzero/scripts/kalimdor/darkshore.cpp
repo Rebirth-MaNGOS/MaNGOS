@@ -900,6 +900,7 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 			m_despawnTimer = 0;			// despawn timer shouldn't be needed anymore
 			m_bOutro = true;
 			m_uiSpeechTimer = 2000;
+			m_uiSpeechStep		= 1;			// need this here so the outro can be repeated more than once.
         }
 	}
 
@@ -1153,6 +1154,128 @@ bool QuestAccept_npc_therylune(Player* pPlayer, Creature* pCreature, const Quest
     return true;
 }
 
+/*####
+# npc_cerellean_whiteclaw
+####*/
+
+enum
+{
+	CERELLAN_SAY_1					 = -1720032,
+	CERELLAN_SAY_2					 = -1720033,
+	CERELLAN_SAY_3					 = -1720034,
+	CERELLAN_SAY_4					 = -1720035,
+	CERELLAN_SAY_5					 = -1720036,
+
+	NPC_ANAYA						 = 3843,
+
+    QUEST_ID_FOR_LOVE_ETERNAL        = 963,
+};
+
+struct MANGOS_DLL_DECL npc_cerellean_whiteclawAI : public npc_escortAI
+{
+    npc_cerellean_whiteclawAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;;
+		m_uiSpeechTimer = 0;
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+	void JustStartedEscort()
+    {
+    }
+	
+	void StartOutro()
+	{
+		m_bOutro = true; 
+		m_uiSpeechTimer = 6000;
+		m_uiSpeechStep = 1;
+		m_creature->SummonCreature(NPC_ANAYA, 6427.54f, 604.45f, 9.46f, 4.19f, TEMPSUMMON_TIMED_DESPAWN, 56000, true);
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {
+                    case 1:
+                        DoScriptText(CERELLAN_SAY_1, m_creature);
+						m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 14000;
+                        break;
+					case 2:
+						DoScriptText(CERELLAN_SAY_2, m_creature);
+						m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 3:
+						m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+						m_uiSpeechTimer = 4000;
+						break;
+					case 4:
+						DoScriptText(CERELLAN_SAY_3, m_creature);
+						m_uiSpeechTimer = 20000;
+						break;
+					case 5:
+						DoScriptText(CERELLAN_SAY_4, m_creature);
+						m_uiSpeechTimer = 10000;
+						break;
+					case 6:
+						m_creature->GenericTextEmote("Anaya's soft voice trails away into the mists. \"Know that I love you always...\" ", NULL, false);
+						m_uiSpeechTimer = 4000;
+						break;
+					case 7:
+						DoScriptText(CERELLAN_SAY_5, m_creature);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 8:
+						m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+
+};
+
+CreatureAI* GetAI_npc_cerellean_whiteclaw(Creature* pCreature)
+{
+    return new npc_cerellean_whiteclawAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_cerellan(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_FOR_LOVE_ETERNAL)
+    {
+		if (npc_cerellean_whiteclawAI* pEscortAI = dynamic_cast<npc_cerellean_whiteclawAI*>(pCreature->AI()))
+		{
+			pEscortAI->Start(false, pPlayer, pQuest);
+			pEscortAI->StartOutro();
+		}
+	}
+	return true;
+}
+
 void AddSC_darkshore()
 {
     Script* pNewscript;
@@ -1202,5 +1325,11 @@ void AddSC_darkshore()
     pNewscript->Name = "npc_therylune";
     pNewscript->GetAI = &GetAI_npc_therylune;
     pNewscript->pQuestAcceptNPC = &QuestAccept_npc_therylune;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_cerellean_whiteclaw";
+    pNewscript->GetAI = &GetAI_npc_cerellean_whiteclaw;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_cerellan;
     pNewscript->RegisterSelf();
 }
