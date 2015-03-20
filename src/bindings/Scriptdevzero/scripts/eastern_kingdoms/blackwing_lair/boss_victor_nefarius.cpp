@@ -41,7 +41,7 @@ enum
     GOSSIP_TEXT_NEFARIUS_3          = 7199,
 
     MAX_DRAKES                      = 5,
-    MAX_DRAKE_SUMMONS               = 42,
+    MAX_DRAKE_SUMMONS               = 0,
     NPC_BRONZE_DRAKANOID            = 14263,
     NPC_BLUE_DRAKANOID              = 14261,
     NPC_RED_DRAKANOID               = 14264,
@@ -73,7 +73,7 @@ static const SpawnLocation aNefarianLocs[5] =
 {
     {-7599.32f, -1191.72f, 475.545f},                       // opening where red/blue/black darknid spawner appear (ori 3.05433)
     {-7526.27f, -1135.04f, 473.445f},                       // same as above, closest to door (ori 5.75959)
-    {-7498.177f, -1273.277f, 481.649f},                     // nefarian spawn location (ori 1.798)
+    {-7468.177f, -1293.277f, 486.649f},                     // nefarian spawn location (ori 1.798)
     {-7592.0f, -1264.0f, 481.0f},                           // hide pos (useless; remove this)
     {-7502.002f, -1256.503f, 476.758f},                     // nefarian fly to this position
 };
@@ -204,14 +204,17 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
     {
         if (pSummoned->GetEntry() == NPC_NEFARIAN)
         {
+            pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
             pSummoned->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+
+            pSummoned->SetHover(true);
 
             // see boss_onyxia (also note the removal of this in boss_nefarian)
             pSummoned->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
-            pSummoned->AddSplineFlag(SPLINEFLAG_FLYING);
+            pSummoned->SetSplineFlags(SPLINEFLAG_FLYING);//>AddSplineFlag(SPLINEFLAG_FLYING);
 
             // Let Nefarian fly towards combat area
-            pSummoned->GetMotionMaster()->MovePoint(1, aNefarianLocs[4].m_fX, aNefarianLocs[4].m_fY, aNefarianLocs[4].m_fZ);
+            pSummoned->MonsterMove(aNefarianLocs[4].m_fX, aNefarianLocs[4].m_fY, aNefarianLocs[4].m_fZ, 7500);//>GetMotionMaster()->MovePoint(1, aNefarianLocs[4].m_fX, aNefarianLocs[4].m_fY, aNefarianLocs[4].m_fZ);
         }
         else
         {
