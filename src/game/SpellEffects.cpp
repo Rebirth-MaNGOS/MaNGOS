@@ -5485,18 +5485,6 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
             {
                 m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
             }
-            else
-            {
-                if(m_caster->GetTypeId() == TYPEID_PLAYER)
-                {
-                    m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
-                }
-                else
-                {
-                    m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
-                }
-            }
-
         }
 
     }
