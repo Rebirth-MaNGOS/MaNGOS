@@ -2838,8 +2838,8 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     // Charge stun delay (Charge, Intercept, Feral Charge).
     if(m_spellInfo->Id == 7922 || m_spellInfo->Id == 20615 || m_spellInfo->Id == 20614 || m_spellInfo->Id == 20253 || m_spellInfo->Id == 19675)
     {
-        m_casttime = m_caster->GetDistance(targets->getUnitTarget())*20;
-        ((Player*)m_caster)->SetChargeTimer(m_casttime+50);
+        m_casttime = m_caster->GetDistance(targets->getUnitTarget())*10;
+        ((Player*)m_caster)->SetChargeTimer(m_casttime+10);
         if(m_spellInfo->Id == 19675)
         {
             EffectInterruptCast(EFFECT_INDEX_2);
@@ -2856,7 +2856,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
             && m_caster->getVictim() == NULL && !m_caster->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED))
     {
         if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252
-            && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 )) // Charge should not aggro at cast.
+            && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 ))
         {
             m_caster->Attack(target, false);
         }

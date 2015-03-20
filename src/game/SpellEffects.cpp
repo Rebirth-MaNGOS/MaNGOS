@@ -5328,17 +5328,36 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
         if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
         {
             MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
-            dtPolyRef polyRef;
+            dtPolyRef polyRef, polyRefE;
             float ox,oy,oz;
             unitTarget->GetPosition(ox,oy,oz);
 
             if (!mmap->GetNearestValidPosition(unitTarget, 1, 1, 5, ox, oy, oz,&polyRef))
                 return;
 
-            if (!mmap->DrawRay(unitTarget, polyRef, ox,oy,oz, fx, fy, fz)) 
+            if (!mmap->DrawRay(unitTarget, polyRef, ox,oy,oz+1.0f, fx, fy, fz)) 
                 return;
 
-            unitTarget->UpdateAllowedPositionZ(fx, fy, fz);
+            PathInfo path(m_caster, fx, fy, fz);
+            PointPath pointPath = path.getFullPath();
+
+            fx = pointPath[pointPath.size()-1].x;
+            fy = pointPath[pointPath.size()-1].y;
+            fz = pointPath[pointPath.size()-1].z;
+
+            float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, MAX_HEIGHT);
+            float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, fz);
+
+            if(abs(fz - floor_z) < abs(ground_z - fz))
+            {
+                fz = floor_z;
+            }
+            else
+            {
+                fz = ground_z;
+            }
+
+            //unitTarget->UpdateAllowedPositionZ(fx, fy, fz);
 
             unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
 
