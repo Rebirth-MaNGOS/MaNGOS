@@ -5344,17 +5344,22 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
             fx = pointPath[pointPath.size()-1].x;
             fy = pointPath[pointPath.size()-1].y;
             fz = pointPath[pointPath.size()-1].z;
-
-            float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, MAX_HEIGHT);
-            float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, fz);
-
-            if(abs(fz - floor_z) < abs(ground_z - fz))
+            
+            if(!m_caster->GetMap()->GetTerrain()->IsInWater(fx, fy, fz))
             {
-                fz = floor_z;
-            }
-            else
-            {
-                fz = ground_z;
+
+
+                float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, MAX_HEIGHT);
+                float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, fz);
+
+                if(abs(fz - floor_z) < abs(ground_z - fz))
+                {
+                    fz = floor_z;
+                }
+                else
+                {
+                    fz = ground_z;
+                }
             }
 
             //unitTarget->UpdateAllowedPositionZ(fx, fy, fz);
