@@ -5338,6 +5338,8 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
             if (!mmap->DrawRay(unitTarget, polyRef, ox,oy,oz, fx, fy, fz)) 
                 return;
 
+            unitTarget->UpdateAllowedPositionZ(fx, fy, fz);
+
             unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
 
         } else
