@@ -4191,8 +4191,18 @@ void Spell::EffectHealMaxHealth(SpellEffectIndex /*eff_idx*/)
     m_healing += heal;
 }
 
-void Spell::EffectInterruptCast(SpellEffectIndex /*eff_idx*/)
+void Spell::EffectInterruptCast(SpellEffectIndex eff_idx)
 {
+    if(m_spellInfo->Id == 19675 && eff_idx == EFFECT_INDEX_2) // Initial Feral charge interrupt.
+    {
+        if(m_caster->getVictim())
+            unitTarget = m_caster->getVictim();
+    }
+    else if(m_spellInfo->Id == 19675 && eff_idx != EFFECT_INDEX_2) // Immobolizing part of charge should not interrupt.
+    {
+        return;
+    }
+
     if(!unitTarget)
         return;
     if(!unitTarget->isAlive())
@@ -5477,11 +5487,19 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
         {
             if(m_caster->GetTypeId() == TYPEID_PLAYER)
             {
-                m_caster->UpdateSpeed(MOVE_RUN, true, 7);
-                m_caster->UpdateSpeed(MOVE_WALK, true, 7);
-                m_caster->UpdateSpeed(MOVE_SWIM, true, 7);
-                m_caster->GetMotionMaster()->MoveChase(unitTarget);//>MovePoint(0, x, y, z, true);
-                ((Player*)m_caster)->SetChargeTarget(m_caster->GetTargetGuid());
+                if(!unitTarget->IsInWater())
+                {
+                    m_caster->UpdateSpeed(MOVE_RUN, true, 7);
+                    m_caster->UpdateSpeed(MOVE_WALK, true, 7);
+                    m_caster->UpdateSpeed(MOVE_SWIM, true, 7);
+                    m_caster->GetMotionMaster()->MoveChase(unitTarget);//>MovePoint(0, x, y, z, true);
+                    ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID()/*m_caster->GetTargetGuid()*/);
+                }
+                else
+                {
+                    m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                }
+
             }
             else
             {

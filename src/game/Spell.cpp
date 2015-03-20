@@ -1317,7 +1317,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
 
                 if (!unit->IsPassiveToSpells())
                 {
-                    if(m_spellInfo->Id != 11578)
+                    if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 ))
                     {
                         if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
                             ((Creature*)unit)->AI()->AttackedBy(realCaster);
@@ -1329,13 +1329,13 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
                     }
                     else
                     {
-                        if(m_spellInfo->Id != 11578)
+                        if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 ))
                         {
                             unit->AddThreat(realCaster);
                         }
                     }
 
-                    if(m_spellInfo->Id != 11578)
+                    if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 ))
                     {
                         unit->SetInCombatWith(realCaster);
                         realCaster->SetInCombatWith(unit);
@@ -2835,23 +2835,28 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     m_casttime = GetSpellCastTime(m_spellInfo, this);
     m_duration = CalculateSpellDuration(m_spellInfo, m_caster);
 
-    // Charge stun delay.
-    if(m_spellInfo->Id == 7922)
+    // Charge stun delay (Charge, Intercept, Feral Charge).
+    if(m_spellInfo->Id == 7922 || m_spellInfo->Id == 20615 || m_spellInfo->Id == 20614 || m_spellInfo->Id == 20253 || m_spellInfo->Id == 19675)
     {
         m_casttime = m_caster->GetDistance(targets->getUnitTarget())*20;
         ((Player*)m_caster)->SetChargeTimer(m_casttime+50);
+        if(m_spellInfo->Id == 19675)
+        {
+            EffectInterruptCast(EFFECT_INDEX_2);
+        }
     }
 
     // set timer base at cast time
     ReSetTimer();
-
+        
     // Make sure the caster is added to the list of attackers when casting a spell against a hostile target.
     Unit* target = m_targets.getUnitTarget();
 
     if (target && m_caster->IsHostileTo(target) && std::find(target->getAttackers().begin(), target->getAttackers().end(), m_caster) == target->getAttackers().end()
             && m_caster->getVictim() == NULL && !m_caster->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED))
     {
-        if(m_spellInfo->Id != 11578)
+        if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252
+            && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 )) // Charge should not aggro at cast.
         {
             m_caster->Attack(target, false);
         }
@@ -5994,7 +5999,7 @@ SpellCastResult Spell::CheckRange(bool strict)
             return SPELL_FAILED_TOO_CLOSE;
     }
 
-    if(m_spellInfo->Id == 11578)
+    if((m_spellInfo->Id == 11578 || m_spellInfo->Id == 100 || m_spellInfo->Id == 6178 || m_spellInfo->Id == 20252 || m_spellInfo->Id == 20616 || m_spellInfo->Id == 20617 || m_spellInfo->Id == 16979 ) && !target->IsInWater())
     {
         PathInfo path(m_caster, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
         PointPath pointPath = path.getFullPath();
