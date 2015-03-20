@@ -5490,24 +5490,6 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
         {
             if(m_caster->GetTypeId() == TYPEID_PLAYER)
             {
-            /*    if(unitTarget->GetTypeId() == TYPEID_PLAYER)
-                {
-                    x = x + (1*cos(unitTarget->GetAngle(m_caster)));
-                    y = y + (1*sin(unitTarget->GetAngle(m_caster)));
-                    ((Player*)m_caster)->SetChargeTarget(unitTarget);
-                }
-                else
-                {*/
-
-                    //m_caster->UpdateSpeed(MOVE_RUN, true, 7);
-                    //m_caster->UpdateSpeed(MOVE_WALK, true, 7);
-                    //m_caster->UpdateSpeed(MOVE_SWIM, true, 7);
-                 /*   PathInfo path(m_caster, x, y, z);
-                    PointPath pointPath = path.getFullPath();
-                    SplineFlags flags = SPLINEFLAG_WALKMODE;
-                    m_caster->SendMonsterMoveByPath(pointPath, 1, pointPath.size(), flags, 0.1f);//>SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, flags, 0.1f, (Player*)m_caster);//SendMonsterMoveWithSpeed(x, y, z, 0.1f, (Player*)m_caster);//>GetMotionMaster()->MovePoint(0, x, y, z, true);   
-                    ((Player*)m_caster)->SetChargeTarget(m_caster->GetTargetGuid());*/
-            //    }
                 m_caster->UpdateSpeed(MOVE_RUN, true, 7);
                 m_caster->UpdateSpeed(MOVE_WALK, true, 7);
                 m_caster->UpdateSpeed(MOVE_SWIM, true, 7);
@@ -5516,7 +5498,18 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
             }
             else
             {
-                m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
+            }
+            else
+            {
+                if(m_caster->GetTypeId() == TYPEID_PLAYER)
+                {
+                    m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                }
+                else
+                {
+                    m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
+                }
             }
 
         }
@@ -5524,7 +5517,14 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     }
     else
     {
-        m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+            if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            {
+                m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+            }
+            else
+            {
+                m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
+            }
     }
 
 
