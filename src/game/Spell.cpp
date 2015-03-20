@@ -48,6 +48,9 @@
 #include "Chat.h"
 #include "Object.h"
 #include "Totem.h"
+#include "MoveMap.h"
+#include "MoveMapSharedDefines.h"
+#include "PathFinder.h"
 
 #define SPELL_CHANNEL_UPDATE_INTERVAL (1 * IN_MILLISECONDS)
 
@@ -1314,8 +1317,11 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
 
                 if (!unit->IsPassiveToSpells())
                 {
-                    if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
-                        ((Creature*)unit)->AI()->AttackedBy(realCaster);
+                    if(m_spellInfo->Id != 11578)
+                    {
+                        if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
+                            ((Creature*)unit)->AI()->AttackedBy(realCaster);
+                    }
 
                     if(strcmp("Holy Nova", *m_spellInfo->SpellName) == 0) // Holy nova adds no threat.
                     {
@@ -1323,11 +1329,17 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
                     }
                     else
                     {
-                        unit->AddThreat(realCaster);
+                        if(m_spellInfo->Id != 11578)
+                        {
+                            unit->AddThreat(realCaster);
+                        }
                     }
 
-                    unit->SetInCombatWith(realCaster);
-                    realCaster->SetInCombatWith(unit);
+                    if(m_spellInfo->Id != 11578)
+                    {
+                        unit->SetInCombatWith(realCaster);
+                        realCaster->SetInCombatWith(unit);
+                    }
                 }
 
                 if (Player *attackedPlayer = unit->GetCharmerOrOwnerPlayerOrPlayerItself())
@@ -2823,6 +2835,13 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     m_casttime = GetSpellCastTime(m_spellInfo, this);
     m_duration = CalculateSpellDuration(m_spellInfo, m_caster);
 
+    // Charge stun delay.
+    if(m_spellInfo->Id == 7922)
+    {
+        m_casttime = m_caster->GetDistance(targets->getUnitTarget())*20;
+        ((Player*)m_caster)->SetChargeTimer(m_casttime+50);
+    }
+
     // set timer base at cast time
     ReSetTimer();
 
@@ -2832,7 +2851,10 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     if (target && m_caster->IsHostileTo(target) && std::find(target->getAttackers().begin(), target->getAttackers().end(), m_caster) == target->getAttackers().end()
             && m_caster->getVictim() == NULL && !m_caster->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED))
     {
-        m_caster->Attack(target, false);
+        if(m_spellInfo->Id != 11578)
+        {
+            m_caster->Attack(target, false);
+        }
     }
 
     // stealth must be removed at cast starting (at show channel bar)
@@ -5970,6 +5992,25 @@ SpellCastResult Spell::CheckRange(bool strict)
             return SPELL_FAILED_OUT_OF_RANGE;
         if(min_range && m_caster->IsWithinDist3d(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, min_range))
             return SPELL_FAILED_TOO_CLOSE;
+    }
+
+    if(m_spellInfo->Id == 11578)
+    {
+        PathInfo path(m_caster, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
+        PointPath pointPath = path.getFullPath();
+        if(pointPath.GetTotalLength() > 30.0f)
+        {
+            return SPELL_FAILED_NOPATH;
+        }
+
+        MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
+        dtPolyRef polyRef;
+
+        float tempx, tempy, temz;
+        target->GetPosition(tempx,tempy,temz);
+
+        if (!mmap->GetNearestValidPosition(target,3,3,5,tempx,tempy,temz,&polyRef))
+            return SPELL_FAILED_NOPATH;
     }
 
     return SPELL_CAST_OK;

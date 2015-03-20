@@ -901,6 +901,12 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         static bool BuildEnumData( QueryResult * result,  WorldPacket * p_data );
 
+        void SetChargeTimer(uint32 timer);
+        uint32 GetChargeTimer();
+
+        ObjectGuid GetChargeTarget();
+        void SetChargeTarget(ObjectGuid target);
+
         void SetInWater(bool apply);
 
         bool IsInWater() const { return m_isInWater; }
@@ -1584,6 +1590,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendResetInstanceSuccess(uint32 MapId);
         void SendResetInstanceFailed(uint32 reason, uint32 MapId);
         void SendResetFailedNotify(uint32 mapid);
+
 private:
 	std::map<uint32, std::list<time_t> > m_InstanceResetLists;
 public:
@@ -2349,6 +2356,10 @@ public:
 
         uint32 m_lastFallTime;
         float  m_lastFallZ;
+
+        uint32 m_chargeTimer;
+        ObjectGuid chargeTarget;
+        bool m_isCharging;
 
         uint8 m_isunderwater;
         bool m_isInWater;

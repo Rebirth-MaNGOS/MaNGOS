@@ -371,6 +371,8 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 
     m_isActiveObject = true;                                // player is always active object
 
+    m_isCharging = false;
+
     m_session = session;
 
     m_ExtraFlags = 0;
@@ -881,6 +883,11 @@ void Player::SendMirrorTimer(MirrorTimerType Type, uint32 MaxValue, uint32 Curre
     GetSession()->SendPacket( &data );
 }
 
+ObjectGuid Player::GetChargeTarget()
+{
+    return chargeTarget;
+}
+
 void Player::StopMirrorTimer(MirrorTimerType Type)
 {
     m_MirrorTimer[Type] = DISABLED_MIRROR_TIMER;
@@ -1123,6 +1130,16 @@ void Player::SetDrunkValue(uint16 newDrunkenValue, uint32 /*itemId*/)
         m_detectInvisibilityMask &= ~(1<<6);
 }
 
+void Player::SetChargeTimer(uint32 timer)
+{
+    m_chargeTimer = timer;
+}
+
+uint32 Player::GetChargeTimer()
+{
+    return m_chargeTimer;
+}
+
 void Player::Update( uint32 update_diff, uint32 p_time )
 {
     if(!IsInWorld())
@@ -1141,6 +1158,83 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         // It will be recalculate at mailbox open (for unReadMails important non-0 until mailbox open, it also will be recalculated)
         m_nextMailDelivereTime = 0;
     }
+
+    /********************** CHARGE TRIALS ********************************************************/
+
+    if(GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE && !m_isCharging)
+    {
+        m_isCharging = true;
+    }
+
+    if(GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE && GetMotionMaster()->GetCurrentMovementGeneratorType() != CHASE_MOTION_TYPE && m_isCharging)
+    {
+        m_isCharging = false;
+        UpdateSpeed(MOVE_RUN, true, 1);
+        UpdateSpeed(MOVE_WALK, true, 1);
+        UpdateSpeed(MOVE_SWIM, true, 1);
+    }
+
+    if(GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE && m_isCharging)
+    {
+        if(m_chargeTimer <= update_diff)
+        {
+            if(Unit *target = GetMap()->GetUnit(GetChargeTarget()))
+            {
+                float x;
+                float y;
+                
+                if(target->GetTypeId() == TYPEID_PLAYER)
+                {
+                    x = target->GetPositionX() + (1.5*cos(target->GetAngle(this)));
+                    y = target->GetPositionY() + (1.5*sin(target->GetAngle(this)));
+                }
+                else
+                {
+                    x = target->GetPositionX() + (2*target->GetObjectBoundingRadius()*cos(target->GetAngle(this)));
+                    y = target->GetPositionY() + (2*target->GetObjectBoundingRadius()*sin(target->GetAngle(this)));
+                }
+                GetMotionMaster()->MovePoint(0, x, y, target->GetPositionZ(), true);
+                m_chargeTimer = 0;
+            }
+            else
+            {
+                GetMotionMaster()->SuspendChaseMovement();
+                GetMotionMaster()->Clear();
+                m_isCharging = false;
+            }
+        } else
+            m_chargeTimer -= update_diff;
+    }
+/*    if(GetMotionMaster()->GetCurrentMovementGeneratorType() == POINT_MOTION_TYPE && !m_isCharging)
+    {
+        m_isCharging = true;
+    }
+
+    if(m_isCharging && GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE)
+    {
+        UpdateSpeed(MOVE_WALK, true, 1);
+        UpdateSpeed(MOVE_RUN, true, 1);
+        UpdateSpeed(MOVE_SWIM, true, 1);
+        m_isCharging = false;
+        if(Unit *trgt = GetChargeTarget())
+            SetFacingToObject(trgt);
+    }*/
+  /*  else if(m_isCharging)
+    {
+        if(chargeTarget)
+        {
+            if(GetDistance(chargeTarget) <= 1.0f)
+            {
+                m_isCharging = false;
+                chargeTarget = nullptr;
+                UpdateSpeed(MOVE_WALK, true, 1);
+                UpdateSpeed(MOVE_RUN, true, 1);
+                UpdateSpeed(MOVE_SWIM, true, 1);
+                GetMotionMaster()->Clear();
+            }
+        }
+    }*/
+    /********************** CHARGE TRIALS ********************************************************/
 
     //used to implement delayed far teleports
     SetCanDelayTeleport(true);
@@ -1412,6 +1506,11 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
     if(isCharmed() && AI())  // Make sure to only call the AI if the player has an AI. This is currently only used for the Gnomish Mind Control Cap.
         AI()->UpdateAI(update_diff);
+}
+
+void Player::SetChargeTarget(ObjectGuid target)
+{
+    chargeTarget = target;
 }
 
 void Player::SetDeathState(DeathState s)

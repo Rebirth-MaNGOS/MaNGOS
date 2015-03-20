@@ -55,6 +55,10 @@
 #include "MoveMap.h"
 #include "MoveMapSharedDefines.h"
 #include "PathFinder.h"
+#include "PointMovementGenerator.h"
+#include "GridMap.h"
+#include "DestinationHolder.h"
+#include "Traveller.h"
 
 pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
 {
@@ -5308,23 +5312,39 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
         float direction = unitTarget->GetOrientation();
         float fx = unitTarget->GetPositionX() + dis * cos(direction);
         float fy = unitTarget->GetPositionY() + dis * sin(direction);
-        float fz = unitTarget->GetPositionZ() + 5.0f;
+        float fz = unitTarget->GetPositionZ();
 
         uint32 mapId = unitTarget->GetMapId();
         if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
         {
             MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
-            dtPolyRef polyRef;
+            dtPolyRef polyRef, polyRefr;
             float ox,oy,oz;
             unitTarget->GetPosition(ox,oy,oz);
 
-            if (!mmap->GetNearestValidPosition(unitTarget, 1, 1, 5, ox, oy, oz,&polyRef))
-                return;
+            if(!unitTarget->GetMap()->GetTerrain()->IsInWater(fx, fy, fz))
+            {
+                if (!mmap->GetNearestValidPosition(unitTarget, 1, 1, 5, ox, oy, oz,&polyRef))
+                    return;
 
-            if (!mmap->DrawRay(unitTarget, polyRef, ox,oy,oz, fx, fy, fz))
-                return;
+                for(int i = 0; i < 3; i++)
+                {
+                    if (!mmap->DrawRay(unitTarget, polyRef, ox,oy,oz, fx, fy, fz))
+                    {
+                        fx = unitTarget->GetPositionX() + (dis = dis - 5) * cos(direction);
+                        fy = unitTarget->GetPositionY() + (dis = dis - 5) * sin(direction);
+                        continue;
+                    }else
+                        break;
 
-            unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
+                    return;
+                }
+
+                m_caster->UpdateAllowedPositionZ(fx, fy, fz);
+            }
+
+            m_caster->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
+
         } else
         {
             float ox, oy, oz;
@@ -5341,6 +5361,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
 
             unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
         }
+
     }
 }
 
@@ -5440,8 +5461,9 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
 
     //TODO: research more ContactPoint/attack distance.
     //3.666666 instead of ATTACK_DISTANCE(5.0f) in below seem to give more accurate result.
-    float x, y, z;
+    float x, y, z, distance;
     unitTarget->GetAttackPoint(m_caster, x, y, z);
+    distance = unitTarget->GetDistance(m_caster);
 
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
@@ -5459,13 +5481,54 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
 
         if (!mmap->DrawRay(unitTarget,polyRef,targetX,targetY,targetZ,x,y,z))
         {
-            x = targetX;
+            x = targetX;    
             y = targetY;
             z = targetZ;
+            m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
         }
+        else
+        {
+            if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            {
+            /*    if(unitTarget->GetTypeId() == TYPEID_PLAYER)
+                {
+                    x = x + (1*cos(unitTarget->GetAngle(m_caster)));
+                    y = y + (1*sin(unitTarget->GetAngle(m_caster)));
+                    ((Player*)m_caster)->SetChargeTarget(unitTarget);
+                }
+                else
+                {*/
+
+                    //m_caster->UpdateSpeed(MOVE_RUN, true, 7);
+                    //m_caster->UpdateSpeed(MOVE_WALK, true, 7);
+                    //m_caster->UpdateSpeed(MOVE_SWIM, true, 7);
+                 /*   PathInfo path(m_caster, x, y, z);
+                    PointPath pointPath = path.getFullPath();
+                    SplineFlags flags = SPLINEFLAG_WALKMODE;
+                    m_caster->SendMonsterMoveByPath(pointPath, 1, pointPath.size(), flags, 0.1f);//>SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, flags, 0.1f, (Player*)m_caster);//SendMonsterMoveWithSpeed(x, y, z, 0.1f, (Player*)m_caster);//>GetMotionMaster()->MovePoint(0, x, y, z, true);   
+                    ((Player*)m_caster)->SetChargeTarget(m_caster->GetTargetGuid());*/
+            //    }
+                m_caster->UpdateSpeed(MOVE_RUN, true, 7);
+                m_caster->UpdateSpeed(MOVE_WALK, true, 7);
+                m_caster->UpdateSpeed(MOVE_SWIM, true, 7);
+                m_caster->GetMotionMaster()->MoveChase(unitTarget);//>MovePoint(0, x, y, z, true);
+                ((Player*)m_caster)->SetChargeTarget(m_caster->GetTargetGuid());
+            }
+            else
+            {
+                m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+            }
+
+        }
+
+    }
+    else
+    {
+        m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
     }
 
-    m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
+
+    //>MonsterMoveByPath(x, y, z, 25, false, true);
 
     Player* player = dynamic_cast<Player*>(m_caster);
     if (player && player->GetSentinel())
