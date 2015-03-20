@@ -1205,35 +1205,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         } else
             m_chargeTimer -= update_diff;
     }
-/*    if(GetMotionMaster()->GetCurrentMovementGeneratorType() == POINT_MOTION_TYPE && !m_isCharging)
-    {
-        m_isCharging = true;
-    }
 
-    if(m_isCharging && GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE)
-    {
-        UpdateSpeed(MOVE_WALK, true, 1);
-        UpdateSpeed(MOVE_RUN, true, 1);
-        UpdateSpeed(MOVE_SWIM, true, 1);
-        m_isCharging = false;
-        if(Unit *trgt = GetChargeTarget())
-            SetFacingToObject(trgt);
-    }*/
-  /*  else if(m_isCharging)
-    {
-        if(chargeTarget)
-        {
-            if(GetDistance(chargeTarget) <= 1.0f)
-            {
-                m_isCharging = false;
-                chargeTarget = nullptr;
-                UpdateSpeed(MOVE_WALK, true, 1);
-                UpdateSpeed(MOVE_RUN, true, 1);
-                UpdateSpeed(MOVE_SWIM, true, 1);
-                GetMotionMaster()->Clear();
-            }
-        }
-    }*/
     /********************** CHARGE TRIALS ********************************************************/
 
     //used to implement delayed far teleports
