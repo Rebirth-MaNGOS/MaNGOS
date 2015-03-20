@@ -429,6 +429,11 @@ CreatureAI* GetAI_boss_victor_nefarius(Creature* pCreature)
 
 bool GossipHello_boss_victor_nefarius(Player* pPlayer, Creature* pCreature)
 {
+    // Only allow the Nef encounter in BWL.
+    Map* pMap = pPlayer->GetMap();
+    if (pMap && pMap->GetId() != 469)
+        return true;
+
     pPlayer->ADD_GOSSIP_ITEM_ID(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NEFARIUS_1 , GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
     pPlayer->SEND_GOSSIP_MENU(GOSSIP_TEXT_NEFARIUS_1, pCreature->GetObjectGuid());
     return true;
