@@ -5312,38 +5312,23 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
         float direction = unitTarget->GetOrientation();
         float fx = unitTarget->GetPositionX() + dis * cos(direction);
         float fy = unitTarget->GetPositionY() + dis * sin(direction);
-        float fz = unitTarget->GetPositionZ();
+        float fz = unitTarget->GetPositionZ() + 5.0f;
 
         uint32 mapId = unitTarget->GetMapId();
         if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
         {
             MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
-            dtPolyRef polyRef, polyRefr;
+            dtPolyRef polyRef;
             float ox,oy,oz;
             unitTarget->GetPosition(ox,oy,oz);
 
-            if(!unitTarget->GetMap()->GetTerrain()->IsInWater(fx, fy, fz))
-            {
-                if (!mmap->GetNearestValidPosition(unitTarget, 1, 1, 5, ox, oy, oz,&polyRef))
-                    return;
+            if (!mmap->GetNearestValidPosition(unitTarget, 1, 1, 5, ox, oy, oz,&polyRef))
+                return;
 
-                for(int i = 0; i < 3; i++)
-                {
-                    if (!mmap->DrawRay(unitTarget, polyRef, ox,oy,oz, fx, fy, fz))
-                    {
-                        fx = unitTarget->GetPositionX() + (dis = dis - 5) * cos(direction);
-                        fy = unitTarget->GetPositionY() + (dis = dis - 5) * sin(direction);
-                        continue;
-                    }else
-                        break;
+            if (!mmap->DrawRay(unitTarget, polyRef, ox,oy,oz, fx, fy, fz)) 
+                return;
 
-                    return;
-                }
-
-                m_caster->UpdateAllowedPositionZ(fx, fy, fz);
-            }
-
-            m_caster->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
+            unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
 
         } else
         {
