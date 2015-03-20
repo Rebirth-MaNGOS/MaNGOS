@@ -85,6 +85,8 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
     uint32 m_uiCleaveTimer;
     uint32 m_uiTailLashTimer;
     uint32 m_uiClassCallTimer;
+    uint32 m_landTimer;
+    uint32 m_landEmoteTimer;
     bool m_bPhase3;
     bool m_bHasEndYell;
 
@@ -96,6 +98,8 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
         m_uiCleaveTimer         = 7000;
         m_uiTailLashTimer       = 10000;
         m_uiClassCallTimer      = 35000;                            // 35-40 seconds
+        m_landTimer             = 7500;
+        m_landEmoteTimer        = 0;
         m_bPhase3               = false;
         m_bHasEndYell           = false;
     }
@@ -165,6 +169,36 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+        if(m_landTimer)
+        {
+            if(m_landTimer <= uiDiff)
+            {
+                m_creature->HandleEmote(EMOTE_ONESHOT_LAND);
+                m_creature->SetHover(false);
+                m_creature->SetSplineFlags(SPLINEFLAG_NONE);
+               // m_creature->SetByteValue(UNIT_FIELD_BYTES_1, 3, 0/* | UNIT_BYTE1_FLAG_UNK_2*/);
+                m_landEmoteTimer = 3000;
+                m_landTimer = 0;
+            }
+            else
+                m_landTimer -= uiDiff;
+        }
+
+        if(m_landEmoteTimer)
+        {
+            if(m_landEmoteTimer <= uiDiff)
+            {
+                m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                m_creature->SetInCombatWithZone();
+                if (Unit* pTarget = m_creature->SelectRandomUnfriendlyTarget(0, 100.0f))//>SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    AttackStart(pTarget);
+
+                m_landEmoteTimer = 0;
+            }
+            else
+                m_landEmoteTimer -= uiDiff;
+        }
+
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
