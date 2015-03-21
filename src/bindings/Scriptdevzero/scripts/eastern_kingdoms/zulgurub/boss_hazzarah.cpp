@@ -38,19 +38,6 @@ enum eHazzarah
 	MODELID_BARTHILAS			= 10433,
 };
 
-static Loc Summon[9]=
-{
-    { -11912.7f, -1892.4f, 65.14f, 0.f },// end corner
-	{ -11907.29f, -1896.57f, 65.14f, 0.f },
-	{ -11901.59f, -1915.91f, 65.14f, 0.f },
-	{ -11888.51f, -1911.85f, 65.14f, 0.f },
-	{ -11897.6f, -1901.6, 65.14f, 0.f },
-    { -11879.3f, -1920.56f, 65.14f, 0.f },
-	{ -11916.45f, -1902.36f, 65.14f, 0.f },
-	{ -11892.12f, -1920.99f, 65.14f, 0.f },
-	{ -11879.3f, -1920.56f, 65.14f, 0.f },//end corner
-};
-
 struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
 {
     boss_hazzarahAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
