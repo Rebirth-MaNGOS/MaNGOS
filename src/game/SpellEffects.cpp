@@ -5322,13 +5322,13 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
         float direction = unitTarget->GetOrientation();
         float fx = unitTarget->GetPositionX() + dis * cos(direction);
         float fy = unitTarget->GetPositionY() + dis * sin(direction);
-        float fz = unitTarget->GetPositionZ() + 5.0f;
+        float fz = unitTarget->GetPositionZ() + (m_caster->IsInWater() ? 0 : 5.0f);
 
         uint32 mapId = unitTarget->GetMapId();
         if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
         {
             MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
-            dtPolyRef polyRef, polyRefE;
+            dtPolyRef polyRef;
             float ox,oy,oz;
             unitTarget->GetPosition(ox,oy,oz);
 
@@ -5338,21 +5338,22 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
             if (!mmap->DrawRay(unitTarget, polyRef, ox,oy,oz+1.0f, fx, fy, fz)) 
                 return;
 
-            PathInfo path(m_caster, fx, fy, fz);
-            PointPath pointPath = path.getFullPath();
+            if (!m_caster->IsInWater())
+            {
+                PathInfo path(m_caster, fx, fy, fz);
+                PointPath pointPath = path.getFullPath();
 
-            fx = pointPath[pointPath.size()-1].x;
-            fy = pointPath[pointPath.size()-1].y;
-            fz = pointPath[pointPath.size()-1].z;
-            
+                fx = pointPath[pointPath.size()-1].x;
+                fy = pointPath[pointPath.size()-1].y;
+                fz = pointPath[pointPath.size()-1].z;
+            }
+
             if(!m_caster->GetMap()->GetTerrain()->IsInWater(fx, fy, fz))
             {
-
-
                 float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, MAX_HEIGHT);
                 float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, fz);
 
-                if(abs(fz - floor_z) < abs(ground_z - fz))
+                if(fabs(fz - floor_z) < fabs(ground_z - fz))
                 {
                     fz = floor_z;
                 }
@@ -5361,8 +5362,6 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
                     fz = ground_z;
                 }
             }
-
-            //unitTarget->UpdateAllowedPositionZ(fx, fy, fz);
 
             unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
 
