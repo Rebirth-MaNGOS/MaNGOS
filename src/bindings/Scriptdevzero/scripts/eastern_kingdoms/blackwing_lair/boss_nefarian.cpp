@@ -74,6 +74,7 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
 		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_FIRE, true);
+        hasLanded = false;
         Reset();
     }
 
@@ -89,6 +90,7 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
     uint32 m_landEmoteTimer;
     bool m_bPhase3;
     bool m_bHasEndYell;
+    bool hasLanded;
 
     void Reset()
     {
@@ -102,6 +104,16 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
         m_landEmoteTimer        = 0;
         m_bPhase3               = false;
         m_bHasEndYell           = false;
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+        m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+        m_creature->SetHover(true);
+        m_creature->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
+        m_creature->SetSplineFlags(SPLINEFLAG_FLYING);
+
+        if(hasLanded)
+        {
+            m_creature->MonsterMove(-7443.177f, -1338.277f, 486.649f, 7500);
+        }
     }
 
     void KilledUnit(Unit* pVictim)
@@ -194,6 +206,7 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
                     AttackStart(pTarget);
 
                 m_landEmoteTimer = 0;
+                hasLanded = true;
             }
             else
                 m_landEmoteTimer -= uiDiff;

@@ -41,7 +41,7 @@ enum
     GOSSIP_TEXT_NEFARIUS_3          = 7199,
 
     MAX_DRAKES                      = 5,
-    MAX_DRAKE_SUMMONS               = 0,
+    MAX_DRAKE_SUMMONS               = 42,
     NPC_BRONZE_DRAKANOID            = 14263,
     NPC_BLUE_DRAKANOID              = 14261,
     NPC_RED_DRAKANOID               = 14264,
@@ -73,7 +73,7 @@ static const SpawnLocation aNefarianLocs[5] =
 {
     {-7599.32f, -1191.72f, 475.545f},                       // opening where red/blue/black darknid spawner appear (ori 3.05433)
     {-7526.27f, -1135.04f, 473.445f},                       // same as above, closest to door (ori 5.75959)
-    {-7468.177f, -1293.277f, 486.649f},                     // nefarian spawn location (ori 1.798)
+    {-7443.177f, -1338.277f, 486.649f},                     // nefarian spawn location (ori 1.798)
     {-7592.0f, -1264.0f, 481.0f},                           // hide pos (useless; remove this)
     {-7502.002f, -1256.503f, 476.758f},                     // nefarian fly to this position
 };
