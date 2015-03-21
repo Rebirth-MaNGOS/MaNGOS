@@ -2838,8 +2838,8 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     // Charge stun delay (Charge, Intercept, Feral Charge).
     if(m_spellInfo->Id == 7922 || m_spellInfo->Id == 20615 || m_spellInfo->Id == 20614 || m_spellInfo->Id == 20253 || m_spellInfo->Id == 19675)
     {
-        m_casttime = m_caster->GetDistance(targets->getUnitTarget())*10;
-        ((Player*)m_caster)->SetChargeTimer(m_casttime+10);
+        m_casttime = m_caster->GetDistance(targets->getUnitTarget())*15;
+        ((Player*)m_caster)->SetChargeTimer(m_casttime+50);
         if(m_spellInfo->Id == 19675)
         {
             EffectInterruptCast(EFFECT_INDEX_2);
