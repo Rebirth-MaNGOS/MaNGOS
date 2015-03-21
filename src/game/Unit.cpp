@@ -2074,6 +2074,8 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster,SpellSchoolMask schoolMa
                     InterruptSpell(CurrentSpellTypes(i));
             }
         }
+
+        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
     }
 
     // only split damage if not damaging yourself
