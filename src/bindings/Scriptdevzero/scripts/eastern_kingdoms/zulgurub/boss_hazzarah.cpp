@@ -40,15 +40,15 @@ enum eHazzarah
 
 static Loc Summon[9]=
 {
-    {-11912.7f,-1892.4f,65.14f},// end corner
-	{-11907.29f,-1896.57f,65.14f},
-	{-11901.59f,-1915.91f,65.14f},
-	{-11888.51f,-1911.85f,65.14f},
-	{-11897.6f,-1901.6,65.14f},
-    {-11879.3f,-1920.56f,65.14f},
-	{-11916.45f,-1902.36f,65.14f},
-	{-11892.12f,-1920.99f,65.14f},
-	{-11879.3f,-1920.56f,65.14f},//end corner
+    { -11912.7f, -1892.4f, 65.14f, 0.f },// end corner
+	{ -11907.29f, -1896.57f, 65.14f, 0.f },
+	{ -11901.59f, -1915.91f, 65.14f, 0.f },
+	{ -11888.51f, -1911.85f, 65.14f, 0.f },
+	{ -11897.6f, -1901.6, 65.14f, 0.f },
+    { -11879.3f, -1920.56f, 65.14f, 0.f },
+	{ -11916.45f, -1902.36f, 65.14f, 0.f },
+	{ -11892.12f, -1920.99f, 65.14f, 0.f },
+	{ -11879.3f, -1920.56f, 65.14f, 0.f },//end corner
 };
 
 struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
@@ -93,16 +93,35 @@ struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
         if (m_uiIllusionsTimer <= uiDiff)			// get the positions within the platform, and random between those because movemaps are buggy.
         {
             //We will summon 3 illusions that will spawn on a random player and attack this player
-            for(uint8 i = 0; i < 3; ++i)
+            for (uint8 i = 0; i < 3; ++i)
             {
-				int r;
-				r = urand(0,8);
+                float x, y, z;
+                short attempts = 0;
+                float radius = frand(0, 10);
+
+                // Make 20 attempts at finding a correct spawn position.
+                while (attempts < 20)
+                {
+                    float angle = frand(0, 2 * PI);
+                    
+                    x = m_creature->GetPositionX() + radius * cosf(angle);
+                    y = m_creature->GetPositionY() + radius * sinf(angle);
+                    z = m_creature->GetPositionZ();
+
+                    if (m_creature->IsWithinLOS(x, y, z))
+                        break;
+
+                    ++attempts;
+                }
+
                 if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-					if (Creature* pIllusion = m_creature->SummonCreature(NPC_NIGHTMARE_ILLUSION, Summon[r].x+irand(-8,8), Summon[r].y+irand(-8,8), Summon[r].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000))
+                {
+                    Creature* pIllusion = m_creature->SummonCreature(NPC_NIGHTMARE_ILLUSION, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
+					if (pIllusion)
                     {
                         // Summoned Illusion will to have a random model
                         uint32 m_uiNewDisplayId = 0;
-                        switch(rand()%5)
+                        switch (rand() % 5)
                         {
                             case 0: m_uiNewDisplayId = MODELID_ABOMINATION;
 								pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 3.0f);
@@ -125,6 +144,7 @@ struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
                        //pIllusion->SetFloatValue(OBJECT_FIELD_SCALE_X, 2.0f);   // bigger model
                         pIllusion->AI()->AttackStart(pTarget);
                     }
+                }
             }
             m_uiIllusionsTimer = urand(15000, 25000);
         }
