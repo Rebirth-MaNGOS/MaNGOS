@@ -39,7 +39,6 @@ struct MANGOS_DLL_DECL boss_ras_frostwhisperAI : public ScriptedAI
     boss_ras_frostwhisperAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (instance_scholomance*)pCreature->GetInstanceData();
-		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_FROST, true);
         Reset();
     }
 
