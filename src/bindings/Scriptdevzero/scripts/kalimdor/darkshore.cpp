@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Darkshore
 SD%Complete: 100
-SDComment: Quest support: 731, 2078, 5321, 5713(all scripted but not doing melee or bow event)
+SDComment: Quest support: 731, 945, 2078, 5321, 5713
 SDCategory: Darkshore
 EndScriptData */
 
@@ -724,6 +724,7 @@ enum SentinelAynasha
 	SAY_END_3							= -1720007,
 
 	SPELL_AYNASHAS_BOW					= 19767,
+	SPELL_ROOT_SELF						= 23973,			// taken from rag, make sure she doesn't move
 
 	NPC_SENTINEL_AYNASHA				= 11711,
 	NPC_BLACKWOOD_TRACKER				= 11713,
@@ -754,6 +755,26 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
     {
 		m_uiPlayerGUID = ObjectGuid();
 		m_creature->SetActiveObjectState(true);
+		m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
+		SetCombatMovement(false);
+
+		m_creature->SetSheath(SHEATH_STATE_RANGED);			// everything has to be here or she resets all timers when ooc between waves
+		
+		/*m_uiSpeechTimer		= 0;
+		m_uiEventTimer      = 0;
+        m_uiKilledCreatures = 0;
+		m_uiPhase           = 0;
+		m_uiCurrentWave     = 0;
+        m_startTimer		= 0;
+		m_uiCanShootTimer	= 0;
+		m_uiShootTimer		= 0;
+		m_despawnTimer		= 0;
+		m_uiPlayerGUID.Clear();
+		m_bCanShoot			= true;
+		m_bOutro			= false;
+		m_uiSpeechStep		= 1;*/
+
+		QuestEndReset();
         Reset();
     }
 
@@ -777,7 +798,10 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 
     void Reset()
     {
-		SetCombatMovement(false);
+    }
+
+	void QuestEndReset()				// make sure another player can do the quest after it's done
+	{
 		m_uiSpeechTimer		= 0;
 		m_uiEventTimer      = 0;
         m_uiKilledCreatures = 0;
@@ -791,7 +815,7 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 		m_bCanShoot			= true;
 		m_bOutro			= false;
 		m_uiSpeechStep		= 1;
-    }
+	}
 
 	void WaypointReached(uint32 uiPoint)
     {
@@ -847,6 +871,8 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
         {
 			pPlayer->FailQuest(QUEST_ONE_SHOT_ONE_KILL);
 			m_uiEventTimer = 0;						// don't spawn more waves
+			m_uiCanShootTimer = 0;					// don't do text if she is dead
+			m_bCanShoot = false;
         }
 	}
 
@@ -873,7 +899,8 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 			}
 			m_despawnTimer = 0;			// despawn timer shouldn't be needed anymore
 			m_bOutro = true;
-			m_uiSpeechTimer = 4000;
+			m_uiSpeechTimer = 2000;
+			m_uiSpeechStep		= 1;			// need this here so the outro can be repeated more than once.
         }
 	}
 
@@ -882,16 +909,21 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 		if (m_uiPlayerGUID)
             return ObjectGuid();
 
-        m_startTimer = 3000; // Do say and start event after 3 sec
-		m_uiEventTimer = 5000;
-		m_despawnTimer = 600000; // despawn after 10min if she didn't reach the outro RP
-		m_uiShootTimer = 1000;			// not working
-		m_uiCanShootTimer = urand(45000, 60000);
-		m_bCanShoot	= true;
+        m_startTimer	= 3000; // Do say and start event after 3 sec
+		m_uiEventTimer  = 5000;
+		m_despawnTimer  = 600000; // despawn after 10min if she didn't reach the outro RP
+		
+		m_bCanShoot		= true;
 
 		m_uiPlayerGUID = player_guid;
         
         return m_uiPlayerGUID;
+	}
+
+	void MoveInLineOfSight(Unit* pWho)		// don't move to target, NOT WORKING
+    {
+        if (!pWho)
+            return;
 	}
 
 	void UpdateEscortAI(const uint32 uiDiff)
@@ -903,13 +935,12 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 				if(m_startTimer <= uiDiff)
 				{
 					DoScriptText(SAY_START, m_creature);
+					m_uiCanShootTimer = urand(45000, 60000);
+					m_uiShootTimer = 1000;
 					m_startTimer = 0;
 				}
 				else
-				{
 					m_startTimer -= uiDiff;
-					return;
-				}
 			}
 
 			if (m_uiEventTimer)					// summon waves every 60 sec
@@ -939,7 +970,7 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 				}
 			}
 
-			if (m_despawnTimer)							// despawn after 5min if quest somehow bugged
+			if (m_despawnTimer)							// despawn after 10min if quest somehow bugged
 			{
 				if(m_despawnTimer <= uiDiff)
 				{
@@ -947,44 +978,45 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 					m_despawnTimer = 0;
 				}
 				else
-				{
 					m_despawnTimer -= uiDiff;
-					return;
-				}
 			}
 
-			/*if (m_uiCanShootTimer)					// not working
+			if (m_uiCanShootTimer)						// do say and no more bow attacks
 			{
-				if (m_uiCanShootTimer < uiDiff)
+				if (m_uiCanShootTimer <= uiDiff)
 				{
 					DoScriptText(SAY_ARROWS, m_creature);
+					m_creature->SetSheath(SHEATH_STATE_MELEE);
 					m_uiCanShootTimer = 0;
 					m_bCanShoot = false;
 				}
 				else
-					m_uiShootTimer -= uiDiff;
+					m_uiCanShootTimer -= uiDiff;
 			}
 
-			if (m_bCanShoot)						// not working
+			if (m_uiShootTimer && m_bCanShoot)
 			{
-				if (m_uiShootTimer < uiDiff)
+				if (m_uiShootTimer <= uiDiff)
 				{
-					m_uiShootTimer = 1000;
-
-					if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))			// can crash server
-						DoCastSpellIfCan(m_creature->getVictim(), SPELL_AYNASHAS_BOW);
+					for(uint8 i = 0; i < 6; ++i)
+						if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_TOPAGGRO, i))
+							if (!pTarget->IsWithinDist(m_creature, 10.0f))
+							{
+								DoCastSpellIfCan(pTarget, SPELL_AYNASHAS_BOW);
+								m_uiShootTimer = 2000;
+							}
 				}
 				else
 					m_uiShootTimer -= uiDiff;
-			}*/
+			}
 		}
 
-		if (m_bOutro)							// handle RP at the end
-        {
-            if (!m_uiSpeechStep)
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at the end
+		{
+			if (!m_uiSpeechStep)
                 return;
 
-            if (m_uiSpeechTimer < uiDiff)
+            if (m_uiSpeechTimer <= uiDiff)
             {
                 switch(m_uiSpeechStep)
                 {
@@ -999,6 +1031,10 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 					case 3:
 						DoScriptText(SAY_END_3, m_creature);
 						m_bOutro = false;
+						QuestEndReset();
+						m_creature->SetRespawnDelay(10);				// to reset, but won't work properly
+						m_creature->SetRespawnTime(0);
+						m_creature->ForcedDespawn(25000);
                     default:
                         m_uiSpeechStep = 0;
                         return;
@@ -1007,8 +1043,6 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
             }
             else
                 m_uiSpeechTimer -= uiDiff;
-
-            return;
         }
 
 		// Return since we have no target
@@ -1016,8 +1050,8 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 		{
 			return;
 		}
-
-        DoMeleeAttackIfReady();				// not working
+		
+		DoMeleeAttackIfReady();
 		
 	}
 };
@@ -1041,6 +1075,204 @@ bool QuestAccept_npc_sentinel_aynasha(Player* pPlayer, Creature* pCreature, cons
     }
 
     return false;
+}
+
+/*####
+# npc_therylune
+####*/
+
+enum
+{
+    SAY_THERYLUNE_START              = -1720008,
+    SAY_THERYLUNE_FINISH             = -1720009,
+
+    QUEST_ID_THERYLUNE_ESCAPE        = 945,
+};
+
+struct MANGOS_DLL_DECL npc_theryluneAI : public npc_escortAI
+{
+    npc_theryluneAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+
+    void Reset()
+	{
+	}
+
+	void JustStartedEscort()
+    {
+        if (GetPlayerForEscort())
+		    m_creature->SetFactionTemporary(10);			// added temp faction so mobs can hit her
+    }
+
+	void JustDied(Unit* /*pKiller*/)			// fail quest if Therylune dies
+	{
+		if (Player* pPlayer = GetPlayerForEscort())
+        {
+			pPlayer->FailQuest(QUEST_ID_THERYLUNE_ESCAPE);
+        }
+	}
+
+    void WaypointReached(uint32 uiPointId)
+    {
+        switch (uiPointId)
+        {
+            case 18:
+                if (Player* pPlayer = GetPlayerForEscort())
+                {
+                    pPlayer->GroupEventHappens(QUEST_ID_THERYLUNE_ESCAPE, m_creature);
+                }
+                break;
+            case 19:
+                if (Player* pPlayer = GetPlayerForEscort())
+                {
+                    DoScriptText(SAY_THERYLUNE_FINISH, m_creature, pPlayer);
+                }
+                SetRun();
+                break;
+			case 20:
+				m_creature->ForcedDespawn();
+				break;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_therylune(Creature* pCreature)
+{
+    return new npc_theryluneAI(pCreature);
+}
+
+bool QuestAccept_npc_therylune(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == QUEST_ID_THERYLUNE_ESCAPE)
+    {
+        if (npc_theryluneAI* pEscortAI = dynamic_cast<npc_theryluneAI*>(pCreature->AI()))
+        {
+            pEscortAI->Start(false, pPlayer, pQuest);
+            DoScriptText(SAY_THERYLUNE_START, pCreature, pPlayer);
+        }
+    }
+
+    return true;
+}
+
+/*####
+# npc_cerellean_whiteclaw
+####*/
+
+enum
+{
+	CERELLAN_SAY_1					 = -1720032,
+	CERELLAN_SAY_2					 = -1720033,
+	CERELLAN_SAY_3					 = -1720034,
+	CERELLAN_SAY_4					 = -1720035,
+	CERELLAN_SAY_5					 = -1720036,
+
+	NPC_ANAYA						 = 3843,
+
+    QUEST_ID_FOR_LOVE_ETERNAL        = 963,
+};
+
+struct MANGOS_DLL_DECL npc_cerellean_whiteclawAI : public npc_escortAI
+{
+    npc_cerellean_whiteclawAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;;
+		m_uiSpeechTimer = 0;
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+	void JustStartedEscort()
+    {
+    }
+	
+	void StartOutro()
+	{
+		m_bOutro = true; 
+		m_uiSpeechTimer = 6000;
+		m_uiSpeechStep = 1;
+		m_creature->SummonCreature(NPC_ANAYA, 6427.54f, 604.45f, 9.46f, 4.19f, TEMPSUMMON_TIMED_DESPAWN, 56000, true);
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {
+                    case 1:
+                        DoScriptText(CERELLAN_SAY_1, m_creature);
+						m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 14000;
+                        break;
+					case 2:
+						DoScriptText(CERELLAN_SAY_2, m_creature);
+						m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 3:
+						m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+						m_uiSpeechTimer = 4000;
+						break;
+					case 4:
+						DoScriptText(CERELLAN_SAY_3, m_creature);
+						m_uiSpeechTimer = 20000;
+						break;
+					case 5:
+						DoScriptText(CERELLAN_SAY_4, m_creature);
+						m_uiSpeechTimer = 10000;
+						break;
+					case 6:
+						m_creature->GenericTextEmote("Anaya's soft voice trails away into the mists. \"Know that I love you always...\" ", NULL, false);
+						m_uiSpeechTimer = 4000;
+						break;
+					case 7:
+						DoScriptText(CERELLAN_SAY_5, m_creature);
+						m_uiSpeechTimer = 40000;
+						break;
+					case 8:
+						m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_cerellean_whiteclaw(Creature* pCreature)
+{
+    return new npc_cerellean_whiteclawAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_cerellan(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_FOR_LOVE_ETERNAL)
+    {
+		if (npc_cerellean_whiteclawAI* pEscortAI = dynamic_cast<npc_cerellean_whiteclawAI*>(pCreature->AI()))
+		{
+			pEscortAI->Start(false, pPlayer, pQuest);
+			pEscortAI->StartOutro();
+		}
+	}
+	return true;
 }
 
 void AddSC_darkshore()
@@ -1086,5 +1318,17 @@ void AddSC_darkshore()
     pNewscript->Name = "npc_sentinel_aynasha";
     pNewscript->GetAI = &GetAI_npc_sentinel_aynasha;
     pNewscript->pQuestAcceptNPC = &QuestAccept_npc_sentinel_aynasha;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_therylune";
+    pNewscript->GetAI = &GetAI_npc_therylune;
+    pNewscript->pQuestAcceptNPC = &QuestAccept_npc_therylune;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_cerellean_whiteclaw";
+    pNewscript->GetAI = &GetAI_npc_cerellean_whiteclaw;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_cerellan;
     pNewscript->RegisterSelf();
 }

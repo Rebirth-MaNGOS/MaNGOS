@@ -36,7 +36,7 @@ bool ScriptedAI::IsVisible(Unit* pWho) const
 void ScriptedAI::MoveInLineOfSight(Unit* pWho)
 {
     if (m_creature->CanInitiateAttack() && pWho->isTargetableForAttack() &&
-        m_creature->IsHostileTo(pWho) && pWho->isInAccessablePlaceFor(m_creature))
+            m_creature->IsHostileTo(pWho) && pWho->isInAccessablePlaceFor(m_creature))
     {
         /*if (!m_creature->CanFly() && m_creature->GetDistanceZ(pWho) > CREATURE_Z_ATTACK_RANGE)
             return;*/
@@ -48,10 +48,10 @@ void ScriptedAI::MoveInLineOfSight(Unit* pWho)
         {
             if (!m_creature->getVictim())
             {
-				if (m_creature->GetCreatureInfo()->rank == CREATURE_ELITE_WORLDBOSS)
-				{
-					pWho->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
-				}
+                if (m_creature->GetCreatureInfo()->rank == CREATURE_ELITE_WORLDBOSS)
+                {
+                    pWho->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+                }
                 AttackStart(pWho);
             }
             else if (m_creature->GetMap()->IsDungeon())
@@ -243,19 +243,19 @@ SpellEntry const* ScriptedAI::SelectSpell(Unit* pTarget, int32 /*uiSchool*/, int
 
         //Check if our target is in range
         if (SpellSummary[m_creature->m_spells[i]].Effects & SELECT_EFFECT_AURA)
-		{
-			//Don't cast a buff/debuff if the target already has it
-			if (pTarget->HasAura(m_creature->m_spells[i]))
-				continue;
-		}
+        {
+            //Don't cast a buff/debuff if the target already has it
+            if (pTarget->HasAura(m_creature->m_spells[i]))
+                continue;
+        }
 
         //Check if our target is in range- creatures can always cast on themselves if the min range is 0
-		if ( (m_creature == pTarget && pTempRange->minRange <= 0) || (!m_creature->IsWithinDistInMap(pTarget, pTempRange->minRange) && m_creature->IsWithinDistInMap(pTarget, pTempRange->maxRange)))
-		{
-			//All good so lets add it to the spell list
-			apSpell[uiSpellCount] = pTempSpell;
-			++uiSpellCount;
-		}
+        if ( (m_creature == pTarget && pTempRange->minRange <= 0) || (!m_creature->IsWithinDistInMap(pTarget, pTempRange->minRange) && m_creature->IsWithinDistInMap(pTarget, pTempRange->maxRange)))
+        {
+            //All good so lets add it to the spell list
+            apSpell[uiSpellCount] = pTempSpell;
+            ++uiSpellCount;
+        }
     }
 
     //We got our usable spells so now lets randomly pick one
@@ -316,101 +316,101 @@ void FillSpellSummary()
 
             //Spell targets a single enemy
             if (pTempSpell->EffectImplicitTargetA[j] == TARGET_CHAIN_DAMAGE ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_CURRENT_ENEMY_COORDINATES)
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_CURRENT_ENEMY_COORDINATES)
                 SpellSummary[i].Targets |= 1 << (SELECT_TARGET_SINGLE_ENEMY-1);
 
             //Spell targets AoE at enemy
             if (pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA_INSTANT ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA_CHANNELED)
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA_INSTANT ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA_CHANNELED)
                 SpellSummary[i].Targets |= 1 << (SELECT_TARGET_AOE_ENEMY-1);
 
             //Spell targets an enemy
             if (pTempSpell->EffectImplicitTargetA[j] == TARGET_CHAIN_DAMAGE ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_CURRENT_ENEMY_COORDINATES ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA_INSTANT ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA_CHANNELED)
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_CURRENT_ENEMY_COORDINATES ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA_INSTANT ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_ENEMY_IN_AREA_CHANNELED)
                 SpellSummary[i].Targets |= 1 << (SELECT_TARGET_ANY_ENEMY-1);
 
-			//Spell targets single friend
+            //Spell targets single friend
             if (pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_FRIEND ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_PARTY)
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_PARTY)
                 SpellSummary[i].Targets |= 1 << (SELECT_TARGET_SINGLE_ALLY-1);
 
 
             //Spell targets a single friend(or self)
             if (pTempSpell->EffectImplicitTargetA[j] == TARGET_SELF ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_FRIEND ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_PARTY)
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_FRIEND ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_PARTY)
                 SpellSummary[i].Targets |= 1 << (SELECT_TARGET_SINGLE_FRIEND-1);
 
             //Spell targets aoe friends
             if (pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_PARTY_AROUND_CASTER ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_AREAEFFECT_PARTY ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES)
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_AREAEFFECT_PARTY ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES)
                 SpellSummary[i].Targets |= 1 << (SELECT_TARGET_AOE_FRIEND-1);
 
             //Spell targets any friend(or self)
             if (pTempSpell->EffectImplicitTargetA[j] == TARGET_SELF ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_FRIEND ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_PARTY ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_PARTY_AROUND_CASTER ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_AREAEFFECT_PARTY ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES)
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_FRIEND ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_PARTY ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_PARTY_AROUND_CASTER ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_AREAEFFECT_PARTY ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES)
                 SpellSummary[i].Targets |= 1 << (SELECT_TARGET_ANY_FRIEND-1);
 
-  			 //Spell targets any friend
+            //Spell targets any friend
             if (pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_FRIEND ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_PARTY ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_PARTY_AROUND_CASTER ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_AREAEFFECT_PARTY ||
-                pTempSpell->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES)
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_SINGLE_PARTY ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_ALL_PARTY_AROUND_CASTER ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_AREAEFFECT_PARTY ||
+                    pTempSpell->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES)
                 SpellSummary[i].Targets |= 1 << (SELECT_TARGET_ANY_ALLY-1);
 
 
             //Make sure that this spell includes a damage effect
             if (pTempSpell->Effect[j] == SPELL_EFFECT_SCHOOL_DAMAGE ||
-                pTempSpell->Effect[j] == SPELL_EFFECT_INSTAKILL ||
-                pTempSpell->Effect[j] == SPELL_EFFECT_ENVIRONMENTAL_DAMAGE ||
-                pTempSpell->Effect[j] == SPELL_EFFECT_HEALTH_LEECH)
+                    pTempSpell->Effect[j] == SPELL_EFFECT_INSTAKILL ||
+                    pTempSpell->Effect[j] == SPELL_EFFECT_ENVIRONMENTAL_DAMAGE ||
+                    pTempSpell->Effect[j] == SPELL_EFFECT_HEALTH_LEECH)
                 SpellSummary[i].Effects |= 1 << (SELECT_EFFECT_DAMAGE-1);
 
             //Make sure that this spell includes a healing effect (or an apply aura with a periodic heal)
             if (pTempSpell->Effect[j] == SPELL_EFFECT_HEAL ||
-                pTempSpell->Effect[j] == SPELL_EFFECT_HEAL_MAX_HEALTH ||
-                pTempSpell->Effect[j] == SPELL_EFFECT_HEAL_MECHANICAL ||
-                (pTempSpell->Effect[j] == SPELL_EFFECT_APPLY_AURA  && pTempSpell->EffectApplyAuraName[j]== 8))
+                    pTempSpell->Effect[j] == SPELL_EFFECT_HEAL_MAX_HEALTH ||
+                    pTempSpell->Effect[j] == SPELL_EFFECT_HEAL_MECHANICAL ||
+                    (pTempSpell->Effect[j] == SPELL_EFFECT_APPLY_AURA  && pTempSpell->EffectApplyAuraName[j]== 8))
                 SpellSummary[i].Effects |= 1 << (SELECT_EFFECT_HEALING-1);
 
             //Make sure that this spell applies an aura
             if (pTempSpell->Effect[j] == SPELL_EFFECT_APPLY_AURA)
-              {
-				if (SpellSummary[i].Targets & (1 << (SELECT_TARGET_SELF-1)))
-				{
-					//Certain aura abilities are actually HEALS, on account of we should use them below 30%
-					if (pTempSpell->Id == 13578 /* Jadefire */ ||
-						pTempSpell->Id == 3019 /* Enrage */ ||
-						pTempSpell->Id == 8599 /* Enrage */ ||
-						pTempSpell->Id == 8269 /* Enrage */ ||
-						pTempSpell->Id == 12795 /* Enrage */ ||
-						pTempSpell->Id == 15716 /* Enrage */ ||
-						pTempSpell->Id == 18501 /* Enrage */ ||
-						pTempSpell->Id == 28468 /* Enrage */ ||
-						pTempSpell->Id == 28747 /* Enrage */)
-					{
-						SpellSummary[i].Effects |= 1 << (SELECT_EFFECT_HEALING-1);
-					} else
-					{
-						SpellSummary[i].Effects |= 1 << (SELECT_EFFECT_AURA-1);
-					}
-				} else
-				{
-					SpellSummary[i].Effects |= 1 << (SELECT_EFFECT_AURA-1);
-				}
-			}  
+            {
+                if (SpellSummary[i].Targets & (1 << (SELECT_TARGET_SELF-1)))
+                {
+                    //Certain aura abilities are actually HEALS, on account of we should use them below 30%
+                    if (pTempSpell->Id == 13578 /* Jadefire */ ||
+                            pTempSpell->Id == 3019 /* Enrage */ ||
+                            pTempSpell->Id == 8599 /* Enrage */ ||
+                            pTempSpell->Id == 8269 /* Enrage */ ||
+                            pTempSpell->Id == 12795 /* Enrage */ ||
+                            pTempSpell->Id == 15716 /* Enrage */ ||
+                            pTempSpell->Id == 18501 /* Enrage */ ||
+                            pTempSpell->Id == 28468 /* Enrage */ ||
+                            pTempSpell->Id == 28747 /* Enrage */)
+                    {
+                        SpellSummary[i].Effects |= 1 << (SELECT_EFFECT_HEALING-1);
+                    } else
+                    {
+                        SpellSummary[i].Effects |= 1 << (SELECT_EFFECT_AURA-1);
+                    }
+                } else
+                {
+                    SpellSummary[i].Effects |= 1 << (SELECT_EFFECT_AURA-1);
+                }
+            }
         }
     }
 }
@@ -424,7 +424,7 @@ void ScriptedAI::DoResetThreat()
     }
 
     ThreatList const& tList = m_creature->getThreatManager().getThreatList();
-    for (ThreatList::const_iterator itr = tList.begin();itr != tList.end(); ++itr)
+    for (ThreatList::const_iterator itr = tList.begin(); itr != tList.end(); ++itr)
     {
         Unit* pUnit = m_creature->GetMap()->GetUnit((*itr)->getUnitGuid());
 
@@ -485,14 +485,14 @@ std::list<Creature*> ScriptedAI::DoFindFriendlyMissingBuff(float fRange, uint32 
 
 std::list<Creature*> ScriptedAI::DoFindHostile(float range)
 {
-	std::list<Creature*> pList;
+    std::list<Creature*> pList;
 
-	MaNGOS::AnyHostileUnitInObjectRangeCheck check(m_creature, m_creature, range);
-	MaNGOS::CreatureListSearcher<MaNGOS::AnyHostileUnitInObjectRangeCheck> searcher(pList, check);
+    MaNGOS::AnyHostileUnitInObjectRangeCheck check(m_creature, m_creature, range);
+    MaNGOS::CreatureListSearcher<MaNGOS::AnyHostileUnitInObjectRangeCheck> searcher(pList, check);
 
-	Cell::VisitGridObjects(m_creature, searcher, range);
+    Cell::VisitGridObjects(m_creature, searcher, range);
 
-	return pList;
+    return pList;
 }
 
 
@@ -510,36 +510,36 @@ Player* ScriptedAI::GetPlayerAtMinimumRange(float fMinimumRange)
 
 Player* ScriptedAI::GetPlayerFarthestAwayFromThreatlistWithinRange(float max_distance)
 {
-	if (!m_creature->getVictim())
-		return nullptr;
+    if (!m_creature->getVictim())
+        return nullptr;
 
-	GUIDVector vGuids;
-	m_creature->FillGuidsListFromThreatList(vGuids);
-	if (vGuids.empty())
-		return nullptr;
+    GUIDVector vGuids;
+    m_creature->FillGuidsListFromThreatList(vGuids);
+    if (vGuids.empty())
+        return nullptr;
 
 
-	Player* farthest_player = nullptr;
-	float farthest_dist = 0;
+    Player* farthest_player = nullptr;
+    float farthest_dist = 0;
 
-	for (GUIDVector::const_iterator itr = vGuids.begin(); itr != vGuids.end(); ++itr)
-	{
-	    if ((*itr).GetHigh() == HIGHGUID_PLAYER)
-	    {
-		Player* current_player = m_creature->GetMap()->GetPlayer(*itr);
-		if (current_player)
-		{       
-		    float current_distance = current_player->GetDistance(m_creature);
-		    if(current_player->isAlive() && current_distance < max_distance  && current_distance > farthest_dist && current_player->IsWithinLOSInMap(m_creature))
-		    {                                       
-			    farthest_player = current_player;
-			    farthest_dist = current_distance;
-		    }                                       
-		}
-	    }                                                       
-	}                                                               
-				    
-	return farthest_player;                                         
+    for (GUIDVector::const_iterator itr = vGuids.begin(); itr != vGuids.end(); ++itr)
+    {
+        if ((*itr).GetHigh() == HIGHGUID_PLAYER)
+        {
+            Player* current_player = m_creature->GetMap()->GetPlayer(*itr);
+            if (current_player)
+            {
+                float current_distance = current_player->GetDistance(m_creature);
+                if(current_player->isAlive() && current_distance < max_distance  && current_distance > farthest_dist && current_player->IsWithinLOSInMap(m_creature))
+                {
+                    farthest_player = current_player;
+                    farthest_dist = current_distance;
+                }
+            }
+        }
+    }
+
+    return farthest_player;
 }
 
 void ScriptedAI::SetEquipmentSlots(bool bLoadDefault, int32 uiMainHand, int32 uiOffHand, int32 uiRanged)
@@ -588,17 +588,17 @@ bool ScriptedAI::EnterEvadeIfOutOfCombatArea(const uint32 uiDiff)
 
     switch(m_creature->GetEntry())
     {
-        case NPC_BROODLORD:                                 // broodlord (not move down stairs)
-            if (fZ > 448.60f)
-                return false;
-            break;
-        case NPC_HAKKAR:
-            if (fZ > 51.0f)                                 // Hakkar (not move down stairs)
-                return false;
-            break;
-        default:
-            error_log("SD0: EnterEvadeIfOutOfCombatArea used for creature entry %u, but does not have any definition.", m_creature->GetEntry());
+    case NPC_BROODLORD:                                 // broodlord (not move down stairs)
+        if (fZ > 448.60f)
             return false;
+        break;
+    case NPC_HAKKAR:
+        if (fZ > 51.0f)                                 // Hakkar (not move down stairs)
+            return false;
+        break;
+    default:
+        error_log("SD0: EnterEvadeIfOutOfCombatArea used for creature entry %u, but does not have any definition.", m_creature->GetEntry());
+        return false;
     }
 
     ResetToHome();
@@ -649,146 +649,167 @@ Unit* ScriptedAI::SelectUnitWithPower(Powers power)
 }
 
 Player* ScriptedAI::GetRandomPlayerInCurrentMap(float max_distance)    {
-		Map::PlayerList const& players = m_creature->GetMap()->GetPlayers();
-		std::vector<Player*> playersInRange;
+    Map::PlayerList const& players = m_creature->GetMap()->GetPlayers();
+    std::vector<Player*> playersInRange;
 
-		if (max_distance == 0)
-			for (auto player = players.begin(); player != players.end(); ++player) playersInRange.push_back(player->getSource());
-		else
-			for (auto player = players.begin(); player != players.end(); ++player)
-			{
-				float currentDistance = m_creature->GetDistance(player->getSource());
-				if (max_distance >= currentDistance) playersInRange.push_back(player->getSource());
-			}
+    if (max_distance == 0)
+        for (auto player = players.begin(); player != players.end(); ++player) playersInRange.push_back(player->getSource());
+    else
+        for (auto player = players.begin(); player != players.end(); ++player)
+        {
+            float currentDistance = m_creature->GetDistance(player->getSource());
+            if (max_distance >= currentDistance) playersInRange.push_back(player->getSource());
+        }
 
-        if (playersInRange.empty())
-            return NULL;
+    if (playersInRange.empty())
+        return NULL;
 
-        return playersInRange[urand(0, playersInRange.size() - 1)];
+    return playersInRange[urand(0, playersInRange.size() - 1)];
 
 }
 
 Unit* ScriptedAI::GetRandomTargetFromThreatList()
 {
-	ThreatList const& threatList = m_creature->getThreatManager().getThreatList();
-	if (threatList.size() > 0)
-	{
-		uint32 random = urand(0, threatList.size() - 1);
-		auto target_itr = threatList.begin();
-		std::advance(target_itr, random);
+    ThreatList const& threatList = m_creature->getThreatManager().getThreatList();
+    if (threatList.size() > 0)
+    {
+        uint32 random = urand(0, threatList.size() - 1);
+        auto target_itr = threatList.begin();
+        std::advance(target_itr, random);
 
-		return (*target_itr)->getTarget();
-	}
-	
-	return NULL;
+        return (*target_itr)->getTarget();
+    }
+
+    return NULL;
 }
 
 
 void ScriptedAI::MakeTauntImmune()
 {
-	m_creature->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_ATTACK_ME, true);
-	m_creature->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TAUNT, true);	
+    m_creature->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_ATTACK_ME, true);
+    m_creature->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TAUNT, true);
 }
 
 
 //AI for patroling NPC
 PatAI::PatAI(Creature* creature) : ScriptedAI(creature)
 {
-	Adds.clear();
-	m_creature->SetVisibility(VISIBILITY_OFF);
+    Adds.clear();
+    m_creature->SetVisibility(VISIBILITY_OFF);
     m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED);
-	m_creature->GetMotionMaster()->Clear(false, true);
-	m_creature->GetMotionMaster()->MoveIdle();
-	Reset(); 
+    m_creature->GetMotionMaster()->Clear(false, true);
+    m_creature->GetMotionMaster()->MoveIdle();
+    Reset();
 }
 
 void PatAI::Reset()
 {
-	init = false;
-	updatetimer = 500;
-	for(uint8 i = 0; i < Adds.size(); ++i)
-	{
-		if (Adds[i] && Adds[i]->IsInWorld() && Adds[i]->isAlive())
-		{
-			//Adds[i]->GetMotionMaster()->Clear(false,false);
-			if (Adds[i]->GetOwnerGuid() == m_creature->GetObjectGuid())
-				Adds[i]->SetOwnerGuid(ObjectGuid());	
-		}
-	}
+    init = false;
+    updatetimer = 500;
+    for(uint8 i = 0; i < Adds.size(); ++i)
+    {
+        Creature* currentAdd = m_creature->GetMap()->GetCreature(Adds[i]);
+        
+        if (currentAdd)
+        {
+            if (currentAdd && currentAdd->IsInWorld() && currentAdd->isAlive())
+            {
+                //currentAdd->GetMotionMaster()->Clear(false,false);
+                if (currentAdd->GetOwnerGuid() == m_creature->GetObjectGuid())
+                    currentAdd->SetOwnerGuid(ObjectGuid());
+            }
+        }
+    }
 }
 
 void PatAI::Aggro(Unit* /*U*/)
-{	
-	for(uint8 i = 0; i < Adds.size(); ++i)
-	{
-		if (Adds[i] && Adds[i]->isAlive() && !Adds[i]->GetCharmerOrOwner())
-			Adds[i]->SetOwnerGuid(m_creature->GetObjectGuid());
-	}	
+{
+    for(uint8 i = 0; i < Adds.size(); ++i)
+    {
+        Creature* currentAdd = m_creature->GetMap()->GetCreature(Adds[i]);
+        
+        if (currentAdd)
+        {
+            if (currentAdd && currentAdd->isAlive() && !currentAdd->GetCharmerOrOwner())
+                currentAdd->SetOwnerGuid(m_creature->GetObjectGuid());
+        }
+    }
 }
 
 void PatAI::UpdateAI(const uint32 diff)
 {
-	if(updatetimer <= diff)
-	{
-		if (!Adds.empty())
-		{
-			uint8 n = 0;
-			Creature* C = 0;
-			for(uint8 i = 0; i < Adds.size(); ++i)
-			{
-				if (!Adds[i] || !Adds[i]->IsInWorld() || !Adds[i]->isAlive() || Adds[i]->GetVisibility() == VISIBILITY_OFF
-					|| (Adds[i]->GetCharmerOrOwner() && Adds[i]->GetCharmerOrOwner() != m_creature) )
-					n++;
-				else 
-				{
-					if (!C)
-						C = Adds[i];
-					//if (Adds[i]->GetVisibility() == VISIBILITY_OFF && Adds[i]->GetDistance(m_creature) < 8.0f)
-					//	Adds[i]->SetVisibility(VISIBILITY_ON);
-				    if (m_creature->getFaction() != 35 && (!m_creature->SelectHostileTarget() || !m_creature->getVictim()))
-					{
-						if (Adds[i]->SelectHostileTarget() && Adds[i]->getVictim()) //enter combat if add is in combat
-							AttackStart(Adds[i]->getVictim());
-					}
-				}
-			}
-			if (m_creature->getFaction() != 35)
-			{
-				if (n == Adds.size())	//all adds dead, enter neutral mode
-				{
-					float x,y,z;
-					init = false;
-					m_creature->GetRespawnCoord(x,y,z);
-					m_creature->Relocate(x,y,z,0);
-					m_creature->GetMotionMaster()->Clear(false, true);
-					m_creature->GetMotionMaster()->MoveIdle();
-					m_creature->setFaction(35);
-					ResetToHome();
-				}
-			}
-			else if (C && !C->getVictim())
-			{
-				if (init)	//enter normal mode 
-				{
-					init = false;
-					m_creature->SetSpeedRate(MOVE_WALK,C->GetSpeedRate(MOVE_WALK));
-					m_creature->setFaction(C->getFaction());
-					m_creature->SetLevel(C->getLevel());
-					m_creature->GetMotionMaster()->Initialize();
-				}
-				else if (n != Adds.size())	//at least one add spawned, set timer to enter normal mode
-				{
-					init = true;
-					m_creature->InitFormationMovement();
-				}
-			}
-		}
-		else //List empty, get adds from Formation Data
-			m_creature->GetFormationMembers(Adds);
+    if(updatetimer <= diff)
+    {
+        if (!Adds.empty())
+        {
+            uint8 n = 0;
+            Creature* C = 0;
+            for(uint8 i = 0; i < Adds.size(); ++i)
+            {
+                Creature* currentAdd = m_creature->GetMap()->GetCreature(Adds[i]);
+        
+                if (currentAdd)
+                {
+                    if (!currentAdd || !currentAdd->IsInWorld() || !currentAdd->isAlive() || currentAdd->GetVisibility() == VISIBILITY_OFF
+                            || (currentAdd->GetCharmerOrOwner() && currentAdd->GetCharmerOrOwner() != m_creature) )
+                        n++;
+                    else
+                    {
+                        if (!C)
+                            C = currentAdd;
+                        //if (currentAdd->GetVisibility() == VISIBILITY_OFF && currentAdd->GetDistance(m_creature) < 8.0f)
+                        //	currentAdd->SetVisibility(VISIBILITY_ON);
+                        if (m_creature->getFaction() != 35 && (!m_creature->SelectHostileTarget() || !m_creature->getVictim()))
+                        {
+                            if (currentAdd->SelectHostileTarget() && currentAdd->getVictim()) //enter combat if add is in combat
+                                AttackStart(currentAdd->getVictim());
+                        }
+                    }
+                }
+            }
+            if (m_creature->getFaction() != 35)
+            {
+                if (n == Adds.size())	//all adds dead, enter neutral mode
+                {
+                    float x,y,z;
+                    init = false;
+                    m_creature->GetRespawnCoord(x,y,z);
+                    m_creature->Relocate(x,y,z,0);
+                    m_creature->GetMotionMaster()->Clear(false, true);
+                    m_creature->GetMotionMaster()->MoveIdle();
+                    m_creature->setFaction(35);
+                    ResetToHome();
+                }
+            }
+            else if (C && !C->getVictim())
+            {
+                if (init)	//enter normal mode
+                {
+                    init = false;
+                    m_creature->SetSpeedRate(MOVE_WALK,C->GetSpeedRate(MOVE_WALK));
+                    m_creature->setFaction(C->getFaction());
+                    m_creature->SetLevel(C->getLevel());
+                    m_creature->GetMotionMaster()->Initialize();
+                }
+                else if (n != Adds.size())	//at least one add spawned, set timer to enter normal mode
+                {
+                    init = true;
+                    m_creature->InitFormationMovement();
+                }
+            }
+        }
+        else //List empty, get adds from Formation Data
+        {
+            std::vector<Creature*> members;
+            m_creature->GetFormationMembers(members);
+            
+            for (Creature* member : members)
+                Adds.push_back(member->GetObjectGuid());
+        }
 
-		updatetimer = 1500;
-	}
-	else updatetimer-=diff;
+        updatetimer = 1500;
+    }
+    else updatetimer-=diff;
 }
 
 CreatureAI* GetAI_patrol(Creature* pCreature)

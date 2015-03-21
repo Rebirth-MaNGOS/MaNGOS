@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: The_Barrens
 SD%Complete: 90
-SDComment: Quest support: 863, 898, 1719, 2381, 2458, 4021, 4921, 6981
+SDComment: Quest support: 863, 857, 898, 1719, 2381, 2458, 4021, 4921, 6981
 SDCategory: Barrens
 EndScriptData */
 
@@ -31,6 +31,7 @@ at_twiggy_flathead
 npc_wizzlecrank_shredder
 npc_wrenixs_gizmotronic_apparatus
 npc_regthar_deathgate
+npc_feegly_the_exiled
 EndContentData */
 
 #include "precompiled.h"
@@ -1337,6 +1338,125 @@ CreatureAI* GetAI_mob_gallywix(Creature* pCreature)
     return new mob_gallywixAI(pCreature);
 }
 
+/*####
+# npc_feegly_the_exiled
+####*/
+
+enum
+{
+	FEEGLY_SAY_1					 = -1720037,
+	FEEGLY_SAY_2					 = -1720038,
+
+	SPELL_WORK						 = 2152,			// Actually craft light armor kit, but it looks good
+	SPELL_TROGG						 = 5142,
+	SPELL_DIE						 = 28748,
+
+    QUEST_ID_THE_TEAR_OF_THE_MOONS   = 857,
+};
+
+struct MANGOS_DLL_DECL npc_feegly_the_exiledAI : public npc_escortAI
+{
+    npc_feegly_the_exiledAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;;
+		m_uiSpeechTimer = 0;
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+	void JustStartedEscort()
+    {
+    }
+	
+	void StartOutro()
+	{
+		m_bOutro = true; 
+		m_uiSpeechTimer = 2000;
+		m_uiSpeechStep = 1;
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {
+                    case 1:
+                        DoScriptText(FEEGLY_SAY_1, m_creature);
+                        m_uiSpeechTimer = 1000;
+                        break;
+					case 2:
+						m_creature->HandleEmote(EMOTE_ONESHOT_ROAR);
+                        m_uiSpeechTimer = 3000;
+                        break;
+					case 3:
+						DoCastSpellIfCan(m_creature, SPELL_WORK);
+						m_creature->GenericTextEmote("Feegly the Exiled begins to rub the Tear of the Moons.", NULL, false);
+						m_uiSpeechTimer = 6000;
+						break;
+					case 4:
+						DoScriptText(FEEGLY_SAY_2, m_creature);
+						m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+						m_uiSpeechTimer = 2000;
+						break;
+					case 5:
+						m_creature->GenericTextEmote("The Tear of the Moons begins to make strange grunting noises. The Tear of the Moons drops to the ground and shatters.", NULL, false);
+						m_uiSpeechTimer = 4000;
+						break;
+					case 6:
+						DoCastSpellIfCan(m_creature, SPELL_TROGG, CAST_TRIGGERED);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 7:
+						m_creature->GetMotionMaster()->MovePoint(1, -4218.01f, -2342.01f, 91.72f);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 8:
+						DoCastSpellIfCan(m_creature, SPELL_DIE, CAST_TRIGGERED);
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_feegly_the_exiled(Creature* pCreature)
+{
+    return new npc_feegly_the_exiledAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_feegly_the_exiled(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_THE_TEAR_OF_THE_MOONS)
+    {
+		if (npc_feegly_the_exiledAI* pEscortAI = dynamic_cast<npc_feegly_the_exiledAI*>(pCreature->AI()))
+		{
+			pEscortAI->Start(false, pPlayer, pQuest);
+			pEscortAI->StartOutro();
+		}
+	}
+	return true;
+}
+
 /* go_ */
 
 void AddSC_the_barrens()
@@ -1434,5 +1554,11 @@ void AddSC_the_barrens()
     pNewscript = new Script;
     pNewscript->Name = "npc_gallywix";
     pNewscript->GetAI = &GetAI_mob_gallywix;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_feegly_the_exiled";
+    pNewscript->GetAI = &GetAI_npc_feegly_the_exiled;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_feegly_the_exiled;
     pNewscript->RegisterSelf();
 }

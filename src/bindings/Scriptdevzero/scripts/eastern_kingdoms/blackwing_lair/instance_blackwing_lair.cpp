@@ -326,7 +326,7 @@ void instance_blackwing_lair::SetData(uint32 uiType, uint32 uiData)
         
         GameObject* razorgoreDoorEntrance = GetSingleGameObjectFromStorage(GO_DOOR_RAZORGORE_ENTER);
         if (razorgoreDoorEntrance)
-            razorgoreDoorEntrance->SetGoState(uiData == DONE ? GO_STATE_ACTIVE : GO_STATE_READY);
+            razorgoreDoorEntrance->SetGoState(uiData == IN_PROGRESS ?  GO_STATE_READY : GO_STATE_ACTIVE);
         
         GameObject* razorgoreDoorExit = GetSingleGameObjectFromStorage(GO_DOOR_RAZORGORE_EXIT);
         if (razorgoreDoorExit)
@@ -339,7 +339,7 @@ void instance_blackwing_lair::SetData(uint32 uiType, uint32 uiData)
         
         GameObject* razorgoreDoorExit = GetSingleGameObjectFromStorage(GO_DOOR_RAZORGORE_EXIT);
         if (razorgoreDoorExit)
-            razorgoreDoorExit->SetGoState(uiData == DONE ? GO_STATE_ACTIVE: GO_STATE_READY);
+            razorgoreDoorExit->SetGoState(uiData == IN_PROGRESS ? GO_STATE_READY : GO_STATE_ACTIVE);
 
         if (uiData == DONE)
             DoUseDoorOrButton(GO_DOOR_VAELASTRASZ);

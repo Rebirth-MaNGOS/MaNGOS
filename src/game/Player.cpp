@@ -371,6 +371,8 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 
     m_isActiveObject = true;                                // player is always active object
 
+    m_isCharging = false;
+
     m_session = session;
 
     m_ExtraFlags = 0;
@@ -881,6 +883,11 @@ void Player::SendMirrorTimer(MirrorTimerType Type, uint32 MaxValue, uint32 Curre
     GetSession()->SendPacket( &data );
 }
 
+ObjectGuid Player::GetChargeTarget()
+{
+    return chargeTarget;
+}
+
 void Player::StopMirrorTimer(MirrorTimerType Type)
 {
     m_MirrorTimer[Type] = DISABLED_MIRROR_TIMER;
@@ -1123,6 +1130,16 @@ void Player::SetDrunkValue(uint16 newDrunkenValue, uint32 /*itemId*/)
         m_detectInvisibilityMask &= ~(1<<6);
 }
 
+void Player::SetChargeTimer(uint32 timer)
+{
+    m_chargeTimer = timer;
+}
+
+uint32 Player::GetChargeTimer()
+{
+    return m_chargeTimer;
+}
+
 void Player::Update( uint32 update_diff, uint32 p_time )
 {
     if(!IsInWorld())
@@ -1141,6 +1158,70 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         // It will be recalculate at mailbox open (for unReadMails important non-0 until mailbox open, it also will be recalculated)
         m_nextMailDelivereTime = 0;
     }
+
+    /********************** CHARGE TRIALS ********************************************************/
+
+    if(GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE && !m_isCharging)
+    {
+        m_isCharging = true;
+    }
+
+    if(GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE && GetMotionMaster()->GetCurrentMovementGeneratorType() != CHASE_MOTION_TYPE && m_isCharging)
+    {
+        Unit *target;
+        if(target = GetMap()->GetUnit(GetChargeTarget()))
+        {
+            if(target->GetTypeId() != TYPEID_PLAYER)
+            {
+                target->GetMotionMaster()->SuspendChaseMovement();
+            }
+        }
+
+        m_isCharging = false;
+        UpdateSpeed(MOVE_RUN, true, 1);
+        UpdateSpeed(MOVE_WALK, true, 1);
+        UpdateSpeed(MOVE_SWIM, true, 1);
+
+        if(target)
+        {
+            target->GetMotionMaster()->ResumeChaseMovement();
+        }
+    }
+
+    if(GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE && m_isCharging && m_chargeTimer)
+    {
+        if(m_chargeTimer <= update_diff)
+        {
+            if(Unit *target = GetMap()->GetUnit(GetChargeTarget()))
+            {
+                float x;
+                float y;
+                
+                if(target->GetTypeId() == TYPEID_PLAYER)
+                {
+                    x = target->GetPositionX() + (1.5*target->GetObjectBoundingRadius()*cos(target->GetAngle(this)));
+                    y = target->GetPositionY() + (1.5*target->GetObjectBoundingRadius()*sin(target->GetAngle(this)));
+                }
+                else
+                {
+                    x = target->GetPositionX() + (2*target->GetObjectBoundingRadius()*cos(target->GetAngle(this)));
+                    y = target->GetPositionY() + (2*target->GetObjectBoundingRadius()*sin(target->GetAngle(this)));
+                    
+                }
+                GetMotionMaster()->MovePoint(0, x, y, target->GetPositionZ(), true);
+            }
+            else
+            {
+                m_chargeTimer = 0;
+                GetMotionMaster()->SuspendChaseMovement();
+                GetMotionMaster()->Clear();
+                m_isCharging = false;
+            }
+        } else
+            m_chargeTimer -= update_diff;
+    }
+
+    /********************** CHARGE TRIALS ********************************************************/
 
     //used to implement delayed far teleports
     SetCanDelayTeleport(true);
@@ -1412,6 +1493,11 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
     if(isCharmed() && AI())  // Make sure to only call the AI if the player has an AI. This is currently only used for the Gnomish Mind Control Cap.
         AI()->UpdateAI(update_diff);
+}
+
+void Player::SetChargeTarget(ObjectGuid target)
+{
+    chargeTarget = target;
 }
 
 void Player::SetDeathState(DeathState s)
@@ -19136,7 +19222,7 @@ void Player::UpdateUnderwaterState( Map* m, float x, float y, float z )
     }
 
     // All liquids type - check under water position
-    if (liquid_status.type&(MAP_LIQUID_TYPE_WATER|MAP_LIQUID_TYPE_OCEAN|MAP_LIQUID_TYPE_MAGMA|MAP_LIQUID_TYPE_SLIME))
+    if (liquid_status.type & (MAP_LIQUID_TYPE_WATER|MAP_LIQUID_TYPE_OCEAN|MAP_LIQUID_TYPE_MAGMA|MAP_LIQUID_TYPE_SLIME))
     {
         if ( res & LIQUID_MAP_UNDER_WATER)
             m_MirrorTimerFlags |= UNDERWATER_INWATER;
@@ -19145,13 +19231,13 @@ void Player::UpdateUnderwaterState( Map* m, float x, float y, float z )
     }
 
     // Allow travel in dark water on taxi or transport
-    if ((liquid_status.type & MAP_LIQUID_TYPE_DARK_WATER) && !IsTaxiFlying() && !GetTransport())
+    if ((liquid_status.type == MAP_LIQUID_TYPE_DARK_WATER) && !IsTaxiFlying() && !GetTransport())
         m_MirrorTimerFlags |= UNDERWATER_INDARKWATER;
     else
         m_MirrorTimerFlags &= ~UNDERWATER_INDARKWATER;
 
     // in lava check, anywhere in lava level
-    if (liquid_status.type&MAP_LIQUID_TYPE_MAGMA)
+    if (liquid_status.type == MAP_LIQUID_TYPE_MAGMA)
     {
         if (res & (LIQUID_MAP_UNDER_WATER|LIQUID_MAP_IN_WATER|LIQUID_MAP_WATER_WALK))
             m_MirrorTimerFlags |= UNDERWATER_INLAVA;
@@ -19159,7 +19245,7 @@ void Player::UpdateUnderwaterState( Map* m, float x, float y, float z )
             m_MirrorTimerFlags &= ~UNDERWATER_INLAVA;
     }
     // in slime check, anywhere in slime level
-    if (liquid_status.type&MAP_LIQUID_TYPE_SLIME)
+    if (liquid_status.type == MAP_LIQUID_TYPE_SLIME)
     {
         if (res & (LIQUID_MAP_UNDER_WATER|LIQUID_MAP_IN_WATER|LIQUID_MAP_WATER_WALK))
             m_MirrorTimerFlags |= UNDERWATER_INSLIME;

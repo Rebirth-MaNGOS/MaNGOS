@@ -133,7 +133,7 @@ public:
         return &goblin_group2;
     }
 
-    std::vector<Creature*> &GetDrakonoidsAndBoneConstructs()
+    std::vector<ObjectGuid> &GetDrakonoidsAndBoneConstructs()
     {
         return m_vecDrakonoidsAndBoneConstructs;
     }
@@ -162,7 +162,7 @@ private:
     std::vector<Creature*> goblin_group2;
 
     // For Nefarius.
-    std::vector<Creature*> m_vecDrakonoidsAndBoneConstructs;
+    std::vector<ObjectGuid> m_vecDrakonoidsAndBoneConstructs;
 
     // For the suppression rooms.
     std::vector<std::pair<std::pair<uint32, uint32>, GameObject*> > m_vecTrapList;		// The trap CD is saved in the first uint32 and the animation CD in the second uint32;

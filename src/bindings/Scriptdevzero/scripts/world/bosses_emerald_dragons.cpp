@@ -188,7 +188,8 @@ enum eEmeriss
     SPELL_VOLATILE_INFECTION    = 24928,
     SPELL_CORRUPTION_OF_EARTH   = 24910,
     SPELL_PUTRID_MUSHROOM       = 24904,                    // Summons a mushroom on killing a player
-
+	SPELL_SPORE_CLOUD			= 22948,					// used this for mushrooms?
+	SPELL_SPORE_CLOUD1			= 24871,					// the one in DB, has mushroom as script target, this spell crashes server
     GO_PUTRID_MUSHROOM          = 180517,
 };
 
@@ -291,20 +292,16 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
 {
     boss_lethonAI(Creature* pCreature) : boss_emerald_dragonAI(pCreature) { Reset(); }
 
-    uint32 m_uiShadowBoltWhirlTimer;
-
     void Reset()
     {
         boss_emerald_dragonAI::Reset();
-
-        m_uiShadowBoltWhirlTimer = 12000;
     }
 
     void Aggro(Unit* /*pWho*/)
     {
         DoScriptText(SAY_LETHON_AGGRO, m_creature);
         // Shadow bolt wirl is a periodic aura which triggers a set of shadowbolts every 2 secs; may need some core tunning
-        //DoCastSpellIfCan(m_creature, SPELL_SHADOW_BOLT_WIRL, CAST_TRIGGERED);
+        DoCastSpellIfCan(m_creature, SPELL_SHADOW_BOLT_WHIRL, CAST_TRIGGERED);
     }
 
     void ReleaseSpirit(Player* pPlayer)
@@ -355,18 +352,11 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
 
         return false;
     }
-
+	
     bool UpdateDragonAI(const uint32 uiDiff)
     {
-        // Shadow Bolt Whirl
-        if (m_uiShadowBoltWhirlTimer < uiDiff)							// not working well
-        {
-            Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-            if (pTarget && DoCastSpellIfCan(pTarget, SPELL_SHADOW_BOLT_WHIRL) == CAST_OK)
-                m_uiShadowBoltWhirlTimer = urand(7000, 12000);
-        }
-        else
-            m_uiShadowBoltWhirlTimer -= uiDiff;
+		if (!m_creature->HasAura(SPELL_SHADOW_BOLT_WHIRL))
+			DoCastSpellIfCan(m_creature, SPELL_SHADOW_BOLT_WHIRL, CAST_TRIGGERED);		// reapply aura if boss somehow doesn't have it
 
         return true;
     }
@@ -809,7 +799,7 @@ struct MANGOS_DLL_DECL mob_dream_fogAI : public ScriptedAI
             }
 
             // Seeping fog movement is slow enough for a player to be able to walk backwards and still outpace it
-			// Changed speed in DB instead
+			// Changed speed in DB instead************************
             //m_creature->AddSplineFlag(SPLINEFLAG_WALKMODE);
             //m_creature->SetSpeedRate(MOVE_WALK, 0.3f);			// 0.75 before, not working still fast speed.
         }

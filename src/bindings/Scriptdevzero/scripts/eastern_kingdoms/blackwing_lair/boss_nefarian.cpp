@@ -74,6 +74,7 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
 		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_FIRE, true);
+        hasLanded = false;
         Reset();
     }
 
@@ -85,8 +86,11 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
     uint32 m_uiCleaveTimer;
     uint32 m_uiTailLashTimer;
     uint32 m_uiClassCallTimer;
+    uint32 m_landTimer;
+    uint32 m_landEmoteTimer;
     bool m_bPhase3;
     bool m_bHasEndYell;
+    bool hasLanded;
 
     void Reset()
     {
@@ -96,8 +100,20 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
         m_uiCleaveTimer         = 7000;
         m_uiTailLashTimer       = 10000;
         m_uiClassCallTimer      = 35000;                            // 35-40 seconds
+        m_landTimer             = 7500;
+        m_landEmoteTimer        = 0;
         m_bPhase3               = false;
         m_bHasEndYell           = false;
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+        m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+        m_creature->SetHover(true);
+        m_creature->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
+        m_creature->SetSplineFlags(SPLINEFLAG_FLYING);
+
+        if(hasLanded)
+        {
+            m_creature->MonsterMove(-7443.177f, -1338.277f, 486.649f, 7500);
+        }
     }
 
     void KilledUnit(Unit* pVictim)
@@ -137,9 +153,12 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
         instance_blackwing_lair* blackwing_lair = dynamic_cast<instance_blackwing_lair*>(m_pInstance);
         if (blackwing_lair)
         {
-            for (Creature* current_spawn : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+            for (ObjectGuid current_spawn_guid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+            {
+                Creature* current_spawn = m_creature->GetMap()->GetCreature(current_spawn_guid);
                 if (current_spawn)
                     ((TemporarySummon*) current_spawn)->UnSummon();
+            }
 
             blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
         }
@@ -162,6 +181,37 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+        if(m_landTimer)
+        {
+            if(m_landTimer <= uiDiff)
+            {
+                m_creature->HandleEmote(EMOTE_ONESHOT_LAND);
+                m_creature->SetHover(false);
+                m_creature->SetSplineFlags(SPLINEFLAG_NONE);
+               // m_creature->SetByteValue(UNIT_FIELD_BYTES_1, 3, 0/* | UNIT_BYTE1_FLAG_UNK_2*/);
+                m_landEmoteTimer = 3000;
+                m_landTimer = 0;
+            }
+            else
+                m_landTimer -= uiDiff;
+        }
+
+        if(m_landEmoteTimer)
+        {
+            if(m_landEmoteTimer <= uiDiff)
+            {
+                m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                m_creature->SetInCombatWithZone();
+                if (Unit* pTarget = m_creature->SelectRandomUnfriendlyTarget(0, 100.0f))//>SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    AttackStart(pTarget);
+
+                m_landEmoteTimer = 0;
+                hasLanded = true;
+            }
+            else
+                m_landEmoteTimer -= uiDiff;
+        }
+
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
@@ -277,9 +327,11 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
             instance_blackwing_lair* blackwing_lair = dynamic_cast<instance_blackwing_lair*>(m_pInstance);
             if (blackwing_lair)
             {
-                std::vector<Creature*> tmp_list;
+                std::vector<ObjectGuid> tmp_list;
 
-                for (Creature* current_drakonoid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+                for (ObjectGuid current_drakonoid_guid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+                {
+                    Creature* current_drakonoid = m_creature->GetMap()->GetCreature(current_drakonoid_guid);
                     if (current_drakonoid)
                     {
                         float x, y, z;
@@ -296,11 +348,12 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
                             bone_construct->Attack(rnd_player ? rnd_player : m_creature->getVictim(), true);
                             bone_construct->GetMotionMaster()->MoveChase(rnd_player ? rnd_player : m_creature->getVictim());
 
-                            tmp_list.push_back(bone_construct);
+                            tmp_list.push_back(bone_construct->GetObjectGuid());
                         }
 
                         ((TemporarySummon*) current_drakonoid)->UnSummon();
                     }
+                }
 
                 blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
                 blackwing_lair->GetDrakonoidsAndBoneConstructs() = tmp_list;

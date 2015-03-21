@@ -1131,6 +1131,10 @@ bool Map::ActiveObjectsNearGrid(uint32 x, uint32 y) const
 
 void Map::AddToActive( WorldObject* obj )
 {
+    // If the active object is already in the list we shouldn't mark it as active again.
+    if (std::find(m_activeNonPlayers.begin(), m_activeNonPlayers.end(), obj) != m_activeNonPlayers.end())
+        return;
+    
     m_activeNonPlayers.push_back(obj);
     
     // also not allow unloading spawn grid to prevent creating creature clone at load

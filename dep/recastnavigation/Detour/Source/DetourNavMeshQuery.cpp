@@ -345,7 +345,7 @@ dtStatus dtNavMeshQuery::getPolyHeight(dtPolyRef ref, const float* pos, float* h
 		for (int j = 0; j < pd->triCount; ++j)
 		{
 			const unsigned char* t = &tile->detailTris[(pd->triBase+j)*4];
-			const float* v[3];
+			float* v[3];
 			for (int k = 0; k < 3; ++k)
 			{
 				if (t[k] < poly->vertCount)
@@ -353,6 +353,7 @@ dtStatus dtNavMeshQuery::getPolyHeight(dtPolyRef ref, const float* pos, float* h
 				else
 					v[k] = &tile->detailVerts[(pd->vertBase+(t[k]-poly->vertCount))*3];
 			}
+
 			float h;
 			if (dtClosestHeightPointTriangle(pos, v[0], v[1], v[2], h))
 			{

@@ -778,83 +778,88 @@ CreatureAI* GetAI_mob_grethok_the_controller(Creature* pCreature)
 bool GOUse_go_orb_of_domination(Player* pPlayer, GameObject* pGo)
 {
 
-	if (pPlayer && pGo)
-	{
-		instance_blackwing_lair* player_instance = (instance_blackwing_lair*) pPlayer->GetInstanceData();
-		Creature* razorgore = player_instance->GetSingleCreatureFromStorage(NPC_RAZORGORE, true);
-		Creature* orb_dummy = player_instance->GetSingleCreatureFromStorage(NPC_ORB_OF_DOMINATION_TRIGGER, true);
+    if (pPlayer && pGo)
+    {
+        instance_blackwing_lair* player_instance = (instance_blackwing_lair*) pPlayer->GetInstanceData();
+        
+        // If the orb is clicked after the Razorgone event is done nothing should happen.
+        if (player_instance->GetData(TYPE_RAZORGORE) == DONE)
+            return true;
+        
+        Creature* razorgore = player_instance->GetSingleCreatureFromStorage(NPC_RAZORGORE, true);
+        Creature* orb_dummy = player_instance->GetSingleCreatureFromStorage(NPC_ORB_OF_DOMINATION_TRIGGER, true);
 
-		if (player_instance->GetRazorgorePhase() == 2)								// Disable the orb during phase 2.
-			return true;
+        if (player_instance->GetRazorgorePhase() == 2)								// Disable the orb during phase 2.
+            return true;
 
-		if (player_instance->GetRazorgorePhase() == 0)
-		{
-			player_instance->SetRazorgorePhase(1);
-			player_instance->SetData(TYPE_RAZORGORE, IN_PROGRESS);
-		}
+        if (player_instance->GetRazorgorePhase() == 0)
+        {
+            player_instance->SetRazorgorePhase(1);
+            player_instance->SetData(TYPE_RAZORGORE, IN_PROGRESS);
+        }
 
-		if (razorgore && orb_dummy)
-		{
+        if (razorgore && orb_dummy)
+        {
 
-			if (!razorgore->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED)) // Do not allow another player to "steal" the MC.
-			{
-				if (pPlayer->GetPet())														// If the player has a pet he cannot use the orb.
-				{
-					pPlayer->CastSpell(razorgore, SPELL_ORB_MIND_CONTROL, true);
-					pPlayer->CastSpell(pPlayer, SPELL_MIND_EXHAUSTION, true);
-					return true;
-				}
+            if (!razorgore->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED)) // Do not allow another player to "steal" the MC.
+            {
+                if (pPlayer->GetPet())														// If the player has a pet he cannot use the orb.
+                {
+                    pPlayer->CastSpell(razorgore, SPELL_ORB_MIND_CONTROL, true);
+                    pPlayer->CastSpell(pPlayer, SPELL_MIND_EXHAUSTION, true);
+                    return true;
+                }
 
-				if (!pPlayer->HasAura(SPELL_MIND_EXHAUSTION))						// A player with the Mind Exhaustion debuff should not be able to use the orb.
-				{
-					ThreatList const& threat_list = razorgore->getThreatManager().getThreatList();
-					if (!threat_list.empty())
-					{
-						HostileReference* top_aggro_reference = threat_list.front();
-						if (top_aggro_reference)
-							{
-								Unit* top_aggro = top_aggro_reference->getTarget();
+                if (!pPlayer->HasAura(SPELL_MIND_EXHAUSTION))						// A player with the Mind Exhaustion debuff should not be able to use the orb.
+                {
+                    ThreatList const& threat_list = razorgore->getThreatManager().getThreatList();
+                    if (!threat_list.empty())
+                    {
+                        HostileReference* top_aggro_reference = threat_list.front();
+                        if (top_aggro_reference)
+                        {
+                            Unit* top_aggro = top_aggro_reference->getTarget();
 
-								if (top_aggro && razorgore->getThreatManager().getThreat(top_aggro) >= 99999999.f)
-									razorgore->getThreatManager().addThreat(top_aggro, -99999999.f);
-							}
-					}
+                            if (top_aggro && razorgore->getThreatManager().getThreat(top_aggro) >= 99999999.f)
+                                razorgore->getThreatManager().addThreat(top_aggro, -99999999.f);
+                        }
+                    }
 
-					razorgore->SetInCombatWith(pPlayer);
-					razorgore->getThreatManager().addThreatDirectly(pPlayer, 99999999.f);
-					razorgore->Attack(pPlayer, false);
+                    razorgore->SetInCombatWith(pPlayer);
+                    razorgore->getThreatManager().addThreatDirectly(pPlayer, 99999999.f);
+                    razorgore->Attack(pPlayer, false);
 
-					Creature* grethok = player_instance->GetSingleCreatureFromStorage(NPC_GRETHOK);
-					if (grethok && !grethok->isInCombat() && grethok->isAlive())
-					{
-						grethok->SetInCombatWithZone();
-						grethok->getThreatManager().addThreat(pPlayer, 1.f);
-						grethok->Attack(pPlayer, false);
-					}
+                    Creature* grethok = player_instance->GetSingleCreatureFromStorage(NPC_GRETHOK);
+                    if (grethok && !grethok->isInCombat() && grethok->isAlive())
+                    {
+                        grethok->SetInCombatWithZone();
+                        grethok->getThreatManager().addThreat(pPlayer, 1.f);
+                        grethok->Attack(pPlayer, false);
+                    }
 
 
-					razorgore->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);	// Is cleared in core.
+                    razorgore->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);	// Is cleared in core.
 
-					pPlayer->CastSpell(pPlayer, SPELL_ORB_USAGE, true);
-					pPlayer->CastSpell(pPlayer, SPELL_MIND_EXHAUSTION, true);
-					pPlayer->CastSpell(razorgore, SPELL_ORB_MIND_CONTROL, false);
-					razorgore->CastSpell(razorgore,  SPELL_ORB_SHRINK_EFFECT, true);
+                    pPlayer->CastSpell(pPlayer, SPELL_ORB_USAGE, true);
+                    pPlayer->CastSpell(pPlayer, SPELL_MIND_EXHAUSTION, true);
+                    pPlayer->CastSpell(razorgore, SPELL_ORB_MIND_CONTROL, false);
+                    razorgore->CastSpell(razorgore,  SPELL_ORB_SHRINK_EFFECT, true);
 
-					if (!razorgore->HasAura(SPELL_POSSESS))
-						orb_dummy->CastSpell(orb_dummy, SPELL_POSSESS, true);
-				}
-			}
-			else
-			{
-				if (pPlayer->HasAura(SPELL_MIND_EXHAUSTION)) // If Razorgore is MC'ed and a player with the Mind Exhaustion spell uses the orb the MC should be broken.
-					for (int i = 0; i < 3; i++)
-						razorgore->RemoveAura(19832, (SpellEffectIndex) i);
-			}
-		}
+                    if (!razorgore->HasAura(SPELL_POSSESS))
+                        orb_dummy->CastSpell(orb_dummy, SPELL_POSSESS, true);
+                }
+            }
+            else
+            {
+                if (pPlayer->HasAura(SPELL_MIND_EXHAUSTION)) // If Razorgore is MC'ed and a player with the Mind Exhaustion spell uses the orb the MC should be broken.
+                    for (int i = 0; i < 3; i++)
+                        razorgore->RemoveAura(19832, (SpellEffectIndex) i);
+            }
+        }
 
-	}
+    }
 
-	return true;
+    return true;
 }
 
 bool GOUse_go_black_dragon_egg(Creature* pMob, GameObject* pGo)

@@ -221,19 +221,6 @@ bool handleArgs(int argc, char** argv,
             else
                 printf("invalid option for '--dumpTile', using default false\n");
         }
-        else if (strcmp(argv[i], "--objectBuild") == 0)
-        {
-            param = argv[++i];
-            if (!param)
-                return false;
-            
-            if (strcmp(param, "true") == 0)
-                objectBuild = true;
-            else if (strcmp(param, "false") == 0)
-                objectBuild = false;
-            else
-                printf("invalid option for '--objectBuild', using default false\n");
-        }
         else if (strcmp(argv[i], "--offMeshInput") == 0)
         {
             param = argv[++i];
@@ -322,13 +309,6 @@ int main(int argc, char** argv)
             printf("Error: When dump tile is used a map and tile have to be specified on the command line!\n");
             return -1;
         }
-    }
-    else if (objectBuild)
-    {
-        if (tileX > -1 && tileY > -1 && mapnum >= 0)
-            builder.buildSingleTileFromObjects(mapnum, tileX, tileY);
-        else if (mapnum >= 0)
-            builder.buildMapFromObjects(uint32(mapnum));
     }
     else if (tileX > -1 && tileY > -1 && mapnum >= 0)
         builder.buildSingleTile(mapnum, tileX, tileY);

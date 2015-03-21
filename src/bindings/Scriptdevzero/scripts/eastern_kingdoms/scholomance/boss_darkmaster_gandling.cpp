@@ -48,6 +48,7 @@ struct MANGOS_DLL_DECL boss_darkmaster_gandlingAI : public ScriptedAI
     boss_darkmaster_gandlingAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (instance_scholomance*)pCreature->GetInstanceData();
+		DoScriptText(SAY_AGGRO, m_creature);
         Reset();
     }
 
@@ -78,7 +79,6 @@ struct MANGOS_DLL_DECL boss_darkmaster_gandlingAI : public ScriptedAI
 
     void Aggro(Unit* /*pWho*/)
     {
-        DoScriptText(SAY_AGGRO, m_creature);
         if (m_pInstance)
             m_pInstance->SetData(TYPE_DARKMASTER_GANDLING, IN_PROGRESS);
     }

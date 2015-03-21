@@ -1,6 +1,8 @@
-/*
- * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2009-2011 MaNGOSZero <https://github.com/mangos-zero>
+/**
+ * mangos-zero is a full featured server for World of Warcraft in its vanilla
+ * version, supporting clients for patch 1.12.x.
+ *
+ * Copyright (C) 2005-2014  MaNGOS project <http://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * World of Warcraft, and all World of Warcraft or Warcraft art, images,
+ * and lore are copyrighted by Blizzard Entertainment, Inc.
  */
 
 #include <sys/types.h>
@@ -27,24 +32,24 @@ namespace VMAP
 {
     void chompAndTrim(std::string& str)
     {
-        while(str.length() >0)
+        while (str.length() > 0)
         {
-            char lc = str[str.length()-1];
-            if(lc == '\r' || lc == '\n' || lc == ' ' || lc == '"' || lc == '\'')
+            char lc = str[str.length() - 1];
+            if (lc == '\r' || lc == '\n' || lc == ' ' || lc == '"' || lc == '\'')
             {
-                str = str.substr(0,str.length()-1);
+                str = str.substr(0, str.length() - 1);
             }
             else
             {
                 break;
             }
         }
-        while(str.length() >0)
+        while (str.length() > 0)
         {
             char lc = str[0];
-            if(lc == ' ' || lc == '"' || lc == '\'')
+            if (lc == ' ' || lc == '"' || lc == '\'')
             {
-                str = str.substr(1,str.length()-1);
+                str = str.substr(1, str.length() - 1);
             }
             else
             {
@@ -53,8 +58,8 @@ namespace VMAP
         }
     }
 
-    IVMapManager *gVMapManager = 0;
-    Table<unsigned int , bool>* iIgnoreSpellIds=0;
+    IVMapManager* gVMapManager = 0;
+    Table<unsigned int , bool>* iIgnoreSpellIds = 0;
 
     //===============================================
     // result false, if no more id are found
@@ -63,17 +68,17 @@ namespace VMAP
     {
         bool result = false;
         unsigned int i;
-        for(i=pStartPos;i<pString.size(); ++i)
+        for (i = pStartPos; i < pString.size(); ++i)
         {
-            if(pString[i] == ',')
+            if (pString[i] == ',')
             {
                 break;
             }
         }
-        if(i>pStartPos)
+        if (i > pStartPos)
         {
-            std::string idString = pString.substr(pStartPos, i-pStartPos);
-            pStartPos = i+1;
+            std::string idString = pString.substr(pStartPos, i - pStartPos);
+            pStartPos = i + 1;
             chompAndTrim(idString);
             pId = atoi(idString.c_str());
             result = true;
@@ -88,15 +93,15 @@ namespace VMAP
 
     void VMapFactory::preventSpellsFromBeingTestedForLoS(const char* pSpellIdString)
     {
-        if(!iIgnoreSpellIds)
-            iIgnoreSpellIds = new Table<unsigned int , bool>();
-        if(pSpellIdString != NULL)
+        if (!iIgnoreSpellIds)
+            { iIgnoreSpellIds = new Table<unsigned int , bool>(); }
+        if (pSpellIdString != NULL)
         {
-            unsigned int pos =0;
+            unsigned int pos = 0;
             unsigned int id;
             std::string confString(pSpellIdString);
             chompAndTrim(confString);
-            while(getNextId(confString, pos, id))
+            while (getNextId(confString, pos, id))
             {
                 iIgnoreSpellIds->set(id, true);
             }
@@ -114,8 +119,8 @@ namespace VMAP
     // just return the instance
     IVMapManager* VMapFactory::createOrGetVMapManager()
     {
-        if(gVMapManager == 0)
-            gVMapManager= new VMapManager2();                // should be taken from config ... Please change if you like :-)
+        if (gVMapManager == 0)
+            { gVMapManager = new VMapManager2(); }              // should be taken from config ... Please change if you like :-)
         return gVMapManager;
     }
 
@@ -123,15 +128,10 @@ namespace VMAP
     // delete all internal data structures
     void VMapFactory::clear()
     {
-        if(iIgnoreSpellIds)
-        {
-            delete iIgnoreSpellIds;
-            iIgnoreSpellIds = NULL;
-        }
-        if(gVMapManager)
-        {
-            delete gVMapManager;
-            gVMapManager = NULL;
-        }
+        delete iIgnoreSpellIds;
+        delete gVMapManager;
+
+        iIgnoreSpellIds = NULL;
+        gVMapManager = NULL;
     }
 }

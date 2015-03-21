@@ -94,7 +94,8 @@ struct MANGOS_DLL_DECL boss_gythAI : public ScriptedAI
             m_creature->InterruptNonMeleeSpells(false);
             m_creature->SetDisplayId(MODEL_GYTH);
             m_creature->SummonCreature(NPC_WARCHIEF_REND_BLACKHAND, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0, TEMPSUMMON_DEAD_DESPAWN, 120000);
-            m_bRendSummoned = true;
+            m_creature->GenericTextEmote("Warchief Rend Blackhand is knocked off his drake!", NULL, false);
+			m_bRendSummoned = true;
         }
 
         // Corrosive Acid Breath

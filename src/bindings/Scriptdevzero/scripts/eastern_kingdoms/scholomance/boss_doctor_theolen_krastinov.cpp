@@ -27,6 +27,7 @@ EndScriptData */
 enum
 {
     EMOTE_GENERIC_FRENZY_KILL   = -1000001,
+	SAY_AGGRO					= -1720041,
 
     SPELL_BACKHAND              = 18103,
     SPELL_FRENZY                = 8269,
@@ -64,6 +65,7 @@ struct MANGOS_DLL_DECL boss_doctor_theolen_krastinovAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_DOCTOR_THEOLEN_KRASTINOV, IN_PROGRESS);
+		DoScriptText(SAY_AGGRO, m_creature);
     }
 
     void JustDied(Unit* /*pKiller*/)

@@ -419,8 +419,8 @@ if(USE_STD_MALLOC)
 endif()
 
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "${DEFINITIONS}")
-set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_RELEASE "${DEFINITIONS_RELEASE}")
-set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DEFINITIONS_DEBUG}")
+set_directory_properties(PROPERTIES $<CONFIG:RELEASE> "${DEFINITIONS_RELEASE}")
+set_directory_properties(PROPERTIES $<CONFIG:DEBUG> "${DEFINITIONS_DEBUG}")
 
 add_subdirectory(src)
 # if(SQL)

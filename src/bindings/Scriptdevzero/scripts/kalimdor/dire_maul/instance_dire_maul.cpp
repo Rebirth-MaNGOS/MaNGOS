@@ -575,14 +575,14 @@ void instance_dire_maul::ProcessForceFieldOpening()				//Removed attack event du
 {
     // 'Open' the force field
     DoUseDoorOrButton(GO_FORCE_FIELD);
-/*
+
     //  Make the summoners attack Immol'Thar when force field goes down
 	 Creature* pImmolThar = GetSingleCreatureFromStorage(NPC_IMMOLTHAR);
     if (!pImmolThar || pImmolThar->isDead())
     {
         return;
     }
-*/
+
     bool bHasYelled = false;
     for (GUIDList::const_iterator itr = m_luiHighborneSummonerGUIDs.begin(); itr != m_luiHighborneSummonerGUIDs.end(); ++itr)
     {
@@ -593,12 +593,13 @@ void instance_dire_maul::ProcessForceFieldOpening()				//Removed attack event du
             DoScriptText(SAY_FREE_IMMOLTHAR, pSummoner);
             bHasYelled = true;
 	    }
-		/*
+		
 		if (!pSummoner || pSummoner->isDead())
         {
             continue;
-        }	
-		pSummoner->Attack(pImmolThar, true);		*/		//attack Immolthar
+        }		
+		pSummoner->AI()->AttackStart(pImmolThar);			//attack Immolthar
+		
 	}
     m_luiHighborneSummonerGUIDs.clear();
 }

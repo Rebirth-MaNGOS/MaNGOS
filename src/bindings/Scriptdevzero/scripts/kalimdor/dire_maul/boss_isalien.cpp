@@ -30,7 +30,9 @@ enum Spells
     SPELL_NET                       = 12024,
     SPELL_REGROWTH                  = 27637,
     SPELL_SHOOT                     = 22907,
-    SPELL_STARSHARDS                = 27636
+    SPELL_STARSHARDS                = 27636,
+	SAY_AGGRO						= -1720039,
+	SAY_DIE							= -1720040,
 };
 
 struct MANGOS_DLL_DECL boss_isalienAI : public ScriptedAI
@@ -74,12 +76,14 @@ struct MANGOS_DLL_DECL boss_isalienAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_ISALIEN, IN_PROGRESS);
+		DoScriptText(SAY_AGGRO, m_creature);
     }
 
     void JustDied(Unit* /*pKiller*/)
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_ISALIEN, DONE);
+		DoScriptText(SAY_DIE, m_creature);
     }
 
     void JustSummoned(Creature* pSummoned)

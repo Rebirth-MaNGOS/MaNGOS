@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Arathi Highlands
 SD%Complete: 100
-SDComment: Quest support: 660, 665
+SDComment: Quest support: 660, 665, 667
 SDCategory: Arathi Highlands
 EndScriptData */
 
@@ -218,6 +218,210 @@ bool QuestAccept_npc_kinelory(Player* pPlayer, Creature* pCreature, const Quest*
 	return true;
 }
 
+/*######
+## npc_shakes_obreen
+######*/
+
+enum
+{
+	SAY_START							= -1720029,
+	NAGA_YELL_1							= -1720030,
+	SAY_SHAKES_HOLD						= -1720031,
+
+	WAVE_W_TWO							= 2,
+	WAVE_W_THREE						= 3,
+
+	NPC_DAGGERSPINE_MARAUDER			= 2775,
+
+	QUEST_DEATH_FROM_BELOW				= 667,
+};
+
+struct Loc
+{
+    float x, y, z;
+};
+
+static Loc aMobSpawnLoc[]= 
+{
+	{-2149.34f, -1974.08f, 14.86f},
+	{-2154.04f, -1977.88f, 14.62f},
+	{-2149.85f, -1978.95f, 13.86f},
+};
+
+struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
+{
+    npc_shakes_obreenAI(Creature* pCreature) : npc_escortAI(pCreature) 
+	{ 
+		QuestEndReset();
+		Reset(); 
+	}
+
+	uint8 m_uiKilledCreatures;
+	uint8 m_uiPhase;
+	uint8 m_uiCurrentWave;
+
+	uint32 m_uiEventTimer;
+
+	ObjectGuid m_uiPlayerGUID;
+
+	bool m_bNagaSay;
+
+    void Reset() { }
+
+	void QuestEndReset()				// make sure another player can do the quest after it's done
+	{
+		m_uiEventTimer      = 0;
+        m_uiKilledCreatures = 0;
+		m_uiPhase           = 0;
+		m_uiCurrentWave     = 0;
+		m_uiPlayerGUID.Clear();
+		m_bNagaSay = false;
+	}
+
+    void Aggro(Unit* /*pWho*/)
+    {
+    }
+
+	void WaypointReached(uint32 uiPointId)
+	{
+	}
+
+    void JustSummoned(Creature* pSummoned)
+    {
+        pSummoned->AI()->AttackStart(m_creature);
+		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
+		if (!m_bNagaSay)
+		{
+			DoScriptText(NAGA_YELL_1, pSummoned);
+			m_bNagaSay = true;
+		}
+    }
+
+	void DoSummonWave(uint32 uiSummonId = 0)
+    {
+        if (uiSummonId == WAVE_W_TWO)
+        {
+            for (uint8 i = 0; i < 2; ++i)
+            {
+                m_creature->SummonCreature(NPC_DAGGERSPINE_MARAUDER, aMobSpawnLoc[i].x, aMobSpawnLoc[i].y, aMobSpawnLoc[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 20000);
+            }
+
+            ++m_uiCurrentWave;
+        }
+        else if (uiSummonId == WAVE_W_THREE)
+        {
+            for (uint8 i = 0; i < 3; ++i)
+            {
+                m_creature->SummonCreature(NPC_DAGGERSPINE_MARAUDER, aMobSpawnLoc[i].x, aMobSpawnLoc[i].y, aMobSpawnLoc[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 20000);
+            }
+			++m_uiCurrentWave;
+        }
+    }
+
+	void JustDied(Unit* /*pKiller*/)			// fail quest if Shakes dies
+	{
+		if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
+        {
+			pPlayer->FailQuest(QUEST_DEATH_FROM_BELOW);
+			m_uiEventTimer = 0;						// don't spawn more waves
+        }
+	}
+
+	void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        if (pSummoned->GetEntry() == NPC_DAGGERSPINE_MARAUDER)
+        {
+            ++m_uiKilledCreatures;
+		}
+		
+		// Event ended
+        if (m_uiKilledCreatures >= 8 && m_uiCurrentWave == 3)
+        {
+			if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))			// give quest credit when all waves are dead
+				pPlayer->AreaExploredOrEventHappens(QUEST_DEATH_FROM_BELOW);
+
+			QuestEndReset();			// reset so next player can do quest again
+        }
+	}
+
+	ObjectGuid DoStartEvent(ObjectGuid player_guid)
+	{
+		if (m_uiPlayerGUID)
+            return ObjectGuid();
+
+		m_uiEventTimer  = 15000;
+
+		m_uiPlayerGUID = player_guid;
+        
+        return m_uiPlayerGUID;
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+	{
+		npc_escortAI::UpdateAI(uiDiff);
+
+		if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
+        {
+			if (m_uiEventTimer)					// summon waves
+			{
+				if (m_uiEventTimer <= uiDiff)
+				{
+					switch (m_uiPhase)
+					{
+						case 0:
+							DoSummonWave(WAVE_W_THREE);
+							m_uiEventTimer = 35000;
+							break;
+						case 1:
+							DoSummonWave(WAVE_W_TWO);
+							m_uiEventTimer = 30000;
+							break;
+						case 2:
+							DoScriptText(SAY_SHAKES_HOLD, m_creature);
+							m_uiEventTimer = 15000;
+							break;
+						case 3:
+							DoSummonWave(WAVE_W_THREE);
+							m_uiEventTimer = 0;
+							break;
+					}
+				++m_uiPhase;
+				}
+				else
+				{
+					m_uiEventTimer -= uiDiff;
+				}
+			}
+		}
+		//return since we have no target
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+			return;
+
+		DoMeleeAttackIfReady();
+	}
+};
+
+bool QuestAccept_npc_shakes_obreen(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == QUEST_DEATH_FROM_BELOW)
+    {
+        DoScriptText(SAY_START, pCreature, pPlayer);
+
+        if (npc_shakes_obreenAI* pEscortAI = dynamic_cast<npc_shakes_obreenAI*>(pCreature->AI()))
+        { 
+			pEscortAI->Start(false, pPlayer, pQuest, true);
+			pEscortAI->DoStartEvent(pPlayer->GetGUID());
+		}
+			
+    }
+    return true;
+}
+
+CreatureAI* GetAI_npc_shakes_obreen(Creature* pCreature)
+{
+    return new npc_shakes_obreenAI(pCreature);
+}
+
 void AddSC_arathi_highlands()
 {
     Script * pNewscript;
@@ -232,5 +436,11 @@ void AddSC_arathi_highlands()
     pNewscript->Name = "npc_kinelory";
     pNewscript->GetAI = &GetAI_npc_kinelory;
     pNewscript->pQuestAcceptNPC = &QuestAccept_npc_kinelory;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_shakes_obreen";
+    pNewscript->GetAI = &GetAI_npc_shakes_obreen;
+    pNewscript->pQuestAcceptNPC = &QuestAccept_npc_shakes_obreen;
     pNewscript->RegisterSelf();
 }

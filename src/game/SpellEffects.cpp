@@ -55,6 +55,10 @@
 #include "MoveMap.h"
 #include "MoveMapSharedDefines.h"
 #include "PathFinder.h"
+#include "PointMovementGenerator.h"
+#include "GridMap.h"
+#include "DestinationHolder.h"
+#include "Traveller.h"
 
 pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
 {
@@ -4187,8 +4191,18 @@ void Spell::EffectHealMaxHealth(SpellEffectIndex /*eff_idx*/)
     m_healing += heal;
 }
 
-void Spell::EffectInterruptCast(SpellEffectIndex /*eff_idx*/)
+void Spell::EffectInterruptCast(SpellEffectIndex eff_idx)
 {
+    if(m_spellInfo->Id == 19675 && eff_idx == EFFECT_INDEX_2) // Initial Feral charge interrupt.
+    {
+        if(m_caster->getVictim())
+            unitTarget = m_caster->getVictim();
+    }
+    else if(m_spellInfo->Id == 19675 && eff_idx != EFFECT_INDEX_2) // Immobolizing part of charge should not interrupt.
+    {
+        return;
+    }
+
     if(!unitTarget)
         return;
     if(!unitTarget->isAlive())
@@ -5308,7 +5322,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
         float direction = unitTarget->GetOrientation();
         float fx = unitTarget->GetPositionX() + dis * cos(direction);
         float fy = unitTarget->GetPositionY() + dis * sin(direction);
-        float fz = unitTarget->GetPositionZ() + 5.0f;
+        float fz = unitTarget->GetPositionZ() + (m_caster->IsInWater() ? 0 : 5.0f);
 
         uint32 mapId = unitTarget->GetMapId();
         if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
@@ -5321,11 +5335,38 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
             if (!mmap->GetNearestValidPosition(unitTarget, 1, 1, 5, ox, oy, oz,&polyRef))
                 return;
 
-            if (!mmap->DrawRay(unitTarget, polyRef, ox,oy,oz, fx, fy, fz))
+            if (!mmap->DrawRay(unitTarget, polyRef, ox,oy,oz+1.0f, fx, fy, fz)) 
                 return;
 
+            if (!m_caster->IsInWater())
+            {
+                PathInfo path(m_caster, fx, fy, fz);
+                PointPath pointPath = path.getFullPath();
+
+                fx = pointPath[pointPath.size()-1].x;
+                fy = pointPath[pointPath.size()-1].y;
+                fz = pointPath[pointPath.size()-1].z;
+            }
+
+            if(!m_caster->GetMap()->GetTerrain()->IsInWater(fx, fy, fz))
+            {
+                float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, MAX_HEIGHT);
+                float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, fz);
+
+                if(fabs(fz - floor_z) < fabs(ground_z - fz))
+                {
+                    fz = floor_z;
+                }
+                else
+                {
+                    fz = ground_z;
+                }
+            }
+
             unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
-        } else
+
+        } 
+        else
         {
             float ox, oy, oz;
             unitTarget->GetPosition(ox, oy, oz);
@@ -5341,6 +5382,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
 
             unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
         }
+
     }
 }
 
@@ -5440,8 +5482,9 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
 
     //TODO: research more ContactPoint/attack distance.
     //3.666666 instead of ATTACK_DISTANCE(5.0f) in below seem to give more accurate result.
-    float x, y, z;
+    float x, y, z, distance;
     unitTarget->GetAttackPoint(m_caster, x, y, z);
+    distance = unitTarget->GetDistance(m_caster);
 
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
@@ -5459,13 +5502,50 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
 
         if (!mmap->DrawRay(unitTarget,polyRef,targetX,targetY,targetZ,x,y,z))
         {
-            x = targetX;
+            x = targetX;    
             y = targetY;
             z = targetZ;
+            m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
         }
+        else
+        {
+            if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            {
+                if(!unitTarget->IsInWater())
+                {
+                    m_caster->UpdateSpeed(MOVE_RUN, true, 7);
+                    m_caster->UpdateSpeed(MOVE_WALK, true, 7);
+                    m_caster->UpdateSpeed(MOVE_SWIM, true, 7);
+                    m_caster->GetMotionMaster()->MoveChase(unitTarget);//>MovePoint(0, x, y, z, true);
+                    ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID()/*m_caster->GetTargetGuid()*/);
+                }
+                else
+                {
+                    m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                }
+
+            }
+            else
+            {
+                m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
+            }
+        }
+
+    }
+    else
+    {
+            if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            {
+                m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+            }
+            else
+            {
+                m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
+            }
     }
 
-    m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
+
+    //>MonsterMoveByPath(x, y, z, 25, false, true);
 
     Player* player = dynamic_cast<Player*>(m_caster);
     if (player && player->GetSentinel())

@@ -73,7 +73,7 @@ static const SpawnLocation aNefarianLocs[5] =
 {
     {-7599.32f, -1191.72f, 475.545f},                       // opening where red/blue/black darknid spawner appear (ori 3.05433)
     {-7526.27f, -1135.04f, 473.445f},                       // same as above, closest to door (ori 5.75959)
-    {-7498.177f, -1273.277f, 481.649f},                     // nefarian spawn location (ori 1.798)
+    {-7443.177f, -1338.277f, 486.649f},                     // nefarian spawn location (ori 1.798)
     {-7592.0f, -1264.0f, 481.0f},                           // hide pos (useless; remove this)
     {-7502.002f, -1256.503f, 476.758f},                     // nefarian fly to this position
 };
@@ -96,10 +96,10 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
     boss_victor_nefariusAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        
+
         // Select the 2 different drakes that we are going to use until despawned
         // 5 possiblities for the first drake, 4 for the second, 20 total possiblites
-        
+
         if (m_pInstance && m_pInstance->GetData(DRAKONID_1) && m_pInstance->GetData(DRAKONID_2))
         {
             m_uiDrakeTypeOne = m_pInstance->GetData(DRAKONID_1);
@@ -113,16 +113,20 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
 
             m_uiDrakeTypeOne = aPossibleDrake[uiPos1];
             m_uiDrakeTypeTwo = aPossibleDrake[uiPos2];
-            
+
             if (m_pInstance)
             {
                 m_pInstance->SetData(DRAKONID_1, m_uiDrakeTypeOne);
                 m_pInstance->SetData(DRAKONID_2, m_uiDrakeTypeTwo);
             }
         }
-        
+
         // Make him friendly from the start so you can talk to him.
         m_creature->setFaction(FACTION_FRIENDLY);
+
+        // Make visible if needed
+        if (m_creature->GetVisibility() != VISIBILITY_ON)
+            m_creature->SetVisibility(VISIBILITY_ON);
 
         Reset();
     }
@@ -153,16 +157,13 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
         m_uiMindControlTimer = 15000;
         m_uiShadowBlinkTimer0 = 20000;
         m_uiShadowBlinkTimer1 = 0;
-        m_uiResetTimer      = 15 * MINUTE * IN_MILLISECONDS;
+        m_uiResetTimer = 0;
         m_uiKilledAdds = 0;
         m_bIsNefarianSpawned = false;
 
         // set gossip flag to begin the event
         m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
 
-        // Make visible if needed
-        if (m_creature->GetVisibility() != VISIBILITY_ON)
-            m_creature->SetVisibility(VISIBILITY_ON);
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -183,12 +184,19 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
         instance_blackwing_lair* blackwing_lair = dynamic_cast<instance_blackwing_lair*>(m_pInstance);
         if (blackwing_lair)
         {
-            for ( Creature* current_drakanoid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+            for ( ObjectGuid current_drakanoid_guid : blackwing_lair->GetDrakonoidsAndBoneConstructs())
+            {
+                Creature* current_drakanoid = m_creature->GetMap()->GetCreature(current_drakanoid_guid);
                 if (current_drakanoid)
                     ((TemporarySummon*) current_drakanoid)->UnSummon();
+            }
 
             blackwing_lair->GetDrakonoidsAndBoneConstructs().clear();
         }
+
+        // Set a 15 minute reset timer.
+        m_uiResetTimer = time(nullptr) + 15 * MINUTE;
+        m_creature->SetVisibility(VISIBILITY_OFF);
 
     }
 
@@ -196,14 +204,17 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
     {
         if (pSummoned->GetEntry() == NPC_NEFARIAN)
         {
+            pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
             pSummoned->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+
+            pSummoned->SetHover(true);
 
             // see boss_onyxia (also note the removal of this in boss_nefarian)
             pSummoned->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
-            pSummoned->AddSplineFlag(SPLINEFLAG_FLYING);
+            pSummoned->SetSplineFlags(SPLINEFLAG_FLYING);//>AddSplineFlag(SPLINEFLAG_FLYING);
 
             // Let Nefarian fly towards combat area
-            pSummoned->GetMotionMaster()->MovePoint(1, aNefarianLocs[4].m_fX, aNefarianLocs[4].m_fY, aNefarianLocs[4].m_fZ);
+            pSummoned->MonsterMove(aNefarianLocs[4].m_fX, aNefarianLocs[4].m_fY, aNefarianLocs[4].m_fZ, 7500);//>GetMotionMaster()->MovePoint(1, aNefarianLocs[4].m_fX, aNefarianLocs[4].m_fY, aNefarianLocs[4].m_fZ);
         }
         else
         {
@@ -241,6 +252,15 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+        if (m_uiResetTimer)
+        {
+            if (time(nullptr) >= m_uiResetTimer)
+            {
+                m_creature->SetVisibility(VISIBILITY_ON);
+                m_uiResetTimer = 0;
+            }
+        }
+
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
@@ -352,12 +372,12 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                     Creature* summoned_drakonoid;
 
                     summoned_drakonoid = m_creature->SummonCreature(m_uiDrakeTypeOne, aNefarianLocs[0].m_fX, aNefarianLocs[0].m_fY, aNefarianLocs[0].m_fZ,
-                                                                    5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
+                                         5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
 
                     if (blackwing_lair && summoned_drakonoid)
                     {
                         summoned_drakonoid->setFaction(FACTION_BLACK_DRAGON);
-                        blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid);
+                        blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid->GetObjectGuid());
                     }
 
                     summoned_drakonoid = m_creature->SummonCreature(m_uiDrakeTypeTwo, aNefarianLocs[1].m_fX, aNefarianLocs[1].m_fY, aNefarianLocs[1].m_fZ,
@@ -366,7 +386,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                     if (blackwing_lair && summoned_drakonoid)
                     {
                         summoned_drakonoid->setFaction(FACTION_BLACK_DRAGON);
-                        blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid);
+                        blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonoid->GetObjectGuid());
                     }
 
                     if (m_uiSpawnWaveCounter <= 20)
@@ -375,7 +395,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                     }
                     else
                         m_uiAddSpawnTimer = 6000;
-                    
+
                     ++m_uiSpawnWaveCounter;
                 }
                 else
@@ -387,11 +407,12 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                     {
                         Creature* summoned_drakonid;
                         summoned_drakonid = m_creature->SummonCreature(NPC_CHROMATIC_DRAKANOID, aNefarianLocs[i].m_fX, aNefarianLocs[i].m_fY, aNefarianLocs[i].m_fZ,
-                                                                       5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
+                                            5.000f, TEMPSUMMON_MANUAL_DESPAWN, 30*MINUTE*IN_MILLISECONDS);
+                        
                         if (blackwing_lair && summoned_drakonid)
                         {
                             summoned_drakonid->setFaction(FACTION_BLACK_DRAGON);
-                            blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonid);
+                            blackwing_lair->GetDrakonoidsAndBoneConstructs().push_back(summoned_drakonid->GetObjectGuid());
                         }
 
                         m_uiSpawnChromaticTimer = 60000; // TODO: This time needs to be verified.
@@ -411,6 +432,11 @@ CreatureAI* GetAI_boss_victor_nefarius(Creature* pCreature)
 
 bool GossipHello_boss_victor_nefarius(Player* pPlayer, Creature* pCreature)
 {
+    // Only allow the Nef encounter in BWL.
+    Map* pMap = pPlayer->GetMap();
+    if (pMap && pMap->GetId() != 469)
+        return true;
+
     pPlayer->ADD_GOSSIP_ITEM_ID(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NEFARIUS_1 , GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
     pPlayer->SEND_GOSSIP_MENU(GOSSIP_TEXT_NEFARIUS_1, pCreature->GetObjectGuid());
     return true;
