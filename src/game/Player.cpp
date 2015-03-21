@@ -1168,10 +1168,24 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
     if(GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE && GetMotionMaster()->GetCurrentMovementGeneratorType() != CHASE_MOTION_TYPE && m_isCharging)
     {
+        Unit *target;
+        if(target = GetMap()->GetUnit(GetChargeTarget()))
+        {
+            if(target->GetTypeId() != TYPEID_PLAYER)
+            {
+                target->GetMotionMaster()->SuspendChaseMovement();
+            }
+        }
+
         m_isCharging = false;
         UpdateSpeed(MOVE_RUN, true, 1);
         UpdateSpeed(MOVE_WALK, true, 1);
         UpdateSpeed(MOVE_SWIM, true, 1);
+
+        if(target)
+        {
+            target->GetMotionMaster()->ResumeChaseMovement();
+        }
     }
 
     if(GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE && m_isCharging && m_chargeTimer)
@@ -1192,6 +1206,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 {
                     x = target->GetPositionX() + (2*target->GetObjectBoundingRadius()*cos(target->GetAngle(this)));
                     y = target->GetPositionY() + (2*target->GetObjectBoundingRadius()*sin(target->GetAngle(this)));
+                    
                 }
                 GetMotionMaster()->MovePoint(0, x, y, target->GetPositionZ(), true);
             }
