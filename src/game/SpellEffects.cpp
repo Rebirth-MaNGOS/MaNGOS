@@ -5365,7 +5365,8 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
 
             unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
 
-        } else
+        } 
+        else
         {
             float ox, oy, oz;
             unitTarget->GetPosition(ox, oy, oz);
