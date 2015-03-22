@@ -10141,7 +10141,7 @@ void Unit::OnRelocated()
 }
 
 template<typename Elem, typename Node>
-void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint32 end, SplineFlags flags, uint32 traveltime)
+void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint32 end, SplineFlags flags, uint32 traveltime, bool skipMover)
 {
     uint32 pathSize = end - start;
 
@@ -10196,9 +10196,9 @@ void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint
         for (uint32 i = start; i < end - 1; ++i)
             data.appendPackXYZ(destX - path[i].x, destY - path[i].y, destZ - path[i].z);
     }
-
-    SendMessageToSet(&data, true);
+    
+    SendMessageToSet(&data, !skipMover);
 }
 
-template void Unit::SendMonsterMoveByPath<PathNode>(const Path<PathNode> &, uint32, uint32, SplineFlags, uint32);
-template void Unit::SendMonsterMoveByPath<TaxiPathNodePtr, const TaxiPathNodeEntry>(const Path<TaxiPathNodePtr, const TaxiPathNodeEntry> &, uint32, uint32, SplineFlags, uint32);
+template void Unit::SendMonsterMoveByPath<PathNode>(const Path<PathNode> &, uint32, uint32, SplineFlags, uint32, bool);
+template void Unit::SendMonsterMoveByPath<TaxiPathNodePtr, const TaxiPathNodeEntry>(const Path<TaxiPathNodePtr, const TaxiPathNodeEntry> &, uint32, uint32, SplineFlags, uint32, bool);

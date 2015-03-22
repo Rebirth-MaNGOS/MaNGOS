@@ -413,6 +413,9 @@ bool FlightPathMovementGenerator::Update(Player &player, const uint32 &diff)
                     {
                         // do not send movement, it was sent already
                         i_destinationHolder.SetDestination(traveller, (*i_path)[i_currentNode].x, (*i_path)[i_currentNode].y, (*i_path)[i_currentNode].z, false);
+
+                        uint32 traveltime = uint32(PLAYER_FLIGHT_SPEED * GetPath().GetTotalLength(GetCurrentNode(), GetPathAtMapEnd()));
+                        player.SendMonsterMoveByPath(GetPath(), GetCurrentNode(), GetPathAtMapEnd(), SplineFlags(SPLINEFLAG_WALKMODE|SPLINEFLAG_FLYING), traveltime, true);
                     }
                     return true;
                 }
