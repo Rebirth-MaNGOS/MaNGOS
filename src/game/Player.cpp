@@ -1196,6 +1196,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
             {
                 float x;
                 float y;
+                float z = target->GetPositionZ();
                 
                 if(target->GetTypeId() == TYPEID_PLAYER)
                 {
@@ -1208,7 +1209,20 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                     y = target->GetPositionY() + (2*target->GetObjectBoundingRadius()*sin(target->GetAngle(this)));
                     
                 }
-                GetMotionMaster()->MovePoint(0, x, y, target->GetPositionZ(), true);
+
+                float ground_z = GetMap()->GetTerrain()->GetHeight(x, y, MAX_HEIGHT);
+                float floor_z = GetMap()->GetTerrain()->GetHeight(x, y, z);
+
+                if(fabs(z - floor_z) < fabs(ground_z - z))
+                {
+                    z = floor_z;
+                }
+                else
+                {
+                    z = ground_z;
+                }
+
+                GetMotionMaster()->MovePoint(0, x, y, z, true);
             }
             else
             {
