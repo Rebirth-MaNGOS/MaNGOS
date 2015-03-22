@@ -644,8 +644,6 @@ class MANGOS_DLL_SPEC WorldSession
 
         void HandleSetTaxiBenchmarkOpcode(WorldPacket& recv_data);
         
-        void MovementOpcodeWorker();
-
     private:
         // private trade methods
         void moveItems(Item* myItems[], Item* hisItems[]);
@@ -682,7 +680,6 @@ class MANGOS_DLL_SPEC WorldSession
         uint32 m_Tutorials[8];
         TutorialDataState m_tutorialState;
         ACE_Based::LockedQueue<WorldPacket*, ACE_Thread_Mutex> _recvQueue;
-        ACE_Based::LockedQueue<WorldPacket*, ACE_Thread_Mutex> _recvMovementQueue;
 };
 #endif
 /// @}

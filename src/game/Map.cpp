@@ -79,8 +79,7 @@ void Map::LoadMapAndVMap(int gx,int gy)
 }
 
 Map::Map(uint32 id, time_t expiry, uint32 InstanceId)
-    : m_isUpdatingSessions(false), m_updatingThreads(0), 
-      i_mapEntry (sMapStore.LookupEntry(id)),
+    : i_mapEntry (sMapStore.LookupEntry(id)),
       i_id(id), i_InstanceId(InstanceId), m_unloadTimer(0),
       m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE), m_persistentState(NULL),
       i_gridExpiry(expiry), m_TerrainData(sTerrainMgr.LoadTerrain(id)),
@@ -494,12 +493,6 @@ bool Map::loaded(const GridPair &p) const
 
 void Map::Update(const uint32 &t_diff)
 {
-    // Block movement updater threads.
-    m_isUpdatingSessions = true;
-    
-    // Wait for all threads to finish. This number is incremented and decremented in WorldSession::MovementOpcodeWorker().
-    while (m_updatingThreads > 0) { std::this_thread::sleep_for(std::chrono::milliseconds(5)); } 
-    
     /// update worldsessions for existing players
     for(m_mapRefIter = m_mapRefManager.begin(); m_mapRefIter != m_mapRefManager.end(); ++m_mapRefIter)
     {
@@ -512,12 +505,6 @@ void Map::Update(const uint32 &t_diff)
             pSession->Update(updater);
         }
     }
-
-    // Notify the worker threads that it's safe to start working again.
-    std::unique_lock<std::mutex> lock(m_SessionUpdateMutex);
-    m_isUpdatingSessions = false;
-    lock.unlock();
-    m_SessionUpdateNotifier.notify_all();
 
     /// update players at tick
     for(m_mapRefIter = m_mapRefManager.begin(); m_mapRefIter != m_mapRefManager.end(); ++m_mapRefIter)
@@ -555,7 +542,6 @@ void Map::Update(const uint32 &t_diff)
         {
             for(uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
             {
-                std::lock_guard<std::mutex> guard(m_RelocationMutex);
                 // marked cells are those that have been visited
                 // don't visit the same cell twice
                 uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
@@ -584,7 +570,6 @@ void Map::Update(const uint32 &t_diff)
         {
             for(uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
             {
-                std::lock_guard<std::mutex> guard(m_RelocationMutex);
                 // marked cells are those that have been visited
                 // don't visit the same cell twice
                 uint32 cell_id =(y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
@@ -726,8 +711,6 @@ Map::PlayerRelocation(Player *player, float x, float y, float z, float orientati
 {
     MANGOS_ASSERT(player);
     
-    std::lock_guard<std::mutex> guard(m_RelocationMutex);
-
     CellPair old_val = MaNGOS::ComputeCellPair(player->GetPositionX(), player->GetPositionY());
     CellPair new_val = MaNGOS::ComputeCellPair(x, y);
 

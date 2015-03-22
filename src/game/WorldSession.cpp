@@ -194,12 +194,6 @@ void WorldSession::QueuePacket(WorldPacket* new_packet)
     _recvQueue.add(new_packet);
 }
 
-/// Add an incoming movement related packet to the correct queue.
-void WorldSession::QueueMovementPacket(WorldPacket* new_packet)
-{
-    _recvMovementQueue.add(new_packet);
-}
-
 /// Logging helper for unexpected opcodes
 void WorldSession::LogUnexpectedOpcode(WorldPacket* packet, const char *reason)
 {
@@ -224,39 +218,6 @@ bool WorldSession::Update(PacketFilter& updater)
     ///- Retrieve packets from the receive queue and call the appropriate handlers
     /// not process packets if socket already closed
     WorldPacket* packet;
-    
-    // Handle all movement packages that have been queued here as well to avoid strange effects.
-    while (m_Socket && !m_Socket->IsClosed() && _recvMovementQueue.next(packet))
-    {
-        OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
-        try
-        {
-            if(_player && _player->IsInWorld())
-            {
-                ExecuteOpcode(opHandle, packet);
-            }
-        }
-        catch (ByteBufferException &)
-        {
-            sLog.outError("WorldSession::Update ByteBufferException occured while parsing a packet (opcode: %u) from client %s, accountid=%i.",
-                    packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
-            if (sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG))
-            {
-                DEBUG_LOG("Dumping error causing packet:");
-                packet->hexlike();
-            }
-
-            if (sWorld.getConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET))
-            {
-                DETAIL_LOG("Disconnecting session [account id %u / address %s] for badly formatted packet.",
-                    GetAccountId(), GetRemoteAddress().c_str());
-
-                KickPlayer();
-            }
-        }
-        
-        delete packet;
-    }
     
     while (m_Socket && !m_Socket->IsClosed() && _recvQueue.next(packet, updater))
     {
@@ -801,57 +762,3 @@ void WorldSession::ExecuteOpcode( OpcodeHandler const& opHandle, WorldPacket* pa
         LogUnprocessedTail(packet);
 }
 
-void WorldSession::MovementOpcodeWorker()
-{
-    // Don't do anything unless we have a player pointer.
-    if (!_player || !_player->GetMap()) 
-        return;
-  
-    // Save the player's map if the player unloads we want to be able to still reduce the counter and handle mutexes.
-    Map* pMap = _player->GetMap(); 
-    
-    if (pMap->m_isUpdatingSessions)
-    {
-        std::unique_lock<std::mutex> lock(pMap->m_SessionUpdateMutex);
-        pMap->m_SessionUpdateNotifier.wait(lock, [pMap]() -> bool { return !pMap->m_isUpdatingSessions; });
-    }
-    
-    // Increase the thread counter to keep the map from updating sessions while the threads are working.
-    ++pMap->m_updatingThreads;
-    
-    WorldPacket* packet = nullptr;
-    while (_player->GetMap() && m_Socket && !m_Socket->IsClosed() && _recvMovementQueue.next(packet))
-    {
-        OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
-        try
-        {
-            if(_player && _player->IsInWorld())
-            {
-                ExecuteOpcode(opHandle, packet);
-            }
-        }
-        catch (ByteBufferException &)
-        {
-            sLog.outError("WorldSession::Update ByteBufferException occured while parsing a packet (opcode: %u) from client %s, accountid=%i.",
-                    packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
-            if (sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG))
-            {
-                DEBUG_LOG("Dumping error causing packet:");
-                packet->hexlike();
-            }
-
-            if (sWorld.getConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET))
-            {
-                DETAIL_LOG("Disconnecting session [account id %u / address %s] for badly formatted packet.",
-                    GetAccountId(), GetRemoteAddress().c_str());
-
-                KickPlayer();
-            }
-        }
-        
-        delete packet;
-    }
-    
-
-    --pMap->m_updatingThreads;
-}

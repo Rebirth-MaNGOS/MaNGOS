@@ -589,17 +589,9 @@ int WorldSocket::ProcessIncoming (WorldPacket* new_pct)
                     // OK ,give the packet to WorldSession
                     aptr.release ();
                     // WARNINIG here we call it with locks held.
-                    // Its possible to cause deadlock if QueuePacket calls back
+                    // Its possible to cause deadlock if QueuePacket calls back 
+                    m_Session->QueuePacket (new_pct);
                     
-                    // Process opcodes that have the MovementHandler::HandleMovementOpcodes handler separately.
-                    if (opcodeTable[new_pct->GetOpcode()] == opcodeTable[MSG_MOVE_START_FORWARD])
-                    {
-                        m_Session->QueueMovementPacket(new_pct);
-                    }
-                    else
-                    {
-                        m_Session->QueuePacket (new_pct);
-                    }
                     return 0;
                 }
                 else
