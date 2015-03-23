@@ -1141,6 +1141,11 @@ uint32 Player::GetChargeTimer()
     return m_chargeTimer;
 }
 
+void Player::SetCharging(bool charging)
+{
+    m_isCharging = charging;
+}
+
 void Player::Update( uint32 update_diff, uint32 p_time )
 {
     if(!IsInWorld())
@@ -1161,11 +1166,6 @@ void Player::Update( uint32 update_diff, uint32 p_time )
     }
 
     /********************** CHARGE TRIALS ********************************************************/
-
-    if(GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE && !m_isCharging)
-    {
-        m_isCharging = true;
-    }
 
     if(m_chargeTimer && !m_isCharging)
     {
@@ -1188,14 +1188,13 @@ void Player::Update( uint32 update_diff, uint32 p_time )
             {
                 target->GetMotionMaster()->ResumeChaseMovement();
             }
-
             m_chargeTimer = 0;
         }
         else
             m_chargeTimer -= update_diff;
     }
 
-    if(GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE && m_isCharging && m_chargeTimer)
+    if(m_isCharging && m_chargeTimer)
     {
         if(m_chargeTimer <= update_diff)
         {
@@ -1253,6 +1252,14 @@ void Player::Update( uint32 update_diff, uint32 p_time )
             }
         } else
             m_chargeTimer -= update_diff;
+    }
+
+    if(!m_chargeTimer && m_isCharging)
+    {
+        m_isCharging = false;
+        UpdateSpeed(MOVE_RUN, true, 1);
+        UpdateSpeed(MOVE_WALK, true, 1);
+        UpdateSpeed(MOVE_SWIM, true, 1);
     }
 
     /********************** CHARGE TRIALS ********************************************************/
