@@ -1172,7 +1172,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         if(m_chargeTimer <= update_diff)
         {
             Unit *target;
-            if(target = GetMap()->GetUnit(GetChargeTarget()))
+            if((target = GetMap()->GetUnit(GetChargeTarget())))
             {
                 if(target->GetTypeId() != TYPEID_PLAYER)
                 {
