@@ -1264,26 +1264,6 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
     /********************** CHARGE TRIALS ********************************************************/
 
-    /********************** TAXI TESTS ***********************************************************/
-    /*
-    FlightPathMovementGenerator *taxi = dynamic_cast<FlightPathMovementGenerator*>(GetMotionMaster()->top());
-
-    if(taxi)
-    {
-        
-        TaxiPathNodeList path = taxi->GetPath();
-        uint32 current_node = taxi->GetCurrentNode();
-       // path[current_node];
-       // taxi->GetPath()[taxi->GetCurrentNode()].x;
-
-        float distance = GetDistanceSqr(taxi->GetPath()[taxi->GetCurrentNode()].x, taxi->GetPath()[taxi->GetCurrentNode()].y, taxi->GetPath()[taxi->GetCurrentNode()].z);
-        uint32 traveltime = uint32((distance*distance)/(path.GetTotalLength()/taxi->GetTotalTravelTime()));
-        SendMonsterMove(taxi->GetPath()[taxi->GetCurrentNode()].x, taxi->GetPath()[taxi->GetCurrentNode()].y, taxi->GetPath()[taxi->GetCurrentNode()].z, SPLINETYPE_NORMAL, SplineFlags(SPLINEFLAG_FLYING | SPLINEFLAG_WALKMODE), traveltime, this); 
-    }
-    */
-    /********************** TAXI TESTS ***********************************************************/
-
-
     //used to implement delayed far teleports
     SetCanDelayTeleport(true);
     Unit::Update( update_diff, p_time );
