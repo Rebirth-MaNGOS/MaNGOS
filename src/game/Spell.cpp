@@ -2839,7 +2839,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     m_duration = CalculateSpellDuration(m_spellInfo, m_caster);
 
     // Charge stun delay (Charge, Intercept, Feral Charge).
-    if(m_spellInfo->Id == 7922 || m_spellInfo->Id == 20615 || m_spellInfo->Id == 20614 || m_spellInfo->Id == 20253 || m_spellInfo->Id == 19675 || m_spellInfo->Id == 13327)
+    if(m_spellInfo->Id == 7922 || m_spellInfo->Id == 20615 || m_spellInfo->Id == 20614 || m_spellInfo->Id == 20253 || m_spellInfo->Id == 19675)
     {
         m_casttime = m_caster->GetDistance(targets->getUnitTarget())*15;
         ((Player*)m_caster)->SetChargeTimer(m_casttime+50);
@@ -6007,7 +6007,7 @@ SpellCastResult Spell::CheckRange(bool strict)
     {
         PathInfo path(m_caster, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
         PointPath pointPath = path.getFullPath();
-        if(pointPath.GetTotalLength() > 30.0f)
+        if(pointPath.GetTotalLength() > max_range + 10.0f)
         {
             return SPELL_FAILED_NOPATH;
         }
