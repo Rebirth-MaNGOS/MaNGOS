@@ -5518,6 +5518,11 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
                     m_caster->UpdateSpeed(MOVE_SWIM, true, 7);
                     m_caster->GetMotionMaster()->MoveChase(unitTarget);//>MovePoint(0, x, y, z, true);
                     ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID()/*m_caster->GetTargetGuid()*/);
+
+                    if(((Player*)m_caster)->GetChargeTimer() == 0)
+                    {
+                        ((Player*)m_caster)->SetChargeTimer(m_caster->GetMotionMaster()->GetTotalTravelTime());
+                    }
                 }
                 else
                 {

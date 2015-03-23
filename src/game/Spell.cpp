@@ -1317,7 +1317,8 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
 
                 if (!unit->IsPassiveToSpells())
                 {
-                    if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 ))
+                    if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 &&
+                        m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 ))
                     {
                         if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
                             ((Creature*)unit)->AI()->AttackedBy(realCaster);
@@ -1329,13 +1330,15 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
                     }
                     else
                     {
-                        if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 ))
+                        if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 &&
+                            m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 ))
                         {
                             unit->AddThreat(realCaster);
                         }
                     }
 
-                    if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 ))
+                    if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 &&
+                        m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 ))
                     {
                         unit->SetInCombatWith(realCaster);
                         realCaster->SetInCombatWith(unit);
@@ -2836,7 +2839,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     m_duration = CalculateSpellDuration(m_spellInfo, m_caster);
 
     // Charge stun delay (Charge, Intercept, Feral Charge).
-    if(m_spellInfo->Id == 7922 || m_spellInfo->Id == 20615 || m_spellInfo->Id == 20614 || m_spellInfo->Id == 20253 || m_spellInfo->Id == 19675)
+    if(m_spellInfo->Id == 7922 || m_spellInfo->Id == 20615 || m_spellInfo->Id == 20614 || m_spellInfo->Id == 20253 || m_spellInfo->Id == 19675 || m_spellInfo->Id == 13327)
     {
         m_casttime = m_caster->GetDistance(targets->getUnitTarget())*15;
         ((Player*)m_caster)->SetChargeTimer(m_casttime+50);
@@ -2856,7 +2859,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
             && m_caster->getVictim() == NULL && !m_caster->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED))
     {
         if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252
-            && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 ))
+            && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641))
         {
             m_caster->Attack(target, false);
         }
@@ -5999,7 +6002,8 @@ SpellCastResult Spell::CheckRange(bool strict)
             return SPELL_FAILED_TOO_CLOSE;
     }
 
-    if((m_spellInfo->Id == 11578 || m_spellInfo->Id == 100 || m_spellInfo->Id == 6178 || m_spellInfo->Id == 20252 || m_spellInfo->Id == 20616 || m_spellInfo->Id == 20617 || m_spellInfo->Id == 16979 ) && !target->IsInWater())
+    if((m_spellInfo->Id == 11578 || m_spellInfo->Id == 100 || m_spellInfo->Id == 6178 || m_spellInfo->Id == 20252 || 
+        m_spellInfo->Id == 20616 || m_spellInfo->Id == 20617 || m_spellInfo->Id == 16979 || m_spellInfo->Id == 22641 ) && !target->IsInWater())
     {
         PathInfo path(m_caster, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
         PointPath pointPath = path.getFullPath();
