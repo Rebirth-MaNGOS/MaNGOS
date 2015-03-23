@@ -384,7 +384,7 @@ struct MANGOS_DLL_DECL npc_death_talon_triggerAI : public ScriptedAI
                 for (Creature* current_creature : m_vecDragonList)
                 {
                     if (current_creature->isAlive() && !current_creature->isInCombat())
-						current_creature->Attack(target, true);
+						current_creature->Attack(target, false);
                 }	
             }
 
@@ -636,7 +636,7 @@ struct MANGOS_DLL_DECL npc_technician_pack_triggerAI : public ScriptedAI
                 {
                     if (current_creature->isAlive() && !current_creature->isInCombat())
 					{
-                        current_creature->Attack(target, true);
+                        current_creature->Attack(target, false);
 					}
                 }
             }
