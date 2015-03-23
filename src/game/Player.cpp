@@ -18216,7 +18216,7 @@ void Player::SendInitialPacketsBeforeAddToMap()
 
     // set fly flag if in fly form or taxi flight to prevent visually drop at ground in showup moment
     if (IsTaxiFlying())
-        m_movementInfo.SetMovementFlags(MOVEFLAG_FLYING);//AddMovementFlag
+        m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
 
     SetMover(this);
 }
