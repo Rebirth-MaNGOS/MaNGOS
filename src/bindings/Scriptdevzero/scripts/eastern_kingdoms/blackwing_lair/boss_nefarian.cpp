@@ -104,14 +104,14 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
         m_landEmoteTimer        = 0;
         m_bPhase3               = false;
         m_bHasEndYell           = false;
-        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
-        m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-        m_creature->SetHover(true);
-        m_creature->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
-        m_creature->SetSplineFlags(SPLINEFLAG_FLYING);
-
+    
         if(hasLanded)
         {
+            m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+            m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+            m_creature->SetHover(true);
+            m_creature->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
+            m_creature->SetSplineFlags(SPLINEFLAG_FLYING);
             m_creature->MonsterMove(-7443.177f, -1338.277f, 486.649f, 7500);
         }
     }
@@ -213,18 +213,17 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
         }
 
         Map::PlayerList const& players = m_creature->GetMap()->GetPlayers();
-        for (auto pRef : players)
+        for (auto pRef : m_creature->getThreatManager().getThreatList())
         {
            float x, y, z;
-
-           Player* player = pRef.getSource();
+           Player* player = m_creature->GetMap()->GetPlayer(pRef->getUnitGuid());
 
            if (player)
            {
                player->GetPosition(x, y, z);
 
-               if (x > -7540.795898f && x < -7524.379883f && y < -1242.45f && y > -1245.19f)
-                   player->NearTeleportTo(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0, false);
+               if((player->GetDistanceSqr(-7532.82f, -1243.3f, 479.98f) < 36.0f)) // if (x > -7540.795898f && x < -7524.379883f && x <-7531.26f && x > -7533.93f && y < -1235.48f && y > -1251.88f && y < -1242.45f && y > -1245.19f)
+                    player->NearTeleportTo(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0, false);
            } 
         }
 
