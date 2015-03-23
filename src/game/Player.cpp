@@ -60,6 +60,7 @@
 #include "ScriptMgr.h"
 #include "SocialMgr.h"
 #include "Mail.h"
+#include "WaypointMovementGenerator.h"
 
 #include <G3D/Matrix3.h>
 #include <G3D/Vector3.h>
@@ -1140,6 +1141,11 @@ uint32 Player::GetChargeTimer()
     return m_chargeTimer;
 }
 
+void Player::SetCharging(bool charging)
+{
+    m_isCharging = charging;
+}
+
 void Player::Update( uint32 update_diff, uint32 p_time )
 {
     if(!IsInWorld())
@@ -1161,34 +1167,34 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
     /********************** CHARGE TRIALS ********************************************************/
 
-    if(GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE && !m_isCharging)
+    if(m_chargeTimer && !m_isCharging)
     {
-        m_isCharging = true;
-    }
-
-    if(GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE && GetMotionMaster()->GetCurrentMovementGeneratorType() != CHASE_MOTION_TYPE && m_isCharging)
-    {
-        Unit *target;
-        if(target = GetMap()->GetUnit(GetChargeTarget()))
+        if(m_chargeTimer <= update_diff)
         {
-            if(target->GetTypeId() != TYPEID_PLAYER)
+            Unit *target;
+            if(target = GetMap()->GetUnit(GetChargeTarget()))
             {
-                target->GetMotionMaster()->SuspendChaseMovement();
+                if(target->GetTypeId() != TYPEID_PLAYER)
+                {
+                    target->GetMotionMaster()->SuspendChaseMovement();
+                }
             }
-        }
 
-        m_isCharging = false;
-        UpdateSpeed(MOVE_RUN, true, 1);
-        UpdateSpeed(MOVE_WALK, true, 1);
-        UpdateSpeed(MOVE_SWIM, true, 1);
+            UpdateSpeed(MOVE_RUN, true, 1);
+            UpdateSpeed(MOVE_WALK, true, 1);
+            UpdateSpeed(MOVE_SWIM, true, 1);
 
-        if(target)
-        {
-            target->GetMotionMaster()->ResumeChaseMovement();
+            if(target)
+            {
+                target->GetMotionMaster()->ResumeChaseMovement();
+            }
+            m_chargeTimer = 0;
         }
+        else
+            m_chargeTimer -= update_diff;
     }
 
-    if(GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE && m_isCharging && m_chargeTimer)
+    if(m_isCharging && m_chargeTimer)
     {
         if(m_chargeTimer <= update_diff)
         {
@@ -1221,12 +1227,25 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 {
                     z = ground_z;
                 }
-
+               
                 GetMotionMaster()->MovePoint(0, x, y, z, true);
+
+                m_chargeTimer = GetMotionMaster()->GetTotalTravelTime();
+                m_isCharging = false;
+
+                if(m_chargeTimer == 0)
+                {
+                    UpdateSpeed(MOVE_RUN, true, 1);
+                    UpdateSpeed(MOVE_WALK, true, 1);
+                    UpdateSpeed(MOVE_SWIM, true, 1);
+                }
             }
             else
             {
                 m_chargeTimer = 0;
+                UpdateSpeed(MOVE_RUN, true, 1);
+                UpdateSpeed(MOVE_WALK, true, 1);
+                UpdateSpeed(MOVE_SWIM, true, 1);
                 GetMotionMaster()->SuspendChaseMovement();
                 GetMotionMaster()->Clear();
                 m_isCharging = false;
@@ -1235,7 +1254,35 @@ void Player::Update( uint32 update_diff, uint32 p_time )
             m_chargeTimer -= update_diff;
     }
 
+    if(!m_chargeTimer && m_isCharging)
+    {
+        m_isCharging = false;
+        UpdateSpeed(MOVE_RUN, true, 1);
+        UpdateSpeed(MOVE_WALK, true, 1);
+        UpdateSpeed(MOVE_SWIM, true, 1);
+    }
+
     /********************** CHARGE TRIALS ********************************************************/
+
+    /********************** TAXI TESTS ***********************************************************/
+    /*
+    FlightPathMovementGenerator *taxi = dynamic_cast<FlightPathMovementGenerator*>(GetMotionMaster()->top());
+
+    if(taxi)
+    {
+        
+        TaxiPathNodeList path = taxi->GetPath();
+        uint32 current_node = taxi->GetCurrentNode();
+       // path[current_node];
+       // taxi->GetPath()[taxi->GetCurrentNode()].x;
+
+        float distance = GetDistanceSqr(taxi->GetPath()[taxi->GetCurrentNode()].x, taxi->GetPath()[taxi->GetCurrentNode()].y, taxi->GetPath()[taxi->GetCurrentNode()].z);
+        uint32 traveltime = uint32((distance*distance)/(path.GetTotalLength()/taxi->GetTotalTravelTime()));
+        SendMonsterMove(taxi->GetPath()[taxi->GetCurrentNode()].x, taxi->GetPath()[taxi->GetCurrentNode()].y, taxi->GetPath()[taxi->GetCurrentNode()].z, SPLINETYPE_NORMAL, SplineFlags(SPLINEFLAG_FLYING | SPLINEFLAG_WALKMODE), traveltime, this); 
+    }
+    */
+    /********************** TAXI TESTS ***********************************************************/
+
 
     //used to implement delayed far teleports
     SetCanDelayTeleport(true);
@@ -18184,7 +18231,7 @@ void Player::SendInitialPacketsBeforeAddToMap()
 
     // set fly flag if in fly form or taxi flight to prevent visually drop at ground in showup moment
     if (IsTaxiFlying())
-        m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
+        m_movementInfo.SetMovementFlags(MOVEFLAG_FLYING);//AddMovementFlag
 
     SetMover(this);
 }

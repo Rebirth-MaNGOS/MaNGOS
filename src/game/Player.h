@@ -907,6 +907,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         ObjectGuid GetChargeTarget();
         void SetChargeTarget(ObjectGuid target);
 
+        void SetCharging(bool charging);
+
         void SetInWater(bool apply);
 
         bool IsInWater() const { return m_isInWater; }
