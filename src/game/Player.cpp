@@ -1189,6 +1189,9 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 target->GetMotionMaster()->ResumeChaseMovement();
             }
             m_chargeTimer = 0;
+
+            GetMotionMaster()->Clear(true, true);
+            GetMotionMaster()->MoveIdle();
         }
         else
             m_chargeTimer -= update_diff;
@@ -1256,6 +1259,8 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
     if(!m_chargeTimer && m_isCharging)
     {
+        GetMotionMaster()->Clear(true, true);
+        GetMotionMaster()->MoveIdle();
         m_isCharging = false;
         UpdateSpeed(MOVE_RUN, true, 1);
         UpdateSpeed(MOVE_WALK, true, 1);

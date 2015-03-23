@@ -5513,7 +5513,6 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
             {
                 if(!unitTarget->IsInWater())
                 {
-                    m_caster->GetMotionMaster()->Clear();
                     m_caster->UpdateSpeed(MOVE_RUN, true, 7);
                     m_caster->UpdateSpeed(MOVE_WALK, true, 7);
                     m_caster->UpdateSpeed(MOVE_SWIM, true, 7);
