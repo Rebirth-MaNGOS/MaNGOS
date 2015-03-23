@@ -212,6 +212,22 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
                 m_landEmoteTimer -= uiDiff;
         }
 
+        Map::PlayerList const& players = m_creature->GetMap()->GetPlayers();
+        for (auto pRef : players)
+        {
+           float x, y, z;
+
+           Player* player = pRef.getSource();
+
+           if (player)
+           {
+               player->GetPosition(x, y, z);
+
+               if (x > -7540.795898f && x < -7524.379883f && y < -1242.45f && y > -1245.19f)
+                   player->NearTeleportTo(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0, false);
+           } 
+        }
+
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
