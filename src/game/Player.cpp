@@ -1167,36 +1167,6 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
     /********************** CHARGE TRIALS ********************************************************/
 
-    if(m_chargeTimer && !m_isCharging)
-    {
-        if(m_chargeTimer <= update_diff)
-        {
-            Unit *target;
-            if((target = GetMap()->GetUnit(GetChargeTarget())))
-            {
-                if(target->GetTypeId() != TYPEID_PLAYER)
-                {
-                    target->GetMotionMaster()->SuspendChaseMovement();
-                }
-            }
-
-            UpdateSpeed(MOVE_RUN, true, 1);
-            UpdateSpeed(MOVE_WALK, true, 1);
-            UpdateSpeed(MOVE_SWIM, true, 1);
-
-            if(target)
-            {
-                target->GetMotionMaster()->ResumeChaseMovement();
-            }
-            m_chargeTimer = 0;
-
-            GetMotionMaster()->Clear(true, true);
-            GetMotionMaster()->MoveIdle();
-        }
-        else
-            m_chargeTimer -= update_diff;
-    }
-
     if(m_isCharging && m_chargeTimer)
     {
         if(m_chargeTimer <= update_diff)
@@ -1206,6 +1176,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 float x;
                 float y;
                 float z = target->GetPositionZ();
+                float chargeTimer = GetDistance(target);
                 
                 if(target->GetTypeId() == TYPEID_PLAYER)
                 {
@@ -1216,7 +1187,8 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 {
                     x = target->GetPositionX() + (2*target->GetObjectBoundingRadius()*cos(target->GetAngle(this)));
                     y = target->GetPositionY() + (2*target->GetObjectBoundingRadius()*sin(target->GetAngle(this)));
-                    
+                    target->GetMotionMaster()->SuspendChaseMovement();
+                    target->GetMotionMaster()->ResumeChaseMovement();
                 }
 
                 float ground_z = GetMap()->GetTerrain()->GetHeight(x, y, MAX_HEIGHT);
@@ -1231,26 +1203,12 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                     z = ground_z;
                 }
                
-                GetMotionMaster()->MovePoint(0, x, y, z, true);
-
-                m_chargeTimer = GetMotionMaster()->GetTotalTravelTime();
-                m_isCharging = false;
-
-                if(m_chargeTimer == 0)
-                {
-                    UpdateSpeed(MOVE_RUN, true, 1);
-                    UpdateSpeed(MOVE_WALK, true, 1);
-                    UpdateSpeed(MOVE_SWIM, true, 1);
-                }
+                MonsterMoveByPath(x, y, z+0.2f, chargeTimer, true, false);
+                m_isCharging = false;              
             }
             else
-            {
+            {            
                 m_chargeTimer = 0;
-                UpdateSpeed(MOVE_RUN, true, 1);
-                UpdateSpeed(MOVE_WALK, true, 1);
-                UpdateSpeed(MOVE_SWIM, true, 1);
-                GetMotionMaster()->SuspendChaseMovement();
-                GetMotionMaster()->Clear();
                 m_isCharging = false;
             }
         } else
@@ -1259,12 +1217,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
     if(!m_chargeTimer && m_isCharging)
     {
-        GetMotionMaster()->Clear(true, true);
-        GetMotionMaster()->MoveIdle();
         m_isCharging = false;
-        UpdateSpeed(MOVE_RUN, true, 1);
-        UpdateSpeed(MOVE_WALK, true, 1);
-        UpdateSpeed(MOVE_SWIM, true, 1);
     }
 
     /********************** CHARGE TRIALS ********************************************************/
