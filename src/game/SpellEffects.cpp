@@ -5513,17 +5513,10 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
             {
                 if(!unitTarget->IsInWater())
                 {
-                    m_caster->UpdateSpeed(MOVE_RUN, true, 7);
-                    m_caster->UpdateSpeed(MOVE_WALK, true, 7);
-                    m_caster->UpdateSpeed(MOVE_SWIM, true, 7);
-                    m_caster->GetMotionMaster()->MoveChase(unitTarget);//>MovePoint(0, x, y, z, true);
-                    ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID()/*m_caster->GetTargetGuid()*/);
+                    float chargeTimer = m_caster->GetDistance(unitTarget);
+                    m_caster->MonsterMoveByPath(x, y, z, chargeTimer, true, false);
+                    ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID());
                     ((Player*)m_caster)->SetCharging(true);
-
-                    if(((Player*)m_caster)->GetChargeTimer() == 0)
-                    {
-                        ((Player*)m_caster)->SetChargeTimer(m_caster->GetMotionMaster()->GetTotalTravelTime());
-                    }
                 }
                 else
                 {
