@@ -74,6 +74,12 @@ struct MANGOS_DLL_DECL boss_doctor_theolen_krastinovAI : public ScriptedAI
             m_pInstance->SetData(TYPE_DOCTOR_THEOLEN_KRASTINOV, DONE);
     }
 
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_BACKHAND && pTarget->GetTypeId() == TYPEID_PLAYER)
+			m_creature->getThreatManager().modifyThreatPercent(pTarget, -40);				//added threat reduction
+	}
+
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -82,7 +88,7 @@ struct MANGOS_DLL_DECL boss_doctor_theolen_krastinovAI : public ScriptedAI
         // Backhand
         if (m_uiBackhandTimer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(), SPELL_BACKHAND);
+			DoCastSpellIfCan(m_creature->getVictim(), SPELL_BACKHAND);
             m_uiBackhandTimer = urand(5000,7000);
         }
         else
