@@ -39,6 +39,7 @@ instance_scholomance::instance_scholomance(Map* pMap) : ScriptedInstance(pMap),
     m_uiWaveCount(0),
     m_uiViewingRoomTimer(0)
 {
+	m_bPaladin = true;
     Initialize();
 }
 
@@ -63,43 +64,21 @@ void instance_scholomance::HandleGate(uint32 uiEntry, uint32 uiData, bool bTrySu
     }
 }
 
-void instance_scholomance::OssuaryWave(uint32 uiWave)
+void instance_scholomance::OssuaryStartEvent()
 {
     if (GetData(TYPE_GREAT_OSSUARY) == FAIL)
         return;
 
-    if (GameObject* pGo = GetSingleGameObjectFromStorage(GO_GREAT_OSSUARY))
-    {
-        uint32 i;
-        float fX, fY, fZ;
-        pGo->GetPosition(fX, fY, fZ);
-        switch(uiWave)
-        {
-            case 1:
-                pGo->SummonCreature(NPC_ASPECT_OF_BANALITY, fX, fY, fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 10000);
-                for(i = 0; i < 2; ++i)
-                    pGo->SummonCreature(NPC_BANAL_SPIRIT, fX+irand(-10,10), fY+irand(-10,10), fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 10000);
-                break;
-            case 2:
-                pGo->SummonCreature(NPC_ASPECT_OF_MALICE, fX, fY, fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 10000);
-                for(i = 0; i < 2; ++i)
-                    pGo->SummonCreature(NPC_MALICIOUS_SPIRIT, fX+irand(-10,10), fY+irand(-10,10), fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 10000);
-                break;
-            case 3:
-                pGo->SummonCreature(NPC_ASPECT_OF_CORRUPTION, fX, fY, fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 10000);
-                for(i = 0; i < 2; ++i)
-                    pGo->SummonCreature(NPC_CORRUPTED_SPIRIT, fX+irand(-10,10), fY+irand(-10,10), fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 10000);
-                break;
-            case 4:
-                pGo->SummonCreature(NPC_ASPECT_OF_SHADOW, fX, fY, fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 10000);
-                for(i = 0; i < 3; ++i)
-                    pGo->SummonCreature(NPC_SHADOWED_SPIRIT, fX+irand(-10,10), fY+irand(-10,10), fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 10000);
-                break;
-            case 5:
-                pGo->SummonCreature(NPC_DEATH_KNIGHT_DARKREAVER, fX, fY, fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 120000);
-                break;
-        }
-    }
+	if(m_bPaladin)
+	{
+		if (GameObject* pGo = GetSingleGameObjectFromStorage(GO_GREAT_OSSUARY))			// spawn npc that starts the paladin event
+		{
+			float fX, fY, fZ;
+			pGo->GetPosition(fX, fY, fZ);
+			pGo->SummonCreature(NPC_PALADIN_EVENT, fX, fY, fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 60000);
+			m_bPaladin = false;
+		}
+	}
 }
 
 void instance_scholomance::TrySummonGandling(GameObject* pGo)
@@ -278,10 +257,6 @@ void instance_scholomance::SetData(uint32 uiType, uint32 uiData)
         case TYPE_GREAT_OSSUARY:
             m_auiEncounter[2] = uiData;
             HandleGate(GO_GATE_GREAT_OSSUARY, uiData, false);
-            break;
-        case TYPE_GREAT_OSSUARY_WAVE:
-            m_uiWaveCount = uiData;
-            OssuaryWave(uiData);
             break;
         case TYPE_RAS_FROSTWHISPER:
             m_auiEncounter[3] = uiData;
