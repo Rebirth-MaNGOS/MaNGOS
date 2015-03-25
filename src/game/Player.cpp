@@ -537,6 +537,8 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 		m_sentinel = nullptr;
 
 	m_warlockPetBeforeDeath = PET_NO_PET;
+
+    m_ChatTeam = ALLIANCE;
 }
 
 Player::~Player ()
@@ -932,7 +934,7 @@ uint32 Player::EnvironmentalDamage(EnvironmentalDamageType type, uint32 damage)
 
     if(type==DAMAGE_FALL && !isAlive())                     // DealDamage not apply item durability loss at self damage
     {
-        DEBUG_LOG("We fell to our death, losing 10% durability");
+        DEBUG_LOG("We fell to our death, losing 10%% durability");
         DurabilityLossAll(0.10f,false);
         // durability lost message
         WorldPacket data2(SMSG_DURABILITY_DAMAGE_DEATH, 0);
@@ -4701,7 +4703,7 @@ void Player::CleanupChannels()
         Channel* ch = *m_channels.begin();
         m_channels.erase(m_channels.begin());               // remove from player's channel list
         ch->Leave(GetObjectGuid(), false);                  // not send to client, not remove from player's channel list
-        if (ChannelMgr* cMgr = channelMgr(GetTeam()))
+        if (ChannelMgr* cMgr = channelMgr(GetTeam(), this))
             cMgr->LeftChannel(ch->GetName());               // deleted channel if empty
 
     }
@@ -4717,7 +4719,7 @@ void Player::UpdateLocalChannels(uint32 newZone )
     if(!current_zone)
         return;
 
-    ChannelMgr* cMgr = channelMgr(GetTeam());
+    ChannelMgr* cMgr = channelMgr(GetTeam(), this);
     if(!cMgr)
         return;
 
