@@ -567,6 +567,126 @@ CreatureAI* GetAI_npc_molthor(Creature* pCreature)
     return new npc_molthor(pCreature);
 }
 
+/*####
+# npc_kinweelay
+####*/
+
+enum
+{
+	KINWEELAY_SAY_1					 = -1720052,
+
+	SPELL_SOUL_GEM					 = 3660,
+
+    QUEST_ID_THE_MINDS_EYE			 = 591,
+};
+
+struct MANGOS_DLL_DECL npc_kinweelayAI : public npc_escortAI
+{
+    npc_kinweelayAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+	ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+		m_uiPlayerGUID.Clear();
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+
+	void JustStartedEscort()
+    {
+    }
+
+	void StartOutro(ObjectGuid pPlayerGUID)
+	{
+		 if (!pPlayerGUID)
+            return;
+
+        m_uiPlayerGUID = pPlayerGUID;
+
+		m_bOutro = true; 
+		m_uiSpeechTimer = 1000;
+		m_uiSpeechStep = 1;
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		npc_escortAI::UpdateAI(uiDiff);
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+				Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+                switch(m_uiSpeechStep)
+                {					
+                    case 1:
+                        m_creature->GenericTextEmote("Kin'weelay shows The Mind's Eye and Singing Crystals...", NULL, false);
+						m_uiSpeechTimer = 4000;
+                        break;
+					case 2:
+						m_creature->CastSpell(m_creature, SPELL_SOUL_GEM, false);
+                        m_uiSpeechTimer = 3000;
+                        break;
+					case 3:
+						DoScriptText(KINWEELAY_SAY_1, m_creature, pPlayer);
+                        m_uiSpeechTimer = 2000;
+						break;
+					case 4:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_kinweelay(Creature* pCreature)
+{
+    return new npc_kinweelayAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_kinweelay(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_THE_MINDS_EYE)
+    {
+		if (npc_kinweelayAI* pEscortAI = dynamic_cast<npc_kinweelayAI*>(pCreature->AI()))
+		{
+			pEscortAI->Start(false, pPlayer, pQuest);
+			pEscortAI->StartOutro(pPlayer->GetObjectGuid());
+		}
+	}
+	return true;
+}
+
 void AddSC_stranglethorn_vale()
 {
     Script* pNewscript;
@@ -600,5 +720,11 @@ void AddSC_stranglethorn_vale()
     pNewscript->Name = "npc_molthor";
     pNewscript->GetAI = &GetAI_npc_molthor;
     pNewscript->pQuestRewardedNPC = &QuestRewardedMolthor;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_kinweelay";
+    pNewscript->GetAI = &GetAI_npc_kinweelay;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_kinweelay;
     pNewscript->RegisterSelf();
 }
