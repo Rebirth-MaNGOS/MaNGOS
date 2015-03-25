@@ -574,29 +574,49 @@ CreatureAI* GetAI_npc_molthor(Creature* pCreature)
 enum
 {
 	KINWEELAY_SAY_1					 = -1720052,
+	KINWEELAY_SAY_1_1240			 = -1720053,
+	KINWEELAY_SAY_2_1240			 = -1720054,
 
 	SPELL_SOUL_GEM					 = 3660,
+	SPELL_SPEAK_WITH_HEADS			 = 3644,
 
     QUEST_ID_THE_MINDS_EYE			 = 591,
+	QUEST_ID_THE_TROLL_WITCHDOCTOR	 = 1240,
 };
 
 struct MANGOS_DLL_DECL npc_kinweelayAI : public npc_escortAI
 {
-    npc_kinweelayAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+    npc_kinweelayAI(Creature* pCreature) : npc_escortAI(pCreature) 
+	{ 
+		//ResetQuests();
+		Reset(); 
+	}
 	
 	uint8 m_uiSpeechStep;
 	uint32 m_uiSpeechTimer;
-	bool m_bOutro;
+	bool m_bOutro591;
+
+	uint8 m_uiSpeechStep2;
+	uint32 m_uiSpeechTimer2;
+	bool m_bOutro1240;
 
 	ObjectGuid m_uiPlayerGUID;
 
     void Reset()
 	{
-		m_bOutro = false;
+		m_bOutro591 = false;
+		m_bOutro1240 = false;
 		m_uiSpeechStep = 1;
+		m_uiSpeechStep2 = 1;
 		m_uiSpeechTimer = 0;
+		m_uiSpeechTimer2 = 0;
 		m_uiPlayerGUID.Clear();
 	}
+
+	/*void ResetQuests()
+	{
+		
+	}*/
 
 	void WaypointReached(uint32 uiPointId)
     {
@@ -606,17 +626,27 @@ struct MANGOS_DLL_DECL npc_kinweelayAI : public npc_escortAI
     {
     }
 
-	void StartOutro(ObjectGuid pPlayerGUID)
+	void StartOutro(ObjectGuid pPlayerGUID, uint32 uiQuestId = 0)
 	{
 		 if (!pPlayerGUID)
             return;
 
         m_uiPlayerGUID = pPlayerGUID;
-
-		m_bOutro = true; 
-		m_uiSpeechTimer = 1000;
-		m_uiSpeechStep = 1;
 		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+
+		if (uiQuestId == 591)
+		{
+			m_bOutro591 = true; 
+			m_uiSpeechTimer = 1000;
+			m_uiSpeechStep = 1;
+		}
+		if (uiQuestId == 1240)
+		{
+			DoScriptText(KINWEELAY_SAY_1_1240, m_creature);
+			m_bOutro1240 = true; 
+			m_uiSpeechTimer2 = 2000;
+			m_uiSpeechStep2 = 1;
+		}
 	}
 
 	void UpdateAI(const uint32 uiDiff)
@@ -631,7 +661,7 @@ struct MANGOS_DLL_DECL npc_kinweelayAI : public npc_escortAI
 
 	void UpdateEscortAI(const uint32 uiDiff)
     {
-		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		if (m_uiSpeechTimer && m_bOutro591)							// handle RP at quest end 591
 		{
 			if (!m_uiSpeechStep)
 				return;
@@ -655,7 +685,7 @@ struct MANGOS_DLL_DECL npc_kinweelayAI : public npc_escortAI
 						break;
 					case 4:
 						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
-						m_bOutro = false;
+						m_bOutro591 = false;
 						break;
                     /*default:
                         m_uiSpeechStep = 0;
@@ -665,6 +695,55 @@ struct MANGOS_DLL_DECL npc_kinweelayAI : public npc_escortAI
             }
             else
                 m_uiSpeechTimer -= uiDiff;
+		}
+
+		if (m_uiSpeechTimer2 && m_bOutro1240)							// handle RP at quest end 1240
+		{
+			if (!m_uiSpeechStep2)
+				return;
+		
+			if (m_uiSpeechTimer2 <= uiDiff)
+            {
+				Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+                switch(m_uiSpeechStep2)
+                {					
+                    case 1:
+						m_creature->GetMotionMaster()->MovePoint(1, -12345.05f, 163.83f, 2.96f);
+						m_uiSpeechTimer2 = 1500;
+                        break;
+					case 2:
+						m_creature->SetFacingTo(0.34f);
+						m_uiSpeechTimer2 = 1500;
+						break;
+					case 3:
+						m_creature->HandleEmote(EMOTE_ONESHOT_ATTACK1H);
+                        m_creature->GenericTextEmote("Kin'weelay places Marg's head in the cauldron.", NULL, false);
+						m_uiSpeechTimer2 = 3000;
+                        break;
+					case 4:
+						m_creature->CastSpell(m_creature, SPELL_SPEAK_WITH_HEADS, false);
+                        m_uiSpeechTimer2 = 5000;
+                        break;
+					case 5:
+						DoScriptText(KINWEELAY_SAY_2_1240, m_creature, pPlayer);
+                        m_uiSpeechTimer2 = 3000;
+						break;
+					case 6:
+						m_creature->GetMotionMaster()->MoveTargetedHome();
+						m_uiSpeechTimer2 = 2000;
+						break;
+					case 7:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro1240 = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep2;
+            }
+            else
+                m_uiSpeechTimer2 -= uiDiff;
 		}
 	}
 };
@@ -681,7 +760,15 @@ bool OnQuestRewarded_npc_kinweelay(Player* pPlayer, Creature* pCreature, Quest c
 		if (npc_kinweelayAI* pEscortAI = dynamic_cast<npc_kinweelayAI*>(pCreature->AI()))
 		{
 			pEscortAI->Start(false, pPlayer, pQuest);
-			pEscortAI->StartOutro(pPlayer->GetObjectGuid());
+			pEscortAI->StartOutro(pPlayer->GetObjectGuid(), 591);
+		}
+	}
+	if (pQuest->GetQuestId() == QUEST_ID_THE_TROLL_WITCHDOCTOR)
+    {
+		if (npc_kinweelayAI* pEscortAI = dynamic_cast<npc_kinweelayAI*>(pCreature->AI()))
+		{
+			pEscortAI->Start(false, pPlayer, pQuest);
+			pEscortAI->StartOutro(pPlayer->GetObjectGuid(), 1240);
 		}
 	}
 	return true;
