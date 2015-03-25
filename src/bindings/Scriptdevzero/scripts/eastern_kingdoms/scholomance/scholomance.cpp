@@ -412,7 +412,8 @@ CreatureAI* GetAI_mob_dark_shade(Creature* pCreature)
 
 enum eSpectralTutor
 {
-    SPELL_IMAGE_PROJECTION = 17651,
+    SPELL_IMAGE_PROJECTION = 17651,				// turn invisible + invulnerable
+	//SPELL_IMAGE_PROJECTION_HEAL = 17652,				// the heal?
     SPELL_MANA_BURN        = 17630,
     SPELL_SILENCE          = 12528
 };
@@ -526,6 +527,418 @@ CreatureAI* GetAI_mob_spectral_tutor(Creature* pCreature)
     return new mob_spectral_tutorAI(pCreature);
 }
 
+/*######
+## npc_paladin_event
+######*/
+
+struct Locd
+{
+    float x, y, z;
+};
+
+static Locd aAspectSpawn[]=
+{
+    {141.07f,173.05f,95.70f},				// middle, for every aspect and death knight
+    {133.29f,172.48f,95.38f},				// add, infront
+	{142.70f,169.97f,95.27f},				// add, left 
+	{142.68f,181.81f,94.72f},				// add, right
+};
+
+static Locd aWaveSpawn[]=					// 12 different spawns
+{
+    {108.79f,185.70f,94.71f},				// corner at door
+    {105.19f,177.30f,93.03f},
+	{115.91f,184.17f,92.75f},
+	{151.15f,184.94f,93.08f},				// north west
+	{143.74f,188.39f,93.97f},
+    {155.45f,176.52f,93.08f},
+	{150.68f,155.39f,93.08f},				// north east
+	{154.74f,161.46f,93.08f},
+	{142.40f,151.92f,92.79f},
+	{112.32f,148.92f,92.70f},				// south east
+	{121.15f,147.81f,92.71f},
+	{106.44f,157.38f,92.77f},
+};
+
+struct MANGOS_DLL_DECL npc_paladin_eventAI : public ScriptedAI
+{
+    npc_paladin_eventAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{	
+		m_uiEventPhase		= 0;
+		m_uiKilledCreatures = 0;
+		m_uiCurrentWave     = 0;
+		m_uiSummonCount		= 0;
+		m_uiEventTimer		= 5000;
+		m_bEvent			= true;			// only start event once
+		m_bDarkreaver		= true;
+		Reset();
+	}
+
+	uint8 m_uiCurrentWave;
+	uint8 m_uiKilledCreatures;
+
+	uint32 m_uiSummonCount;
+	uint32 m_uiEventTimer;
+	uint32 m_uiEventPhase;
+
+	GUIDList m_uiSummonList;
+
+	bool m_bEvent;
+	bool m_bDarkreaver;
+
+    void Reset()
+    {
+    }
+
+    void DamageTaken(Unit* /*pDoneBy*/, uint32 &uiDamage)
+    {
+    }
+
+	void JustSummoned(Creature* pSummoned)
+    {
+        ++m_uiSummonCount;
+		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
+
+		m_uiSummonList.push_front(pSummoned->GetObjectGuid());
+    }
+
+	void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        --m_uiSummonCount;
+		m_uiSummonList.remove(pSummoned->GetObjectGuid());
+
+		++m_uiKilledCreatures;
+
+        if (m_uiSummonCount == 0 && m_uiEventTimer > 1000 && m_uiEventPhase < 11)
+            m_uiEventTimer = 1000;
+
+		else if (m_uiSummonCount == 0 && m_uiEventTimer > 1000 && m_uiEventPhase > 17)
+            m_uiEventTimer = 1000;
+
+		else if (m_uiSummonCount == 0 && m_uiEventPhase >= 19 && m_bDarkreaver)
+            DoSummonWave(12);
+    }
+	
+	void DoSummonWave(uint32 uiSummonId = 0)
+    {
+        switch (uiSummonId)
+        {
+		case 1:
+            for (uint8 i = 0; i < 9; ++i)
+            {
+                m_creature->SummonCreature(NPC_BANAL_SPIRIT, aWaveSpawn[i].x, aWaveSpawn[i].y, aWaveSpawn[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+            }
+            ++m_uiCurrentWave;
+			break;
+        case 2:
+			for (uint8 i = 0; i < 1; ++i)
+			{
+				m_creature->SummonCreature(NPC_ASPECT_OF_BANALITY, aAspectSpawn[0].x, aAspectSpawn[i].y, aAspectSpawn[0].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+				m_creature->SummonCreature(NPC_BANAL_SPIRIT, aAspectSpawn[1].x, aAspectSpawn[1].y, aAspectSpawn[1].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+				m_creature->SummonCreature(NPC_BANAL_SPIRIT, aAspectSpawn[2].x, aAspectSpawn[2].y, aAspectSpawn[2].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+				m_creature->SummonCreature(NPC_BANAL_SPIRIT, aAspectSpawn[3].x, aAspectSpawn[3].y, aAspectSpawn[3].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+			}
+			++m_uiCurrentWave;
+			break;
+		case 3:
+            for (uint8 i = 0; i < 3; ++i)
+            {
+                m_creature->SummonCreature(NPC_MALICIOUS_SPIRIT, aWaveSpawn[i].x, aWaveSpawn[i].y, aWaveSpawn[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+            }
+			++m_uiCurrentWave;
+			break;
+		case 4:			// do this 3 times
+            for (uint8 i = 0; i < 2; ++i)
+            {
+				int Rnd = irand(0, 11);
+                m_creature->SummonCreature(NPC_MALICIOUS_SPIRIT, aWaveSpawn[Rnd].x, aWaveSpawn[Rnd].y, aWaveSpawn[Rnd].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+            }
+			++m_uiCurrentWave;
+			break;
+		case 5:
+            for (uint8 i = 0; i < 1; ++i)
+            {
+                m_creature->SummonCreature(NPC_ASPECT_OF_MALICE, aAspectSpawn[i].x, aAspectSpawn[i].y, aAspectSpawn[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+            }
+			++m_uiCurrentWave;
+			break;
+		case 6:
+            for (uint8 i = 0; i < 9; ++i)
+            {
+                m_creature->SummonCreature(NPC_CORRUPTED_SPIRIT, aWaveSpawn[i].x, aWaveSpawn[i].y, aWaveSpawn[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+            }
+            ++m_uiCurrentWave;
+			break;
+		case 7:
+            for (uint8 i = 0; i < 2; ++i)
+            {
+				int Rnd = irand(0, 11);
+                m_creature->SummonCreature(NPC_CORRUPTED_SPIRIT, aWaveSpawn[Rnd].x, aWaveSpawn[Rnd].y, aWaveSpawn[Rnd].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+            }
+            ++m_uiCurrentWave;
+			break;
+		case 8:
+            for (uint8 i = 0; i < 1; ++i)
+            {
+                m_creature->SummonCreature(NPC_ASPECT_OF_CORRUPTION, aAspectSpawn[i].x, aAspectSpawn[i].y, aAspectSpawn[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+            }
+			++m_uiCurrentWave;
+			break;
+		case 9:
+            for (uint8 i = 0; i < 1; ++i)
+            {
+                m_creature->SummonCreature(NPC_SHADOWED_SPIRIT, aWaveSpawn[1].x, aWaveSpawn[1].y, aWaveSpawn[1].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+				m_creature->SummonCreature(NPC_SHADOWED_SPIRIT, aWaveSpawn[4].x, aWaveSpawn[4].y, aWaveSpawn[4].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+				m_creature->SummonCreature(NPC_SHADOWED_SPIRIT, aWaveSpawn[9].x, aWaveSpawn[9].y, aWaveSpawn[9].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+            }
+			++m_uiCurrentWave;
+			break;
+		case 10:
+            for (uint8 i = 0; i < 1; ++i)
+            {
+				int Rnd = irand(0, 11);
+                m_creature->SummonCreature(NPC_SHADOWED_SPIRIT, aWaveSpawn[Rnd].x, aWaveSpawn[Rnd].y, aWaveSpawn[Rnd].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+            }
+			++m_uiCurrentWave;
+			break;
+		case 11:
+            for (uint8 i = 0; i < 1; ++i)
+            {
+                m_creature->SummonCreature(NPC_ASPECT_OF_SHADOW, aAspectSpawn[i].x, aAspectSpawn[i].y, aAspectSpawn[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+            }
+			++m_uiCurrentWave;
+			break;
+		case 12:
+            for (uint8 i = 0; i < 1; ++i)
+            {
+                m_creature->SummonCreature(NPC_DEATH_KNIGHT_DARKREAVER, aAspectSpawn[i].x, aAspectSpawn[i].y, aAspectSpawn[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000, true);
+				m_bDarkreaver = false;
+            }
+			break;
+		}
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+         if (m_bEvent)
+        {
+            if (m_uiEventTimer <= uiDiff)
+            {
+                switch(++m_uiEventPhase)
+                {
+                    case 1:
+						DoSummonWave(1);
+						m_creature->GenericTextEmote("Banal Spirit emerges from the darkness, drawn out by the divination scryer!", NULL, false);
+                        break;
+                    case 2:
+						DoSummonWave(2);
+						m_creature->GenericTextEmote("Aspect of Banality emerges from the darkness, drawn out by the divination scryer!", NULL, false);
+                        break;
+                    case 3:
+						DoSummonWave(3);
+						m_creature->GenericTextEmote("Malicious Spirit emerges from the darkness, drawn out by the divination scryer!", NULL, false);
+                        break;
+                    case 4:
+						DoSummonWave(4);
+                        break;
+                    case 5:
+						DoSummonWave(4);
+                        break;
+                    case 6:
+						DoSummonWave(4);
+                        break;
+                    case 7:
+						DoSummonWave(5);
+						m_creature->GenericTextEmote("Aspect of Malice emerges from the darkness, drawn out by the divination scryer!", NULL, false);
+                        break;
+                    case 8:
+						DoSummonWave(6);
+						m_creature->GenericTextEmote("Corrupted Spirit emerges from the darkness, drawn out by the divination scryer!", NULL, false);
+                        break;
+					case 9:
+						DoSummonWave(7);
+						break;
+                    case 10:
+						DoSummonWave(8);
+						m_creature->GenericTextEmote("Aspect of Corruption emerges from the darkness, drawn out by the divination scryer!", NULL, false);
+                        break;
+                    case 11:
+						DoSummonWave(9);
+						m_creature->GenericTextEmote("Shadowed Spirit emerges from the darkness, drawn out by the divination scryer!", NULL, false);
+						m_uiEventTimer = 30000;
+                        break;
+                    case 12:
+						DoSummonWave(10);
+						m_uiEventTimer = 30000;
+                        break;
+					case 13:
+						DoSummonWave(10);
+						m_uiEventTimer = 30000;
+                        break;
+					case 14:
+						DoSummonWave(10);
+						m_uiEventTimer = 30000;
+                        break;
+					case 15:
+						DoSummonWave(10);
+						m_uiEventTimer = 30000;
+                        break;
+					case 16:
+						DoSummonWave(10);
+						m_uiEventTimer = 30000;
+                        break;
+					case 17:
+						DoSummonWave(10);
+						m_uiEventTimer = 30000;
+                        break;
+					case 18:
+						DoSummonWave(11);
+						m_creature->GenericTextEmote("Aspect of Shadow emerges from the darkness, drawn out by the divination scryer!", NULL, false);
+                        break;
+					case 19:
+						m_uiEventTimer = 0;
+						m_bEvent = false;
+                        break;
+                    /*default:
+						m_uiEventTimer = 1000;
+                        break;*/
+                }
+				if (m_uiEventPhase < 11)
+					m_uiEventTimer = 300000;
+            }
+            else
+                m_uiEventTimer -= uiDiff;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_paladin_event(Creature* pCreature)
+{
+    return new npc_paladin_eventAI(pCreature);
+}
+
+/*######
+## npc_jeevee_dummy
+######*/
+enum 
+{
+	SAY_1					= -1720043,
+	SAY_2					= -1720044,
+	SAY_3					= -1720045,
+	SAY_4					= -1720046,
+
+	SPELL_TELEPORT			= 21649,
+
+	QUEST_ID_IMP_DELIVERY	= 7629,
+};
+
+struct MANGOS_DLL_DECL npc_jeevee_dummyAI : public ScriptedAI
+{
+    npc_jeevee_dummyAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{	
+		m_uiEventPhase		= 0;
+		m_uiEventTimer		= 1000;
+		m_bEvent			= true;
+		Reset();
+	}
+
+	uint32 m_uiEventTimer;
+	uint32 m_uiEventPhase;
+
+	bool m_bEvent;
+
+    void Reset()
+    {
+    }
+
+    void DamageTaken(Unit* /*pDoneBy*/, uint32 &uiDamage)
+    {
+    }
+
+	/*void HandleQuestCredit()				// How the fuck do you give quest credit? Not working so hack in DB instead, but in future pls fix this
+	{
+		if (Player* pPlayer = GetPlayerAtMinimumRange(20))
+			if (pPlayer->HasQuest(QUEST_ID_IMP_DELIVERY) && QuestStatus(IN_PROGRESS))
+				pPlayer->GroupEventHappens(QUEST_ID_IMP_DELIVERY, m_creature);
+	}*/
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_bEvent)
+        {
+            if (m_uiEventTimer <= uiDiff)
+            {
+                switch(++m_uiEventPhase)
+                {
+					case 1:
+						DoScriptText(SAY_1, m_creature);								// say on spawn
+						m_uiEventTimer = 4000;
+						break;
+					case 2:
+						m_creature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);			// first spot
+						m_uiEventTimer = 1000;
+						break;
+					case 3:
+						DoScriptText(SAY_2, m_creature);
+						m_uiEventTimer = 8000;
+						break;
+					case 4:
+						m_creature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);			// second spot
+						m_uiEventTimer = 1500;
+						break;
+					case 5:
+						m_creature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+						m_uiEventTimer = 2000;
+						break;
+					case 6:
+						DoScriptText(SAY_3, m_creature);
+						m_uiEventTimer = 10000;
+						break;
+					case 7:
+						m_creature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);			// last spot
+						m_uiEventTimer = 1500;
+						break;
+					case 8:
+						m_creature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+						m_uiEventTimer = 1500;
+						break;
+					case 9:
+						m_creature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+						m_uiEventTimer = 1500;
+						break;
+					case 10:
+						DoScriptText(SAY_4, m_creature);								// give quest credit
+						//HandleQuestCredit();
+						m_creature->SetFacingTo(4.71f);
+						m_uiEventTimer = 1000;
+						break;
+					case 11:
+						m_uiEventTimer = 3000;											// placeholder
+						break;
+					case 12:
+						DoCast(m_creature, SPELL_TELEPORT, true);
+						m_uiEventTimer = 1500;
+						break;
+					case 13:
+						m_creature->SetVisibility(VISIBILITY_OFF);
+						m_creature->ForcedDespawn();
+						break;
+                    /*default:
+						m_uiEventTimer = 1000;
+                        break;*/
+                }
+            }
+            else
+                m_uiEventTimer -= uiDiff;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_jeevee_dummy(Creature* pCreature)
+{
+    return new npc_jeevee_dummyAI(pCreature);
+}
+
 void AddSC_scholomance()
 {
     Script* pNewscript;
@@ -573,5 +986,15 @@ void AddSC_scholomance()
     pNewscript = new Script;
     pNewscript->Name = "mob_spectral_tutor";
     pNewscript->GetAI = &GetAI_mob_spectral_tutor;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_paladin_event";
+    pNewscript->GetAI = &GetAI_npc_paladin_event;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_jeevee_dummy";
+    pNewscript->GetAI = &GetAI_npc_jeevee_dummy;
     pNewscript->RegisterSelf();
 }

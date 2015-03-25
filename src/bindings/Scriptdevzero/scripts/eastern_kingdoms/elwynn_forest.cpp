@@ -235,6 +235,114 @@ CreatureAI* GetAI_npc_creepy_child(Creature* pCreature)
     return new npc_creepy_child(pCreature);
 }
 
+/*####
+# npc_maybell_maclure
+####*/
+
+enum
+{
+	MAYBELL_SAY_1					 = -1720048,
+
+	SPELL_DRINK_POTION				 = 9956,
+
+    QUEST_ID_THE_ESCAPE				 = 114,
+};
+
+struct MANGOS_DLL_DECL npc_maybell_maclureAI : public npc_escortAI
+{
+    npc_maybell_maclureAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+
+	void JustStartedEscort()
+    {
+    }
+	
+	void StartOutro()
+	{
+		m_bOutro = true; 
+		m_uiSpeechTimer = 3000;
+		m_uiSpeechStep = 1;
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {
+                    case 1:
+                        DoScriptText(MAYBELL_SAY_1, m_creature);						
+						m_uiSpeechTimer = 1000;
+                        break;
+					case 2:				// drink the potion
+						m_creature->CastSpell(m_creature, SPELL_DRINK_POTION, false);
+                        m_uiSpeechTimer = 6000;
+                        break;
+					case 3:
+						m_creature->SetVisibility(VISIBILITY_OFF);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 4:
+						m_uiSpeechTimer = 7000;
+						break;
+					case 5:
+						m_creature->SetVisibility(VISIBILITY_ON);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 6:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_maybell_maclure(Creature* pCreature)
+{
+    return new npc_maybell_maclureAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_maybell_maclure(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_THE_ESCAPE)
+    {
+		if (npc_maybell_maclureAI* pEscortAI = dynamic_cast<npc_maybell_maclureAI*>(pCreature->AI()))
+		{
+			pEscortAI->Start(false, pPlayer, pQuest);
+			pEscortAI->StartOutro();
+		}
+	}
+	return true;
+}
+
 void AddSC_elwynn_forest()
 {
     Script* pNewscript;
@@ -247,5 +355,11 @@ void AddSC_elwynn_forest()
     pNewscript = new Script;
     pNewscript->Name = "npc_creepy_child";
     pNewscript->GetAI = &GetAI_npc_creepy_child;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_maybell_maclure";
+    pNewscript->GetAI = &GetAI_npc_maybell_maclure;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_maybell_maclure;
     pNewscript->RegisterSelf();
 }
