@@ -344,7 +344,12 @@ struct MANGOS_DLL_DECL npc_ello_ebonlockeAI : public npc_escortAI
 	void JustStartedEscort()
     {
     }
-	
+
+	void JustSummoned(Creature* pSummoned)
+    {
+		pSummoned->SetRespawnDelay(-10);			// make sure he won't respawn randomly
+	}
+
 	void SpawnStitches()
 	{
 		if (m_bStitches)					// If he gets to the last WP he'll despawn, so no need to force despawn
