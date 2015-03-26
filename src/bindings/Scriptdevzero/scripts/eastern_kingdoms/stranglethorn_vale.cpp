@@ -758,18 +758,12 @@ bool OnQuestRewarded_npc_kinweelay(Player* pPlayer, Creature* pCreature, Quest c
 	if (pQuest->GetQuestId() == QUEST_ID_THE_MINDS_EYE)
     {
 		if (npc_kinweelayAI* pEscortAI = dynamic_cast<npc_kinweelayAI*>(pCreature->AI()))
-		{
-			pEscortAI->Start(false, pPlayer, pQuest);
 			pEscortAI->StartOutro(pPlayer->GetObjectGuid(), 591);
-		}
 	}
 	if (pQuest->GetQuestId() == QUEST_ID_THE_TROLL_WITCHDOCTOR)
     {
 		if (npc_kinweelayAI* pEscortAI = dynamic_cast<npc_kinweelayAI*>(pCreature->AI()))
-		{
-			pEscortAI->Start(false, pPlayer, pQuest);
 			pEscortAI->StartOutro(pPlayer->GetObjectGuid(), 1240);
-		}
 	}
 	return true;
 }

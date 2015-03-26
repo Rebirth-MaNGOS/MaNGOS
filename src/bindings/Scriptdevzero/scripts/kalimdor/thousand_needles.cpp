@@ -442,7 +442,6 @@ bool go_harpy_foodstuffs(Player* pPlayer, GameObject* /*pGo*/)
     return false;
 }
 
-
 /*####
 # npc_kravel_koalbeard
 ####*/
@@ -548,10 +547,7 @@ bool OnQuestRewarded_npc_kravel_koalbeard(Player* pPlayer, Creature* pCreature, 
 	if (pQuest->GetQuestId() == QUEST_ID_PARTS_FOR_KRAVEL)
     {
 		if (npc_kravel_koalbeardAI* pEscortAI = dynamic_cast<npc_kravel_koalbeardAI*>(pCreature->AI()))
-		{
-			pEscortAI->Start(false, pPlayer, pQuest);
 			pEscortAI->StartOutro();
-		}
 	}
 	return true;
 }

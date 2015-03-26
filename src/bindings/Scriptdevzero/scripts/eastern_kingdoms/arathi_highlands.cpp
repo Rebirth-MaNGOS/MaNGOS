@@ -536,10 +536,7 @@ bool OnQuestRewarded_npc_gormul(Player* pPlayer, Creature* pCreature, Quest cons
 	if (pQuest->GetQuestId() == QUEST_ID_GUILE_OF_THE_RAPTOR)
     {
 		if (npc_gormulAI* pEscortAI = dynamic_cast<npc_gormulAI*>(pCreature->AI()))
-		{
-			pEscortAI->Start(false, pPlayer, pQuest);
 			pEscortAI->StartOutro();
-		}
 	}
 	return true;
 }

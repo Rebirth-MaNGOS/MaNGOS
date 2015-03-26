@@ -335,10 +335,7 @@ bool OnQuestRewarded_npc_maybell_maclure(Player* pPlayer, Creature* pCreature, Q
 	if (pQuest->GetQuestId() == QUEST_ID_THE_ESCAPE)
     {
 		if (npc_maybell_maclureAI* pEscortAI = dynamic_cast<npc_maybell_maclureAI*>(pCreature->AI()))
-		{
-			pEscortAI->Start(false, pPlayer, pQuest);
 			pEscortAI->StartOutro();
-		}
 	}
 	return true;
 }
