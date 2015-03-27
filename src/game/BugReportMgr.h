@@ -7,20 +7,18 @@
 
 struct BugReport
 {
-    BugReport(GMTicket &ticket)
+    BugReport(std::string title, GMTicket &ticket)
     {
         m_creator = ticket.GetPlayerGuid();
-        m_commentor = ObjectGuid();
+        m_title = title;
         m_text = ticket.GetText();
-        m_comment = "";
-        date = ticket.GetLastUpdate();
+        m_date = ticket.GetLastUpdate();
     }
 
     ObjectGuid m_creator;
-    ObjectGuid m_commentor;
+    std::string m_title;
     std::string m_text;
-    std::string m_comment;
-    time_t date;
+    time_t m_date;
 };
 
 typedef std::vector<BugReport> BugReportList;
@@ -30,7 +28,7 @@ class BugReportMgr
 public:
     BugReportMgr();
 
-    void AddReport(GMTicket &ticket);
+    void AddReport(std::string title, GMTicket &ticket);
     bool RemoveReport(size_t index);
     BugReport& GetBugReport(size_t index);
     BugReportList const& GetBugReportList();

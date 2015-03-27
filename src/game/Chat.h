@@ -554,7 +554,9 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleQuitCommand(char* args);
 
         bool HandleBugReportListCommand(char* args);
+        bool HandleBugReportShowCommand(char* args);
         bool HandleBugReportTicketToReportCommand(char* args);
+        bool HandleBugReportDeleteCommand(char* args);
 
         bool HandleMmapPathCommand(char* args);
         bool HandleMmapLocCommand(char* args);

@@ -118,7 +118,9 @@ ChatCommand * ChatHandler::getCommandTable()
     static ChatCommand bugReportCommandTable[] =
     {
         { "list",           SEC_PLAYER,         false, &ChatHandler::HandleBugReportListCommand,           "", nullptr },
-        { "tickettoreport", SEC_GAMEMASTER,     false, &ChatHandler::HandleBugReportTicketToReportCommand, "", nullptr }
+        {"show",            SEC_PLAYER,         false, &ChatHandler::HandleBugReportShowCommand,           "", nullptr },
+        { "tickettoreport", SEC_GAMEMASTER,     false, &ChatHandler::HandleBugReportTicketToReportCommand, "", nullptr },
+        { "delete",            SEC_GAMEMASTER,     false, &ChatHandler::HandleBugReportDeleteCommand,      "", nullptr }
     };
 
     static ChatCommand castCommandTable[] =

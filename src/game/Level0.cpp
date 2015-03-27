@@ -39,16 +39,36 @@ bool ChatHandler::HandleBugReportListCommand(char* /*args*/)
     
     std::string playerName;
     
-    size_t counter = 0;
-    for (BugReport& report : list)
+    size_t i;
+    for (i = 0; i < list.size(); ++i)
     {
-        ++counter;
-        sObjectMgr.GetPlayerNameByGUID(report.m_creator, playerName);
-        PSendSysMessage("%u - Creator: %s, Date: %d", counter, playerName.c_str(), report.date);
+        sObjectMgr.GetPlayerNameByGUID(list[i].m_creator, playerName);
+        PSendSysMessage("%lu - Creator: %s, Title: %s, Date: %ld", i + 1, playerName.c_str(), list[i].m_title.c_str(), list[i].m_date);
     }
 
-    if (counter == 0)
+    if (i == 0)
         PSendSysMessage("No bug reports exist!");
+
+    return true;
+}
+
+bool ChatHandler::HandleBugReportShowCommand(char* args)
+{
+    uint32 index;
+    ExtractUInt32(&args, index);
+    --index;
+
+    if (index >= sBugReportMgr.GetBugReportList().size())
+    {
+        PSendSysMessage("The given index was too large!");
+        return false;
+    }
+
+    BugReport const& report = sBugReportMgr.GetBugReport(index);
+
+    std::string playerName;
+    sObjectMgr.GetPlayerNameByGUID(report.m_creator, playerName);
+    PSendSysMessage("%u - Creator: %s, Title: %s, Date: %lu\n%s", index, playerName.c_str(), report.m_title.c_str(), report.m_date, report.m_text.c_str());
 
     return true;
 }

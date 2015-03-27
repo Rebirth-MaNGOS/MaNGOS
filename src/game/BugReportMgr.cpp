@@ -8,9 +8,10 @@ BugReportMgr::BugReportMgr()
 {
 }
 
-void BugReportMgr::AddReport(GMTicket &ticket)
+void BugReportMgr::AddReport(std::string title, GMTicket &ticket)
 {
-    m_bugReports.push_back(ticket);
+    BugReport report(title, ticket);
+    m_bugReports.push_back(report);
 }
 
 bool BugReportMgr::RemoveReport(size_t index)

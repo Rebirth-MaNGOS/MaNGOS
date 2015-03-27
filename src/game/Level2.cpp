@@ -63,18 +63,19 @@ static uint32 ReputationRankStrIndex[MAX_REPUTATION_RANK] =
 
 bool ChatHandler::HandleBugReportTicketToReportCommand(char* args)
 {
-    int index = atoi(args) - 1;
-
-    if (index < 0)
-    {
-        PSendSysMessage("The ticket index must be greater than 1!");
-        return false;
-    }
+    std::string title;
+   
+    if (*args)
+        title = ExtractArg(&args, false);
+    
+    uint32 index;
+    ExtractUInt32(&args, index);
 
     GMTicket* ticket = sTicketMgr.GetGMTicketByOrderPos(index);
+    
     if (ticket)
     {
-        sBugReportMgr.AddReport(*ticket);
+        sBugReportMgr.AddReport(title, *ticket);
         
         PSendSysMessage("Ticket added as bug report!");
         return true;
@@ -82,6 +83,28 @@ bool ChatHandler::HandleBugReportTicketToReportCommand(char* args)
     else
     {
         PSendSysMessage("No ticket with that index!");
+        return false;
+    }
+}
+
+bool ChatHandler::HandleBugReportDeleteCommand(char* args)
+{
+    int index = atoi(args) - 1;
+    
+    if (index < 0)
+    {
+        PSendSysMessage("The ticket index must be greater than 1!");
+        return false;
+    }
+
+    if (sBugReportMgr.RemoveReport(index))
+    {
+        PSendSysMessage("The report was deleted!");
+        return true;
+    }
+    else
+    {
+        PSendSysMessage("The given index was too large!");   
         return false;
     }
 }
