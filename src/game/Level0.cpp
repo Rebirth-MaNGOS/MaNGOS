@@ -31,6 +31,27 @@
 #include "revision.h"
 #include "revision_nr.h"
 #include "Util.h"
+#include "BugReportMgr.h"
+
+bool ChatHandler::HandleBugReportListCommand(char* /*args*/)
+{
+    BugReportList list = sBugReportMgr.GetBugReportList();
+    
+    std::string playerName;
+    
+    size_t counter = 0;
+    for (BugReport& report : list)
+    {
+        ++counter;
+        sObjectMgr.GetPlayerNameByGUID(report.m_creator, playerName);
+        PSendSysMessage("%u - Creator: %s, Date: %d", counter, playerName.c_str(), report.date);
+    }
+
+    if (counter == 0)
+        PSendSysMessage("No bug reports exist!");
+
+    return true;
+}
 
 bool ChatHandler::HandleHelpCommand(char* args)
 {

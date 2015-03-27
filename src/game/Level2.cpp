@@ -40,6 +40,7 @@
 #include "MapPersistentStateMgr.h"
 #include "AccountMgr.h"
 #include "GMTicketMgr.h"
+#include "BugReportMgr.h"
 #include "WaypointManager.h"
 #include "DBCStores.h"
 #include "Util.h"
@@ -59,6 +60,31 @@ static uint32 ReputationRankStrIndex[MAX_REPUTATION_RANK] =
     LANG_REP_HATED,    LANG_REP_HOSTILE, LANG_REP_UNFRIENDLY, LANG_REP_NEUTRAL,
     LANG_REP_FRIENDLY, LANG_REP_HONORED, LANG_REP_REVERED,    LANG_REP_EXALTED
 };
+
+bool ChatHandler::HandleBugReportTicketToReportCommand(char* args)
+{
+    int index = atoi(args) - 1;
+
+    if (index < 0)
+    {
+        PSendSysMessage("The ticket index must be greater than 1!");
+        return false;
+    }
+
+    GMTicket* ticket = sTicketMgr.GetGMTicketByOrderPos(index);
+    if (ticket)
+    {
+        sBugReportMgr.AddReport(*ticket);
+        
+        PSendSysMessage("Ticket added as bug report!");
+        return true;
+    }
+    else
+    {
+        PSendSysMessage("No ticket with that index!");
+        return false;
+    }
+}
 
 //mute player for some times
 bool ChatHandler::HandleMuteCommand(char* args)
