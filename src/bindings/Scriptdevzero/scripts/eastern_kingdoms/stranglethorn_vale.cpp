@@ -576,6 +576,7 @@ enum
 	KINWEELAY_SAY_1					 = -1720052,
 	KINWEELAY_SAY_1_1240			 = -1720053,
 	KINWEELAY_SAY_2_1240			 = -1720054,
+	KINWEELAY_SAY_1_584				 = -1720072,
 
 	SPELL_SOUL_GEM					 = 3660,
 	SPELL_SPEAK_WITH_HEADS			 = 3644,
@@ -592,6 +593,10 @@ struct MANGOS_DLL_DECL npc_kinweelayAI : public npc_escortAI
 		Reset(); 
 	}
 	
+	//uint8 m_uiSpeechStep3;
+	//uint32 m_uiSpeechTimer3;
+	//bool m_bOutro584;
+
 	uint8 m_uiSpeechStep;
 	uint32 m_uiSpeechTimer;
 	bool m_bOutro591;
@@ -604,12 +609,15 @@ struct MANGOS_DLL_DECL npc_kinweelayAI : public npc_escortAI
 
     void Reset()
 	{
+		//m_bOutro584 = false;
 		m_bOutro591 = false;
 		m_bOutro1240 = false;
 		m_uiSpeechStep = 1;
 		m_uiSpeechStep2 = 1;
+		//m_uiSpeechStep3 = 1;
 		m_uiSpeechTimer = 0;
 		m_uiSpeechTimer2 = 0;
+		//m_uiSpeechTimer3 = 0;
 		m_uiPlayerGUID.Clear();
 	}
 
@@ -629,6 +637,17 @@ struct MANGOS_DLL_DECL npc_kinweelayAI : public npc_escortAI
         m_uiPlayerGUID = pPlayerGUID;
 		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
 		
+		if (uiQuestId == 584)					// should wait 4 sec before cast, but since <dynamic cast> won't update his ai for timer it's commented out and just does it instantly.
+		{
+			//m_bOutro584 = true; 
+			//m_uiSpeechTimer3 = 4000;
+			//m_uiSpeechStep3	= 1;
+			Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+			DoScriptText(KINWEELAY_SAY_1_584, m_creature, pPlayer);
+			m_creature->GenericTextEmote("Kin'weelay starts channeling...", NULL, false);
+			m_creature->CastSpell(m_creature, SPELL_SPEAK_WITH_HEADS, false);
+			m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+		}
 		if (uiQuestId == 591)
 		{
 			m_bOutro591 = true; 
@@ -656,6 +675,34 @@ struct MANGOS_DLL_DECL npc_kinweelayAI : public npc_escortAI
 
 	void UpdateEscortAI(const uint32 uiDiff)
     {
+		/*if (m_uiSpeechTimer3 && m_bOutro584)							// handle RP at quest end 584
+		{
+			if (!m_uiSpeechStep3)
+				return;
+		
+			if (m_uiSpeechTimer3 <= uiDiff)
+            {				
+                switch(m_uiSpeechStep3)
+                {					
+                    case 1:
+						m_creature->GenericTextEmote("Kin'weelay starts channeling...", NULL, false);			// why is he repeating this step D:
+						m_creature->CastSpell(m_creature, SPELL_SPEAK_WITH_HEADS, false);
+						m_uiSpeechTimer3 = 5000;
+                        break;
+					case 2:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro584 = false;				
+						break;
+					//default:
+                        //m_uiSpeechStep = 0;
+                        //return;
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer3 -= uiDiff;
+		}*/
+
 		if (m_uiSpeechTimer && m_bOutro591)							// handle RP at quest end 591
 		{
 			if (!m_uiSpeechStep)
@@ -870,6 +917,23 @@ bool OnQuestRewarded_npc_sea_wolf_mackinley(Player* pPlayer, Creature* pCreature
 	return true;
 }
 
+enum eCauldron
+{
+	QUEST_ID_BLOODSCALP_CLAN_HEADS  = 584,
+	NPC_KINWEELAY					= 2519,
+};
+
+bool QuestRewarded_go_bubbling_cauldron(Player* pPlayer, GameObject* pGo, const Quest* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_BLOODSCALP_CLAN_HEADS)
+    {
+		Creature* pKinweelay = GetClosestCreatureWithEntry(pGo, NPC_KINWEELAY, 10.0f);
+		if (npc_kinweelayAI* pEscortAI = dynamic_cast<npc_kinweelayAI*>(pKinweelay->AI()))
+			pEscortAI->StartOutro(pPlayer->GetObjectGuid(), 584);
+	}
+	return true;
+}
+
 void AddSC_stranglethorn_vale()
 {
     Script* pNewscript;
@@ -915,5 +979,10 @@ void AddSC_stranglethorn_vale()
     pNewscript->Name = "npc_sea_wolf_mackinley";
     pNewscript->GetAI = &GetAI_npc_sea_wolf_mackinley;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_sea_wolf_mackinley;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "go_bubbling_cauldron";
+    pNewscript->pQuestRewardedGO = &QuestRewarded_go_bubbling_cauldron;
     pNewscript->RegisterSelf();
 }
