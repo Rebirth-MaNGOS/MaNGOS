@@ -115,6 +115,14 @@ ChatCommand * ChatHandler::getCommandTable()
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
+    static ChatCommand bugReportCommandTable[] =
+    {
+        { "list",           SEC_PLAYER,         false, &ChatHandler::HandleBugReportListCommand,           "", nullptr },
+        {"show",            SEC_PLAYER,         false, &ChatHandler::HandleBugReportShowCommand,           "", nullptr },
+        { "tickettoreport", SEC_GAMEMASTER,     false, &ChatHandler::HandleBugReportTicketToReportCommand, "", nullptr },
+        { "delete",            SEC_GAMEMASTER,     false, &ChatHandler::HandleBugReportDeleteCommand,      "", nullptr }
+    };
+
     static ChatCommand castCommandTable[] =
     {
         { "back",           SEC_ADMINISTRATOR,  false, &ChatHandler::HandleCastBackCommand,            "", NULL },
@@ -710,6 +718,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "bank",           SEC_ADMINISTRATOR,  false, &ChatHandler::HandleBankCommand,                "", NULL },
         { "wchange",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleChangeWeatherCommand,       "", NULL },
         { "ticket",         SEC_GAMEMASTER,     true,  &ChatHandler::HandleTicketCommand,              "", NULL },
+        { "bugreport",      SEC_PLAYER,         true, nullptr,                                         "", bugReportCommandTable },
         { "delticket",      SEC_GAMEMASTER,     true,  &ChatHandler::HandleDelTicketCommand,           "", NULL },
         { "maxskill",       SEC_ADMINISTRATOR,  false, &ChatHandler::HandleMaxSkillCommand,            "", NULL },
         { "setskill",       SEC_ADMINISTRATOR,  false, &ChatHandler::HandleSetSkillCommand,            "", NULL },
