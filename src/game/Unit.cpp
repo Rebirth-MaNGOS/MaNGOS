@@ -6217,6 +6217,11 @@ uint32 Unit::SpellCriticalDamageBonus(SpellEntry const *spellProto, uint32 damag
         break;
     }
 
+    // Judgement of Command - should be counted as a spell 
+    // and have half the crit damage.
+    if (spellProto->SpellVisual == 0 && spellProto->SpellIconID == 561)
+        crit_bonus /= 2;
+
     // adds additional damage to crit_bonus (from talents)
     if(Player* modOwner = GetSpellModOwner())
         modOwner->ApplySpellMod(spellProto->Id, SPELLMOD_CRIT_DAMAGE_BONUS, crit_bonus);
