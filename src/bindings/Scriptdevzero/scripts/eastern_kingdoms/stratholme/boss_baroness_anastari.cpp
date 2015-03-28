@@ -139,29 +139,34 @@ struct MANGOS_DLL_DECL boss_baroness_anastariAI : public ScriptedAI
 				// Check for possessed player
 				Player* pPlayer = m_creature->GetMap()->GetPlayer(m_possessedPlayer);
 				if (!pPlayer || !pPlayer->isAlive())
-					EndTimersRemoveInvis();
-
-                // If aura has expired, return to fight
-                if (!m_creature->HasAura(SPELL_POSSESS_INV))
-				{
-					RemovePossess(pPlayer);
-					EndTimersRemoveInvis();
-				}
-
-				// If aura has expired, return to fight
-                if (!pPlayer->HasAura(SPELL_POSSESSED))
-				{
-					RemovePossess(pPlayer);
-					EndTimersRemoveInvis();
-				}
-
-                // If possessed player has less than 50% health
-                if (pPlayer->GetHealth() <= pPlayer->GetMaxHealth() * .5f)
                 {
-					RemovePossess(pPlayer);
 					EndTimersRemoveInvis();
-
                 }
+                else
+                {
+                    // If aura has expired, return to fight
+                    if (!m_creature->HasAura(SPELL_POSSESS_INV))
+                    {
+                        RemovePossess(pPlayer);
+                        EndTimersRemoveInvis();
+                    }
+
+                    // If aura has expired, return to fight
+                    if (!pPlayer->HasAura(SPELL_POSSESSED))
+                    {
+                        RemovePossess(pPlayer);
+                        EndTimersRemoveInvis();
+                    }
+
+                    // If possessed player has less than 50% health
+                    if (pPlayer->GetHealth() <= pPlayer->GetMaxHealth() * .5f)
+                    {
+                        RemovePossess(pPlayer);
+                        EndTimersRemoveInvis();
+
+                    }
+                }
+
                 m_uiPossessEndTimer = 1000;
             }
             else
