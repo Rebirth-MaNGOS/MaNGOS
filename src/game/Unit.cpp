@@ -1391,6 +1391,20 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, S
         }
     }
 
+    // Judgement of Command - Should be counted as magic.
+    if (spellInfo->SpellVisual == 0 && spellInfo->SpellIconID == 561)
+    {
+        // Calculate damage bonus
+        damage = SpellDamageBonusDone(pVictim, spellInfo, damage, SPELL_DIRECT_DAMAGE);
+        damage = pVictim->SpellDamageBonusTaken(this, spellInfo, damage, SPELL_DIRECT_DAMAGE);
+
+        // If crit add critical bonus
+        if (crit)
+        {
+            damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
+            damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
+        }
+    }
 
     // damage mitigation
     if (damage > 0)
