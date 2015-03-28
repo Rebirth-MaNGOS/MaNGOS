@@ -304,13 +304,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
         {
         case SPELLFAMILY_GENERIC:
         {
-            //Judgement of Command
-            if (m_spellInfo->SpellIconID == 561 && !unitTarget->HasAuraType(SPELL_AURA_MOD_STUN))
-            {
-                damage *= 0.5;
-                break;
-            }
-
             switch(m_spellInfo->Id)                     // better way to check unknown
             {
                 // Wrath of Ragnaros - threat wipe
@@ -1652,18 +1645,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             if (!spell_proto)
                 return;
 
-            if (!unitTarget->hasUnitState(UNIT_STAT_STUNNED) && m_caster->GetTypeId()==TYPEID_PLAYER)
-            {
-                // decreased damage (/2) for non-stunned target.
-                SpellModifier *mod = new SpellModifier(SPELLMOD_DAMAGE,SPELLMOD_PCT,-50,m_spellInfo->Id,UI64LIT(0x0000020000000000));
-
-                ((Player*)m_caster)->AddSpellMod(mod, true);
-                m_caster->CastSpell(unitTarget, spell_proto, true, NULL);
-                // mod deleted
-                ((Player*)m_caster)->AddSpellMod(mod, false);
-            }
-            else
-                m_caster->CastSpell(unitTarget, spell_proto, true, NULL);
+            m_caster->CastSpell(unitTarget, spell_proto, true, NULL);
 
             return;
         }
