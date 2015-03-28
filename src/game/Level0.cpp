@@ -68,7 +68,7 @@ bool ChatHandler::HandleBugReportShowCommand(char* args)
 
     std::string playerName;
     sObjectMgr.GetPlayerNameByGUID(report.m_creator, playerName);
-    PSendSysMessage("%u - Creator: %s, Title: %s, Date: %lu\n%s", index, playerName.c_str(), report.m_title.c_str(), report.m_date, report.m_text.c_str());
+    PSendSysMessage("%u - Creator: %s, Title: %s, Date: %lu\n%s", index + 1, playerName.c_str(), report.m_title.c_str(), report.m_date, report.m_text.c_str());
 
     return true;
 }

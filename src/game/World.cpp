@@ -61,6 +61,7 @@
 #include "MapPersistentStateMgr.h"
 #include "WaypointManager.h"
 #include "GMTicketMgr.h"
+#include "BugReportMgr.h"
 #include "Util.h"
 #include "CharacterDatabaseCleaner.h"
 #include "CreatureGroups.h"
@@ -1183,6 +1184,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "Loading GM tickets...");
     sTicketMgr.LoadGMTickets();
+
+    sLog.outString("Loading bug reports...");
+    sBugReportMgr.LoadBugReports();
 
 	sLog.outString( "Loading pathing barriers...");
 	sObjectMgr.LoadPathingBarriers();

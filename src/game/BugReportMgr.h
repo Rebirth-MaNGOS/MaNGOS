@@ -15,6 +15,10 @@ struct BugReport
         m_date = ticket.GetLastUpdate();
     }
 
+    BugReport(unsigned long id, ObjectGuid creator, std::string title, std::string text, time_t date) :
+        m_id(id), m_creator(creator), m_title(title), m_text(text), m_date(date) {}
+
+    unsigned long m_id;
     ObjectGuid m_creator;
     std::string m_title;
     std::string m_text;
@@ -32,6 +36,8 @@ public:
     bool RemoveReport(size_t index);
     BugReport& GetBugReport(size_t index);
     BugReportList const& GetBugReportList();
+
+    void LoadBugReports();
 
 private:
     BugReportList m_bugReports;
