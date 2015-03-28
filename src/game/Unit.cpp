@@ -1344,54 +1344,7 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, S
     // Check spell crit chance
     bool crit = IsSpellCrit(pVictim, spellInfo, damageSchoolMask, attackType);
 
-    // damage bonus (per damage class)
-    switch (spellInfo->DmgClass)
-    {
-        // Melee and Ranged Spells
-    case SPELL_DAMAGE_CLASS_RANGED:
-    case SPELL_DAMAGE_CLASS_MELEE:
-    {
-        //Calculate damage bonus
-        damage = MeleeDamageBonusDone(pVictim, damage, attackType, spellInfo, SPELL_DIRECT_DAMAGE);
-        damage = pVictim->MeleeDamageBonusTaken(this, damage, attackType, spellInfo, SPELL_DIRECT_DAMAGE);
-
-        // if crit add critical bonus
-        if (crit)
-        {
-            damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
-            damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
-        }
-    }
-    break;
-    // Magical Attacks
-    case SPELL_DAMAGE_CLASS_NONE:
-    case SPELL_DAMAGE_CLASS_MAGIC:
-    {
-        // Calculate damage bonus
-        damage = SpellDamageBonusDone(pVictim, spellInfo, damage, SPELL_DIRECT_DAMAGE);
-        damage = pVictim->SpellDamageBonusTaken(this, spellInfo, damage, SPELL_DIRECT_DAMAGE);
-
-        // If crit add critical bonus
-        if (crit)
-        {
-            damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
-            damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
-        }
-    }
-    break;
-    }
-
-    // Gnomish Death Ray
-    if (spellInfo->Id == 13279)
-    {
-        if (urand(1, 100) <= 5) // A 5 % crit chance.
-        {
-            damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
-            damage = (int32)((float)damage * 2.5f);
-        }
-    }
-
-    // Judgement of Command - Should be counted as magic.
+    // Judgement of Command should be counted as a spell. Speparate handling for it.
     if (spellInfo->SpellVisual == 0 && spellInfo->SpellIconID == 561)
     {
         // Calculate damage bonus
@@ -1403,6 +1356,55 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, S
         {
             damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
             damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
+        }
+    }
+    else // Default calculations for damage class.
+    {    
+        // damage bonus (per damage class)
+        switch (spellInfo->DmgClass)
+        {
+            // Melee and Ranged Spells
+        case SPELL_DAMAGE_CLASS_RANGED:
+        case SPELL_DAMAGE_CLASS_MELEE:
+        {
+            //Calculate damage bonus
+            damage = MeleeDamageBonusDone(pVictim, damage, attackType, spellInfo, SPELL_DIRECT_DAMAGE);
+            damage = pVictim->MeleeDamageBonusTaken(this, damage, attackType, spellInfo, SPELL_DIRECT_DAMAGE);
+
+            // if crit add critical bonus
+            if (crit)
+            {
+                damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
+                damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
+            }
+        }
+        break;
+        // Magical Attacks
+        case SPELL_DAMAGE_CLASS_NONE:
+        case SPELL_DAMAGE_CLASS_MAGIC:
+        {
+            // Calculate damage bonus
+            damage = SpellDamageBonusDone(pVictim, spellInfo, damage, SPELL_DIRECT_DAMAGE);
+            damage = pVictim->SpellDamageBonusTaken(this, spellInfo, damage, SPELL_DIRECT_DAMAGE);
+
+            // If crit add critical bonus
+            if (crit)
+            {
+                damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
+                damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
+            }
+        }
+        break;
+        }
+    }
+
+    // Gnomish Death Ray
+    if (spellInfo->Id == 13279)
+    {
+        if (urand(1, 100) <= 5) // A 5 % crit chance.
+        {
+            damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
+            damage = (int32)((float)damage * 2.5f);
         }
     }
 
