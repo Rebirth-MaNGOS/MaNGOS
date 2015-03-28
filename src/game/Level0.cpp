@@ -43,7 +43,12 @@ bool ChatHandler::HandleBugReportListCommand(char* /*args*/)
     for (i = 0; i < list.size(); ++i)
     {
         sObjectMgr.GetPlayerNameByGUID(list[i].m_creator, playerName);
-        PSendSysMessage("%lu - Creator: %s, Title: %s, Date: %ld", i + 1, playerName.c_str(), list[i].m_title.c_str(), list[i].m_date);
+    
+        struct tm* timeinfo = localtime(&list[i].m_date);
+        char timeArr[25];
+        strftime(timeArr, 25, "%F %T", timeinfo);
+        
+        PSendSysMessage("%lu - Creator: %s, Title: %s, Date: %s", i + 1, playerName.c_str(), list[i].m_title.c_str(), timeArr);
     }
 
     if (i == 0)
@@ -68,7 +73,12 @@ bool ChatHandler::HandleBugReportShowCommand(char* args)
 
     std::string playerName;
     sObjectMgr.GetPlayerNameByGUID(report.m_creator, playerName);
-    PSendSysMessage("%u - Creator: %s, Title: %s, Date: %lu\n%s", index + 1, playerName.c_str(), report.m_title.c_str(), report.m_date, report.m_text.c_str());
+
+    struct tm* timeinfo = localtime(&report.m_date);
+    char timeArr[25];
+    strftime(timeArr, 25, "%F %T", timeinfo);
+
+    PSendSysMessage("%u - Creator: %s, Title: %s, Date: %s\n%s", index + 1, playerName.c_str(), report.m_title.c_str(), timeArr, report.m_text.c_str());
 
     return true;
 }
