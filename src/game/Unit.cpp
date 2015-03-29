@@ -6045,6 +6045,9 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
         case 302:										//Hammer of Wrath: 43% of maximum applied
             coeff = 0.43f;
             break;
+        case 561:									//Judgement of Command: 43% of maximum applied
+            tmpDamage += tmpDamage*0.43 > saveAuraMod ? saveAuraMod : tmpDamage*0.43;
+            break;
         case 156:
             if (spellProto->SpellVisual == 3400)
             {
@@ -6739,8 +6742,6 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
         {
             if (spellProto->SpellVisual == 5622)					//Seal of Command proc: 29% of maximum applied
                 tmpDamage += tmpDamage*0.29 > saveAuraMod ? saveAuraMod : tmpDamage*0.29;
-            else													//Judgement of Command: 43% of maximum applied
-                tmpDamage += tmpDamage*0.43 > saveAuraMod ? saveAuraMod : tmpDamage*0.43;
         }
     }
 
