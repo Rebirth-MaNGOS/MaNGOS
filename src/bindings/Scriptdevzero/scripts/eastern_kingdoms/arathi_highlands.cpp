@@ -323,6 +323,7 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 	{
 		if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
 			pPlayer->FailQuest(QUEST_DEATH_FROM_BELOW);
+		QuestEndReset();			// stop waves
 	}
 
 	void SummonedCreatureJustDied(Creature* pSummoned)
