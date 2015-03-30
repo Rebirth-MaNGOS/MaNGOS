@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Darkshore
 SD%Complete: 100
-SDComment: Quest support: 731, 945, 2078, 5321, 5713
+SDComment: Quest support: 963, 731, 945, 2078, 5321, 5713
 SDCategory: Darkshore
 EndScriptData */
 
@@ -758,23 +758,8 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 		m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
 		SetCombatMovement(false);
 
-		m_creature->SetSheath(SHEATH_STATE_RANGED);			// everything has to be here or she resets all timers when ooc between waves
+		m_creature->SetSheath(SHEATH_STATE_RANGED);
 		
-		/*m_uiSpeechTimer		= 0;
-		m_uiEventTimer      = 0;
-        m_uiKilledCreatures = 0;
-		m_uiPhase           = 0;
-		m_uiCurrentWave     = 0;
-        m_startTimer		= 0;
-		m_uiCanShootTimer	= 0;
-		m_uiShootTimer		= 0;
-		m_despawnTimer		= 0;
-		m_uiPlayerGUID.Clear();
-		m_bCanShoot			= true;
-		m_bOutro			= false;
-		m_uiSpeechStep		= 1;*/
-
-		QuestEndReset();
         Reset();
     }
 
@@ -868,12 +853,8 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 	void JustDied(Unit* /*pKiller*/)			// fail quest if aynasha dies
 	{
 		if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
-        {
 			pPlayer->FailQuest(QUEST_ONE_SHOT_ONE_KILL);
-			m_uiEventTimer = 0;						// don't spawn more waves
-			m_uiCanShootTimer = 0;					// don't do text if she is dead
-			m_bCanShoot = false;
-        }
+		QuestEndReset();			// stop waves
 	}
 
     void JustSummoned(Creature* pSummoned)
@@ -900,12 +881,13 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 			m_despawnTimer = 0;			// despawn timer shouldn't be needed anymore
 			m_bOutro = true;
 			m_uiSpeechTimer = 2000;
-			m_uiSpeechStep		= 1;			// need this here so the outro can be repeated more than once.
+			m_uiSpeechStep		= 1;		// need this here so the outro can be repeated more than once.
         }
 	}
 
 	ObjectGuid DoStartEvent(ObjectGuid player_guid)
 	{
+		QuestEndReset();			// this first, reset timers so the quest can be done again
 		if (m_uiPlayerGUID)
             return ObjectGuid();
 
@@ -935,7 +917,7 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 				if(m_startTimer <= uiDiff)
 				{
 					DoScriptText(SAY_START, m_creature);
-					m_uiCanShootTimer = urand(45000, 60000);
+					m_uiCanShootTimer = 65000;
 					m_uiShootTimer = 1000;
 					m_startTimer = 0;
 				}
@@ -1031,13 +1013,10 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 					case 3:
 						DoScriptText(SAY_END_3, m_creature);
 						m_bOutro = false;
-						QuestEndReset();
-						m_creature->SetRespawnDelay(10);				// to reset, but won't work properly
-						m_creature->SetRespawnTime(0);
-						m_creature->ForcedDespawn(25000);
-                    default:
+						break;
+                    /*default:
                         m_uiSpeechStep = 0;
-                        return;
+                        return;*/
                 }
                 ++m_uiSpeechStep;
             }
