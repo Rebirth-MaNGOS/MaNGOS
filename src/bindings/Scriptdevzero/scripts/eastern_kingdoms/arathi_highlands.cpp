@@ -252,7 +252,6 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 {
     npc_shakes_obreenAI(Creature* pCreature) : npc_escortAI(pCreature) 
 	{ 
-		QuestEndReset();
 		Reset(); 
 	}
 
@@ -266,7 +265,9 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 
 	bool m_bNagaSay;
 
-    void Reset() { }
+    void Reset() 
+	{ 
+	}
 
 	void QuestEndReset()				// make sure another player can do the quest after it's done
 	{
@@ -321,10 +322,7 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 	void JustDied(Unit* /*pKiller*/)			// fail quest if Shakes dies
 	{
 		if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
-        {
 			pPlayer->FailQuest(QUEST_DEATH_FROM_BELOW);
-			m_uiEventTimer = 0;						// don't spawn more waves
-        }
 	}
 
 	void SummonedCreatureJustDied(Creature* pSummoned)
@@ -339,17 +337,16 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
         {
 			if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))			// give quest credit when all waves are dead
 				pPlayer->AreaExploredOrEventHappens(QUEST_DEATH_FROM_BELOW);
-
-			QuestEndReset();			// reset so next player can do quest again
-        }
+		}
 	}
 
 	ObjectGuid DoStartEvent(ObjectGuid player_guid)
 	{
+		QuestEndReset();			// reset so next player can do quest again
 		if (m_uiPlayerGUID)
             return ObjectGuid();
 
-		m_uiEventTimer  = 15000;
+		m_uiEventTimer  =  15000;
 
 		m_uiPlayerGUID = player_guid;
         
@@ -359,7 +356,15 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 	void UpdateAI(const uint32 uiDiff)
 	{
 		npc_escortAI::UpdateAI(uiDiff);
+		//return since we have no target
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+			return;
 
+		DoMeleeAttackIfReady();
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
 		if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
         {
 			if (m_uiEventTimer)					// summon waves
@@ -393,11 +398,6 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 				}
 			}
 		}
-		//return since we have no target
-		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-			return;
-
-		DoMeleeAttackIfReady();
 	}
 };
 
