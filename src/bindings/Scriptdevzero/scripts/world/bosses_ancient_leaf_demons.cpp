@@ -613,7 +613,8 @@ enum eArtoriustheDoombringer
 {
 	SPELL_DEMONIC_DOOM = 23298,
 	SPELL_STINGING_TRAUMA = 23299,
-	SPELL_SERPENTSTING = 25295,
+	SPELL_SERPENTSTING_R8 = 13555,
+	SPELL_SERPENTSTING_R9 = 25295,
 };
 
 // Artorius the Doombringer script
@@ -651,7 +652,7 @@ struct MANGOS_DLL_DECL boss_artorius_the_doombringerAI : public bosses_ancient_l
 
 	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)							// serpentsting should stack an invisible debuff that makes serpentsting do lots of damage
     {
-        if (pSpell->Id == SPELL_SERPENTSTING)
+        if (pSpell->Id == SPELL_SERPENTSTING_R9 || pSpell->Id == SPELL_SERPENTSTING_R8)
         {
 			 DoCastSpellIfCan(m_creature, SPELL_STINGING_TRAUMA, CAST_TRIGGERED);
 		}
