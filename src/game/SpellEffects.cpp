@@ -1155,12 +1155,16 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
         case 23448:                                 // Transporter Arrival - Ultrasafe Transporter: Gadgetzan - backfires
         {
             int32 r = irand(0, 119);
-            if (r < 20)                             // Transporter Malfunction - 1/6 polymorph
+            if (r <= 20)                             // Transporter Malfunction - 1/6 polymorph
                 m_caster->CastSpell(m_caster, 23444, true);
-            else if (r < 100)                       // Evil Twin               - 4/6 evil twin
+            else if (r > 20 && r < 100)                       // Evil Twin               - 4/6 evil twin
                 m_caster->CastSpell(m_caster, 23445, true);
             else                                    // Transporter Malfunction - 1/6 miss the target
-                m_caster->CastSpell(m_caster, 36902, true);
+			{
+				m_caster->NearTeleportTo(-7109.10,-3805.21,1010.15,2.833,false);			// teleport the player up in the sky
+				m_caster->CastSpell(m_caster, 23447, true);
+				//m_caster->CastSpell(m_caster, 36902, true);			// old spell, not working
+			}
 
             return;
         }
