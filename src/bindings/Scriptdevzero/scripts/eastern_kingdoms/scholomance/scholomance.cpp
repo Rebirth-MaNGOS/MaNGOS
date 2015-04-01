@@ -34,6 +34,7 @@ EndContentData */
 
 #include "precompiled.h"
 #include "scholomance.h"
+#include "TemporarySummon.h"
 
 /*######
 ## go_iron_gate
@@ -407,71 +408,128 @@ CreatureAI* GetAI_mob_dark_shade(Creature* pCreature)
 }
 
 /*######
+## mob_spectral_projection
+######*/
+
+enum eSpectralProjection
+{
+	//SPELL_IMAGE_PROJECTION_HEAL = 17652,				// the heal? not working
+	SPELL_DARK_MENDING			= 16588,				// a heal, heals 2k each
+	NPC_SPECTRAL_TUTOR			= 10498,
+};
+
+struct MANGOS_DLL_DECL mob_spectral_projectionAI : public ScriptedAI
+{
+    mob_spectral_projectionAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiTutorCheck;
+	ObjectGuid m_uiTutorGUID;
+
+    void Reset()
+    {
+        m_uiTutorCheck = 7000;
+		if (m_creature->IsTemporarySummon())
+            m_uiTutorGUID = ((TemporarySummon*)m_creature)->GetSummonerGuid();
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		// Heal tutor/ despawn
+        if (m_uiTutorCheck <= uiDiff)
+        {
+			Creature* pTutor = m_creature->GetMap()->GetCreature(m_uiTutorGUID);
+			if (pTutor && pTutor->IsWithinDistInMap(m_creature, 100.0f))
+			{
+				m_creature->CastSpell(pTutor, SPELL_DARK_MENDING, true);
+				m_creature->ForcedDespawn();
+			}
+			else 
+				m_creature->ForcedDespawn();
+        }
+        else
+            m_uiTutorCheck -= uiDiff;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_spectral_projection(Creature* pCreature)
+{
+    return new mob_spectral_projectionAI(pCreature);
+}
+
+/*######
 ## mob_spectral_tutor
 ######*/
 
 enum eSpectralTutor
 {
-    SPELL_IMAGE_PROJECTION = 17651,				// turn invisible + invulnerable
-	//SPELL_IMAGE_PROJECTION_HEAL = 17652,				// the heal?
+    SPELL_IMAGE_PROJECTION = 17651,				// turn invisible + invulnerable	
     SPELL_MANA_BURN        = 17630,
-    SPELL_SILENCE          = 12528
+    SPELL_SILENCE          = 12528,
+
+	NPC_SPECTRAL_PROJECTION	= 11263,
 };
 
 struct MANGOS_DLL_DECL mob_spectral_tutorAI : public ScriptedAI
 {
-    mob_spectral_tutorAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    mob_spectral_tutorAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}			// commented out the invisible hack since the spell works
 
     uint32 m_uiImageProjection_Timer;
     uint32 m_uiManaBurn_Timer;
     uint32 m_uiSilence_Timer;
-    bool IsProjected;
+    //bool IsProjected;
 
     void Reset()
     {
         m_uiImageProjection_Timer = 0;
         m_uiManaBurn_Timer = urand(4200, 19100);
         m_uiSilence_Timer = urand(0, 3300);
-
         //IsProjected = false;
-        SetTutorProjection(false);
+        //SetTutorProjection(false);
     }
 
-    void SetTutorProjection(bool activate)
-    {
-        if (activate)
-        {
-            // become invisible
-            m_creature->AttackStop();
-            m_creature->StopMoving();
-            m_creature->setFaction(35);
-            m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_1 + UNIT_FLAG_NOT_SELECTABLE);
-            m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
-            m_creature->SetVisibility(VISIBILITY_OFF);
-            
-            IsProjected = true;
-        }
-        else
-        {
-            // become visible
-            m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_1 + UNIT_FLAG_NOT_SELECTABLE);
-            m_creature->clearUnitState(UNIT_STAT_CAN_NOT_MOVE);
-            m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);
-            m_creature->SetVisibility(VISIBILITY_ON);
-            
-            IsProjected = false;
-        }
-    }
-    
+    //void SetTutorProjection(bool activate)
+    //{
+    //    if (activate)
+    //    {
+    //        // become invisible
+    //        m_creature->AttackStop();
+    //        m_creature->StopMoving();
+    //        m_creature->setFaction(35);
+    //        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_1 + UNIT_FLAG_NOT_SELECTABLE);
+    //        m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
+    //        m_creature->SetVisibility(VISIBILITY_OFF);            
+
+    //        IsProjected = true;
+    //    }
+    //    else
+    //    {
+    //        // become visible
+    //        m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_1 + UNIT_FLAG_NOT_SELECTABLE);
+    //        m_creature->clearUnitState(UNIT_STAT_CAN_NOT_MOVE);
+    //        m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);
+    //        m_creature->SetVisibility(VISIBILITY_ON);
+		
+    //        IsProjected = false;
+    //    }
+    //}
+	
     void Aggro(Unit* /*pWho*/)
     {
-        m_uiImageProjection_Timer = urand(11800, 12700);
+		m_uiImageProjection_Timer = urand(40000,60000);
     }
 
     void JustDied(Unit* /*pKiller*/)
     {
-        if (IsProjected)
-            SetTutorProjection(false);
+        /*if (IsProjected)
+            SetTutorProjection(false);*/
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -481,8 +539,8 @@ struct MANGOS_DLL_DECL mob_spectral_tutorAI : public ScriptedAI
         {
             if (m_uiImageProjection_Timer <= uiDiff)
             {
-                //DoCastSpellIfCan(m_creature, SPELL_IMAGE_PROJECTION);     // leaving combat core issue
-                if (IsProjected)
+                DoCastSpellIfCan(m_creature, SPELL_IMAGE_PROJECTION);     // leaving combat core issue, seems to work fine.
+                /*if (IsProjected)
                 {
                     SetTutorProjection(false);
                     m_uiImageProjection_Timer = urand(17700, 25300);
@@ -491,7 +549,13 @@ struct MANGOS_DLL_DECL mob_spectral_tutorAI : public ScriptedAI
                 {
                     SetTutorProjection(true);
                     m_uiImageProjection_Timer = 5000;
-                }
+                }*/
+				float fX, fY, fZ;
+				m_creature->GetPosition(fX, fY, fZ);
+				for(uint8 i = 0; i < 5; ++i)
+					if (Creature* pProjection = m_creature->SummonCreature(NPC_SPECTRAL_PROJECTION, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 5000))
+						pProjection->SetRespawnDelay(-10);				// to stop them from randomly respawning
+				m_uiImageProjection_Timer = urand(45000,60000);
             }
             else
                 m_uiImageProjection_Timer -= uiDiff;
@@ -981,6 +1045,11 @@ void AddSC_scholomance()
     pNewscript = new Script;
     pNewscript->Name = "mob_dark_shade";
     pNewscript->GetAI = &GetAI_mob_dark_shade;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_spectral_projection";
+    pNewscript->GetAI = &GetAI_mob_spectral_projection;
     pNewscript->RegisterSelf();
 
     pNewscript = new Script;
