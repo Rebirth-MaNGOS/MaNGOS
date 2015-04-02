@@ -61,14 +61,12 @@ void instance_blackrock_depths::Initialize()
     m_goSecretSafe = 0;
 }
 
-void instance_blackrock_depths::OnPlayerEnter(Player* pPlayer)
+void instance_blackrock_depths::OnPlayerEnter(Player* /*pPlayer*/)
 {
-    SetLavaState(pPlayer, true);
 }
 
-void instance_blackrock_depths::OnPlayerLeave(Player* pPlayer)
+void instance_blackrock_depths::OnPlayerLeave(Player* /*pPlayer*/)
 {
-    SetLavaState(pPlayer, false);
 }
 
 void instance_blackrock_depths::OnCreatureCreate(Creature* pCreature)
@@ -650,8 +648,6 @@ void instance_blackrock_depths::Update(uint32 uiDiff)
 
     if (GetData(TYPE_GIANT_DOOR) == DONE)
         HandleGameObject(GO_SHADOW_GIANT_DOOR, false);
-
-    DoLavaDamage(uiDiff);
 }
 
 InstanceData* GetInstanceData_instance_blackrock_depths(Map* pMap)
