@@ -499,7 +499,7 @@ struct MANGOS_DLL_DECL boss_solenor_the_slayerAI : public bosses_ancient_leaf_de
 
 	void JustSummoned(Creature* pSummoned)
     {
-		if (pSummoned->GetEntry() == NPC_CREEPING_DOOM)
+		/*if (pSummoned->GetEntry() == NPC_CREEPING_DOOM)			// moved to DB
 		{
 		pSummoned->SetFactionTemporary(90);
         pSummoned->SetMaxHealth(urand(190,200));
@@ -507,11 +507,11 @@ struct MANGOS_DLL_DECL boss_solenor_the_slayerAI : public bosses_ancient_leaf_de
 		const CreatureInfo* cinfo = pSummoned->GetCreatureInfo();
         pSummoned->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE,250);
         pSummoned->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE,350);
-		pSummoned->UpdateDamagePhysical(BASE_ATTACK);
+		pSummoned->UpdateDamagePhysical(BASE_ATTACK);*/
 
         if (Unit* pTarget = m_creature->getVictim())
             pSummoned->AI()->AttackStart(pTarget);
-		}
+		//}
 	}
 
 	void JustDied(Unit* /*pKiller*/)			// despawn creeping doom if boss dies
