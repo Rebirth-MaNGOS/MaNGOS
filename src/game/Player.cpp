@@ -1930,7 +1930,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
                 }
 
                 GetSession()->SendPacket( &data );
-                //SendSavedInstances();
+                SendSavedInstances();
             }
         }
         else
@@ -15448,11 +15448,7 @@ void Player::SendSavedInstances()
 
     //Send opcode 811. true or false means, whether you have current raid instances
     data.Initialize(SMSG_UPDATE_INSTANCE_OWNERSHIP);
-
-    if(hasBeenSaved)
-        data << uint32(0x01);
-    else
-        data << uint32(0x00);
+    data << uint32(hasBeenSaved);
 
     GetSession()->SendPacket(&data);
 
