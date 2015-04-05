@@ -212,7 +212,6 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
                 m_landEmoteTimer -= uiDiff;
         }
 
-        Map::PlayerList const& players = m_creature->GetMap()->GetPlayers();
         for (auto pRef : m_creature->getThreatManager().getThreatList())
         {
            float x, y, z;
@@ -294,39 +293,39 @@ struct MANGOS_DLL_DECL boss_nefarianAI : public ScriptedAI
             {
             case CLASS_MAGE:
                 DoScriptText(SAY_MAGE, m_creature);
-                DoCastSpellIfCan(m_creature, SPELL_MAGE);	// Works
+                m_creature->CastSpell(m_creature, SPELL_MAGE, true);	// Works
                 break;
             case CLASS_WARRIOR:
                 DoScriptText(SAY_WARRIOR, m_creature);
-                DoCastSpellIfCan(m_creature, SPELL_WARRIOR); // Works
+                m_creature->CastSpell(m_creature, SPELL_WARRIOR, true); // Works
                 break;
             case CLASS_DRUID:
                 DoScriptText(SAY_DRUID, m_creature);
-                DoCastSpellIfCan(m_creature, SPELL_DRUID);  // Works
+                m_creature->CastSpell(m_creature, SPELL_DRUID, true);  // Works
                 break;
             case CLASS_PRIEST:
                 DoScriptText(SAY_PRIEST, m_creature);
-                DoCastSpellIfCan(m_creature, SPELL_PRIEST); // Works
+                m_creature->CastSpell(m_creature, SPELL_PRIEST, true); // Works
                 break;
             case CLASS_PALADIN:
                 DoScriptText(SAY_PALADIN, m_creature);
-                DoCastSpellIfCan(m_creature, SPELL_PALADIN); // Works
+                m_creature->CastSpell(m_creature, SPELL_PALADIN, true); // Works
                 break;
             case CLASS_SHAMAN:
                 DoScriptText(SAY_SHAMAN, m_creature);
-                DoCastSpellIfCan(m_creature, SPELL_SHAMAN); // Works
+                m_creature->CastSpell(m_creature, SPELL_SHAMAN, true); // Works
                 break;
             case CLASS_WARLOCK:
                 DoScriptText(SAY_WARLOCK, m_creature);
-                DoCastSpellIfCan(m_creature, SPELL_WARLOCK); // Works
+                m_creature->CastSpell(m_creature, SPELL_WARLOCK, true); // Works
                 break;
             case CLASS_HUNTER:
                 DoScriptText(SAY_HUNTER, m_creature);
-                DoCastSpellIfCan(m_creature, SPELL_HUNTER); // Works
+                m_creature->CastSpell(m_creature, SPELL_HUNTER, true); // Works
                 break;
             case CLASS_ROGUE:
                 DoScriptText(SAY_ROGUE, m_creature);
-                DoCastSpellIfCan(m_creature, SPELL_ROGUE); // Works
+                m_creature->CastSpell(m_creature, SPELL_ROGUE, true); // Works
                 break;
             }
 
