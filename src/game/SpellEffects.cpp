@@ -5472,6 +5472,9 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     unitTarget->GetAttackPoint(m_caster, x, y, z);
     distance = unitTarget->GetDistance(m_caster);
 
+    float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(x, y, MAX_HEIGHT);
+    float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(x, y, z);
+
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
 
@@ -5499,8 +5502,21 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
             {
                 if(!unitTarget->IsInWater())
                 {
+
+                    if(ground_z > z || floor_z > z)
+                    {
+                        if(fabs(z - floor_z) < fabs(ground_z - z))
+                        {
+                            z = floor_z;
+                        }
+                        else
+                        {
+                            z = ground_z;
+                        }
+                    }
+
                     float chargeTimer = m_caster->GetDistance(unitTarget);
-                    m_caster->MonsterMoveByPath(x, y, z, chargeTimer, true, false);
+                    m_caster->MonsterMoveByPath(x, y, z+2.0f, chargeTimer, true, false);
                     ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID());
                     ((Player*)m_caster)->SetCharging(true);
                 }
@@ -5521,6 +5537,19 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     {
             if(m_caster->GetTypeId() == TYPEID_PLAYER)
             {
+                               
+                if(ground_z > z || floor_z > z)                      
+                {                        
+                    if(fabs(z - floor_z) < fabs(ground_z - z))                                               
+                    {                         
+                        z = floor_z;                        
+                    }                       
+                    else                      
+                    {                     
+                        z = ground_z;                     
+                    }  
+                }
+
                 m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
             }
             else
