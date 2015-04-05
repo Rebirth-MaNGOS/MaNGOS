@@ -1213,16 +1213,19 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 float ground_z = GetMap()->GetTerrain()->GetHeight(x, y, MAX_HEIGHT);
                 float floor_z = GetMap()->GetTerrain()->GetHeight(x, y, z);
 
-                if(fabs(z - floor_z) < fabs(ground_z - z))
+                if(ground_z > z || floor_z > z)
                 {
-                    z = floor_z;
-                }
-                else
-                {
-                    z = ground_z;
+                    if(fabs(z - floor_z) < fabs(ground_z - z))
+                    {
+                        z = floor_z;
+                    }
+                    else
+                    {
+                        z = ground_z;
+                    }
                 }
                
-                MonsterMoveByPath(x, y, z+0.2f, chargeTimer, true, false);
+                MonsterMoveByPath(x, y, z+2.0f, chargeTimer, true, false);
                 m_chargeTimer = chargeTimer;
                 m_isCharging = false;              
             }
@@ -1927,7 +1930,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
                 }
 
                 GetSession()->SendPacket( &data );
-                SendSavedInstances();
+                //SendSavedInstances();
             }
         }
         else
@@ -15445,7 +15448,12 @@ void Player::SendSavedInstances()
 
     //Send opcode 811. true or false means, whether you have current raid instances
     data.Initialize(SMSG_UPDATE_INSTANCE_OWNERSHIP);
-    data << uint32(hasBeenSaved);
+
+    if(hasBeenSaved)
+        data << uint32(0x01);
+    else
+        data << uint32(0x00);
+
     GetSession()->SendPacket(&data);
 
     if(!hasBeenSaved)
