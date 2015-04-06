@@ -886,6 +886,7 @@ struct MANGOS_DLL_DECL npc_sea_wolf_mackinleyAI : public npc_escortAI
 					case 1:
 						DoScriptText(SEA_WOLF_SAY_1, m_creature, pPlayer);
                         m_uiSpeechTimer = 1000;
+						break;
 					case 2:
 						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
 						m_bOutro = false;
@@ -930,6 +931,140 @@ bool QuestRewarded_go_bubbling_cauldron(Player* pPlayer, GameObject* pGo, const 
 		Creature* pKinweelay = GetClosestCreatureWithEntry(pGo, NPC_KINWEELAY, 10.0f);
 		if (npc_kinweelayAI* pEscortAI = dynamic_cast<npc_kinweelayAI*>(pKinweelay->AI()))
 			pEscortAI->StartOutro(pPlayer->GetObjectGuid(), 584);
+	}
+	return true;
+}
+
+/*####
+# npc_nimboya
+####*/
+
+enum
+{
+	NIMBOYA_SAY_1					= -1720078,
+
+	GO_HEADHUNTER_SKULL				= 2371,
+	QUEST_ID_HEADHUNTING			= 582,
+};
+
+struct MANGOS_DLL_DECL npc_nimboyaAI : public npc_escortAI
+{
+    npc_nimboyaAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+	ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+		m_uiPlayerGUID.Clear();
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+
+	void JustStartedEscort()
+    {
+    }
+
+	void StartOutro(ObjectGuid pPlayerGUID)
+	{
+		if (!pPlayerGUID)
+            return;
+
+        m_uiPlayerGUID = pPlayerGUID;
+
+		m_bOutro = true; 
+		m_uiSpeechTimer = 1000;
+		m_uiSpeechStep = 1;
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);			
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		npc_escortAI::UpdateAI(uiDiff);
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+				Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+                switch(m_uiSpeechStep)
+                {
+					case 1:
+						m_creature->SetFacingTo(0.67f);
+						m_creature->GenericTextEmote("Nimboya searches through the skulls...", NULL, false);	
+						m_uiSpeechTimer = 3000;
+						break;
+					case 2:			// lots of skulls!
+						m_creature->SummonGameObject(GO_HEADHUNTER_SKULL, 30000,-12347.53f,170.84f,3.01f,urand(0,2.f));
+						m_creature->SummonGameObject(GO_HEADHUNTER_SKULL, 30000,-12347.39f,169.71f,3.01f,urand(0,2.f));
+						m_creature->SummonGameObject(GO_HEADHUNTER_SKULL, 30000,-12346.39f,170.15f,3.02f,urand(0,2.f));
+						m_creature->SummonGameObject(GO_HEADHUNTER_SKULL, 30000,-12345.75f,170.05f,3.02f,urand(0,2.f));
+						m_creature->SummonGameObject(GO_HEADHUNTER_SKULL, 30000,-12345.77f,171.09f,3.02f,urand(0,2.f));
+                        m_uiSpeechTimer = 7000;
+						break;
+					case 3:			// even more!
+						m_creature->GenericTextEmote("Nimboya continues searching, placing more skulls in his crate.", NULL, false);
+						m_creature->SummonGameObject(GO_HEADHUNTER_SKULL, 30000,-12347.53f+urand(0.5f,1.f),170.84f+urand(0.5f,1.f),3.01f,urand(0,2.f));
+						m_creature->SummonGameObject(GO_HEADHUNTER_SKULL, 30000,-12347.39f+urand(0.5f,1.f),169.71f+urand(0.5f,1.f),3.01f,urand(0,2.f));
+						m_creature->SummonGameObject(GO_HEADHUNTER_SKULL, 30000,-12346.39f+urand(0.5f,1.f),170.15f+urand(0.5f,1.f),3.02f,urand(0,2.f));
+						m_creature->SummonGameObject(GO_HEADHUNTER_SKULL, 30000,-12345.75f+urand(0.5f,1.f),170.05f+urand(0.5f,1.f),3.02f,urand(0,2.f));
+						m_creature->SummonGameObject(GO_HEADHUNTER_SKULL, 30000,-12345.77f+urand(0.5f,1.f),171.09f+urand(0.5f,1.f),3.02f,urand(0,2.f));
+						m_uiSpeechTimer = 8000;
+						break;
+					case 4:
+						m_creature->GetMotionMaster()->MoveTargetedHome();
+						m_uiSpeechTimer = 1000;
+						break;
+					case 5:
+						DoScriptText(NIMBOYA_SAY_1, m_creature, pPlayer);
+                        m_uiSpeechTimer = 2000;
+						break;
+					case 6:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_nimboya(Creature* pCreature)
+{
+    return new npc_nimboyaAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_nimboya(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_HEADHUNTING)
+    {
+		if (npc_nimboyaAI* pEscortAI = dynamic_cast<npc_nimboyaAI*>(pCreature->AI()))
+			pEscortAI->StartOutro(pPlayer->GetObjectGuid());
 	}
 	return true;
 }
@@ -984,5 +1119,11 @@ void AddSC_stranglethorn_vale()
 	pNewscript = new Script;
     pNewscript->Name = "go_bubbling_cauldron";
     pNewscript->pQuestRewardedGO = &QuestRewarded_go_bubbling_cauldron;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_nimboya";
+    pNewscript->GetAI = &GetAI_npc_nimboya;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_nimboya;
     pNewscript->RegisterSelf();
 }
