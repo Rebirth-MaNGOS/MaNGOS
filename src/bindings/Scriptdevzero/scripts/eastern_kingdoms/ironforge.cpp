@@ -179,6 +179,111 @@ bool GossipSelect_npc_royal_historian_archesonus(Player* pPlayer, Creature* pCre
     return true;
 }
 
+/*######
+## npc_haggle
+######*/
+
+enum
+{
+	HAGGLE_SAY_1 = -1720079,
+	HAGGLE_SAY_2 = -1720080,
+	HAGGLE_SAY_3 = -1720081,
+	HAGGLE_SAY_4 = -1720082,
+	HAGGLE_SAY_5 = -1720083,
+	HAGGLE_SAY_6 = -1720084,
+	HAGGLE_SAY_7 = -1720085,
+
+	SPELL_BUFF_SLEEP      = 17743,
+};
+
+struct MANGOS_DLL_DECL npc_haggleAI : public ScriptedAI
+{
+    npc_haggleAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+
+	uint32 m_uiRandomWakeUpTimer;
+
+    void Reset()
+    {		
+		m_uiRandomWakeUpTimer = 0;
+    }
+	
+	void MovementInform(uint32 /*uiMotiontype*/, uint32 uiPointId)
+	{
+		switch(uiPointId)
+        {
+			case 3:
+			case 17:
+			case 19:
+			case 23:
+			case 35:
+			case 40:
+				int rand = urand(1,5);
+				if(rand == 1)
+					DoScriptText(HAGGLE_SAY_7, m_creature);
+				break;
+		}
+		if(uiPointId)
+		{
+			int randomAction = urand(1,100);					// sometimes do random say
+			if (randomAction < 5)
+				RandomSay();
+
+			if (randomAction > 35 && randomAction < 39)			// sometimes fall asleep
+			if (!m_creature->HasAura(SPELL_BUFF_SLEEP,EFFECT_INDEX_0))
+				m_creature->CastSpell(m_creature,SPELL_BUFF_SLEEP,true);
+            m_uiRandomWakeUpTimer = urand(30000,75000);
+		}
+	}
+
+	void RandomSay()
+	{
+		int r = urand(1,6);
+		switch(r)
+		{
+			case 1:
+				DoScriptText(HAGGLE_SAY_1, m_creature);
+				break;
+			case 2:
+				DoScriptText(HAGGLE_SAY_2, m_creature);
+				break;
+			case 3:
+				DoScriptText(HAGGLE_SAY_3, m_creature);
+				break;
+			case 4:
+				DoScriptText(HAGGLE_SAY_4, m_creature);
+				break;
+			case 5:
+				DoScriptText(HAGGLE_SAY_5, m_creature);
+				break;
+			case 6:
+				DoScriptText(HAGGLE_SAY_6, m_creature);
+				break;
+		}
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+		// Random wake up
+        if (m_uiRandomWakeUpTimer < uiDiff)
+		{            
+			if (m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() != WAYPOINT_MOTION_TYPE)
+				m_creature->GetMotionMaster()->MoveWaypoint();
+			m_creature->RemoveAllAuras();
+		}
+        else
+            m_uiRandomWakeUpTimer -= uiDiff;	
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_haggle(Creature* pCreature)
+{
+    return new npc_haggleAI(pCreature);
+}
+
 void AddSC_ironforge()
 {
     Script* pNewscript;
@@ -193,4 +298,9 @@ void AddSC_ironforge()
     pNewscript->pGossipHello =  &GossipHello_npc_royal_historian_archesonus;
     pNewscript->pGossipSelect = &GossipSelect_npc_royal_historian_archesonus;
     pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+	pNewscript->Name = "npc_haggle";
+	pNewscript->GetAI = &GetAI_npc_haggle;
+	pNewscript->RegisterSelf();
 }
