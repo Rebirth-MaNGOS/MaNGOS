@@ -1613,6 +1613,12 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 m_modifier.periodictime = 30*IN_MILLISECONDS;
                 m_periodicTimer = m_modifier.periodictime;
                 return;
+			case 16468:                              // Mother's Milk
+                // expected to tick with 30 sec period (tick part see in Aura::PeriodicTick)
+                m_isPeriodic = true;
+                m_modifier.periodictime = 30*IN_MILLISECONDS;
+                m_periodicTimer = m_modifier.periodictime;
+                return;
             case 12292:								// Warriors' sweeping strikes should not be removed on stance change.
             {
                 SpellAuraHolder* holder = GetTarget()->GetSpellAuraHolder(GetId());
@@ -5992,6 +5998,13 @@ void Aura::PeriodicDummyTick()
         case 7057:                                  // Haunting Spirits
             if (roll_chance_i(33))
                 target->CastSpell(target,m_modifier.m_amount,true,NULL,this);
+            return;
+		case 16468:                                  // Mother's Milk
+            if (roll_chance_i(33))
+			{
+				target->CastSpell(target, 16469, true, NULL, this); // Web Explosion on the player
+				target->CastSpell(target, 15474, true, NULL, this); // Web Explosion on nearby players				
+			}
             return;
         }
         break;
