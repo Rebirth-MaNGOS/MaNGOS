@@ -560,7 +560,6 @@ enum
 {
 	NPC_RIZZLE_BRASSBOLTS			= 4720,
 	ZAMEK_SAY						= -1720068,
-	//SPELL_BARREL					= 10772,
 	GO_WEEGLIS_BARREL				= 141612,
 	GO_UNGUARDED_PLANS				= 20805,
 	QUEST_ID_ZAMEKS_DISTRACTION		= 1191,
@@ -576,9 +575,6 @@ struct MANGOS_DLL_DECL npc_zamekAI : public npc_escortAI
 
     void Reset()
 	{
-		//if (HasEscortState(STATE_ESCORT_ESCORTING))
-  //          return;
-
 		m_bOutro = false;
 		m_uiSpeechStep = 1;
 		m_uiSpeechTimer = 0;
@@ -645,6 +641,7 @@ struct MANGOS_DLL_DECL npc_zamekAI : public npc_escortAI
 						if (GoBarrel->GetGoState() != GO_STATE_ACTIVE_ALTERNATIVE)
                             GoBarrel->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);					
 						m_uiSpeechTimer = 1000;
+						break;
 					case 4:
 						m_creature->SummonGameObject(GO_UNGUARDED_PLANS,30000,-6237.90f,-3831.93f,-58.13f,0);
 						m_uiSpeechTimer = 3000;
