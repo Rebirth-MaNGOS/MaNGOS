@@ -552,6 +552,140 @@ bool OnQuestRewarded_npc_kravel_koalbeard(Player* pPlayer, Creature* pCreature, 
 	return true;
 }
 
+/*####
+# npc_zamek
+####*/
+
+enum
+{
+	NPC_RIZZLE_BRASSBOLTS			= 4720,
+	ZAMEK_SAY						= -1720068,
+	//SPELL_BARREL					= 10772,
+	GO_WEEGLIS_BARREL				= 141612,
+	GO_UNGUARDED_PLANS				= 20805,
+	QUEST_ID_ZAMEKS_DISTRACTION		= 1191,
+};
+
+struct MANGOS_DLL_DECL npc_zamekAI : public npc_escortAI
+{
+    npc_zamekAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+    void Reset()
+	{
+		//if (HasEscortState(STATE_ESCORT_ESCORTING))
+  //          return;
+
+		m_bOutro = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+        if(uiPointId == 5)
+			DoScriptText(ZAMEK_SAY, m_creature);
+	}
+
+	void Rizzle()
+	{
+		Creature* pRizzle = GetClosestCreatureWithEntry(m_creature, NPC_RIZZLE_BRASSBOLTS, 50.0f);
+
+		pRizzle->GetMotionMaster()->MovePoint(1,-6249.65f,-3857.35f,58.749f);
+		pRizzle->ForcedDespawn(30000);
+		pRizzle->SetRespawnDelay(2);
+	}
+
+	void JustStartedEscort()
+    {
+    }
+
+	void StartOutro()
+	{
+		m_bOutro = true; 
+		m_uiSpeechTimer = 21000;
+		m_uiSpeechStep = 1;
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		npc_escortAI::UpdateAI(uiDiff);
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+				GameObject* GoBarrel = GetClosestGameObjectWithEntry(m_creature, GO_WEEGLIS_BARREL, 40.0f);
+                switch(m_uiSpeechStep)
+                {					
+					case 1:					
+						m_creature->SummonGameObject(GO_WEEGLIS_BARREL,10000,-6266.25f,-3846.25f,-58.75f,0);
+                        m_uiSpeechTimer = 5000;
+						break;
+					case 2:
+						Rizzle();
+						m_uiSpeechTimer = 1000;
+						break;
+					case 3:
+						if (GoBarrel->GetGoState() != GO_STATE_ACTIVE_ALTERNATIVE)
+                            GoBarrel->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);					
+						m_uiSpeechTimer = 1000;
+					case 4:
+						m_creature->SummonGameObject(GO_UNGUARDED_PLANS,30000,-6237.90f,-3831.93f,-58.13f,0);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 5:
+						m_uiSpeechTimer = 3000;
+						break;
+					case 6:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_zamek(Creature* pCreature)
+{
+    return new npc_zamekAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_zamek(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_ZAMEKS_DISTRACTION)
+    {
+		if (npc_zamekAI* pEscortAI = dynamic_cast<npc_zamekAI*>(pCreature->AI()))
+		{
+			pEscortAI->Start(true, pPlayer,pQuest,true,false);
+			pEscortAI->StartOutro();
+		}
+	}
+	return true;
+}
+
 void AddSC_thousand_needles()
 {
     Script* pNewscript;
@@ -600,5 +734,11 @@ void AddSC_thousand_needles()
     pNewscript->Name = "npc_kravel_koalbeard";
     pNewscript->GetAI = &GetAI_npc_kravel_koalbeard;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_kravel_koalbeard;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_zamek";
+    pNewscript->GetAI = &GetAI_npc_zamek;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_zamek;
     pNewscript->RegisterSelf();
 }
