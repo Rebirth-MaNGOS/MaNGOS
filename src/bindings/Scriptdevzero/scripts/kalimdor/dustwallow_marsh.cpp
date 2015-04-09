@@ -805,7 +805,8 @@ struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
 						m_uiSpeechTimer = 3000;
 						break;
 					case 3:
-						DoScriptText(SAY_PROGRESS_1_TER, pTervosh);
+						if (pTervosh)
+							DoScriptText(SAY_PROGRESS_1_TER, pTervosh);
 						m_uiSpeechTimer = 5000;
 						break;
 					case 4:
@@ -818,28 +819,34 @@ struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
 						m_uiSpeechTimer = 5000;
 						break;
 					case 6:						// hendel disapears
-						pPlayer->GroupEventHappens(QUEST_MISSING_DIPLO_PT16, m_creature);
+						if (pPlayer)
+							pPlayer->GroupEventHappens(QUEST_MISSING_DIPLO_PT16, m_creature);
 						m_creature->SetVisibility(VISIBILITY_OFF);
 						m_creature->HandleEmoteState(EMOTE_STATE_NONE);
-
-						pTervosh->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
-						pJaina->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						if (pTervosh)
+							pTervosh->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						if (pJaina)
+							pJaina->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
 						m_uiSpeechTimer = 4000;
 						break;
 					case 7:
-						DoScriptText(SAY_PROGRESS_3_TER, pTervosh);
+						if (pTervosh)
+							DoScriptText(SAY_PROGRESS_3_TER, pTervosh);
 						m_uiSpeechTimer = 8000;
 						break;
 					case 8:
-						DoScriptText(SAY_PROGRESS_4_TER, pTervosh);
+						if (pTervosh)
+							DoScriptText(SAY_PROGRESS_4_TER, pTervosh);
 						m_uiSpeechTimer = urand(60000, 90000);			// long time until they despawn
 						break;
-					case 9:																// despawn event
-						DoScriptText(SAY_BYE, pTervosh);
+					case 9:	// despawn event
+						if (pTervosh)
+							DoScriptText(SAY_BYE, pTervosh);
 						m_uiSpeechTimer = 3000;
 						break;
 					case 10:
-						pJaina->HandleEmote(EMOTE_ONESHOT_WAVE);
+						if (pJaina)
+							pJaina->HandleEmote(EMOTE_ONESHOT_WAVE);
 						m_uiSpeechTimer = 5000;
 						break;
 					case 11:
@@ -855,15 +862,21 @@ struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
 						m_uiSpeechTimer = 2000;
 						break;
 					case 12:
-						pTervosh->SetVisibility(VISIBILITY_OFF);
-						pTervosh->ForcedDespawn(1000);
-
-						pJaina->SetVisibility(VISIBILITY_OFF);
-						pJaina->ForcedDespawn(1000);
-
-						pPained->SetVisibility(VISIBILITY_OFF);
-						pPained->ForcedDespawn(1000);
-
+						if (pTervosh)
+						{
+							pTervosh->SetVisibility(VISIBILITY_OFF);
+							pTervosh->ForcedDespawn(1000);
+						}
+						if (pJaina)
+						{
+							pJaina->SetVisibility(VISIBILITY_OFF);
+							pJaina->ForcedDespawn(1000);
+						}
+						if (pPained)
+						{
+							pPained->SetVisibility(VISIBILITY_OFF);
+							pPained->ForcedDespawn(1000);
+						}
 						m_creature->ForcedDespawn(5000);
 
 						m_bOutro = false;
@@ -1288,7 +1301,7 @@ bool OnQuestRewarded_npc_krog(Player* pPlayer, Creature* pCreature, Quest const*
     {
 		if (npc_krogAI* pEscortAI = dynamic_cast<npc_krogAI*>(pCreature->AI()))
 		{
-			pEscortAI->Start(false, pPlayer, pQuest);
+			//pEscortAI->Start(false, pPlayer, pQuest);
 			pEscortAI->StartOutro();
 		}
 	}
