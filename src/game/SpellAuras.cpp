@@ -4163,6 +4163,18 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     m_modifier.m_amount *= 1.17;
         }
     }
+    else
+    {
+        // Handle Doomguard Summoning for the Curse of Doom.
+        if (GetId() == 603)
+        {
+            if (target)
+            {
+                if (urand(0, 99) < 5 && (int32) target->GetHealth() <= m_modifier.m_amount)
+                    target->CastSpell(target, 18662, true);
+            }
+        }
+    }
 
     // Temp fix for Hakkar's Blood Siphon - disable control for player
     if (GetId() == 24323 && caster->GetTypeId() == TYPEID_PLAYER)
