@@ -578,7 +578,8 @@ void Channel::Say(ObjectGuid p, const char *what, uint32 lang)
        
 
         // Add a packet with a faction tag so GMs can differentiate players by faction in the chat.
-        Team team = plr->GetTeam(); 
+        // For GMs we use the faction they've manually set.
+        Team team = plr->isGameMaster() ? plr->m_ChatTeam : plr->GetTeam(); 
 
         std::stringstream ss("");
         ss << "[" << (team == ALLIANCE ? "|cFF0000FFA|r" : "|cFFFF0000H|r") << "]: " << what;
