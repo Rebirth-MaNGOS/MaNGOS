@@ -1231,7 +1231,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 }
                 else
                 {
-                    MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                    MonsterMove(x, y, z, chargeTimer*GetSpeed(MOVE_RUN)*7);
                 }
                 m_chargeTimer = chargeTimer;
                 m_isCharging = false;              
