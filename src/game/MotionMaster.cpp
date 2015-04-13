@@ -495,7 +495,7 @@ void MotionMaster::ResumeChaseMovement()
 	if (m_movementSuspended)
 	{
 		if (m_owner->getVictim())
-			MoveChase(m_owner->getVictim());
+			MoveChase(m_owner->getVictim(), m_owner->GetFloatValue(UNIT_FIELD_COMBATREACH));
 
 		m_movementSuspended = false;
 	}
