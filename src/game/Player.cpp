@@ -1225,7 +1225,14 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                     }
                 }
                
-                MonsterMoveByPath(x, y, z+2.0f, chargeTimer, true, false);
+                if(!m_movementInfo.HasMovementFlag(MOVEFLAG_FALLING))
+                {
+                    MonsterMoveByPath(x, y, z+0.5f, chargeTimer, true, false);
+                }
+                else
+                {
+                    MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                }
                 m_chargeTimer = chargeTimer;
                 m_isCharging = false;              
             }

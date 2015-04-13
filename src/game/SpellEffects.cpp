@@ -5479,85 +5479,88 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
         ((Creature *)unitTarget)->StopMoving();
 
     uint32 mapId = unitTarget->GetMapId();
-    if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
+
+    if(m_caster->GetTypeId() == TYPEID_PLAYER)
     {
-        float targetX, targetY, targetZ;
-        unitTarget->GetPosition(targetX,targetY,targetZ);
-        MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
-        dtPolyRef polyRef;
-
-        if (!mmap->GetNearestValidPosition(unitTarget,3,3,5,targetX,targetY,targetZ,&polyRef))
-            return;
-
-        if (!mmap->DrawRay(unitTarget,polyRef,targetX,targetY,targetZ,x,y,z))
+        if(!((Player*)m_caster)->m_movementInfo.HasMovementFlag(MOVEFLAG_FALLING))
         {
-            x = targetX;    
-            y = targetY;
-            z = targetZ;
-            m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
-        }
-        else
-        {
-            if(m_caster->GetTypeId() == TYPEID_PLAYER)
-            {
-                if(!unitTarget->IsInWater())
+            if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
                 {
+                    float targetX, targetY, targetZ;
+                    unitTarget->GetPosition(targetX,targetY,targetZ);
+                    MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
+                    dtPolyRef polyRef;
 
-                    if(ground_z > z || floor_z > z)
+                    if (!mmap->GetNearestValidPosition(unitTarget,3,3,5,targetX,targetY,targetZ,&polyRef))
+                        return;
+
+                    if (!mmap->DrawRay(unitTarget,polyRef,targetX,targetY,targetZ,x,y,z))
                     {
-                        if(fabs(z - floor_z) < fabs(ground_z - z))
-                        {
-                            z = floor_z;
-                        }
-                        else
-                        {
-                            z = ground_z;
-                        }
+                        x = targetX;    
+                        y = targetY;
+                        z = targetZ;
+                        m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                    }
+                    else
+                    {
+                            if(!unitTarget->IsInWater())
+                            {
+
+                                if(ground_z > z || floor_z > z)
+                                {
+                                    if(fabs(z - floor_z) < fabs(ground_z - z))
+                                    {
+                                        z = floor_z;
+                                    }
+                                    else
+                                    {
+                                        z = ground_z;
+                                    }
+                                }
+
+                                float chargeTimer = m_caster->GetDistance(unitTarget);
+                                m_caster->MonsterMoveByPath(x, y, z+0.5f, chargeTimer, true, false);
+                                ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID());
+                                ((Player*)m_caster)->SetCharging(true);
+                            }
+                            else
+                            {
+                                m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                            }
+                     
                     }
 
-                    float chargeTimer = m_caster->GetDistance(unitTarget);
-                    m_caster->MonsterMoveByPath(x, y, z+2.0f, chargeTimer, true, false);
-                    ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID());
-                    ((Player*)m_caster)->SetCharging(true);
                 }
                 else
                 {
-                    m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                               
+                            if(ground_z > z || floor_z > z)                      
+                            {                        
+                                if(fabs(z - floor_z) < fabs(ground_z - z))                                               
+                                {                         
+                                    z = floor_z;                        
+                                }                       
+                                else                      
+                                {                     
+                                    z = ground_z;                     
+                                }  
+                            }
+
+                            m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                        
                 }
-
-            }
-            else
-            {
-                m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
-            }
         }
-
+        else
+        {
+            m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+            ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID());
+            ((Player*)m_caster)->SetCharging(true);
+        }
     }
     else
     {
-            if(m_caster->GetTypeId() == TYPEID_PLAYER)
-            {
-                               
-                if(ground_z > z || floor_z > z)                      
-                {                        
-                    if(fabs(z - floor_z) < fabs(ground_z - z))                                               
-                    {                         
-                        z = floor_z;                        
-                    }                       
-                    else                      
-                    {                     
-                        z = ground_z;                     
-                    }  
-                }
-
-                m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
-            }
-            else
-            {
-                m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
-            }
+        m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
     }
-
 
     //>MonsterMoveByPath(x, y, z, 25, false, true);
 
