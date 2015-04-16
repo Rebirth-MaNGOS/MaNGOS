@@ -6003,7 +6003,7 @@ SpellCastResult Spell::CheckRange(bool strict)
     }
 
     if((m_spellInfo->Id == 11578 || m_spellInfo->Id == 100 || m_spellInfo->Id == 6178 || m_spellInfo->Id == 20252 || 
-        m_spellInfo->Id == 20616 || m_spellInfo->Id == 20617 || m_spellInfo->Id == 16979 || m_spellInfo->Id == 22641 ) && !target->IsInWater())
+        m_spellInfo->Id == 20616 || m_spellInfo->Id == 20617 || m_spellInfo->Id == 16979 || m_spellInfo->Id == 22641 ) && target && !target->IsInWater())
     {
         PathInfo path(m_caster, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
         PointPath pointPath = path.getFullPath();
