@@ -2044,6 +2044,12 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
     case 30918:   //Improved Sprint
         //Don't need to apply any actual aura here, just remove snare and root effects from the target!
         unitTarget->RemoveAurasAtMechanicImmunity(IMMUNE_TO_ROOT_AND_SNARE_MASK,30918,true);
+
+		// Some spells have to be manually removed
+		if(unitTarget->HasAura(23331))			// explicitly remove Blastwave at Lashlayer(BWL)
+			unitTarget->RemoveAurasDueToSpell(23331);
+		if(unitTarget->HasAura(20229))			// explicitly remove Blastwave at Majordomo(MC)
+			unitTarget->RemoveAurasDueToSpell(20229);
         return;
     }
 
