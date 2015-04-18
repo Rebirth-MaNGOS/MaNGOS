@@ -1078,35 +1078,39 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             Creature* creatureTarget = (Creature*)unitTarget;
             if (creatureTarget->IsPet())
                 return;
-
-            GameObject* pGameObj = new GameObject;
-
-            Map *map = creatureTarget->GetMap();
-
-            // create before death for get proper coordinates
-            if (!pGameObj->Create(map->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), 179644, map,
-                                  creatureTarget->GetPositionX(), creatureTarget->GetPositionY(), creatureTarget->GetPositionZ(),
-                                  creatureTarget->GetOrientation(), 0.0f, 0.0f, 0.0f, 0.0f, GO_ANIMPROGRESS_DEFAULT, GO_STATE_READY) )
-            {
-                delete pGameObj;
-                return;
-            }
-
-            pGameObj->SetRespawnTime(creatureTarget->GetRespawnTime()-time(NULL));
-            pGameObj->SetOwnerGuid(m_caster->GetObjectGuid() );
-            pGameObj->SetUInt32Value(GAMEOBJECT_LEVEL, m_caster->getLevel() );
-            pGameObj->SetSpellId(m_spellInfo->Id);
-
+			
+            creatureTarget->CastSpell(creatureTarget, 23022, true);		// added from stock mangos, cast spell Prison Crystal Conjure DND
             creatureTarget->ForcedDespawn();
-
-            DEBUG_LOG("AddObject at SpellEfects.cpp EffectDummy");
-            map->Add(pGameObj);
-
-            WorldPacket data(SMSG_GAMEOBJECT_SPAWN_ANIM_OBSOLETE, 8);
-            data << ObjectGuid(pGameObj->GetObjectGuid());
-            m_caster->SendMessageToSet(&data, true);
-
             return;
+
+            //GameObject* pGameObj = new GameObject;					// wasn't able to loot the crystal with this code.
+
+            //Map *map = creatureTarget->GetMap();
+
+            //// create before death for get proper coordinates
+            //if (!pGameObj->Create(map->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), 179644, map,
+            //                      creatureTarget->GetPositionX(), creatureTarget->GetPositionY(), creatureTarget->GetPositionZ(),
+            //                      creatureTarget->GetOrientation(), 0.0f, 0.0f, 0.0f, 0.0f, GO_ANIMPROGRESS_DEFAULT, GO_STATE_READY) )
+            //{
+            //    delete pGameObj;
+            //    return;
+            //}
+
+            //pGameObj->SetRespawnTime(creatureTarget->GetRespawnTime()-time(NULL));
+            //pGameObj->SetOwnerGuid(m_caster->GetObjectGuid() );
+            //pGameObj->SetUInt32Value(GAMEOBJECT_LEVEL, m_caster->getLevel() );
+            //pGameObj->SetSpellId(m_spellInfo->Id);
+
+            //creatureTarget->ForcedDespawn();
+
+            //DEBUG_LOG("AddObject at SpellEfects.cpp EffectDummy");
+            //map->Add(pGameObj);
+
+            //WorldPacket data(SMSG_GAMEOBJECT_SPAWN_ANIM_OBSOLETE, 8);
+            //data << ObjectGuid(pGameObj->GetObjectGuid());
+            //m_caster->SendMessageToSet(&data, true);
+
+            //return;
         }
         case 23074:                                 // Arcanite Dragonling
         {
