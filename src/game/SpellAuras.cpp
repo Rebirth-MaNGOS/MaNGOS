@@ -1619,6 +1619,12 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 m_modifier.periodictime = 30*IN_MILLISECONDS;
                 m_periodicTimer = m_modifier.periodictime;
                 return;
+			case 24596:								// Intoxicating Venom
+				// expected to tick with 15 sec period (tick part see in Aura::PeriodicTick)
+                m_isPeriodic = true;
+                m_modifier.periodictime = 15*IN_MILLISECONDS;
+                m_periodicTimer = m_modifier.periodictime;
+				return;
             case 12292:								// Warriors' sweeping strikes should not be removed on stance change.
             {
                 SpellAuraHolder* holder = GetTarget()->GetSpellAuraHolder(GetId());
@@ -6018,6 +6024,14 @@ void Aura::PeriodicDummyTick()
 				target->CastSpell(target, 15474, true, NULL, this); // Web Explosion on nearby players				
 			}
             return;
+		case 24596:                                  // Intoxicating Venom
+			int32 r = irand(0, 99);
+
+            if (r <= 30)
+				target->CastSpell(target, 6869, true, NULL, this); //Cast Fall Down on the player
+			else if (r >= 70 && r <= 90)
+				target->CastSpell(target, 22691, true, NULL, this); // Disarm the player		
+			return;
         }
         break;
     }
