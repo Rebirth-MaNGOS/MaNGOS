@@ -732,7 +732,7 @@ enum eSimonetheSeductress
 // Simone the Seductress script
 struct MANGOS_DLL_DECL boss_simone_the_seductressAI : public bosses_ancient_leaf_demonsAI
 {
-    boss_simone_the_seductressAI(Creature* pCreature) : bosses_ancient_leaf_demonsAI(pCreature) {Reset(); }			// Should he not enrage while stunned in trap?
+    boss_simone_the_seductressAI(Creature* pCreature) : bosses_ancient_leaf_demonsAI(pCreature) {Reset(); }
 
 	uint32 m_uiChainLightningTimer;
 	uint32 m_uiSeductressKissTimer;
@@ -754,9 +754,11 @@ struct MANGOS_DLL_DECL boss_simone_the_seductressAI : public bosses_ancient_leaf
 
 	void JustDied(Unit* pKiller)
     {
-        if (pKiller->GetObjectGuid() != m_uiChallengerGUID)
-            SummonTheCleaner();
-        m_creature->SetLootRecipient(NULL);
+        if (pKiller->GetObjectGuid() != m_uiChallengerGUID)			// if someone else but the hunter kills the demon, summon cleaner and don't let anyone loot head
+        {    
+			SummonTheCleaner();
+			m_creature->SetLootRecipient(NULL);
+		}
     }
 
     bool DoSpecialDemonAbility()
