@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Silithus
 SD%Complete: 100
-SDComment: Abbysal Council support, Quest support: 1126, 7785, 8304, 8534, 8538, 8539.
+SDComment: Abbysal Council support, Quest support: 1126, 7785, 8304, 8315, 8534, 8538, 8539.
 SDCategory: Silithus
 EndScriptData */
 
@@ -1008,6 +1008,124 @@ CreatureAI* GetAI_npc_cenarion_hold_infantry(Creature* pCreature)
     return new npc_cenarion_hold_infantryAI(pCreature);
 }
 
+/*######
+## npc_the_calling_event
+######*/
+
+enum TheCallingEvent
+{
+	NPC_ALUNTIR							= 15288,
+	NPC_ARAKIS							= 15290,
+	NPC_XIL_XIX 						= 15286,
+
+	NPC_ROMAN_KHAN						= 14862,
+
+	WAVE_ONE							= 1,
+	WAVE_BOSS							= 2,
+};
+
+struct Loc
+{
+    float x, y, z;
+};
+
+static Loc aMobSpawnLoc[]= 
+{
+	{-7283.15f,863.34f,3.18f},
+	{-7270.11f, 841.34f, 3.94f},
+	{-7286.15f, 843.34f, 2.24f},
+	{-7276.38f, 852.34f, 3.64f},
+};
+
+struct MANGOS_DLL_DECL npc_the_calling_eventAI : public ScriptedAI
+{
+    npc_the_calling_eventAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+		m_uiEventTimer = 1000;
+		m_uiPhase = 0;
+        Reset();
+    }
+
+    uint8 m_uiKilledCreatures;
+	uint8 m_uiPhase;
+
+	uint32 m_uiEventTimer;
+
+    void Reset()
+    {
+    }
+
+	void DoSummonWave(uint32 uiSummonId = 0)
+    {
+        if (uiSummonId == WAVE_ONE)
+        {
+            for (uint8 i = 0; i < 1; ++i)
+            {
+                m_creature->SummonCreature(NPC_ALUNTIR, aMobSpawnLoc[0].x, aMobSpawnLoc[0].y, aMobSpawnLoc[0].z, 5.48f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 600000);
+				m_creature->SummonCreature(NPC_ARAKIS, aMobSpawnLoc[1].x, aMobSpawnLoc[1].y, aMobSpawnLoc[1].z, 2.23f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 600000);
+				m_creature->SummonCreature(NPC_XIL_XIX, aMobSpawnLoc[2].x, aMobSpawnLoc[2].y, aMobSpawnLoc[2].z, 0.74f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 600000);
+            }
+        }
+        if (uiSummonId == WAVE_BOSS)
+        {
+            for (uint8 i = 0; i < 1; ++i)
+                m_creature->SummonCreature(NPC_ROMAN_KHAN, aMobSpawnLoc[3].x, aMobSpawnLoc[3].y, aMobSpawnLoc[3].z, 0.50f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1200000);
+        }
+    }
+
+    void JustSummoned(Creature* pSummoned)
+    {
+		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
+    }
+
+	void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        if (pSummoned->GetEntry() == NPC_ALUNTIR || pSummoned->GetEntry() == NPC_ARAKIS || pSummoned->GetEntry() == NPC_XIL_XIX)
+        {
+            ++m_uiKilledCreatures;
+		}
+
+		// If first wave is done
+        if (m_uiKilledCreatures >= 3)
+			m_uiEventTimer = 10000;
+
+		// if boss died, despawn dummy
+		if (pSummoned->GetEntry() == NPC_ROMAN_KHAN)
+			m_creature->ForcedDespawn();
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiEventTimer)
+		{
+			if (m_uiEventTimer <= uiDiff)
+			{
+				switch (m_uiPhase)
+				{
+					case 0:
+						DoSummonWave(WAVE_ONE);
+						m_uiEventTimer = 0;
+						break;
+					case 1:
+						DoSummonWave(WAVE_BOSS);
+						m_uiEventTimer = 0;
+						break;
+				}
+			++m_uiPhase;
+			}
+			else
+			{
+				m_uiEventTimer -= uiDiff;
+			}
+		}			
+	}
+};
+
+CreatureAI* GetAI_npc_the_calling_event(Creature* pCreature)
+{
+    return new npc_the_calling_eventAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -1053,5 +1171,10 @@ void AddSC_silithus()
     pNewscript->Name = "npcs_rutgar_and_frankal";
     pNewscript->pGossipHello = &GossipHello_npcs_rutgar_and_frankal;
     pNewscript->pGossipSelect = &GossipSelect_npcs_rutgar_and_frankal;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_the_calling_event";
+    pNewscript->GetAI = &GetAI_npc_the_calling_event;
     pNewscript->RegisterSelf();
 }
