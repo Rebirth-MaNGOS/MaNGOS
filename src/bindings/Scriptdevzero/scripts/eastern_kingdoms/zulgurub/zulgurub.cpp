@@ -76,7 +76,7 @@ struct MANGOS_DLL_DECL mob_razzashi_venombroodAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiVenomTimer = 5000;
+        m_uiVenomTimer = urand(5000,15000);
 		m_uiPoisonTimer = 0;
 		m_uiSummonCount = 0;
     }
@@ -109,7 +109,7 @@ struct MANGOS_DLL_DECL mob_razzashi_venombroodAI : public ScriptedAI
 		// Intoxicating venom timer
         if (m_uiVenomTimer <= uiDiff)
         {
-			DoCastSpellIfCan(m_creature->getVictim(), SPELL_INTOXICATING_VENOM);
+			DoCastSpellIfCan(m_creature->getVictim(), SPELL_INTOXICATING_VENOM, CAST_AURA_NOT_PRESENT);
 			m_uiVenomTimer = 60000;
 		}
 		else 
