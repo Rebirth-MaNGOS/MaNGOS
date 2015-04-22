@@ -2288,7 +2288,9 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
         // Lifegiving Gem
         if (m_spellInfo->Id == 23783)
         {
-            addhealth = unitTarget->GetHealth() * 0.15f;
+            // Divide by 1.15 to avoid taking the new max health from the health
+            // increase effect.
+            m_healing = unitTarget->GetMaxHealth() * 0.15f / 1.15f;
         }
 
         m_healing += addhealth;

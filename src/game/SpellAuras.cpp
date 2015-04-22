@@ -4735,7 +4735,7 @@ void Aura::HandleAuraModIncreaseHealth(bool apply, bool Real)
 	case 23782: // Lifegiving Gem
 	{
 		if (apply)
-			m_modifier.m_amount = float(target->GetHealth() * 0.15f);
+			m_modifier.m_amount = float(target->GetMaxHealth() * 0.15f);
 	}
     }
 
