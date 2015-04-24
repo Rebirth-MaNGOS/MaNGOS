@@ -5875,10 +5875,29 @@ void Spell::EffectTransmitted(SpellEffectIndex eff_idx)
     Map *cMap = m_caster->GetMap();
 
 
-    // if gameobject is summoning object, it should be spawned right on caster's position
+    // if gameobject is summoning object, it should be spawned a bit in front of the caster's position
     if (goinfo->type == GAMEOBJECT_TYPE_SUMMONING_RITUAL)
     {
+        float dX = cosf(m_caster->GetOrientation());
+        float dY = sinf(m_caster->GetOrientation());
+
         m_caster->GetPosition(fx, fy, fz);
+
+        fx += 2.f * dX;
+        fy += 2.f * dY;
+
+        float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, MAX_HEIGHT);
+        float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, fz);
+
+        if(fabs(fz - floor_z) < fabs(ground_z - fz))
+        {
+            fz = floor_z;
+        }
+        else
+        {
+            fz = ground_z;
+        }
+
     }
 
     GameObject* pGameObj = new GameObject;

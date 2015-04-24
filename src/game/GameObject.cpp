@@ -50,6 +50,7 @@ GameObject::GameObject() : WorldObject(),
     m_valuesCount = GAMEOBJECT_END;
     m_respawnTime = 0;
     m_respawnDelayTime = 25;
+    m_timedDeletionTimer = 0;
     m_lootState = GO_NOT_READY;
     m_spawnedByDefault = true;
     m_useTimes = 0;
@@ -171,7 +172,7 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, float x, float
     return true;
 }
 
-void GameObject::Update(uint32 /*update_diff*/, uint32 /*p_time*/)
+void GameObject::Update(uint32 update_diff, uint32 /*p_time*/)
 {
     if (GetObjectGuid().IsMOTransport())
     {
@@ -463,6 +464,19 @@ void GameObject::Update(uint32 /*update_diff*/, uint32 /*p_time*/)
             break;
         }
     }
+
+    if (m_timedDeletionTimer)
+    {
+        if (m_timedDeletionTimer <= update_diff)
+        {
+            m_timedDeletionCallback();
+            Delete();
+
+            m_timedDeletionTimer = 0;
+        }
+        else
+            m_timedDeletionTimer -= update_diff;
+    }
 }
 
 void GameObject::Refresh()
@@ -497,6 +511,12 @@ void GameObject::Delete()
         sPoolMgr.UpdatePool<GameObject>(*GetMap()->GetPersistentState(), poolid, GetGUIDLow());
     else
         AddObjectToRemoveList();
+}
+
+void GameObject::TimedDeletion(uint32 msTime, std::function<void()> callback)
+{
+    m_timedDeletionTimer = msTime;
+    m_timedDeletionCallback = callback;
 }
 
 void GameObject::getFishLoot(Loot *fishloot, Player* loot_owner)
@@ -1385,16 +1405,38 @@ void GameObject::Use(Unit* user)
             // it triggered spell in fact casted at currently channeled GO
             triggered = true;
 
-            // finish owners spell
-            if (owner)
-                owner->FinishSpell(CURRENT_CHANNELED_SPELL);
 
             // can be deleted now, if
             if (!info->summoningRitual.ritualPersistent)
-                SetLootState(GO_JUST_DEACTIVATED);
+            {
+                // Call a timed deletion on the portal with
+                // a callback in a lambda.
+                TimedDeletion(5000, [=]() -> void
+                {
+                    if (owner)
+                    {
+                        owner->FinishSpell(CURRENT_CHANNELED_SPELL);
+                        
+                        for (ObjectGuid playerGuid : m_UniqueUsers)
+                        {
+                            Player* pPlayer = owner->GetMap()->GetPlayer(playerGuid);
+
+                            if (pPlayer)
+                                pPlayer->FinishSpell(CURRENT_CHANNELED_SPELL);
+                        }
+                    }
+                    
+                });
+            }
             // reset ritual for this GO
             else
+            {
+                // finish owners spell
+                if (owner)
+                    owner->FinishSpell(CURRENT_CHANNELED_SPELL);
+
                 ClearAllUsesData();
+            }
 
             // go to end function to spell casting
             break;
