@@ -66,7 +66,7 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
     {
         m_uiTrampleTimer = 9000;
         m_uiManaDrainTimer = 3000;
-        m_uiSummonManaFiendsTimer = 9000;
+        m_uiSummonManaFiendsTimer = 90000;
         m_uiCheckoutManaTimer = 15000;
 		m_uiRemoveEnergizeTimer = 0;
         m_uiPhase = PHASE_ATTACKING;
