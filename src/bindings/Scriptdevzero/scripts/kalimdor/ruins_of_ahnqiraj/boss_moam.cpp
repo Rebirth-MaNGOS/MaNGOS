@@ -26,9 +26,9 @@ EndScriptData */
 
 enum eMoam
 {
-    EMOTE_AGGRO              = -1509000,
-    EMOTE_MANA_FULL          = -1509001,
-    EMOTE_ENERGIZING         = -1509028,
+    //EMOTE_AGGRO              = -1509000,
+    //EMOTE_MANA_FULL          = -1509001,
+    //EMOTE_ENERGIZING         = -1509028,
 
     SPELL_TRAMPLE            = 15550,
     SPELL_DRAIN_MANA         = 25671,
@@ -37,6 +37,8 @@ enum eMoam
     SPELL_SUMMON_MANAFIEND_2 = 25682,
     SPELL_SUMMON_MANAFIEND_3 = 25683,
     SPELL_ENERGIZE           = 25685,
+
+	SPELL_IVUS_TELEPORT_VISUAL	= 21649,		// visual for mana fiend spawn
 
     PHASE_ATTACKING          = 0,
     PHASE_ENERGIZING         = 1
@@ -58,13 +60,15 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
     uint32 m_uiManaDrainTimer;
     uint32 m_uiCheckoutManaTimer;
     uint32 m_uiSummonManaFiendsTimer;
+	uint32 m_uiRemoveEnergizeTimer;
 
     void Reset()
     {
         m_uiTrampleTimer = 9000;
         m_uiManaDrainTimer = 3000;
-        m_uiSummonManaFiendsTimer = 90000;
-        m_uiCheckoutManaTimer = 1500;
+        m_uiSummonManaFiendsTimer = 9000;
+        m_uiCheckoutManaTimer = 15000;
+		m_uiRemoveEnergizeTimer = 0;
         m_uiPhase = PHASE_ATTACKING;
         m_creature->SetPower(POWER_MANA, 0);
         m_creature->SetMaxPower(POWER_MANA, 0);
@@ -83,35 +87,57 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
             m_pInstance->SetData(TYPE_MOAM, DONE);
     }
 
+	void JustSummoned(Creature* pSummoned)
+    {
+		if (pSummoned->GetEntry() == NPC_MANA_FIEND)
+			pSummoned->CastSpell(pSummoned,SPELL_IVUS_TELEPORT_VISUAL,true);			
+	}
+
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+		if (m_uiCheckoutManaTimer <= uiDiff)
+        {
+			m_uiCheckoutManaTimer = 2000;
+			if (m_creature->GetPower(POWER_MANA) == m_creature->GetMaxPower(POWER_MANA))
+			{
+				if(m_creature->HasAura(SPELL_ENERGIZE))
+					m_creature->RemoveAurasDueToSpell(SPELL_ENERGIZE);
+
+				DoCastSpellIfCan(m_creature, SPELL_ARCANE_ERUPTION);
+				m_creature->GenericTextEmote("Moam bristles with energy!", NULL, false);
+				//DoScriptText(EMOTE_MANA_FULL, m_creature);
+				m_uiPhase = PHASE_ATTACKING;
+                return;
+			}
+		} 
+		else
+			m_uiCheckoutManaTimer -= uiDiff;
+
         switch(m_uiPhase)
         {
             case PHASE_ATTACKING:
-                if (m_uiCheckoutManaTimer <= uiDiff)
-                {
-                    m_uiCheckoutManaTimer = 1500;
-                    if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 75.0f)
-                    {
-                        DoCastSpellIfCan(m_creature, SPELL_ENERGIZE);
-						m_creature->GenericTextEmote("Moam drains your mana and turns to stone.", NULL, false);
-                        //DoScriptText(EMOTE_ENERGIZING, m_creature);
-                        m_uiPhase = PHASE_ENERGIZING;
-                        return;
-                    }
-                } 
-                else
-                    m_uiCheckoutManaTimer -= uiDiff;
 
-                if (m_uiSummonManaFiendsTimer <= uiDiff)
+                if (m_uiSummonManaFiendsTimer <= uiDiff)		// do the stone transform here
                 {
-                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_SUMMON_MANAFIEND_1, CAST_TRIGGERED);
+					float fX, fY, fZ;
+					m_creature->GetPosition(fX, fY, fZ);
+					for(uint8 i = 0; i < 3; ++i)
+						if (Creature* pFiend = m_creature->SummonCreature(NPC_MANA_FIEND, fX+irand(-5,5), fY+irand(-5,5), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
+							if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))							
+								pFiend->AI()->AttackStart(pTarget);
+
+                    /*DoCastSpellIfCan(m_creature->getVictim(), SPELL_SUMMON_MANAFIEND_1, CAST_TRIGGERED);
                     DoCastSpellIfCan(m_creature->getVictim(), SPELL_SUMMON_MANAFIEND_2, CAST_TRIGGERED);
-                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_SUMMON_MANAFIEND_3, CAST_TRIGGERED);
+                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_SUMMON_MANAFIEND_3, CAST_TRIGGERED);*/
+					DoCastSpellIfCan(m_creature, SPELL_ENERGIZE);
+					m_creature->GenericTextEmote("Moam drains your mana and turns to stone.", NULL, false);
                     m_uiSummonManaFiendsTimer = 90000;
+					m_uiRemoveEnergizeTimer = 90000;
+					m_uiPhase = PHASE_ENERGIZING;
+                    return;
                 }
                 else
                     m_uiSummonManaFiendsTimer -= uiDiff;
@@ -137,21 +163,18 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
                 DoMeleeAttackIfReady();
                 break;
             case PHASE_ENERGIZING:
-                if (m_uiCheckoutManaTimer <= uiDiff)
+                // after 90 sec he should go back to attacking if he still didn't reach 100% mana
+				if (m_uiRemoveEnergizeTimer <= uiDiff)
                 {
-                    m_uiCheckoutManaTimer = 1500;
-                    if (m_creature->GetPower(POWER_MANA) == m_creature->GetMaxPower(POWER_MANA))
-                    {
-                        m_creature->RemoveAurasDueToSpell(SPELL_ENERGIZE);
-                        DoCastSpellIfCan(m_creature, SPELL_ARCANE_ERUPTION);
-						m_creature->GenericTextEmote("Moam bristles with energy!", NULL, false);
-                        //DoScriptText(EMOTE_MANA_FULL, m_creature);
-                        m_uiPhase = PHASE_ATTACKING;
-                        return;
-                    }
+                    if(m_creature->HasAura(SPELL_ENERGIZE))
+						m_creature->RemoveAurasDueToSpell(SPELL_ENERGIZE);
+					m_uiSummonManaFiendsTimer = 90000;
+                    m_uiRemoveEnergizeTimer = 0;
+					m_uiPhase = PHASE_ATTACKING;
+                    return;
                 } 
                 else
-                    m_uiCheckoutManaTimer -= uiDiff;
+                    m_uiRemoveEnergizeTimer -= uiDiff;
                 break;
         }
     }
