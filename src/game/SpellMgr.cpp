@@ -708,6 +708,8 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
 		return false;
 	case 23444:	// Ultrasafe Transporter - Gadgetzan, malfunction(poly) is not a positive effect.
 		return false;
+	case 25040:	// Mark of Nature is not a positive effect
+		return false;
     }
             
     if ((spellproto->Attributes & SPELL_ATTR_HIDDEN) != 0)
