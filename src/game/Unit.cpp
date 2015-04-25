@@ -276,6 +276,8 @@ Unit::Unit()
     // remove aurastates allowing special moves
     for(int i=0; i < MAX_REACTIVE; ++i)
         m_reactiveTimer[i] = 0;
+
+    m_isAOEImmune = false;
 }
 
 Unit::~Unit()
@@ -6524,6 +6526,17 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
             if (itr->type == aura)
                 return true;
     }
+
+
+    if (IsAreaOfEffectSpell(spellInfo) && m_isAOEImmune)
+        return true;
+
+    for(uint8 i = 0; i < MAX_EFFECT_INDEX; ++i)
+    {
+        if (IsAreaAuraEffect(spellInfo->Effect[i]) && m_isAOEImmune)
+            return true;
+    }
+
     return false;
 }
 

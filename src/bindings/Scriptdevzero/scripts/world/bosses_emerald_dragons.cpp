@@ -374,6 +374,7 @@ struct MANGOS_DLL_DECL mob_spirit_shadeAI : public ScriptedAI
     mob_spirit_shadeAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
+        m_creature->SetAOEImmunity(true);
         Reset();
     }
 
@@ -386,30 +387,6 @@ struct MANGOS_DLL_DECL mob_spirit_shadeAI : public ScriptedAI
 
         if (m_creature->IsTemporarySummon())
             m_uiLethonGUID = ((TemporarySummon*)m_creature)->GetSummonerGuid();
-    }
-
-    bool IsAOESpell(const SpellEntry* pSpell)
-    {
-        if (!pSpell)
-            return false;
-
-        if (IsAreaOfEffectSpell(pSpell))
-            return true;
-
-        for(uint8 i = 0; i < MAX_EFFECT_INDEX; ++i)
-        {
-            if (IsAreaAuraEffect(pSpell->Effect[i]))
-                return true;
-        }
-
-        return false;
-    }
-   
-	void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)				// not currently working
-    {
-        if (Spell* pSpell = pDoneBy->GetCurrentSpell(CURRENT_GENERIC_SPELL))
-            if (IsAOESpell(pSpell->m_spellInfo))
-                uiDamage = 0;
     }
 
     void UpdateAI(const uint32 uiDiff)
