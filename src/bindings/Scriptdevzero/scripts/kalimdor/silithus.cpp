@@ -1427,6 +1427,111 @@ bool OnQuestRewarded_npc_geologist_larksbane(Player* pPlayer, Creature* pCreatur
 	return true;
 }
 
+/*####
+# boss_roman_khan
+####*/
+
+enum eRomanKhan
+{
+	SPELL_WILT				= 23772,
+	SPELL_SYSTEM_SHOCK		= 23774,
+	//SPELL_EXPLODE			= 0,		// find out what spell this should be!
+	SPELL_ARCANE_ERUPTION	= 25672,   // from moam for now
+};
+
+struct MANGOS_DLL_DECL boss_roman_khanAI : public ScriptedAI
+{
+    boss_roman_khanAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiWiltTimer;
+    uint32 m_uiSystemShockTimer;
+	uint32 m_uiCheckoutManaTimer;
+
+    void Reset()
+    {
+        m_uiWiltTimer = urand(6000,11000);			// 5-10 sec on retail video
+        m_uiSystemShockTimer = urand(9000,15000);
+		m_uiCheckoutManaTimer = 15000;
+		m_creature->SetPower(POWER_MANA, 0);
+        m_creature->SetMaxPower(POWER_MANA, 0);
+    }
+
+	void Aggro(Unit* /*pWho*/)
+    {
+        m_creature->SetMaxPower(POWER_MANA, m_creature->GetCreatureInfo()->maxmana);
+    }
+
+	void KilledUnit(Unit* victim)
+    {
+        
+        if (victim->GetTypeId() != TYPEID_PLAYER)
+            return;
+
+        // heal for 2% everytime a player dies
+		m_creature->SetHealth(m_creature->GetHealth()+m_creature->GetMaxHealth()*0.02);
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // 100% mana -> explode        
+		if (m_uiCheckoutManaTimer <= uiDiff)
+        {
+			m_uiCheckoutManaTimer = 2000;
+			
+			if (m_creature->GetPower(POWER_MANA) == m_creature->GetMaxPower(POWER_MANA))
+				DoCastSpellIfCan(m_creature, SPELL_ARCANE_ERUPTION);
+        } 
+		else
+			m_uiCheckoutManaTimer -= uiDiff;
+
+        // Wilt
+        if (m_uiWiltTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_WILT);
+            m_uiWiltTimer = urand(6000,11000);
+        }
+        else
+            m_uiWiltTimer -= uiDiff;
+
+        // System Shock
+        if (m_uiSystemShockTimer <= uiDiff)			// cast time depends on how much mana the boss has, about 3 sec?
+        {
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            
+			if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 25.0f)
+            {
+				DoCastSpellIfCan(pTarget, SPELL_SYSTEM_SHOCK);
+				m_uiSystemShockTimer = 6000;
+            }
+			else if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 50.0f)
+            {
+				DoCastSpellIfCan(pTarget, SPELL_SYSTEM_SHOCK);
+				m_uiSystemShockTimer = 4000;
+            }
+			else if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 75.0f)
+            {
+				DoCastSpellIfCan(pTarget, SPELL_SYSTEM_SHOCK);
+				m_uiSystemShockTimer = 2000;
+            }
+        }
+        else
+            m_uiSystemShockTimer -= uiDiff;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_boss_roman_khan(Creature* pCreature)
+{
+    return new boss_roman_khanAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -1483,5 +1588,10 @@ void AddSC_silithus()
     pNewscript->Name = "npc_geologist_larksbane";
     pNewscript->GetAI = &GetAI_npc_geologist_larksbane;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_geologist_larksbane;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "boss_roman_khan";
+    pNewscript->GetAI = &GetAI_boss_roman_khan;
     pNewscript->RegisterSelf();
 }
