@@ -311,9 +311,11 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
         fO = pPlayer->GetOrientation();
         if (Creature* pShade = m_creature->SummonCreature(NPC_SPIRIT_SHADE, fX, fY, fZ, fO, TEMPSUMMON_DEAD_DESPAWN, 0))
         {
+            pShade->SetVisibility(VISIBILITY_OFF);
             pShade->CastSpell(pShade, SPELL_SPIRIT_SHADE_VISUAL, true);					// looks weird in combat log
             pShade->SetDisplayId(pPlayer->GetDisplayId());
             pShade->GetMotionMaster()->MoveFollow(m_creature, 1.0f, float(M_PI/2));
+            pShade->SetVisibility(VISIBILITY_ON);
         }
     }
 
