@@ -1471,10 +1471,12 @@ void GameObject::Use(Unit* user)
                         if (!owner->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
                             shouldCast = false;
                         
-                                                
-                        for (ObjectGuid playerGuid : m_UniqueUsers)
+                        auto itr = m_UniqueUsers.begin();                        
+                        while (itr != m_UniqueUsers.end())
                         {
-                            Player* pPlayer = owner->GetMap()->GetPlayer(playerGuid);
+                            bool shouldIncrement = true;
+
+                            Player* pPlayer = owner->GetMap()->GetPlayer(*itr);
 
                             if (pPlayer)
                             {
@@ -1482,16 +1484,21 @@ void GameObject::Use(Unit* user)
                                 // interrupt the summon.
                                 if (!pPlayer->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
                                 {
-                                    auto itr = std::find(m_UniqueUsers.begin(), m_UniqueUsers.end(), pPlayer->GetObjectGuid());
-                                    if (itr != m_UniqueUsers.end())
+                                    auto found = std::find(m_UniqueUsers.begin(), m_UniqueUsers.end(), pPlayer->GetObjectGuid());
+                                    if (found != m_UniqueUsers.end())
                                     {
-                                        m_UniqueUsers.erase(itr);
+                                        itr = m_UniqueUsers.erase(found);
+                                        shouldIncrement = false;
+
                                         --m_useTimes;
                                     }
 
                                     shouldCast = false;
                                 }
                             }
+
+                            if (shouldIncrement)
+                                ++itr;
                         }
 
 
