@@ -223,13 +223,9 @@ struct MANGOS_DLL_DECL boss_emerissAI : public boss_emerald_dragonAI
     // Corruption of Earth at 75%, 50% and 25%
     bool DoSpecialDragonAbility()
     {
-        if (DoCastSpellIfCan(m_creature->getVictim(), SPELL_CORRUPTION_OF_EARTH) == CAST_OK)
-        {
-            DoScriptText(SAY_CAST_CORRUPTION, m_creature);
-
-            // Successfull cast
-            return true;
-        }
+        m_creature->CastSpell(m_creature->getVictim(), SPELL_CORRUPTION_OF_EARTH, true);
+        
+        DoScriptText(SAY_CAST_CORRUPTION, m_creature);
 
         return false;
     }
