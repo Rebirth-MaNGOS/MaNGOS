@@ -1437,6 +1437,7 @@ enum eRomanKhan
 	SPELL_SYSTEM_SHOCK		= 23774,
 	//SPELL_EXPLODE			= 0,		// find out what spell this should be!
 	SPELL_ARCANE_ERUPTION	= 25672,   // from moam for now
+	SPELL_DRAIN_MANA         = 25671, // also from moam, trigger by wilt so he gets mana
 };
 
 struct MANGOS_DLL_DECL boss_roman_khanAI : public ScriptedAI
@@ -1474,6 +1475,12 @@ struct MANGOS_DLL_DECL boss_roman_khanAI : public ScriptedAI
 		m_creature->SetHealth(m_creature->GetHealth()+m_creature->GetMaxHealth()*0.02);
 	}
 
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_WILT && pTarget->GetTypeId() == TYPEID_PLAYER)
+			m_creature->CastSpell(pTarget,SPELL_DRAIN_MANA, true);				//added mana drain to wilt, probably should be in core but oh well
+	}
+
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -1507,17 +1514,17 @@ struct MANGOS_DLL_DECL boss_roman_khanAI : public ScriptedAI
 			if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 25.0f)
             {
 				DoCastSpellIfCan(pTarget, SPELL_SYSTEM_SHOCK);
-				m_uiSystemShockTimer = 6000;
+				m_uiSystemShockTimer = urand(25000,30000);
             }
 			else if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 50.0f)
             {
 				DoCastSpellIfCan(pTarget, SPELL_SYSTEM_SHOCK);
-				m_uiSystemShockTimer = 4000;
+				m_uiSystemShockTimer = urand(20000,25000);
             }
 			else if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 75.0f)
             {
 				DoCastSpellIfCan(pTarget, SPELL_SYSTEM_SHOCK);
-				m_uiSystemShockTimer = 2000;
+				m_uiSystemShockTimer = urand(15000,20000);
             }
         }
         else

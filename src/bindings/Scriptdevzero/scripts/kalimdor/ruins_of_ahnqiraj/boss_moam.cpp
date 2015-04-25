@@ -72,7 +72,8 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
 
     void Aggro(Unit* /*pWho*/)
     {
-        DoScriptText(EMOTE_AGGRO, m_creature);
+		m_creature->GenericTextEmote("Moam senses your fear.", NULL, false);
+        //DoScriptText(EMOTE_AGGRO, m_creature);			// until DB emotes work this is commented out
         m_creature->SetMaxPower(POWER_MANA, m_creature->GetCreatureInfo()->maxmana);
     }
     
@@ -96,7 +97,8 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
                     if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 75.0f)
                     {
                         DoCastSpellIfCan(m_creature, SPELL_ENERGIZE);
-                        DoScriptText(EMOTE_ENERGIZING, m_creature);
+						m_creature->GenericTextEmote("Moam drains your mana and turns to stone.", NULL, false);
+                        //DoScriptText(EMOTE_ENERGIZING, m_creature);
                         m_uiPhase = PHASE_ENERGIZING;
                         return;
                     }
@@ -142,7 +144,8 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
                     {
                         m_creature->RemoveAurasDueToSpell(SPELL_ENERGIZE);
                         DoCastSpellIfCan(m_creature, SPELL_ARCANE_ERUPTION);
-                        DoScriptText(EMOTE_MANA_FULL, m_creature);
+						m_creature->GenericTextEmote("Moam bristles with energy!", NULL, false);
+                        //DoScriptText(EMOTE_MANA_FULL, m_creature);
                         m_uiPhase = PHASE_ATTACKING;
                         return;
                     }
