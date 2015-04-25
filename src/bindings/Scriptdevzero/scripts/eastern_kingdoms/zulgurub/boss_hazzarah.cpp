@@ -146,11 +146,46 @@ CreatureAI* GetAI_boss_hazzarah(Creature* pCreature)
     return new boss_hazzarahAI(pCreature);
 }
 
+/*######
+## mob_nightmare_illusion
+######*/
+
+struct MANGOS_DLL_DECL mob_nightmare_illusionAI : public ScriptedAI
+{
+    mob_nightmare_illusionAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+		m_creature->SetAOEImmunity(true);	
+        Reset();
+    }
+
+    void Reset()
+    {
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_mob_nightmare_illusion(Creature* pCreature)
+{
+    return new mob_nightmare_illusionAI(pCreature);
+}
+
 void AddSC_boss_hazzarah()
 {
     Script* pNewScript;
     pNewScript = new Script;
     pNewScript->Name = "boss_hazzarah";
     pNewScript->GetAI = &GetAI_boss_hazzarah;
+    pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "mob_nightmare_illusion";
+    pNewScript->GetAI = &GetAI_mob_nightmare_illusion;
     pNewScript->RegisterSelf();
 }
