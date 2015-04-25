@@ -61,6 +61,8 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
 		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
         Reset();
         lSummonList.clear();
+
+        m_creature->CastSpell(m_creature, SPELL_MARK_OF_NATURE_AURA, true);
     }
 
     uint32 m_uiEventCounter;
@@ -79,14 +81,13 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
         m_uiNoxiousBreathTimer = 8000;
         m_uiTailsweepTimer = 4000;
 
-        m_creature->RemoveAurasDueToSpell(SPELL_MARK_OF_NATURE_AURA);
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
+        
+        m_creature->CastSpell(m_creature, SPELL_MARK_OF_NATURE_AURA, true);
     }
 
     void EnterCombat(Unit* pEnemy)
     {
-        DoCastSpellIfCan(m_creature, SPELL_MARK_OF_NATURE_AURA, CAST_TRIGGERED);
-
         ScriptedAI::EnterCombat(pEnemy);
     }
 

@@ -5975,6 +5975,11 @@ void Aura::PeriodicTick()
     case SPELL_AURA_PERIODIC_TRIGGER_SPELL:
     {
         TriggerSpell();
+
+        // Aura of Nature for the Emerald Dragon.
+        if (GetId() == 25041)
+            target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
+
         break;
     }
     default:
