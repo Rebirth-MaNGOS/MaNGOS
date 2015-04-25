@@ -1573,6 +1573,7 @@ void GameObject::Use(Unit* user)
         }
         case GAMEOBJECT_TYPE_MEETINGSTONE:                  //23
         {
+            /*
             GameObjectInfo const* info = GetGOInfo();
 
             if (user->GetTypeId() != TYPEID_PLAYER)
@@ -1595,7 +1596,9 @@ void GameObject::Use(Unit* user)
             if (level < info->meetingstone.minLevel || level > info->meetingstone.maxLevel)
                 return;
 
-            spellId = 23598;
+            spellId = 23598;*/
+
+            return;
 
             break;
         }
