@@ -1499,7 +1499,7 @@ struct MANGOS_DLL_DECL boss_roman_khanAI : public ScriptedAI
 
         // Wilt
         if (m_uiWiltTimer <= uiDiff)
-        {
+        {			
             DoCastSpellIfCan(m_creature->getVictim(), SPELL_WILT);
             m_uiWiltTimer = urand(6000,11000);
         }
@@ -1510,21 +1510,26 @@ struct MANGOS_DLL_DECL boss_roman_khanAI : public ScriptedAI
         if (m_uiSystemShockTimer <= uiDiff)			// cast time depends on how much mana the boss has, about 3 sec?
         {
 			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-            
-			if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 25.0f)
+            float percent = m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA);
+			if (percent <= 25.0f)
             {
-				DoCastSpellIfCan(pTarget, SPELL_SYSTEM_SHOCK);
+				m_creature->CastSpell(pTarget, SPELL_SYSTEM_SHOCK, true);
 				m_uiSystemShockTimer = urand(25000,30000);
             }
-			else if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 50.0f)
+			else if (percent > 25.0f && percent <= 50.0f)
             {
-				DoCastSpellIfCan(pTarget, SPELL_SYSTEM_SHOCK);
+				m_creature->CastSpell(pTarget, SPELL_SYSTEM_SHOCK, true);
 				m_uiSystemShockTimer = urand(20000,25000);
             }
-			else if (m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA) > 75.0f)
+			else if (percent > 50.0f && percent <= 75.0f)
             {
-				DoCastSpellIfCan(pTarget, SPELL_SYSTEM_SHOCK);
+				m_creature->CastSpell(pTarget, SPELL_SYSTEM_SHOCK, true);
 				m_uiSystemShockTimer = urand(15000,20000);
+            }
+			else if (percent > 75.0f)
+            {
+				m_creature->CastSpell(pTarget, SPELL_SYSTEM_SHOCK, true);
+				m_uiSystemShockTimer = urand(10000,15000);
             }
         }
         else
