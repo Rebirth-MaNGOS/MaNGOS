@@ -355,7 +355,7 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
         return false;
     }
 	
-    bool UpdateDragonAI(const uint32 uiDiff)
+    bool UpdateDragonAI(const uint32 /*uiDiff*/)
     {
 		if (!m_creature->HasAura(SPELL_SHADOW_BOLT_WHIRL))
 			DoCastSpellIfCan(m_creature, SPELL_SHADOW_BOLT_WHIRL, CAST_TRIGGERED);		// reapply aura if boss somehow doesn't have it
@@ -554,8 +554,15 @@ struct MANGOS_DLL_DECL boss_taerarAI : public boss_emerald_dragonAI
         if (m_uiArcaneBlastTimer < uiDiff)
         {
             Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-            if (pTarget && DoCastSpellIfCan(pTarget, SPELL_ARCANE_BLAST) == CAST_OK)
-                m_uiArcaneBlastTimer = urand(7000, 12000);
+            if (pTarget) 
+            {
+                SpellAuraHolder* pHolder = pTarget->GetSpellAuraHolder(24778);
+                if (pHolder)
+                    pTarget->RemoveSpellAuraHolder(pHolder, AURA_REMOVE_BY_CANCEL);
+
+                if (DoCastSpellIfCan(pTarget, SPELL_ARCANE_BLAST) == CAST_OK)
+                    m_uiArcaneBlastTimer = urand(7000, 12000);
+            }
         }
         else
             m_uiArcaneBlastTimer -= uiDiff;
