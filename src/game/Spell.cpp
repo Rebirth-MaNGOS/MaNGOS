@@ -2882,6 +2882,10 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
 
     sMod.spellPrepare(this, m_caster);  // extra for prepare
 
+    // Make the Ritual of Summoning effect instantly cast.
+    if (m_spellInfo->Id == 7720)
+        m_timer = 0;
+
     // add non-triggered (with cast time and without)
     if (!m_IsTriggeredSpell || IsChanneledSpell(m_spellInfo))
     {

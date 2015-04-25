@@ -616,7 +616,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 		}
 		void Refresh();
         void Delete();
-        void TimedDeletion(uint32 msTime, std::function<void()> callback);
+        void TimedDeletion(uint32 msTime, std::function<bool()> callback);
 
         // Functions spawn/remove gameobject with DB guid in all loaded map copies (if point grid loaded in map)
         static void AddToRemoveListInMaps(uint32 db_guid, GameObjectData const* data);
@@ -694,7 +694,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         time_t      m_respawnTime;                          // (secs) time of next respawn (or despawn if GO have owner()),
         uint32      m_respawnDelayTime;                     // (secs) if 0 then current GO state no dependent from timer
         uint32      m_timedDeletionTimer;
-        std::function<void()> m_timedDeletionCallback;
+        std::function<bool()> m_timedDeletionCallback;
 
         LootState   m_lootState;
         bool        m_spawnedByDefault;

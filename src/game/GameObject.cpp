@@ -469,10 +469,12 @@ void GameObject::Update(uint32 update_diff, uint32 /*p_time*/)
     {
         if (m_timedDeletionTimer <= update_diff)
         {
-            m_timedDeletionCallback();
-            Delete();
-
+            // IMPORTANT: Set the timer to 0 before calling delete.
+            //            since the callback will be run twice otherwise.
             m_timedDeletionTimer = 0;
+            
+            if (m_timedDeletionCallback())
+                Delete();
         }
         else
             m_timedDeletionTimer -= update_diff;
@@ -507,13 +509,21 @@ void GameObject::Delete()
     SetGoState(GO_STATE_READY);
     SetUInt32Value(GAMEOBJECT_FLAGS, GetGOInfo()->flags);
 
+    // If we have a timed deletion scheduled that hasn't triggered
+    // we call the callback here.
+    if (m_timedDeletionTimer)
+    {
+        m_timedDeletionCallback();
+        m_timedDeletionTimer = 0;
+    }
+
     if (uint16 poolid = sPoolMgr.IsPartOfAPool<GameObject>(GetGUIDLow()))
         sPoolMgr.UpdatePool<GameObject>(*GetMap()->GetPersistentState(), poolid, GetGUIDLow());
     else
         AddObjectToRemoveList();
 }
 
-void GameObject::TimedDeletion(uint32 msTime, std::function<void()> callback)
+void GameObject::TimedDeletion(uint32 msTime, std::function<bool()> callback)
 {
     m_timedDeletionTimer = msTime;
     m_timedDeletionCallback = callback;
@@ -1392,7 +1402,33 @@ void GameObject::Use(Unit* user)
 
             // full amount unique participants including original summoner, need more
             if (GetUniqueUseCount() < info->summoningRitual.reqParticipants)
+            {
+                // If we don't have enough players we still want the callback to
+                // interrupt the ritual if the casting player interrupts the channeling.
+                if (!info->summoningRitual.ritualPersistent)
+                    TimedDeletion(600000, [=]()
+                    {
+                        if (owner)
+                        { 
+                           owner->FinishSpell(CURRENT_CHANNELED_SPELL); 
+                                                    
+                            for (ObjectGuid playerGuid : m_UniqueUsers)
+                            {
+                                Player* pPlayer = owner->GetMap()->GetPlayer(playerGuid);
+
+                                if (pPlayer)
+                                {
+                                    pPlayer->FinishSpell(CURRENT_CHANNELED_SPELL);
+                                }
+                            }
+
+                        }
+
+                        return true;
+                      });
+
                 return;
+            }
 
             // owner is first user for non-wild GO objects, if it offline value already set to current user
             if (!GetOwnerGuid())
@@ -1411,9 +1447,12 @@ void GameObject::Use(Unit* user)
             {
                 // Call a timed deletion on the portal with
                 // a callback in a lambda.
-                TimedDeletion(5000, [=]() -> void
+                TimedDeletion(5000, [=]()
                 {
-                    if (owner)
+                    bool shouldCast = true;
+
+                    // If we have a timed deletion timer we interrupted before the spell was completed.
+                    if (m_timedDeletionTimer)
                     {
                         owner->FinishSpell(CURRENT_CHANNELED_SPELL);
                         
@@ -1422,11 +1461,72 @@ void GameObject::Use(Unit* user)
                             Player* pPlayer = owner->GetMap()->GetPlayer(playerGuid);
 
                             if (pPlayer)
-                                pPlayer->FinishSpell(CURRENT_CHANNELED_SPELL);
+                                pPlayer->FinishSpell(CURRENT_CHANNELED_SPELL); 
                         }
+                        return true;
                     }
-                    
+
+                    if (owner)
+                    { 
+                        if (!owner->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
+                            shouldCast = false;
+                        
+                                                
+                        for (ObjectGuid playerGuid : m_UniqueUsers)
+                        {
+                            Player* pPlayer = owner->GetMap()->GetPlayer(playerGuid);
+
+                            if (pPlayer)
+                            {
+                                // If any of the channeling players has stopped channeling we
+                                // interrupt the summon.
+                                if (!pPlayer->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
+                                {
+                                    auto itr = std::find(m_UniqueUsers.begin(), m_UniqueUsers.end(), pPlayer->GetObjectGuid());
+                                    if (itr != m_UniqueUsers.end())
+                                    {
+                                        m_UniqueUsers.erase(itr);
+                                        --m_useTimes;
+                                    }
+
+                                    shouldCast = false;
+                                }
+                            }
+                        }
+
+
+                        if (shouldCast)
+                        {   
+                            owner->FinishSpell(CURRENT_CHANNELED_SPELL);
+                            
+                            for (ObjectGuid playerGuid : m_UniqueUsers)
+                            {
+                                Player* pPlayer = owner->GetMap()->GetPlayer(playerGuid);
+
+                                if (pPlayer)
+                                    pPlayer->FinishSpell(CURRENT_CHANNELED_SPELL); 
+                            }
+                        
+                            SpellEntry const *spellInfo = sSpellStore.LookupEntry(7720);
+                            Spell *spell = new Spell(spellCaster, spellInfo, triggered, GetObjectGuid());
+
+                            // spell target is user of GO
+                            SpellCastTargets targets;
+                            targets.setUnitTarget(user);
+
+                            spell->prepare(&targets);
+                        }
+                        
+                        // If we return true the portal will be deleted so only delete it if 
+                        // the summon was successful.
+                        return shouldCast;
+                    }
+
+                    return true;
                 });
+
+                // We handle the casting of the summon spell in the callback for the portal.
+                return;
             }
             // reset ritual for this GO
             else
