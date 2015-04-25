@@ -687,7 +687,11 @@ CreatureAI* GetAI_boss_ysondre(Creature* pCreature)
 // Summoned druid script
 struct MANGOS_DLL_DECL mob_demented_druidAI : public ScriptedAI
 {
-    mob_demented_druidAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    mob_demented_druidAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{
+		m_creature->SetAOEImmunity(true);
+		Reset();
+	}
 
     uint32 m_uiCurseOfThornsTimer;
     uint32 m_uiMoonfireTimer;
