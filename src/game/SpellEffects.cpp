@@ -5484,8 +5484,11 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     unitTarget->GetAttackPoint(m_caster, x, y, z);
     distance = unitTarget->GetDistance(m_caster);
 
-    float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(x, y, MAX_HEIGHT);
-    float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(x, y, z);
+    float targetX, targetY, targetZ;
+    unitTarget->GetPosition(targetX,targetY,targetZ);
+
+    float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(targetX, targetY, MAX_HEIGHT);
+    float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(targetX, targetY, targetZ);
 
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
@@ -5498,8 +5501,7 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
         {
             if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
                 {
-                    float targetX, targetY, targetZ;
-                    unitTarget->GetPosition(targetX,targetY,targetZ);
+
                     MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
                     dtPolyRef polyRef;
 
@@ -5515,23 +5517,26 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
                     }
                     else
                     {
+                        ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(targetX, targetY, MAX_HEIGHT);
+                        floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(targetX, targetY, targetZ);
+
                             if(!unitTarget->IsInWater())
                             {
 
-                                if(ground_z > z || floor_z > z)
+                                if(ground_z > targetZ || floor_z > targetZ)
                                 {
-                                    if(fabs(z - floor_z) < fabs(ground_z - z))
+                                    if(fabs(targetZ - floor_z) < fabs(ground_z - targetZ))
                                     {
-                                        z = floor_z;
+                                        targetZ = floor_z;
                                     }
                                     else
                                     {
-                                        z = ground_z;
+                                        targetZ = ground_z;
                                     }
                                 }
 
                                 float chargeTimer = m_caster->GetDistance(unitTarget);
-                                m_caster->MonsterMoveByPath(x, y, z+0.5f, chargeTimer, true, false);
+                                m_caster->MonsterMoveByPath(targetX, targetY, targetZ+0.5f, chargeTimer, true, false);
                                 ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID());
                                 ((Player*)m_caster)->SetCharging(true);
                             }

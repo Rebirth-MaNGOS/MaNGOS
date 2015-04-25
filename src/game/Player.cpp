@@ -61,6 +61,7 @@
 #include "SocialMgr.h"
 #include "Mail.h"
 #include "WaypointMovementGenerator.h"
+#include "MoveMap.h"
 
 #include <G3D/Matrix3.h>
 #include <G3D/Vector3.h>
@@ -1231,8 +1232,9 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 }
                 else
                 {
-                    MonsterMove(x, y, z, chargeTimer*GetSpeed(MOVE_RUN)*7);
+                    MonsterMove(x, y, z+0.5f, 0);
                 }
+
                 m_chargeTimer = chargeTimer;
                 m_isCharging = false;              
             }
