@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Gnomeregan
 SD%Complete: 90
-SDComment: Quest support: 2904, Kernobee escort, find correct Emi's spell for create an explosive barrel
+SDComment: Quest support: 2904, Kernobee escort, find correct Emi's spell for create an explosive barrel, 2962.
 SDCategory: Gnomeregan
 EndScriptData */
 
@@ -982,7 +982,6 @@ enum eTechbot
 	TECHBOT_SAY6			= -1720116,
 	TECHBOT_SAY7			= -1720117,
 	TECHBOT_SAY8			= -1720118,
-
 };
 
 struct MANGOS_DLL_DECL boss_techbotAI : public ScriptedAI
@@ -1101,6 +1100,103 @@ CreatureAI* GetAI_boss_techbot(Creature* pCreature)
     return new boss_techbotAI(pCreature);
 }
 
+/*####
+# mob_radioactive_fallout
+####*/
+
+enum eFallout
+{
+	SPELL_RADIATION_CLOUD	= 10341,
+	SPELL_CORROSIVE_OOZE	= 9459,
+	SPELL_CHAIN_BURN 		= 8211,
+
+	SPELL_EMPTY_HEAVY_PHIAL	= 11637,
+	ITEM_RADIOACTIVE_FALLOUT = 9365,
+
+	NPC_IRRADIATED_SLIME	= 6218,
+	NPC_CORROSIVE_LURKER	= 6219,
+	NPC_IRRADIATED_HORROR	= 6220,
+};
+
+struct MANGOS_DLL_DECL mob_radioactive_falloutAI : public ScriptedAI
+{
+    mob_radioactive_falloutAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiSpell1Entry;
+    uint32 m_uiSpell1Timer;
+	
+    void Reset()
+    {
+        m_uiSpell1Timer = urand(5000,10000);
+
+        switch(m_creature->GetEntry())
+        {
+			case NPC_IRRADIATED_SLIME:
+				m_uiSpell1Entry = SPELL_RADIATION_CLOUD;
+				break;
+            case NPC_CORROSIVE_LURKER:
+                m_uiSpell1Entry = SPELL_CORROSIVE_OOZE;
+                break;
+			case NPC_IRRADIATED_HORROR:
+				m_uiSpell1Entry = SPELL_CHAIN_BURN;
+				break;
+        }
+    }
+
+    void JustReachedHome()
+    {
+    }
+
+	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)			// create the item for quest
+    {
+        if (pSpell->Id == SPELL_EMPTY_HEAVY_PHIAL)
+			if (Item* pItem = ((Player*)pCaster)->StoreNewItemInInventorySlot(ITEM_RADIOACTIVE_FALLOUT, 1))
+				((Player*)pCaster)->SendNewItem(pItem, 1, true, false);
+	}
+
+    void Execute(uint32 uiSpellEntry)
+    {
+        Unit* pTarget = NULL;
+        switch(uiSpellEntry)
+        {
+			case SPELL_RADIATION_CLOUD:
+				pTarget = m_creature;
+                break;
+            case SPELL_CORROSIVE_OOZE:
+			case SPELL_CHAIN_BURN:
+                pTarget = m_creature->getVictim();
+                break;
+        }
+        if (pTarget && uiSpellEntry != 0)
+            DoCastSpellIfCan(pTarget, uiSpellEntry);
+    }
+
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if (m_uiSpell1Timer < uiDiff)
+        {
+            Execute(m_uiSpell1Entry);
+            m_uiSpell1Timer = urand(9000,14000);
+        }
+        else
+            m_uiSpell1Timer -= uiDiff;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_radioactive_fallout(Creature* pCreature)
+{
+    return new mob_radioactive_falloutAI(pCreature);
+}
+
 /*######
 ## AddSC
 ######*/
@@ -1174,5 +1270,10 @@ void AddSC_gnomeregan()
 	pNewScript = new Script;
 	pNewScript->Name = "boss_techbot";
 	pNewScript->GetAI = &GetAI_boss_techbot;
+	pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+	pNewScript->Name = "mob_radioactive_fallout";
+	pNewScript->GetAI = &GetAI_mob_radioactive_fallout;
 	pNewScript->RegisterSelf();
 }
