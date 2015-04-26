@@ -961,6 +961,146 @@ CreatureAI* GetAI_mob_dark_iron_agent(Creature* pCreature)
 	return new mob_dark_iron_agentAI(pCreature);
 }
 
+/*####
+# boss_techbot
+####*/
+
+enum eTechbot
+{
+	SPELL_BATTLE_NET		= 10852,
+	SPELL_LAG				= 10855,
+	SPELL_LINK_DEAD			= 10856,
+	SPELL_SUMMON_DUPE_BUG	= 10858,
+
+	NPC_DUPE_BUG			= 7732,
+
+	TECHBOT_SAY1			= -1720111,
+	TECHBOT_SAY2			= -1720112,
+	TECHBOT_SAY3			= -1720113,
+	TECHBOT_SAY4			= -1720114,
+	TECHBOT_SAY5			= -1720115,
+	TECHBOT_SAY6			= -1720116,
+	TECHBOT_SAY7			= -1720117,
+	TECHBOT_SAY8			= -1720118,
+
+};
+
+struct MANGOS_DLL_DECL boss_techbotAI : public ScriptedAI
+{
+    boss_techbotAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiSpellTimer;
+	uint32 m_uiKillBugTimer;
+    uint32 m_uiSummonBugTimer;
+
+    void Reset()
+    {
+        m_uiSpellTimer = urand(6000,11000);
+		m_uiKillBugTimer = 10000;
+        m_uiSummonBugTimer = urand(9000,15000);
+    }
+
+	void Aggro(Unit* /*pWho*/)
+    {
+        int Say = urand(0,7);
+		switch(Say)
+		{
+			case 0:
+				DoScriptText(TECHBOT_SAY1, m_creature);
+				break;
+			case 1:
+				DoScriptText(TECHBOT_SAY2, m_creature);
+				break;
+			case 2:
+				DoScriptText(TECHBOT_SAY3, m_creature);
+				break;
+			case 3:
+				DoScriptText(TECHBOT_SAY4, m_creature);
+				break;
+			case 4:
+				DoScriptText(TECHBOT_SAY5, m_creature);
+				break;
+			case 5:
+				DoScriptText(TECHBOT_SAY6, m_creature);
+				break;
+			case 6:
+				DoScriptText(TECHBOT_SAY7, m_creature);
+				break;
+			case 7:
+				DoScriptText(TECHBOT_SAY8, m_creature);
+				break;
+		}
+    }
+
+	void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        switch(pSummoned->GetEntry())
+		{
+			case NPC_DUPE_BUG:	// heal 5% when a dupe bug dies				 
+				m_creature->SetHealth(m_creature->GetHealth()+m_creature->GetMaxHealth()*0.05);
+				break;
+		}
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // Summon Dupe bugs
+        if (m_uiSummonBugTimer <= uiDiff)
+        {			
+            DoCastSpellIfCan(m_creature, SPELL_SUMMON_DUPE_BUG);
+            m_uiSummonBugTimer = urand(15000,30000);
+        }
+        else
+            m_uiSummonBugTimer -= uiDiff;
+
+		// Kill Dupe bugs
+        if (m_uiKillBugTimer <= uiDiff)
+        {	
+			Creature* pDupebug = GetClosestCreatureWithEntry(m_creature, NPC_DUPE_BUG, 10.0f);
+			if (pDupebug)
+				m_creature->DealDamage(pDupebug, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+            m_uiKillBugTimer = 10000;
+        }
+        else
+            m_uiKillBugTimer -= uiDiff;
+
+		// Cast a random spell
+        if (m_uiSpellTimer <= uiDiff)
+        {
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+			int spell = urand(0,2);
+			switch(spell)
+			{
+				case 0:
+					m_creature->CastSpell(pTarget,SPELL_BATTLE_NET, true);
+					break;
+				case 1:
+					m_creature->CastSpell(pTarget,SPELL_LAG, true);
+					break;
+				case 2:
+					m_creature->CastSpell(pTarget,SPELL_LINK_DEAD, true);
+					break;
+			}
+			m_uiSpellTimer = 10000;
+        }
+        else
+            m_uiSpellTimer -= uiDiff;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_boss_techbot(Creature* pCreature)
+{
+    return new boss_techbotAI(pCreature);
+}
+
 /*######
 ## AddSC
 ######*/
@@ -1029,5 +1169,10 @@ void AddSC_gnomeregan()
 	pNewScript = new Script;
 	pNewScript->Name = "mob_dark_iron_agent";
 	pNewScript->GetAI = &GetAI_mob_dark_iron_agent;
+	pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+	pNewScript->Name = "boss_techbot";
+	pNewScript->GetAI = &GetAI_boss_techbot;
 	pNewScript->RegisterSelf();
 }
