@@ -449,12 +449,16 @@ void instance_blackrock_depths::SetData(uint32 uiType, uint32 uiData)
                 {
                     if (Creature* pTarget = instance->GetCreature(*itr))
                     {
-                        pTarget->SetRespawnTime(7200);
-                        pTarget->SaveRespawnTime();
-                    }
-                }
-            }
-        }
+                        pTarget->SetRespawnDelay(7200);
+						if (!pTarget->isAlive())
+						{
+							pTarget->SetRespawnTime(7200);
+							pTarget->SaveRespawnTime();
+						}
+					}
+				}
+			}
+		}
         break;
     case TYPE_IRON_HALL:
         m_auiEncounter[9] = uiData;
