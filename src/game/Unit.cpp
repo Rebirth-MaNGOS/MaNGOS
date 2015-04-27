@@ -6851,6 +6851,16 @@ void Unit::Mount(uint32 mount, uint32 spellId)
                 }
                 else
                     pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,true);
+   
+            }
+            else if (Unit* pCharmed = GetCharm()) // For the Warlock spell Enslave Demon.
+            {
+                WorldPacket data(SMSG_PET_MODE, 12);
+                data << pCharmed->GetObjectGuid();
+                data << uint32(PET_MODE_DISABLE_ACTIONS);
+                ((Player*)this)->GetSession()->SendPacket(&data);
+
+                pCharmed->GetMotionMaster()->MoveChase(this, 0.5f, 3.14f / 6.f);
             }
         }
     }
@@ -6881,6 +6891,13 @@ void Unit::Unmount(bool from_aura)
     {
         if(Pet* pet = GetPet())
             pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,false);
+        else if (Unit* pCharmed = GetCharm()) // For the Warlock spell Enslave Demon.
+        {
+            WorldPacket data(SMSG_PET_MODE, 12);
+            data << pCharmed->GetObjectGuid();
+            data << uint32(0);
+            ((Player*)this)->GetSession()->SendPacket(&data);
+        }
         else
             ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
     }

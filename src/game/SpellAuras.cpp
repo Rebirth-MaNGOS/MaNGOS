@@ -3115,19 +3115,30 @@ void Aura::HandleModCharm(bool apply, bool Real)
                 {
                     // creature with pet number expected have class set
                     if(target->GetByteValue(UNIT_FIELD_BYTES_0, 1)==0)
-                    {
-                        if(cinfo->unit_class==0)
-                            sLog.outErrorDb("Creature (Entry: %u) have unit_class = 0 but used in charmed spell, that will be result client crash.",cinfo->Entry);
-                        else
-                            sLog.outError("Creature (Entry: %u) have unit_class = %u but at charming have class 0!!! that will be result client crash.",cinfo->Entry,cinfo->unit_class);
-
                         target->SetByteValue(UNIT_FIELD_BYTES_0, 1, CLASS_MAGE);
-                    }
 
                     //just to enable stat window
                     charmInfo->SetPetNumber(sObjectMgr.GeneratePetNumber(), true);
                     //if charmed two demons the same session, the 2nd gets the 1st one's name
                     target->SetUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, uint32(time(NULL)));
+                    
+                    // Set a bunch of flags to make the demon behave as a pet.
+                    target->SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
+                    target->SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, 0);
+                    target->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
+                    target->SetByteValue(UNIT_FIELD_BYTES_0, 2, GENDER_NONE);
+                    target->SetSheath(SHEATH_STATE_MELEE);
+                    target->SetByteValue(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_UNK3 | UNIT_BYTE2_FLAG_AURAS | UNIT_BYTE2_FLAG_UNK5 );
+                    target->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE | UNIT_FLAG_RESTING | UNIT_FLAG_RENAME);
+
+                    
+                    target->GetMotionMaster()->MoveFollow(caster, 0.5f, 3.14f / 6.f);
+                    
+                    caster->SetPetGuid(target->GetObjectGuid());
+                    
+                    // Make sure that the caster doesn't get combat bugged.
+                    target->DeleteThreatList();
+                    target->getHostileRefManager().deleteReferences();
                 }
             }
         }
@@ -3138,15 +3149,15 @@ void Aura::HandleModCharm(bool apply, bool Real)
 
             playerCharmInfo->SetPetNumber(sObjectMgr.GeneratePetNumber(), true);
 
-			// A player afflicted by the Chromatic Mutation at Chromaggus should be aggressive.
-			if (GetId() == 23174)
-			{
-				playerCharmInfo->SetReactState(REACT_AGGRESSIVE);
-			}
-			else
-			{
-				playerCharmInfo->SetReactState(REACT_DEFENSIVE);
-			}
+            // A player afflicted by the Chromatic Mutation at Chromaggus should be aggressive.
+            if (GetId() == 23174)
+            {
+                playerCharmInfo->SetReactState(REACT_AGGRESSIVE);
+            }
+            else
+            {
+                playerCharmInfo->SetReactState(REACT_DEFENSIVE);
+            }
 
             Player* targetPlayer = dynamic_cast<Player*>(target);
 
