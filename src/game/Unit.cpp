@@ -6895,7 +6895,7 @@ void Unit::Unmount(bool from_aura)
         {
             WorldPacket data(SMSG_PET_MODE, 12);
             data << pCharmed->GetObjectGuid();
-            data << uint32(0);
+            data << uint32(PET_MODE_DEFAULT);
             ((Player*)this)->GetSession()->SendPacket(&data);
         }
         else
