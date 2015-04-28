@@ -207,8 +207,11 @@ enum eKeeperRemulos
     SPELL_THROW_NIGHTMARE_OBJECT    = 25004,
     SPELL_TRANQUILITY               = 25817,
 
+	SPELL_LONGSHAKE = 24203,
+    SPELL_SHORT_SHAKE = 24204,
+
     SPELL_MALFURION_SHADE           = 24999,
-    SPELL_LEVITATE                  = 1706,
+    SPELL_SPAWN	                    = 17321,
     
     QUEST_WAKING_LEGENDS            = 8447,
 
@@ -296,7 +299,7 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI : public npc_escortAI
             // Declaration
             Creature* pMalfurion = NULL;
 
-            if (m_uiLastReachedWPoint == 7 && m_uiEventPhase > 3 && m_uiEventPhase < 14)
+            if (m_uiLastReachedWPoint == 7 && m_uiEventPhase > 4 && m_uiEventPhase < 17)
             {
                 pMalfurion = m_creature->GetMap()->GetCreature(m_uiMalfurionGUID);
                 if (!pMalfurion)
@@ -316,64 +319,83 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI : public npc_escortAI
                         break;
                     case 2:
                         DoCastSpellIfCan(m_creature, SPELL_THROW_NIGHTMARE_OBJECT);
-                        m_uiEventTimer = 7000;
+                        m_uiEventTimer = 3000;
                         break;
-                    case 3:
+					case 3:
+						// Shake the ground
+						DoCast(m_creature, SPELL_LONGSHAKE, true);
+						m_uiEventTimer = 7000;
+						break;
+                    case 4:
                         if (Creature* pSummon = m_creature->SummonCreature(NPC_MALFURION_STORMRAGE, 7729.68f, -2314.69f, 453.67f, 0.63f, TEMPSUMMON_TIMED_DESPAWN, 78000+1000))
                         {
                             m_uiMalfurionGUID = pSummon->GetObjectGuid();
+							// keep him up in the air
+							pSummon->SendMonsterMove(pSummon->GetPositionX(),pSummon->GetPositionY(),pSummon->GetPositionZ()+2.0f, SPLINETYPE_NORMAL, SPLINEFLAG_FLYING, 1000);
                             // Dark visual across the character
                             pSummon->CastSpell(pSummon, SPELL_MALFURION_SHADE, false);
-                        }
-                        m_uiEventTimer = 1000;
+							pSummon->CastSpell(pSummon, SPELL_SPAWN, true);
+                        }						
+                        m_uiEventTimer = 100;
                         break;
-                    case 4:
-                        // Remulos says: Malfuron!
-                        pMalfurion->HandleEmoteCommand(EMOTE_ONESHOT_ROAR);
+					case 5:
+						if (pMalfurion)
+							pMalfurion->SetFacingTo(0.63f);							
+						m_uiEventTimer = 1000;
+                        break;
+					case 6:
+						if (pMalfurion)
+							pMalfurion->HandleEmote(EMOTE_ONESHOT_ROAR);
+						m_uiEventTimer = 2000;
+                        break;
+                    case 7:
+                        // Remulos says: Malfuron!                        
                         DoScriptText(SAY_REMULOS_3, m_creature);
                         m_uiEventTimer = 4000;
                         break;
-                    case 5:
+                    case 8:
                         DoScriptText(SAY_MALFURION_1, pMalfurion);
                         m_uiEventTimer = 5000;
                         break;
-                    case 6:
+                    case 9:
                         DoScriptText(SAY_REMULOS_4, m_creature);
                         m_uiEventTimer = 7000;
                         break;
-                    case 7:
+					case 10:
                         DoScriptText(SAY_MALFURION_2, pMalfurion);
                         m_uiEventTimer = 11000;
                         break;
-                    case 8:
+                    case 11:
                         DoScriptText(SAY_REMULOS_5, m_creature);
                         m_uiEventTimer = 6000;
                         break;
-                    case 9:
+                    case 12:
                         DoScriptText(SAY_MALFURION_3, pMalfurion);
+						// Shake the ground
+						DoCast(m_creature, SPELL_SHORT_SHAKE, true);
                         m_uiEventTimer = 6000;
                         break;
-                    case 10:
+                    case 13:
                         DoScriptText(SAY_REMULOS_6, m_creature);
                         m_uiEventTimer = 10000;
                         break;
-                    case 11:
+                    case 14:
                         DoScriptText(SAY_MALFURION_4, pMalfurion);
                         m_uiEventTimer = 20000;
                         break;
-                    case 12:
+                    case 15:
                         DoScriptText(SAY_MALFURION_5, pMalfurion);
                         m_uiEventTimer = 4000;
                         break;
-                    case 13:
+                    case 16:
                         DoScriptText(SAY_REMULOS_7, m_creature);
                         m_uiEventTimer = 4000;
                         break;
-                    case 14:
+                    case 17:
                         DoScriptText(SAY_REMULOS_8, m_creature);
                         m_uiEventTimer = 3000;
                         break;
-                    case 15:
+                    case 18:
                         m_uiEventPhase = 0;
                         m_uiEventTimer = 0;
                         SetEscortPaused(false);
@@ -402,7 +424,7 @@ bool QuestAccept_npc_keeper_remulos(Player* pPlayer, Creature* pCreature, const 
         if (npc_keeper_remulosAI* pEscortAI = dynamic_cast<npc_keeper_remulosAI*>(pCreature->AI()))
         {
             DoScriptText(SAY_REMULOS_1, pCreature, pPlayer);
-            pEscortAI->Start(true, pPlayer, pQuest, true);
+            pEscortAI->Start(false, pPlayer, pQuest, true);
         }
     return true;
 }
