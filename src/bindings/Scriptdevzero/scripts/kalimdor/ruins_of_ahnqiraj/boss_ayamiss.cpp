@@ -26,7 +26,7 @@ EndScriptData */
 
 enum eAyamiss
 {
-    EMOTE_FRENZY                = -1000002,
+    //EMOTE_FRENZY                = -1000002,
 
     // Ayamiss
     SPELL_FRENZY                = 8269,
@@ -43,7 +43,7 @@ enum eAyamiss
 static Loc Larva[]=
 {
     {-9695.0f, 1585.0f, 25.0f, 0, 0},
-    {-9627.0f, 1538.0f, 21.44f, 0, 0}
+    {-9650.0f, 1536.0f, 21.44f, 0, 0}
 };
 
 static Loc Swarmers[]=
@@ -62,6 +62,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
     instance_ruins_of_ahnqiraj* m_pInstance;
 
     bool m_bPhaseTwo;
+	bool m_bEnrage;
 
     uint32 m_uiPoisonStingerTimer;
     uint32 m_uiStingerSprayTimer;
@@ -75,10 +76,11 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
 
     void Reset()
     {
-        m_bPhaseTwo = true;
+        m_bPhaseTwo = false;
+		m_bEnrage = false;
 
         m_uiPoisonStingerTimer = urand(5000,9000);
-        m_uiStingerSprayTimer = urand(6000,8000);
+        m_uiStingerSprayTimer = urand(10000,20000);
         m_uiParalyzeTimer = urand(35000,45000);
         m_uiLashTimer = urand(7000,9000);
         m_uiTrashTimer = urand(6000,8000);
@@ -101,8 +103,17 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         if (m_pInstance)
             m_pInstance->SetData(TYPE_AYAMISS, IN_PROGRESS);
 
-        m_creature->SendMonsterMove(m_creature->GetPositionX(),m_creature->GetPositionY(),m_creature->GetPositionZ()+20.0f, SPLINETYPE_NORMAL, SPLINEFLAG_UNKNOWN7, 3000);
+        m_creature->SendMonsterMove(m_creature->GetPositionX(),m_creature->GetPositionY(),m_creature->GetPositionZ()+20.0f, SPLINETYPE_NORMAL, SPLINEFLAG_FLYING, 3000);//SPLINEFLAG_UNKNOWN7
     }
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)		// only summon larva if a player got hit by paralyze
+    {
+        if (pSpell->Id == SPELL_PARALYZE && pTarget->GetTypeId() == TYPEID_PLAYER)
+		{
+			uint32 i = urand(0,1);
+            m_creature->SummonCreature(NPC_HIVEZARA_LARVA, Larva[i].x, Larva[i].y, Larva[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
+		}
+	}
 
     void JustDied(Unit* /*pKiller*/)
     {
@@ -136,6 +147,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
             SetCombatMovement(true);
             m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim());
             m_creature->AttackerStateUpdate(m_creature->getVictim(), BASE_ATTACK, true);
+			DoResetThreat();
             m_bPhaseTwo = true;
         }
 
@@ -150,15 +162,25 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         else
             m_uiSwarmerTimer -= uiDiff;
 
+		// Stinger Spray
+            if (m_uiStingerSprayTimer <= uiDiff)
+            {
+                DoCastSpellIfCan(m_creature->getVictim(), SPELL_STINGER_SPRAY);
+                m_uiStingerSprayTimer = urand(25000,30000);
+            }
+            else
+                m_uiStingerSprayTimer -= uiDiff;
+
         // Paralyze and Summon Larva
         if (m_uiParalyzeTimer <= uiDiff)
         {
             if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
             {
                 DoCastSpellIfCan(pTarget, SPELL_PARALYZE);
-                uint32 i = urand(0,1);
-                m_creature->SummonCreature(NPC_HIVEZARA_LARVA, Larva[i].x, Larva[i].y, Larva[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
 				m_uiLarvaTargetGUID = pTarget->GetObjectGuid();
+                /*uint32 i = urand(0,1);
+                m_creature->SummonCreature(NPC_HIVEZARA_LARVA, Larva[i].x, Larva[i].y, Larva[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);*/
+				
             }
             m_uiParalyzeTimer = urand(15000,20000);
         }
@@ -179,10 +201,12 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         else
         {
             // Frenzy spell
-            if (HealthBelowPct(20))
-                if (DoCastSpellIfCan(m_creature, SPELL_FRENZY, CAST_AURA_NOT_PRESENT))
-                    DoScriptText(EMOTE_FRENZY, m_creature);
-
+            if (HealthBelowPct(20) && !m_bEnrage)
+			{
+                DoCastSpellIfCan(m_creature, SPELL_FRENZY, CAST_AURA_NOT_PRESENT);
+                m_creature->GenericTextEmote("Ayamiss the Hunter becomes enraged!", NULL, false);
+				m_bEnrage = true;
+			}
             // Lash
             if (m_uiLashTimer <= uiDiff)
             {
@@ -191,16 +215,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
             }
             else
                 m_uiLashTimer -= uiDiff;
-
-            // Stinger Spray
-            if (m_uiStingerSprayTimer <= uiDiff)
-            {
-                DoCastSpellIfCan(m_creature->getVictim(), SPELL_STINGER_SPRAY);
-                m_uiStingerSprayTimer = urand(8000,12000);
-            }
-            else
-                m_uiStingerSprayTimer -= uiDiff;
-
+			          
             // Trash
             if (m_uiTrashTimer <= uiDiff)
             {
