@@ -150,45 +150,47 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
 {
     sLog.outBasic("Shuffling exclusive pool %u...", pool.poolID);
     
+    // Get the spawn points and shuffle them.
+    std::vector<ExclusivePoolSpot> poolSpotList;
+    poolSpotList.insert(poolSpotList.begin(), m_poolSpots[pool.poolID].begin(), m_poolSpots[pool.poolID].end());
+    std::random_shuffle(poolSpotList.begin(), poolSpotList.end());
+    
     for (std::pair<const uint32, std::list<ObjectGuid> >& poolPair : pool.m_objects)
     {
+        // If we have run out of spawn positions we stop spawning creatures.
+        if (poolSpotList.empty())
+            break;
+        
         std::list<ObjectGuid> poolObjectList = poolPair.second;
-        std::vector<ExclusivePoolSpot> poolSpotList;
-        poolSpotList.insert(poolSpotList.begin(), m_poolSpots[poolPair.first].begin(), m_poolSpots[poolPair.first].end());
         
-        std::random_shuffle(poolSpotList.begin(), poolSpotList.end());
+        // Pick a random creature from the current group.
+        auto itr = poolObjectList.begin();
+        std::advance(itr, urand(0, poolObjectList.size() - 1));
         
-        for (ExclusivePoolSpot& spot : poolSpotList)
+        // Get a spawn point for the creature.
+        ExclusivePoolSpot spot = poolSpotList.back();
+        poolSpotList.pop_back();
+
+        CreatureData& rData = sObjectMgr.mCreatureDataMap[itr->GetCounter()];
+        
+        // If the creature is already in the correct spot we skip it.
+        if (rData.posX == spot.x && rData.posY == spot.y && 
+            rData.posZ == spot.z && rData.mapid == spot.mapID)
         {
-            if (!poolObjectList.empty())
-            {
-                ObjectGuid currentGuid = poolObjectList.back();
-                poolObjectList.pop_back();
-                
-                CreatureData& rData = sObjectMgr.mCreatureDataMap[currentGuid.GetCounter()];
-                
-                // If the creature is already in the correct spot we skip it.
-                if (rData.posX == spot.x && rData.posY == spot.y && 
-                    rData.posZ == spot.z && rData.mapid == spot.mapID)
-                {
-                    continue;
-                }
-                
-                sObjectMgr.RemoveCreatureFromGrid(currentGuid.GetCounter(), &rData);
-                Creature::AddToRemoveListInMaps(currentGuid.GetCounter(), &rData);
-                
-                rData.posX = spot.x;
-                rData.posY = spot.y;
-                rData.posZ = spot.z;
-                rData.mapid = spot.mapID;
-                
-                sObjectMgr.AddCreatureToGrid(currentGuid.GetCounter(), &rData);
-                Creature::SpawnInMaps(currentGuid.GetCounter(), &rData);
-            }
-            else
-                break;
+            continue;
         }
         
+        // Do the actual spawning.
+        sObjectMgr.RemoveCreatureFromGrid(itr->GetCounter(), &rData);
+        Creature::AddToRemoveListInMaps(itr->GetCounter(), &rData);
+        
+        rData.posX = spot.x;
+        rData.posY = spot.y;
+        rData.posZ = spot.z;
+        rData.mapid = spot.mapID;
+        
+        sObjectMgr.AddCreatureToGrid(itr->GetCounter(), &rData);
+        Creature::SpawnInMaps(itr->GetCounter(), &rData);
     }
     
     SaveRespawnTime(pool);
