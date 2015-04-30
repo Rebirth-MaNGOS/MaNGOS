@@ -148,8 +148,8 @@ void ExclusivePoolMgr::CheckEvents()
 
 void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
 {
-    sLog.outBasic("Shuffling exclusive pool %u...", pool.poolID);
-    
+    sLog.outBasic("Shuffling exclusive pool %u.", pool.poolID);
+
     // Get the spawn points and shuffle them.
     std::vector<ExclusivePoolSpot> poolSpotList;
     poolSpotList.insert(poolSpotList.begin(), m_poolSpots[pool.poolID].begin(), m_poolSpots[pool.poolID].end());
@@ -162,6 +162,60 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
             break;
         
         std::list<ObjectGuid> poolObjectList = poolPair.second;
+
+        // Check if any creatures in the current group are alive.
+        // If they are the group should be skipped.
+        bool foundAlive = false;
+        for (ObjectGuid currentCreature : poolObjectList)
+        {
+            const CreatureData* pData = sObjectMgr.GetCreatureData(currentCreature.GetCounter());
+            if (pData)
+            {
+                Map* pMap = sMapMgr.FindMap(pData->mapid);
+                if (pMap)
+                {
+                    Creature* pCreature = pMap->GetCreature(currentCreature);
+                    if (pCreature)
+                    {
+                        if (pCreature->isAlive())
+                        {
+                            auto itr = std::find_if(poolSpotList.begin(), poolSpotList.end(),
+                            [&](const ExclusivePoolSpot& spot)
+                            {
+                                if (spot.x == pData->posX && spot.y == pData->posY && 
+                                    spot.z == pData->posZ && spot.mapID == pData->mapid)
+                                {
+                                    return true;
+                                }
+                                else
+                                    return false;
+                            });
+
+                            if (itr != poolSpotList.end())
+                                poolSpotList.erase(itr);
+
+                            DespawnAllExcept(poolObjectList, currentCreature);
+
+                            foundAlive = true;
+                            break;
+                        }
+                        else if (pCreature->HasLootRecipient())
+                        {
+                            // If the creature is being looted we delay the handling
+                            // for this pool by 10 minutes.
+                            pool.currentRespawnTime += 10 * 60;
+                            sLog.outBasic("A the creature with guid %u in pool %u is currently being looted. Delaying the handling by 10 minutes.", currentCreature.GetCounter(), pool.poolID);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // If a creature in the current group was alive we skip it.
+        if (foundAlive)
+            continue;
+
         
         // Pick a random creature from the current group.
         auto itr = poolObjectList.begin();
@@ -191,6 +245,9 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
         
         sObjectMgr.AddCreatureToGrid(itr->GetCounter(), &rData);
         Creature::SpawnInMaps(itr->GetCounter(), &rData);
+
+        // Make sure that all other creatures in the group are despawned.
+        DespawnAllExcept(poolObjectList, *itr);
     }
     
     SaveRespawnTime(pool);
@@ -200,7 +257,23 @@ void ExclusivePoolMgr::SaveRespawnTime(ExclusivePool& pool)
 {
     time_t nextTime = time(nullptr) + pool.respawnDelay;
     
-    WorldDatabase.PExecute("REPLACE INTO exclusive_pool_respawn (`poolID`, `spawntime`) VALUES (%u, %li)", pool.poolID, nextTime);
+    WorldDatabase.PExecute("REPLACE INTO exclusive_pool_respawn (`poolID`, `spawntime`) VALUES (%u, %li)",
+                           pool.poolID, nextTime);
     pool.currentRespawnTime = nextTime;    
 }
 
+void ExclusivePoolMgr::DespawnAllExcept(const std::list<ObjectGuid>& group, const ObjectGuid& except) const
+{
+   for (const ObjectGuid& guid : group)
+   {
+       if (except == guid)
+           continue;
+
+       const CreatureData* pData = sObjectMgr.GetCreatureData(guid.GetCounter());
+       if (pData)
+       {
+            sObjectMgr.RemoveCreatureFromGrid(guid.GetCounter(), pData);
+            Creature::AddToRemoveListInMaps(guid.GetCounter(), pData);
+       } 
+   }
+}

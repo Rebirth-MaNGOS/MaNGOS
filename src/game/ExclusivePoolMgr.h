@@ -35,6 +35,7 @@ class ExclusivePoolMgr
 {
     void ExecuteEvent(ExclusivePool &pool);
     void SaveRespawnTime(ExclusivePool &pool);
+    void DespawnAllExcept(const std::list<ObjectGuid>& group, const ObjectGuid& except) const;
     
 public:
     ExclusivePoolMgr();
