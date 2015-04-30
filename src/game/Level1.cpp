@@ -216,25 +216,6 @@ bool ChatHandler::HandleGMChatCommand(char* args)
     return true;
 }
 
-bool ChatHandler::HandleGMChatFactionCommand(char* args)
-{
-    if (!*args)
-    {
-        PSendSysMessage("You're chatting as %s.", m_session->GetPlayer()->m_ChatTeam == ALLIANCE ? "ALLIANCE" : "HORDE");
-        return true;
-    }
-
-    int faction = atoi(args);
-
-    if (faction == 0)
-        m_session->GetPlayer()->m_ChatTeam = ALLIANCE;
-    else
-        m_session->GetPlayer()->m_ChatTeam = HORDE;
-
-    return true;
-
-}
-
 //Enable\Dissable Invisible mode
 bool ChatHandler::HandleGMVisibleCommand(char* args)
 {

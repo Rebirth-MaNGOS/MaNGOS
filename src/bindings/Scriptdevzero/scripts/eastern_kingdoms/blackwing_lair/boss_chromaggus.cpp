@@ -334,7 +334,7 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
                         && pUnit->HasAura(SPELL_BROODAF_GREEN, EFFECT_INDEX_0))
                 {
                     pUnit->RemoveAllAuras();
-                    m_creature->CastSpell(pUnit,SPELL_CHROMATIC_MUT_1, true);
+                    m_creature->CastSpell(pUnit,SPELL_CHROMATIC_MUT_1, false);
                 }
             }
 

@@ -10,6 +10,7 @@ enum Data
     TYPE_KIRTONOS_THE_HERALD,
     TYPE_JANDICE_BAROV,
     TYPE_GREAT_OSSUARY,
+    TYPE_GREAT_OSSUARY_WAVE,
     TYPE_RAS_FROSTWHISPER,
     TYPE_KORMOK,
     TYPE_LOREKEEPER_POLKELT,
@@ -51,7 +52,6 @@ enum Creatures
     NPC_RISEN_ABERRATION            = 10485,
 	NPC_RISEN_GUARDIAN				= 11598,
     NPC_DARKMASTER_GANDLING         = 1853,
-	NPC_PALADIN_EVENT				= 800469,
 };
 
 enum GameObjects
@@ -111,7 +111,7 @@ class MANGOS_DLL_DECL instance_scholomance : public ScriptedInstance
         void Update(uint32 uiDiff);
 
 		void HandleGate(uint32 uiEntry, uint32 uiData, bool bTrySummon);
-		void OssuaryStartEvent();
+		void OssuaryWave(uint32 uiWave);
 		void TrySummonGandling(GameObject* pGo);
     protected:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
@@ -119,7 +119,6 @@ class MANGOS_DLL_DECL instance_scholomance : public ScriptedInstance
 
 		uint32 m_uiWaveCount;
 		uint32 m_uiViewingRoomTimer;
-		bool m_bPaladin;
 };
 
 #endif

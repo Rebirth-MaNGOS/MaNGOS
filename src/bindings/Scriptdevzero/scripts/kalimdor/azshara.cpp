@@ -378,103 +378,6 @@ bool QuestAccept_npc_captain_vanessa_beltis(Player* pPlayer, Creature* pCreature
     return true;
 }
 
-/*######
-## npc_felhound_tracker
-######*/
-
-enum
-{
-	GO_AZSHARITE_FORMATION1				= 152620,
-	GO_AZSHARITE_FORMATION2				= 152621,
-	GO_AZSHARITE_FORMATION3				= 152622,
-	GO_AZSHARITE_FORMATION4				= 152631,
-
-	QUEST_ID_AZSHARITE					= 3602,
-};
-
-struct MANGOS_DLL_DECL npc_felhound_trackerAI : public FollowerAI
-{
-    npc_felhound_trackerAI(Creature* pCreature) : FollowerAI(pCreature)
-    {
-		if (pCreature->GetOwner() && pCreature->GetOwner()->GetTypeId() == TYPEID_PLAYER)
-            StartFollow((Player*)pCreature->GetOwner());
-        Reset();
-    }
-
-	bool m_bFindingAzsharite;
-
-    void Reset()
-    {
-		m_bFindingAzsharite = true;
-    }
-	void MovementInform(uint32 /*uiType*/, uint32 uiPointId)
-    {
-        if (uiPointId == 1)
-		{
-			m_creature->HandleEmote(EMOTE_ONESHOT_ROAR);			// don't think it has the animation, should have one atleast
-			m_bFindingAzsharite = false;
-		}
-	}
-
-	void Follow()
-	{
-		Unit* pOwner = GetLeaderForFollower();
-		m_creature->GetMotionMaster()->Clear();
-		m_creature->GetMotionMaster()->MoveFollow(pOwner, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
-	}
-
-	void ReceiveEmote(Player* pPlayer, uint32 emote)
-    {
-        if (pPlayer == GetLeaderForFollower() && emote == TEXTEMOTE_ROAR)			// lots of the same, oh well
-        {	
-			if(m_bFindingAzsharite)
-			{
-				if (GameObject* pGo = GetClosestGameObjectWithEntry(m_creature, GO_AZSHARITE_FORMATION1, 30.0f))	
-				{
-					m_creature->GetMotionMaster()->MovePoint(1, pGo->GetPositionX()-5, pGo->GetPositionY(), pGo->GetPositionZ());
-					m_creature->GenericTextEmote("Felhound Tracker reacts to your roar and starts running towards an Azsharite Formation. Follow it!", NULL, false);
-				}
-				else if (GameObject* pGo = GetClosestGameObjectWithEntry(m_creature, GO_AZSHARITE_FORMATION2, 30.0f))				
-				{
-					m_creature->GetMotionMaster()->MovePoint(1, pGo->GetPositionX()-5, pGo->GetPositionY(), pGo->GetPositionZ());
-					m_creature->GenericTextEmote("Felhound Tracker reacts to your roar and starts running towards an Azsharite Formation. Follow it!", NULL, false);
-				}
-				else if (GameObject* pGo = GetClosestGameObjectWithEntry(m_creature, GO_AZSHARITE_FORMATION3, 30.0f))					
-				{
-					m_creature->GetMotionMaster()->MovePoint(1, pGo->GetPositionX()-5, pGo->GetPositionY(), pGo->GetPositionZ());
-					m_creature->GenericTextEmote("Felhound Tracker reacts to your roar and starts running towards an Azsharite Formation. Follow it!", NULL, false);
-				}
-				else if (GameObject* pGo = GetClosestGameObjectWithEntry(m_creature, GO_AZSHARITE_FORMATION4, 30.0f))
-				{
-					m_creature->GetMotionMaster()->MovePoint(1, pGo->GetPositionX()-5, pGo->GetPositionY(), pGo->GetPositionZ());
-					m_creature->GenericTextEmote("Felhound Tracker reacts to your roar and starts running towards an Azsharite Formation. Follow it!", NULL, false);
-				}					
-				else 				// if no crystals close, do emote and go back to follow
-				{
-					Follow();
-					m_bFindingAzsharite = true;
-					m_creature->GenericTextEmote("Felhound Tracker somberly shakes it's head to point out that there is no nearby deposit of Azsharite Formation. Try again somewhere else.", NULL, false);
-				}
-			}
-
-			if (!m_bFindingAzsharite)		// if at crystal, go back to player, THIS IS WRONG! Should go to next deposit, but atm they keep going to the same even after looted.
-			{
-				Follow();
-				m_bFindingAzsharite = true;
-			}
-		 }
-	}
-
-	void UpdateFollowerAI(const uint32 uiDiff)
-    {
-	}
-};
-
-CreatureAI* GetAI_npc_felhound_tracker(Creature* pCreature)
-{
-    return new npc_felhound_trackerAI(pCreature);
-}
-
 void AddSC_azshara()
 {
     Script* pNewscript;
@@ -501,9 +404,4 @@ void AddSC_azshara()
     pNewscript->GetAI = &GetAI_npc_captain_vanessa_beltis;
     pNewscript->pQuestAcceptNPC = &QuestAccept_npc_captain_vanessa_beltis;
     pNewscript->RegisterSelf();
-
-	pNewscript = new Script;
-	pNewscript->Name = "npc_felhound_tracker";
-	pNewscript->GetAI = &GetAI_npc_felhound_tracker;
-	pNewscript->RegisterSelf();
 }

@@ -304,6 +304,13 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
         {
         case SPELLFAMILY_GENERIC:
         {
+            //Judgement of Command
+            if (m_spellInfo->SpellIconID == 561 && !unitTarget->HasAuraType(SPELL_AURA_MOD_STUN))
+            {
+                damage *= 0.5;
+                break;
+            }
+
             switch(m_spellInfo->Id)                     // better way to check unknown
             {
                 // Wrath of Ragnaros - threat wipe
@@ -1078,39 +1085,35 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             Creature* creatureTarget = (Creature*)unitTarget;
             if (creatureTarget->IsPet())
                 return;
-			
-            creatureTarget->CastSpell(creatureTarget, 23022, true);		// added from stock mangos, cast spell Prison Crystal Conjure DND
+
+            GameObject* pGameObj = new GameObject;
+
+            Map *map = creatureTarget->GetMap();
+
+            // create before death for get proper coordinates
+            if (!pGameObj->Create(map->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), 179644, map,
+                                  creatureTarget->GetPositionX(), creatureTarget->GetPositionY(), creatureTarget->GetPositionZ(),
+                                  creatureTarget->GetOrientation(), 0.0f, 0.0f, 0.0f, 0.0f, GO_ANIMPROGRESS_DEFAULT, GO_STATE_READY) )
+            {
+                delete pGameObj;
+                return;
+            }
+
+            pGameObj->SetRespawnTime(creatureTarget->GetRespawnTime()-time(NULL));
+            pGameObj->SetOwnerGuid(m_caster->GetObjectGuid() );
+            pGameObj->SetUInt32Value(GAMEOBJECT_LEVEL, m_caster->getLevel() );
+            pGameObj->SetSpellId(m_spellInfo->Id);
+
             creatureTarget->ForcedDespawn();
+
+            DEBUG_LOG("AddObject at SpellEfects.cpp EffectDummy");
+            map->Add(pGameObj);
+
+            WorldPacket data(SMSG_GAMEOBJECT_SPAWN_ANIM_OBSOLETE, 8);
+            data << ObjectGuid(pGameObj->GetObjectGuid());
+            m_caster->SendMessageToSet(&data, true);
+
             return;
-
-            //GameObject* pGameObj = new GameObject;					// wasn't able to loot the crystal with this code.
-
-            //Map *map = creatureTarget->GetMap();
-
-            //// create before death for get proper coordinates
-            //if (!pGameObj->Create(map->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), 179644, map,
-            //                      creatureTarget->GetPositionX(), creatureTarget->GetPositionY(), creatureTarget->GetPositionZ(),
-            //                      creatureTarget->GetOrientation(), 0.0f, 0.0f, 0.0f, 0.0f, GO_ANIMPROGRESS_DEFAULT, GO_STATE_READY) )
-            //{
-            //    delete pGameObj;
-            //    return;
-            //}
-
-            //pGameObj->SetRespawnTime(creatureTarget->GetRespawnTime()-time(NULL));
-            //pGameObj->SetOwnerGuid(m_caster->GetObjectGuid() );
-            //pGameObj->SetUInt32Value(GAMEOBJECT_LEVEL, m_caster->getLevel() );
-            //pGameObj->SetSpellId(m_spellInfo->Id);
-
-            //creatureTarget->ForcedDespawn();
-
-            //DEBUG_LOG("AddObject at SpellEfects.cpp EffectDummy");
-            //map->Add(pGameObj);
-
-            //WorldPacket data(SMSG_GAMEOBJECT_SPAWN_ANIM_OBSOLETE, 8);
-            //data << ObjectGuid(pGameObj->GetObjectGuid());
-            //m_caster->SendMessageToSet(&data, true);
-
-            //return;
         }
         case 23074:                                 // Arcanite Dragonling
         {
@@ -1159,16 +1162,12 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
         case 23448:                                 // Transporter Arrival - Ultrasafe Transporter: Gadgetzan - backfires
         {
             int32 r = irand(0, 119);
-            if (r <= 20)                             // Transporter Malfunction - 1/6 polymorph
+            if (r < 20)                             // Transporter Malfunction - 1/6 polymorph
                 m_caster->CastSpell(m_caster, 23444, true);
-            else if (r > 20 && r < 100)                       // Evil Twin               - 4/6 evil twin
+            else if (r < 100)                       // Evil Twin               - 4/6 evil twin
                 m_caster->CastSpell(m_caster, 23445, true);
             else                                    // Transporter Malfunction - 1/6 miss the target
-			{
-				m_caster->NearTeleportTo(-7402.10f,-3493.21f,512.15f,2.833f,false);			// teleport the player up in the sky and SW of Gadgetzan
-				m_caster->CastSpell(m_caster, 23447, true);
-				//m_caster->CastSpell(m_caster, 36902, true);			// old spell, not working
-			}
+                m_caster->CastSpell(m_caster, 36902, true);
 
             return;
         }
@@ -1653,7 +1652,18 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             if (!spell_proto)
                 return;
 
-            m_caster->CastSpell(unitTarget, spell_proto, true, NULL);
+            if (!unitTarget->hasUnitState(UNIT_STAT_STUNNED) && m_caster->GetTypeId()==TYPEID_PLAYER)
+            {
+                // decreased damage (/2) for non-stunned target.
+                SpellModifier *mod = new SpellModifier(SPELLMOD_DAMAGE,SPELLMOD_PCT,-50,m_spellInfo->Id,UI64LIT(0x0000020000000000));
+
+                ((Player*)m_caster)->AddSpellMod(mod, true);
+                m_caster->CastSpell(unitTarget, spell_proto, true, NULL);
+                // mod deleted
+                ((Player*)m_caster)->AddSpellMod(mod, false);
+            }
+            else
+                m_caster->CastSpell(unitTarget, spell_proto, true, NULL);
 
             return;
         }
@@ -2048,12 +2058,6 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
     case 30918:   //Improved Sprint
         //Don't need to apply any actual aura here, just remove snare and root effects from the target!
         unitTarget->RemoveAurasAtMechanicImmunity(IMMUNE_TO_ROOT_AND_SNARE_MASK,30918,true);
-
-		// Some spells have to be manually removed
-		if(unitTarget->HasAura(23331))			// explicitly remove Blastwave at Lashlayer(BWL)
-			unitTarget->RemoveAurasDueToSpell(23331);
-		if(unitTarget->HasAura(20229))			// explicitly remove Blastwave at Majordomo(MC)
-			unitTarget->RemoveAurasDueToSpell(20229);
         return;
     }
 
@@ -2288,9 +2292,7 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
         // Lifegiving Gem
         if (m_spellInfo->Id == 23783)
         {
-            // Divide by 1.15 to avoid taking the new max health from the health
-            // increase effect.
-            m_healing = unitTarget->GetMaxHealth() * 0.15f / 1.15f;
+            addhealth = unitTarget->GetHealth() * 0.15f;
         }
 
         m_healing += addhealth;
@@ -5484,100 +5486,63 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     unitTarget->GetAttackPoint(m_caster, x, y, z);
     distance = unitTarget->GetDistance(m_caster);
 
-    float targetX, targetY, targetZ;
-    unitTarget->GetPosition(targetX,targetY,targetZ);
-
-    float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(targetX, targetY, MAX_HEIGHT);
-    float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(targetX, targetY, targetZ);
-
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
 
     uint32 mapId = unitTarget->GetMapId();
-
-    if(m_caster->GetTypeId() == TYPEID_PLAYER)
+    if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
     {
-        if(!((Player*)m_caster)->m_movementInfo.HasMovementFlag(MOVEFLAG_FALLING))
+        float targetX, targetY, targetZ;
+        unitTarget->GetPosition(targetX,targetY,targetZ);
+        MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
+        dtPolyRef polyRef;
+
+        if (!mmap->GetNearestValidPosition(unitTarget,3,3,5,targetX,targetY,targetZ,&polyRef))
+            return;
+
+        if (!mmap->DrawRay(unitTarget,polyRef,targetX,targetY,targetZ,x,y,z))
         {
-            if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
-                {
-
-                    MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
-                    dtPolyRef polyRef;
-
-                    if (!mmap->GetNearestValidPosition(unitTarget,3,3,5,targetX,targetY,targetZ,&polyRef))
-                        return;
-
-                    if (!mmap->DrawRay(unitTarget,polyRef,targetX,targetY,targetZ,x,y,z))
-                    {
-                        x = targetX;    
-                        y = targetY;
-                        z = targetZ;
-                        m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
-                    }
-                    else
-                    {
-                        ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(targetX, targetY, MAX_HEIGHT);
-                        floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(targetX, targetY, targetZ);
-
-                            if(!unitTarget->IsInWater())
-                            {
-
-                                if(ground_z > targetZ || floor_z > targetZ)
-                                {
-                                    if(fabs(targetZ - floor_z) < fabs(ground_z - targetZ))
-                                    {
-                                        targetZ = floor_z;
-                                    }
-                                    else
-                                    {
-                                        targetZ = ground_z;
-                                    }
-                                }
-
-                                float chargeTimer = m_caster->GetDistance(unitTarget);
-                                m_caster->MonsterMoveByPath(targetX, targetY, targetZ+0.5f, chargeTimer, true, false);
-                                ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID());
-                                ((Player*)m_caster)->SetCharging(true);
-                            }
-                            else
-                            {
-                                m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
-                            }
-                     
-                    }
-
-                }
-                else
-                {
-                               
-                            if(ground_z > z || floor_z > z)                      
-                            {                        
-                                if(fabs(z - floor_z) < fabs(ground_z - z))                                               
-                                {                         
-                                    z = floor_z;                        
-                                }                       
-                                else                      
-                                {                     
-                                    z = ground_z;                     
-                                }  
-                            }
-
-                            m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
-                        
-                }
+            x = targetX;    
+            y = targetY;
+            z = targetZ;
+            m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
         }
         else
         {
-            m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
-            ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID());
-            ((Player*)m_caster)->SetCharging(true);
+            if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            {
+                if(!unitTarget->IsInWater())
+                {
+                    float chargeTimer = m_caster->GetDistance(unitTarget);
+                    m_caster->MonsterMoveByPath(x, y, z, chargeTimer, true, false);
+                    ((Player*)m_caster)->SetChargeTarget(unitTarget->GetGUID());
+                    ((Player*)m_caster)->SetCharging(true);
+                }
+                else
+                {
+                    m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+                }
+
+            }
+            else
+            {
+                m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
+            }
         }
+
     }
     else
     {
-        m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
+            if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            {
+                m_caster->MonsterMove(x, y, z, distance*m_caster->GetSpeed(MOVE_RUN)*7);
+            }
+            else
+            {
+                m_caster->MonsterMoveByPath(x, y, z, 25, false, true);
+            }
     }
+
 
     //>MonsterMoveByPath(x, y, z, 25, false, true);
 
@@ -5880,29 +5845,10 @@ void Spell::EffectTransmitted(SpellEffectIndex eff_idx)
     Map *cMap = m_caster->GetMap();
 
 
-    // if gameobject is summoning object, it should be spawned a bit in front of the caster's position
+    // if gameobject is summoning object, it should be spawned right on caster's position
     if (goinfo->type == GAMEOBJECT_TYPE_SUMMONING_RITUAL)
     {
-        float dX = cosf(m_caster->GetOrientation());
-        float dY = sinf(m_caster->GetOrientation());
-
         m_caster->GetPosition(fx, fy, fz);
-
-        fx += 2.f * dX;
-        fy += 2.f * dY;
-
-        float ground_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, MAX_HEIGHT);
-        float floor_z = m_caster->GetMap()->GetTerrain()->GetHeight(fx, fy, fz);
-
-        if(fabs(fz - floor_z) < fabs(ground_z - fz))
-        {
-            fz = floor_z;
-        }
-        else
-        {
-            fz = ground_z;
-        }
-
     }
 
     GameObject* pGameObj = new GameObject;

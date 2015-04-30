@@ -82,12 +82,6 @@ struct MANGOS_DLL_DECL boss_gythAI : public ScriptedAI
             m_pInstance->SetData(TYPE_REND_BLACKHAND, DONE);
     }
 
-	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
-    {
-        if (pSpell->Id == SPELL_KNOCK_AWAY && pTarget->GetTypeId() == TYPEID_PLAYER)
-			m_creature->getThreatManager().modifyThreatPercent(pTarget, -40);				//added threat reduction
-	}
-
     void UpdateAI(const uint32 uiDiff)
     {
         // Return since we have no target

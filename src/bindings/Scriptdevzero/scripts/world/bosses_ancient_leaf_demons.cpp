@@ -499,7 +499,7 @@ struct MANGOS_DLL_DECL boss_solenor_the_slayerAI : public bosses_ancient_leaf_de
 
 	void JustSummoned(Creature* pSummoned)
     {
-		/*if (pSummoned->GetEntry() == NPC_CREEPING_DOOM)			// moved to DB
+		if (pSummoned->GetEntry() == NPC_CREEPING_DOOM)
 		{
 		pSummoned->SetFactionTemporary(90);
         pSummoned->SetMaxHealth(urand(190,200));
@@ -507,11 +507,11 @@ struct MANGOS_DLL_DECL boss_solenor_the_slayerAI : public bosses_ancient_leaf_de
 		const CreatureInfo* cinfo = pSummoned->GetCreatureInfo();
         pSummoned->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE,250);
         pSummoned->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE,350);
-		pSummoned->UpdateDamagePhysical(BASE_ATTACK);*/
+		pSummoned->UpdateDamagePhysical(BASE_ATTACK);
 
         if (Unit* pTarget = m_creature->getVictim())
             pSummoned->AI()->AttackStart(pTarget);
-		//}
+		}
 	}
 
 	void JustDied(Unit* /*pKiller*/)			// despawn creeping doom if boss dies
@@ -613,8 +613,7 @@ enum eArtoriustheDoombringer
 {
 	SPELL_DEMONIC_DOOM = 23298,
 	SPELL_STINGING_TRAUMA = 23299,
-	SPELL_SERPENTSTING_R8 = 13555,
-	SPELL_SERPENTSTING_R9 = 25295,
+	SPELL_SERPENTSTING = 25295,
 };
 
 // Artorius the Doombringer script
@@ -652,7 +651,7 @@ struct MANGOS_DLL_DECL boss_artorius_the_doombringerAI : public bosses_ancient_l
 
 	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)							// serpentsting should stack an invisible debuff that makes serpentsting do lots of damage
     {
-        if (pSpell->Id == SPELL_SERPENTSTING_R9 || pSpell->Id == SPELL_SERPENTSTING_R8)
+        if (pSpell->Id == SPELL_SERPENTSTING)
         {
 			 DoCastSpellIfCan(m_creature, SPELL_STINGING_TRAUMA, CAST_TRIGGERED);
 		}
@@ -732,7 +731,7 @@ enum eSimonetheSeductress
 // Simone the Seductress script
 struct MANGOS_DLL_DECL boss_simone_the_seductressAI : public bosses_ancient_leaf_demonsAI
 {
-    boss_simone_the_seductressAI(Creature* pCreature) : bosses_ancient_leaf_demonsAI(pCreature) {Reset(); }
+    boss_simone_the_seductressAI(Creature* pCreature) : bosses_ancient_leaf_demonsAI(pCreature) {Reset(); }			// Should he not enrage while stunned in trap?
 
 	uint32 m_uiChainLightningTimer;
 	uint32 m_uiSeductressKissTimer;
@@ -754,11 +753,9 @@ struct MANGOS_DLL_DECL boss_simone_the_seductressAI : public bosses_ancient_leaf
 
 	void JustDied(Unit* pKiller)
     {
-        if (pKiller->GetObjectGuid() != m_uiChallengerGUID)			// if someone else but the hunter kills the demon, summon cleaner and don't let anyone loot head
-        {    
-			SummonTheCleaner();
-			m_creature->SetLootRecipient(NULL);
-		}
+        if (pKiller->GetObjectGuid() != m_uiChallengerGUID)
+            SummonTheCleaner();
+        m_creature->SetLootRecipient(NULL);
     }
 
     bool DoSpecialDemonAbility()

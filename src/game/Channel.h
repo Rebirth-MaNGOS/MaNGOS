@@ -221,7 +221,7 @@ class Channel
         void MakePlayerInviteBanned(WorldPacket *data, ObjectGuid guid);        //? 0x1E
         void MakeThrottled(WorldPacket *data);                                  //? 0x1F
 
-        void SendToAll(WorldPacket *data, ObjectGuid p = ObjectGuid(), WorldPacket* gmData = nullptr);
+        void SendToAll(WorldPacket *data, ObjectGuid p = ObjectGuid());
         void SendToOne(WorldPacket *data, ObjectGuid who);
 
         

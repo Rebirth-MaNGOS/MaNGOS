@@ -28,7 +28,6 @@ EndContentData */
 #include "precompiled.h"
 #include "escort_ai.h"
 #include "razorfen_kraul.h"
-#include "follower_ai.h"
 
 /*#########################
 # Npc Willix The Importer #
@@ -197,95 +196,6 @@ CreatureAI* GetAI_npc_deaths_head_ward_keeper(Creature* pCreature)
     return new npc_deaths_head_ward_keeperAI(pCreature);
 }
 
-/*######
-## npc_snufflenose_gopher
-######*/
-
-enum
-{
-	SPELL_COMMAND_STICK				= 8283,
-
-	GO_BLUELEAF_TUBER				= 20920,
-	QUEST_BLELEAF_TUBERS			= 1221,
-};
-
-struct MANGOS_DLL_DECL npc_snufflenose_gopherAI : public FollowerAI
-{
-    npc_snufflenose_gopherAI(Creature* pCreature) : FollowerAI(pCreature)
-    {
-		if (pCreature->GetOwner() && pCreature->GetOwner()->GetTypeId() == TYPEID_PLAYER)
-            StartFollow((Player*)pCreature->GetOwner());
-        Reset();
-    }
-
-	uint32 m_uiFollowTimer;
-	bool m_bFindTubers;
-	bool m_bFoundTubers;
-
-    void Reset()
-    {
-		m_uiFollowTimer = 1000;
-		m_bFindTubers = true;
-		m_bFoundTubers = false;
-    }
-
-	void Follow()
-	{
-		Unit* pOwner = GetLeaderForFollower();
-		m_creature->GetMotionMaster()->Clear();
-		m_creature->GetMotionMaster()->MoveFollow(pOwner, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
-	}
-
-	void SpellHit(Unit* pCaster, const SpellEntry* pSpell)
-    {
-        if (pCaster->GetTypeId() != TYPEID_PLAYER)
-            return;
-
-        if (pSpell->Id == SPELL_COMMAND_STICK && ((Player*)pCaster)->GetQuestStatus(QUEST_BLELEAF_TUBERS) == QUEST_STATUS_INCOMPLETE)
-        {
-			if (m_bFindTubers)
-			{
-				m_creature->GenericTextEmote("Snufflenose Gopher sniffs at the ground...", NULL, false);
-				m_bFindTubers = false;
-				if (GameObject* pGo = GetClosestGameObjectWithEntry(m_creature, GO_BLUELEAF_TUBER, 50.0f))
-					m_creature->GetMotionMaster()->MovePoint(1, pGo->GetPositionX()-1, pGo->GetPositionY(), pGo->GetPositionZ());
-			}
-			else if (!m_bFindTubers)
-			{
-				Follow();
-				m_bFindTubers = true;
-				//m_creature->GenericTextEmote("Snufflenose Gopher wiggles his whiskers at [INSERT PLAYERNAME].", NULL, false);
-				m_creature->GenericTextEmote("Snufflenose Gopher wiggles his whiskers.", NULL, false);		// FIX THIS! Should have player name, but can't do it like this atm.
-			}
-        }		
-	}
-
-	void MovementInform(uint32 /*uiType*/, uint32 uiPointId)
-    {
-        if (uiPointId == 1)
-		{
-			if (GameObject* pGo = GetClosestGameObjectWithEntry(m_creature, GO_BLUELEAF_TUBER, 3.0f))
-			{						
-				pGo->Respawn();
-				pGo->SetRespawnTime(60);
-                pGo->Refresh();
-				pGo->UpdateVisibilityAndView();
-				pGo->SetGoState(GO_STATE_READY);
-				pGo->SetLootState(GO_READY);				
-			}
-		}
-    }
-
-	void UpdateFollowerAI(const uint32 uiDiff)
-    {
-	}
-};
-
-CreatureAI* GetAI_npc_snufflenose_gopher(Creature* pCreature)
-{
-    return new npc_snufflenose_gopherAI(pCreature);
-}
-
 void AddSC_razorfen_kraul()
 {
     Script* pNewscript;
@@ -300,9 +210,4 @@ void AddSC_razorfen_kraul()
     pNewscript->Name = "npc_deaths_head_ward_keeper";
     pNewscript->GetAI = &GetAI_npc_deaths_head_ward_keeper;
     pNewscript->RegisterSelf();
-
-	pNewscript = new Script;
-	pNewscript->Name = "npc_snufflenose_gopher";
-	pNewscript->GetAI = &GetAI_npc_snufflenose_gopher;
-	pNewscript->RegisterSelf();
 }

@@ -28,7 +28,7 @@ enum Spells
 {
     SPELL_KNOCK_AWAY        = 10101,
     SPELL_STRIKE            = 18368,
-    SPELL_WAR_STOMP         = 16727,
+    SPELL_WAR_STOMP         = 16727
 };
 
 struct MANGOS_DLL_DECL boss_rattlegoreAI : public ScriptedAI
@@ -38,14 +38,14 @@ struct MANGOS_DLL_DECL boss_rattlegoreAI : public ScriptedAI
         Reset();
     }
 
-    //uint32 m_uiCallTimer;
+    uint32 m_uiCallTimer;
     uint32 m_uiKnockAwayTimer;
     uint32 m_uiStrikeTimer;
     uint32 m_uiWarStompTimer;
 
     void Reset()
     {
-        //m_uiCallTimer = 0;
+        m_uiCallTimer = 0;
         m_uiKnockAwayTimer = urand(6000,8000);
         m_uiStrikeTimer = urand(2000,4000);
         m_uiWarStompTimer = urand(12000,14000);
@@ -55,12 +55,6 @@ struct MANGOS_DLL_DECL boss_rattlegoreAI : public ScriptedAI
     {
     }
 
-	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
-    {
-        if (pSpell->Id == SPELL_KNOCK_AWAY && pTarget->GetTypeId() == TYPEID_PLAYER)
-			m_creature->getThreatManager().modifyThreatPercent(pTarget, -40);				//added threat reduction
-	}
-		
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -69,7 +63,7 @@ struct MANGOS_DLL_DECL boss_rattlegoreAI : public ScriptedAI
         // Knock Away
         if (m_uiKnockAwayTimer < uiDiff)
         {
-			DoCastSpellIfCan(m_creature->getVictim(), SPELL_KNOCK_AWAY);		
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_KNOCK_AWAY);
             m_uiKnockAwayTimer = urand(7000,9000);
         }
         else
@@ -93,18 +87,18 @@ struct MANGOS_DLL_DECL boss_rattlegoreAI : public ScriptedAI
         else
             m_uiWarStompTimer -= uiDiff;
 
-        //// Call Construct
-        //if (HealthBelowPct(33))
-        //{
-        //    if (m_uiCallTimer < uiDiff)
-        //    {
-        //        if (Creature* pConstruct = GetClosestCreatureWithEntry(m_creature, NPC_RISEN_CONSTRUCT, 100.0f))
-        //            pConstruct->AI()->AttackStart(m_creature->getVictim());
-        //        m_uiCallTimer = 30000;
-        //    }
-        //    else
-        //        m_uiCallTimer -= uiDiff;
-        //}
+        // Call Construct
+        if (HealthBelowPct(33))
+        {
+            if (m_uiCallTimer < uiDiff)
+            {
+                if (Creature* pConstruct = GetClosestCreatureWithEntry(m_creature, NPC_RISEN_CONSTRUCT, 100.0f))
+                    pConstruct->AI()->AttackStart(m_creature->getVictim());
+                m_uiCallTimer = 30000;
+            }
+            else
+                m_uiCallTimer -= uiDiff;
+        }
 
         DoMeleeAttackIfReady();
     }

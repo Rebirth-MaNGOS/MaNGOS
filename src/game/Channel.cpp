@@ -22,8 +22,6 @@
 #include "World.h"
 #include "SocialMgr.h"
 
-#include <sstream>
-
 Channel::Channel(const std::string& name, uint32 channel_id)
 : m_announce(true), m_moderate(false), m_name(name), m_flags(0), m_channelId(channel_id)
 {
@@ -575,26 +573,8 @@ void Channel::Say(ObjectGuid p, const char *what, uint32 lang)
         data << uint32(messageLength);
         data << what;
         data << uint8(plr ? plr->chatTag() : 0);
-       
 
-        // Add a packet with a faction tag so GMs can differentiate players by faction in the chat.
-        // For GMs we use the faction they've manually set.
-        Team team = plr->isGameMaster() ? plr->m_ChatTeam : plr->GetTeam(); 
-
-        std::stringstream ss("");
-        ss << "[" << (team == ALLIANCE ? "|cFF0000FFA|r" : "|cFFFF0000H|r") << "]: " << what;
-
-        WorldPacket gmData(SMSG_MESSAGECHAT, 1+4+8+4+m_name.size()+1+8+4+ss.str().size()+1+1);
-        gmData << uint8(CHAT_MSG_CHANNEL);
-        gmData << uint32(lang);
-        gmData << m_name;
-        gmData << uint32(0);
-        gmData << ObjectGuid(p);
-        gmData << uint32(ss.str().size() + 1);
-        gmData << ss.str();
-        gmData << uint8(plr ? plr->chatTag() : 0);
-
-        SendToAll(&data, !m_players[p].IsModerator() ? p : ObjectGuid(), &gmData);
+        SendToAll(&data, !m_players[p].IsModerator() ? p : ObjectGuid());
     }
 }
 
@@ -681,25 +661,12 @@ void Channel::SetOwner(ObjectGuid guid, bool exclaim)
     }
 }
 
-void Channel::SendToAll(WorldPacket *data, ObjectGuid p, WorldPacket* gmData)
+void Channel::SendToAll(WorldPacket *data, ObjectGuid p)
 {
     for(PlayerList::const_iterator i = m_players.begin(); i != m_players.end(); ++i)
-    {
         if (Player *plr = sObjectMgr.GetPlayer(i->first))
-        {
-            if (!plr->isGameMaster())
-            {
-                if (!p || !plr->GetSocial()->HasIgnore(p))
-                    plr->GetSession()->SendPacket(data);
-            }
-            else
-            {
-                if (!p || !plr->GetSocial()->HasIgnore(p))
-                    plr->GetSession()->SendPacket(gmData ? gmData : data);
-
-            }
-        }
-    }
+            if (!p || !plr->GetSocial()->HasIgnore(p))
+                plr->GetSession()->SendPacket(data);
 }
 
 void Channel::SendToOne(WorldPacket *data, ObjectGuid who)

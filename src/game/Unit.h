@@ -1228,8 +1228,6 @@ public:
         void ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag, uint32 procExtra, WeaponAttackType attType, SpellEntry const * procSpell, uint32 damage, time_t spellCastTime, bool isFirstTarget = true );
 		bool IsTriggeredOnlyOnFirstTarget(uint32 spellId);
 
-        void SetAOEImmunity(bool immune) { m_isAOEImmune = immune; }
-
         void HandleEmote(uint32 emote_id);                  // auto-select command/state
         void HandleEmoteCommand(uint32 emote_id);
         void HandleEmoteState(uint32 emote_id);
@@ -1909,8 +1907,6 @@ public:
         void CastSpell(float x, float y, float z, uint32 spell, TR triggered);
         template <typename TR>
         void CastSpell(float x, float y, float z, SpellEntry const* spell, TR triggered);
-
-        bool m_isAOEImmune;
         
     protected:
         // Set if no more procs should be done on this attack.

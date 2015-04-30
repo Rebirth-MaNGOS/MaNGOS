@@ -805,8 +805,7 @@ struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
 						m_uiSpeechTimer = 3000;
 						break;
 					case 3:
-						if (pTervosh)
-							DoScriptText(SAY_PROGRESS_1_TER, pTervosh);
+						DoScriptText(SAY_PROGRESS_1_TER, pTervosh);
 						m_uiSpeechTimer = 5000;
 						break;
 					case 4:
@@ -819,34 +818,28 @@ struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
 						m_uiSpeechTimer = 5000;
 						break;
 					case 6:						// hendel disapears
-						if (pPlayer)
-							pPlayer->GroupEventHappens(QUEST_MISSING_DIPLO_PT16, m_creature);
+						pPlayer->GroupEventHappens(QUEST_MISSING_DIPLO_PT16, m_creature);
 						m_creature->SetVisibility(VISIBILITY_OFF);
 						m_creature->HandleEmoteState(EMOTE_STATE_NONE);
-						if (pTervosh)
-							pTervosh->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
-						if (pJaina)
-							pJaina->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+
+						pTervosh->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						pJaina->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
 						m_uiSpeechTimer = 4000;
 						break;
 					case 7:
-						if (pTervosh)
-							DoScriptText(SAY_PROGRESS_3_TER, pTervosh);
+						DoScriptText(SAY_PROGRESS_3_TER, pTervosh);
 						m_uiSpeechTimer = 8000;
 						break;
 					case 8:
-						if (pTervosh)
-							DoScriptText(SAY_PROGRESS_4_TER, pTervosh);
+						DoScriptText(SAY_PROGRESS_4_TER, pTervosh);
 						m_uiSpeechTimer = urand(60000, 90000);			// long time until they despawn
 						break;
-					case 9:	// despawn event
-						if (pTervosh)
-							DoScriptText(SAY_BYE, pTervosh);
+					case 9:																// despawn event
+						DoScriptText(SAY_BYE, pTervosh);
 						m_uiSpeechTimer = 3000;
 						break;
 					case 10:
-						if (pJaina)
-							pJaina->HandleEmote(EMOTE_ONESHOT_WAVE);
+						pJaina->HandleEmote(EMOTE_ONESHOT_WAVE);
 						m_uiSpeechTimer = 5000;
 						break;
 					case 11:
@@ -862,21 +855,15 @@ struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
 						m_uiSpeechTimer = 2000;
 						break;
 					case 12:
-						if (pTervosh)
-						{
-							pTervosh->SetVisibility(VISIBILITY_OFF);
-							pTervosh->ForcedDespawn(1000);
-						}
-						if (pJaina)
-						{
-							pJaina->SetVisibility(VISIBILITY_OFF);
-							pJaina->ForcedDespawn(1000);
-						}
-						if (pPained)
-						{
-							pPained->SetVisibility(VISIBILITY_OFF);
-							pPained->ForcedDespawn(1000);
-						}
+						pTervosh->SetVisibility(VISIBILITY_OFF);
+						pTervosh->ForcedDespawn(1000);
+
+						pJaina->SetVisibility(VISIBILITY_OFF);
+						pJaina->ForcedDespawn(1000);
+
+						pPained->SetVisibility(VISIBILITY_OFF);
+						pPained->ForcedDespawn(1000);
+
 						m_creature->ForcedDespawn(5000);
 
 						m_bOutro = false;
@@ -1191,123 +1178,6 @@ CreatureAI* GetAI_npc_bogbean_plant_dummy(Creature* pCreature)
     return new npc_bogbean_plant_dummy(pCreature);
 }
 
-/*####
-# npc_krog
-####*/
-
-enum
-{
-	KROG_SAY_1					 = -1720055,
-	KROG_SAY_2					 = -1720056,
-	KAGORO_SAY					 = -1720057,
-
-	NPC_KAGORO					 = 4972,
-
-    QUEST_ID_SUSPICIOUS_HOOFPRINTS = 1268,
-};
-
-struct MANGOS_DLL_DECL npc_krogAI : public npc_escortAI
-{
-    npc_krogAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
-	
-	uint8 m_uiSpeechStep;
-	uint32 m_uiSpeechTimer;
-	bool m_bOutro;
-
-    void Reset()
-	{
-		m_bOutro = false;
-		m_uiSpeechStep = 1;
-		m_uiSpeechTimer = 0;
-	}
-
-	void WaypointReached(uint32 uiPointId)
-    {
-	}
-
-	void JustStartedEscort()
-    {
-    }
-
-	void StartOutro()
-	{
-		DoScriptText(KROG_SAY_1, m_creature);
-		m_creature->SummonCreature(NPC_KAGORO, -3156.64f, -2900.26f, 34.0025f,0,TEMPSUMMON_DEAD_DESPAWN, 60000, true);
-		m_bOutro = true; 
-		m_uiSpeechTimer = 5000;
-		m_uiSpeechStep = 1;
-		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
-	}
-
-	void UpdateAI(const uint32 uiDiff)
-    {
-		npc_escortAI::UpdateAI(uiDiff);
-
-		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
-        DoMeleeAttackIfReady();
-	}
-
-	void UpdateEscortAI(const uint32 uiDiff)
-    {
-		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
-		{
-			if (!m_uiSpeechStep)
-				return;
-		
-			if (m_uiSpeechTimer <= uiDiff)
-            {
-				Creature* pKagoro = GetClosestCreatureWithEntry(m_creature, NPC_KAGORO, 10.0f);
-
-                switch(m_uiSpeechStep)
-                {
-                    case 1:
-                        DoScriptText(KROG_SAY_2, m_creature);
-						m_uiSpeechTimer = 4000;
-                        break;
-					case 2:
-						DoScriptText(KAGORO_SAY, pKagoro);
-                        m_uiSpeechTimer = 3000;
-                        break;
-					case 3:
-						pKagoro->HandleEmote(EMOTE_ONESHOT_SALUTE);
-						m_uiSpeechTimer = 3000;
-                        break;
-					case 4:
-						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
-						m_bOutro = false;
-						break;
-                    /*default:
-                        m_uiSpeechStep = 0;
-                        return;*/
-                }
-                ++m_uiSpeechStep;
-            }
-            else
-                m_uiSpeechTimer -= uiDiff;
-		}
-	}
-};
-
-CreatureAI* GetAI_npc_krog(Creature* pCreature)
-{
-    return new npc_krogAI(pCreature);
-}
-
-bool OnQuestRewarded_npc_krog(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
-{
-	if (pQuest->GetQuestId() == QUEST_ID_SUSPICIOUS_HOOFPRINTS)
-    {
-		if (npc_krogAI* pEscortAI = dynamic_cast<npc_krogAI*>(pCreature->AI()))
-		{
-			//pEscortAI->Start(false, pPlayer, pQuest);
-			pEscortAI->StartOutro();
-		}
-	}
-	return true;
-}
-
 /* AddSC */
 
 void AddSC_dustwallow_marsh()
@@ -1365,10 +1235,4 @@ void AddSC_dustwallow_marsh()
 	pNewScript->Name = "npc_bogbean_plant_dummy";
 	pNewScript->GetAI = &GetAI_npc_bogbean_plant_dummy;
 	pNewScript->RegisterSelf();
-
-	pNewScript = new Script;
-    pNewScript->Name = "npc_krog";
-    pNewScript->GetAI = &GetAI_npc_krog;
-    pNewScript->pQuestRewardedNPC = &OnQuestRewarded_npc_krog;
-    pNewScript->RegisterSelf();
 }

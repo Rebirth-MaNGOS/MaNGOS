@@ -180,7 +180,6 @@ struct MANGOS_DLL_DECL boss_guardAI : public ScriptedAI
                     m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
                     m_creature->addUnitState(UNIT_STAT_ROOT);
-                    m_creature->GetMotionMaster()->MoveIdle();
 				}
 			}
 			else

@@ -45,6 +45,6 @@ class ChannelMgr
 class AllianceChannelMgr : public ChannelMgr {};
 class HordeChannelMgr    : public ChannelMgr {};
 
-ChannelMgr* channelMgr(Team team, Player* player);
+ChannelMgr* channelMgr(Team team);
 
 #endif

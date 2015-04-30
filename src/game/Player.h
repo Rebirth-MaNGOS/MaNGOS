@@ -951,7 +951,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isGMVisible() const { return !(m_ExtraFlags & PLAYER_EXTRA_GM_INVISIBLE); }
         void SetGMVisible(bool on);
         void SetPvPDeath(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_PVP_DEATH; else m_ExtraFlags &= ~PLAYER_EXTRA_PVP_DEATH; }
-        Team m_ChatTeam; // Used to keep track of which faction's chat a gm is in.
 
         // 0 = own auction, -1 = enemy auction, 1 = goblin auction
         int GetAuctionAccessMode() const { return m_ExtraFlags & PLAYER_EXTRA_AUCTION_ENEMY ? -1 : (m_ExtraFlags & PLAYER_EXTRA_AUCTION_NEUTRAL ? 1 : 0); }

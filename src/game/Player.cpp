@@ -61,7 +61,6 @@
 #include "SocialMgr.h"
 #include "Mail.h"
 #include "WaypointMovementGenerator.h"
-#include "MoveMap.h"
 
 #include <G3D/Matrix3.h>
 #include <G3D/Vector3.h>
@@ -538,8 +537,6 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 		m_sentinel = nullptr;
 
 	m_warlockPetBeforeDeath = PET_NO_PET;
-
-    m_ChatTeam = ALLIANCE;
 }
 
 Player::~Player ()
@@ -935,7 +932,7 @@ uint32 Player::EnvironmentalDamage(EnvironmentalDamageType type, uint32 damage)
 
     if(type==DAMAGE_FALL && !isAlive())                     // DealDamage not apply item durability loss at self damage
     {
-        DEBUG_LOG("We fell to our death, losing 10%% durability");
+        DEBUG_LOG("We fell to our death, losing 10% durability");
         DurabilityLossAll(0.10f,false);
         // durability lost message
         WorldPacket data2(SMSG_DURABILITY_DAMAGE_DEATH, 0);
@@ -1214,27 +1211,16 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 float ground_z = GetMap()->GetTerrain()->GetHeight(x, y, MAX_HEIGHT);
                 float floor_z = GetMap()->GetTerrain()->GetHeight(x, y, z);
 
-                if(ground_z > z || floor_z > z)
+                if(fabs(z - floor_z) < fabs(ground_z - z))
                 {
-                    if(fabs(z - floor_z) < fabs(ground_z - z))
-                    {
-                        z = floor_z;
-                    }
-                    else
-                    {
-                        z = ground_z;
-                    }
-                }
-               
-                if(!m_movementInfo.HasMovementFlag(MOVEFLAG_FALLING))
-                {
-                    MonsterMoveByPath(x, y, z+0.5f, chargeTimer, true, false);
+                    z = floor_z;
                 }
                 else
                 {
-                    MonsterMove(x, y, z+0.5f, 0);
+                    z = ground_z;
                 }
-
+               
+                MonsterMoveByPath(x, y, z+0.2f, chargeTimer, true, false);
                 m_chargeTimer = chargeTimer;
                 m_isCharging = false;              
             }
@@ -4686,7 +4672,7 @@ void Player::CleanupChannels()
         Channel* ch = *m_channels.begin();
         m_channels.erase(m_channels.begin());               // remove from player's channel list
         ch->Leave(GetObjectGuid(), false);                  // not send to client, not remove from player's channel list
-        if (ChannelMgr* cMgr = channelMgr(GetTeam(), this))
+        if (ChannelMgr* cMgr = channelMgr(GetTeam()))
             cMgr->LeftChannel(ch->GetName());               // deleted channel if empty
 
     }
@@ -4702,7 +4688,7 @@ void Player::UpdateLocalChannels(uint32 newZone )
     if(!current_zone)
         return;
 
-    ChannelMgr* cMgr = channelMgr(GetTeam(), this);
+    ChannelMgr* cMgr = channelMgr(GetTeam());
     if(!cMgr)
         return;
 
@@ -15458,7 +15444,6 @@ void Player::SendSavedInstances()
     //Send opcode 811. true or false means, whether you have current raid instances
     data.Initialize(SMSG_UPDATE_INSTANCE_OWNERSHIP);
     data << uint32(hasBeenSaved);
-
     GetSession()->SendPacket(&data);
 
     if(!hasBeenSaved)

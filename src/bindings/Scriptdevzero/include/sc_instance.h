@@ -70,6 +70,10 @@ class MANGOS_DLL_DECL ScriptedInstance : public InstanceData
         // set rare boss chance to be in instance
         bool SetRareBoss(Creature* pCreature, uint32 uiChance);
 
+        // Lava damage
+        void SetLavaState(Player* pPlayer, bool enter);
+        void DoLavaDamage(const uint32 uiDiff);
+
 		Player* GetRandomLivingPlayerInInstance();
 
     protected:

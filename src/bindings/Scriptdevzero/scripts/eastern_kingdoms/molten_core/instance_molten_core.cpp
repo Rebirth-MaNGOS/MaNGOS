@@ -274,12 +274,14 @@ void instance_molten_core::StopSpawningAllTrashMobs(uint32 type)
 	}
 }
 
-void instance_molten_core::OnPlayerEnter(Player* /*pPlayer*/)
+void instance_molten_core::OnPlayerEnter(Player* pPlayer)
 {
+    SetLavaState(pPlayer, true);
 }
 
-void instance_molten_core::OnPlayerLeave(Player* /*pPlayer*/)
+void instance_molten_core::OnPlayerLeave(Player* pPlayer)
 {
+    SetLavaState(pPlayer, false);
 }
 
 void instance_molten_core::OnObjectCreate(GameObject* pGo)
@@ -548,6 +550,8 @@ void instance_molten_core::Update(uint32 uiDiff)
         else
             m_uiMajordomoRespawnTimer -= uiDiff;
     }
+
+    DoLavaDamage(uiDiff);
 }
 
 void instance_molten_core::SetData(uint32 uiType, uint32 uiData)

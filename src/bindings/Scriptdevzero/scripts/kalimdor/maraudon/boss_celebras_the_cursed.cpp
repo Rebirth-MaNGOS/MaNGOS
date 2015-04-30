@@ -74,7 +74,7 @@ struct MANGOS_DLL_DECL boss_celebras_the_cursedAI : public ScriptedAI
         if (m_pInstance)
             m_pInstance->SetData(TYPE_CELEBRAS_THE_CURSED, DONE);
 
-		//m_creature->SummonCreature(NPC_CELEBRAS_GHOST,m_creature->GetPositionX()+3,m_creature->GetPositionY()+3,m_creature->GetPositionZ()+1,0,TEMPSUMMON_TIMED_DESPAWN,1800000);
+		m_creature->SummonCreature(NPC_CELEBRAS_GHOST,m_creature->GetPositionX()+3,m_creature->GetPositionY()+3,m_creature->GetPositionZ()+1,0,TEMPSUMMON_TIMED_DESPAWN,1800000);
     }
 
     void UpdateAI(const uint32 uiDiff)

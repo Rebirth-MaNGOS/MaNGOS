@@ -225,7 +225,7 @@ GroupQueueInfo * BattleGroundQueue::AddGroup(Player *leader, Group* grp, BattleG
                 }
                 else
                 {
-                    ChannelMgr *chmgr = channelMgr(leader->GetTeam(), leader);
+                    ChannelMgr *chmgr = channelMgr(leader->GetTeam());
                     Channel* announcement = chmgr->GetChannel("rebirth_pvp", leader);
                     if (announcement)
                     {

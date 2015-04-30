@@ -61,12 +61,14 @@ void instance_blackrock_depths::Initialize()
     m_goSecretSafe = 0;
 }
 
-void instance_blackrock_depths::OnPlayerEnter(Player* /*pPlayer*/)
+void instance_blackrock_depths::OnPlayerEnter(Player* pPlayer)
 {
+    SetLavaState(pPlayer, true);
 }
 
-void instance_blackrock_depths::OnPlayerLeave(Player* /*pPlayer*/)
+void instance_blackrock_depths::OnPlayerLeave(Player* pPlayer)
 {
+    SetLavaState(pPlayer, false);
 }
 
 void instance_blackrock_depths::OnCreatureCreate(Creature* pCreature)
@@ -449,16 +451,12 @@ void instance_blackrock_depths::SetData(uint32 uiType, uint32 uiData)
                 {
                     if (Creature* pTarget = instance->GetCreature(*itr))
                     {
-                        pTarget->SetRespawnDelay(7200);
-						if (!pTarget->isAlive())
-						{
-							pTarget->SetRespawnTime(7200);
-							pTarget->SaveRespawnTime();
-						}
-					}
-				}
-			}
-		}
+                        pTarget->SetRespawnTime(7200);
+                        pTarget->SaveRespawnTime();
+                    }
+                }
+            }
+        }
         break;
     case TYPE_IRON_HALL:
         m_auiEncounter[9] = uiData;
@@ -652,6 +650,8 @@ void instance_blackrock_depths::Update(uint32 uiDiff)
 
     if (GetData(TYPE_GIANT_DOOR) == DONE)
         HandleGameObject(GO_SHADOW_GIANT_DOOR, false);
+
+    DoLavaDamage(uiDiff);
 }
 
 InstanceData* GetInstanceData_instance_blackrock_depths(Map* pMap)

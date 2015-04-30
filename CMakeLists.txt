@@ -21,9 +21,6 @@ set(MANGOS_VERSION 0.6.1)
 # CMake policies
 cmake_minimum_required(VERSION 2.8)
 
-# Export compilation flags for use with YouCompleteMe in vim.
-set( CMAKE_EXPORT_COMPILE_COMMANDS 1 )
-
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   ${CMAKE_SOURCE_DIR}/cmake

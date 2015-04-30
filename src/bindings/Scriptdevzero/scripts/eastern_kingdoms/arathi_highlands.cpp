@@ -252,6 +252,7 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 {
     npc_shakes_obreenAI(Creature* pCreature) : npc_escortAI(pCreature) 
 	{ 
+		QuestEndReset();
 		Reset(); 
 	}
 
@@ -265,9 +266,7 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 
 	bool m_bNagaSay;
 
-    void Reset() 
-	{ 
-	}
+    void Reset() { }
 
 	void QuestEndReset()				// make sure another player can do the quest after it's done
 	{
@@ -322,8 +321,10 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 	void JustDied(Unit* /*pKiller*/)			// fail quest if Shakes dies
 	{
 		if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
+        {
 			pPlayer->FailQuest(QUEST_DEATH_FROM_BELOW);
-		QuestEndReset();			// stop waves
+			m_uiEventTimer = 0;						// don't spawn more waves
+        }
 	}
 
 	void SummonedCreatureJustDied(Creature* pSummoned)
@@ -338,16 +339,17 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
         {
 			if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))			// give quest credit when all waves are dead
 				pPlayer->AreaExploredOrEventHappens(QUEST_DEATH_FROM_BELOW);
-		}
+
+			QuestEndReset();			// reset so next player can do quest again
+        }
 	}
 
 	ObjectGuid DoStartEvent(ObjectGuid player_guid)
 	{
-		QuestEndReset();			// reset so next player can do quest again
 		if (m_uiPlayerGUID)
             return ObjectGuid();
 
-		m_uiEventTimer  =  15000;
+		m_uiEventTimer  = 15000;
 
 		m_uiPlayerGUID = player_guid;
         
@@ -357,15 +359,7 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 	void UpdateAI(const uint32 uiDiff)
 	{
 		npc_escortAI::UpdateAI(uiDiff);
-		//return since we have no target
-		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-			return;
 
-		DoMeleeAttackIfReady();
-	}
-
-	void UpdateEscortAI(const uint32 uiDiff)
-    {
 		if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
         {
 			if (m_uiEventTimer)					// summon waves
@@ -399,6 +393,11 @@ struct MANGOS_DLL_DECL npc_shakes_obreenAI : public npc_escortAI
 				}
 			}
 		}
+		//return since we have no target
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+			return;
+
+		DoMeleeAttackIfReady();
 	}
 };
 
@@ -423,125 +422,6 @@ CreatureAI* GetAI_npc_shakes_obreen(Creature* pCreature)
     return new npc_shakes_obreenAI(pCreature);
 }
 
-/*####
-# npc_gormul
-####*/
-
-enum
-{
-	GORMUL_SAY_1					 = -1720049,
-	GORMUL_SAY_2					 = -1720050,
-
-	SPELL_GUILE_OF_THE_RAPTOR		 = 4153,
-
-    QUEST_ID_GUILE_OF_THE_RAPTOR	 = 702,
-};
-
-struct MANGOS_DLL_DECL npc_gormulAI : public npc_escortAI
-{
-    npc_gormulAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
-	
-	uint8 m_uiSpeechStep;
-	uint32 m_uiSpeechTimer;
-	bool m_bOutro;
-
-    void Reset()
-	{
-		m_bOutro = false;
-		m_uiSpeechStep = 1;
-		m_uiSpeechTimer = 0;
-	}
-
-	void WaypointReached(uint32 uiPointId)
-    {
-	}
-
-	void JustStartedEscort()
-    {
-    }
-
-	void Aggro(Unit* /*pWho*/)
-    {
-        m_creature->CastSpell(m_creature, SPELL_GUILE_OF_THE_RAPTOR, true);
-    }
-
-	void StartOutro()
-	{
-		m_bOutro = true; 
-		m_uiSpeechTimer = 3000;
-		m_uiSpeechStep = 1;
-		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
-		m_creature->CastSpell(m_creature, SPELL_GUILE_OF_THE_RAPTOR, false);
-	}
-
-	void UpdateAI(const uint32 uiDiff)
-    {
-		npc_escortAI::UpdateAI(uiDiff);
-
-		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
-        DoMeleeAttackIfReady();
-	}
-
-	void UpdateEscortAI(const uint32 uiDiff)
-    {
-		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
-		{
-			if (!m_uiSpeechStep)
-				return;
-		
-			if (m_uiSpeechTimer <= uiDiff)
-            {
-                switch(m_uiSpeechStep)
-                {
-                    case 1:
-                        m_creature->GenericTextEmote("Gor'mul watches as his blood begins to stir, and the guile of the raptor slips through him.", NULL, false);
-						m_uiSpeechTimer = 5000;
-                        break;
-					case 2:
-						DoScriptText(GORMUL_SAY_1, m_creature);
-                        m_uiSpeechTimer = 3000;
-                        break;
-					case 3:
-						DoScriptText(GORMUL_SAY_2, m_creature);
-                        m_uiSpeechTimer = 2500;
-						break;
-					case 4:
-						m_creature->HandleEmote(EMOTE_ONESHOT_FLEX);
-						m_uiSpeechTimer = 3000;
-						break;
-					case 5:
-						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
-						m_bOutro = false;
-						break;
-                    /*default:
-                        m_uiSpeechStep = 0;
-                        return;*/
-                }
-                ++m_uiSpeechStep;
-            }
-            else
-                m_uiSpeechTimer -= uiDiff;
-		}
-	}
-};
-
-CreatureAI* GetAI_npc_gormul(Creature* pCreature)
-{
-    return new npc_gormulAI(pCreature);
-}
-
-bool OnQuestRewarded_npc_gormul(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
-{
-	if (pQuest->GetQuestId() == QUEST_ID_GUILE_OF_THE_RAPTOR)
-    {
-		if (npc_gormulAI* pEscortAI = dynamic_cast<npc_gormulAI*>(pCreature->AI()))
-			pEscortAI->StartOutro();
-	}
-	return true;
-}
-
 void AddSC_arathi_highlands()
 {
     Script * pNewscript;
@@ -562,11 +442,5 @@ void AddSC_arathi_highlands()
     pNewscript->Name = "npc_shakes_obreen";
     pNewscript->GetAI = &GetAI_npc_shakes_obreen;
     pNewscript->pQuestAcceptNPC = &QuestAccept_npc_shakes_obreen;
-    pNewscript->RegisterSelf();
-
-	pNewscript = new Script;
-    pNewscript->Name = "npc_gormul";
-    pNewscript->GetAI = &GetAI_npc_gormul;
-    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_gormul;
     pNewscript->RegisterSelf();
 }
