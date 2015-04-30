@@ -148,7 +148,7 @@ void ExclusivePoolMgr::CheckEvents()
 
 void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
 {
-    sLog.outBasic("Shuffling exclusive pool %u.", pool.poolID);
+    sLog.outBasic("ExclusivePool: Shuffling pool %u.", pool.poolID);
 
     // Get the spawn points and shuffle them.
     std::vector<ExclusivePoolSpot> poolSpotList;
@@ -191,6 +191,8 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
                                     return false;
                             });
 
+                            // If we found the spot on which the living creature is standing
+                            // we remove that spot since it's occupied.
                             if (itr != poolSpotList.end())
                                 poolSpotList.erase(itr);
 
@@ -199,12 +201,12 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
                             foundAlive = true;
                             break;
                         }
-                        else if (pCreature->HasLootRecipient())
+                        else if (pCreature->HasFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE))
                         {
                             // If the creature is being looted we delay the handling
                             // for this pool by 10 minutes.
-                            pool.currentRespawnTime += 10 * 60;
-                            sLog.outBasic("A the creature with guid %u in pool %u is currently being looted. Delaying the handling by 10 minutes.", currentCreature.GetCounter(), pool.poolID);
+                            pool.currentRespawnTime +=  10 * 60;
+                            sLog.outBasic("ExclusivePool: The creature with guid %u in pool %u is currently being looted. Delaying the handling by 10 minutes.", currentCreature.GetCounter(), pool.poolID);
                             return;
                         }
                     }
@@ -245,6 +247,10 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
         
         sObjectMgr.AddCreatureToGrid(itr->GetCounter(), &rData);
         Creature::SpawnInMaps(itr->GetCounter(), &rData);
+
+        // Update the creature entry in the database.
+        WorldDatabase.PQuery("UPDATE creature SET map=%u, position_x=%f, position_y=%f, position_z=%f WHERE guid=%u",
+                             spot.mapID, spot.x, spot.y, spot.z, itr->GetCounter());
 
         // Make sure that all other creatures in the group are despawned.
         DespawnAllExcept(poolObjectList, *itr);
