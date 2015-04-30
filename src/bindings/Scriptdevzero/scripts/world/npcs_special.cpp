@@ -912,7 +912,7 @@ enum
     TEXT_ID_PROGRESS        = 4715
 };
 
-#define GOSSIP_ITEM_GRANT   "You have thought well, spirit. I ask you to grant me the strength of your body and the strength of your heart."
+#define GOSSIP_ITEM_GRANT   "You have fought well, spirit. I ask you to grant me the strength of your body and the strength of your heart."
 
 bool GossipHello_npc_lunaclaw_spirit(Player* pPlayer, Creature* pCreature)
 {

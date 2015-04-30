@@ -61,6 +61,8 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
 		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
         Reset();
         lSummonList.clear();
+
+        m_creature->CastSpell(m_creature, SPELL_MARK_OF_NATURE_AURA, true);
     }
 
     uint32 m_uiEventCounter;
@@ -79,14 +81,13 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
         m_uiNoxiousBreathTimer = 8000;
         m_uiTailsweepTimer = 4000;
 
-        m_creature->RemoveAurasDueToSpell(SPELL_MARK_OF_NATURE_AURA);
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
+        
+        m_creature->CastSpell(m_creature, SPELL_MARK_OF_NATURE_AURA, true);
     }
 
     void EnterCombat(Unit* pEnemy)
     {
-        DoCastSpellIfCan(m_creature, SPELL_MARK_OF_NATURE_AURA, CAST_TRIGGERED);
-
         ScriptedAI::EnterCombat(pEnemy);
     }
 
@@ -223,13 +224,9 @@ struct MANGOS_DLL_DECL boss_emerissAI : public boss_emerald_dragonAI
     // Corruption of Earth at 75%, 50% and 25%
     bool DoSpecialDragonAbility()
     {
-        if (DoCastSpellIfCan(m_creature->getVictim(), SPELL_CORRUPTION_OF_EARTH) == CAST_OK)
-        {
-            DoScriptText(SAY_CAST_CORRUPTION, m_creature);
-
-            // Successfull cast
-            return true;
-        }
+        m_creature->CastSpell(m_creature->getVictim(), SPELL_CORRUPTION_OF_EARTH, true);
+        
+        DoScriptText(SAY_CAST_CORRUPTION, m_creature);
 
         return false;
     }
@@ -311,9 +308,11 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
         fO = pPlayer->GetOrientation();
         if (Creature* pShade = m_creature->SummonCreature(NPC_SPIRIT_SHADE, fX, fY, fZ, fO, TEMPSUMMON_DEAD_DESPAWN, 0))
         {
+            pShade->SetVisibility(VISIBILITY_OFF);
             pShade->CastSpell(pShade, SPELL_SPIRIT_SHADE_VISUAL, true);					// looks weird in combat log
             pShade->SetDisplayId(pPlayer->GetDisplayId());
             pShade->GetMotionMaster()->MoveFollow(m_creature, 1.0f, float(M_PI/2));
+            pShade->SetVisibility(VISIBILITY_ON);
         }
     }
 
@@ -353,7 +352,7 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
         return false;
     }
 	
-    bool UpdateDragonAI(const uint32 uiDiff)
+    bool UpdateDragonAI(const uint32 /*uiDiff*/)
     {
 		if (!m_creature->HasAura(SPELL_SHADOW_BOLT_WHIRL))
 			DoCastSpellIfCan(m_creature, SPELL_SHADOW_BOLT_WHIRL, CAST_TRIGGERED);		// reapply aura if boss somehow doesn't have it
@@ -372,6 +371,7 @@ struct MANGOS_DLL_DECL mob_spirit_shadeAI : public ScriptedAI
     mob_spirit_shadeAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
+        m_creature->SetAOEImmunity(true);
         Reset();
     }
 
@@ -384,30 +384,6 @@ struct MANGOS_DLL_DECL mob_spirit_shadeAI : public ScriptedAI
 
         if (m_creature->IsTemporarySummon())
             m_uiLethonGUID = ((TemporarySummon*)m_creature)->GetSummonerGuid();
-    }
-
-    bool IsAOESpell(const SpellEntry* pSpell)
-    {
-        if (!pSpell)
-            return false;
-
-        if (IsAreaOfEffectSpell(pSpell))
-            return true;
-
-        for(uint8 i = 0; i < MAX_EFFECT_INDEX; ++i)
-        {
-            if (IsAreaAuraEffect(pSpell->Effect[i]))
-                return true;
-        }
-
-        return false;
-    }
-   
-	void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)				// not currently working
-    {
-        if (Spell* pSpell = pDoneBy->GetCurrentSpell(CURRENT_GENERIC_SPELL))
-            if (IsAOESpell(pSpell->m_spellInfo))
-                uiDamage = 0;
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -552,8 +528,15 @@ struct MANGOS_DLL_DECL boss_taerarAI : public boss_emerald_dragonAI
         if (m_uiArcaneBlastTimer < uiDiff)
         {
             Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-            if (pTarget && DoCastSpellIfCan(pTarget, SPELL_ARCANE_BLAST) == CAST_OK)
-                m_uiArcaneBlastTimer = urand(7000, 12000);
+            if (pTarget) 
+            {
+                SpellAuraHolder* pHolder = pTarget->GetSpellAuraHolder(24778);
+                if (pHolder)
+                    pTarget->RemoveSpellAuraHolder(pHolder, AURA_REMOVE_BY_CANCEL);
+
+                if (DoCastSpellIfCan(pTarget, SPELL_ARCANE_BLAST) == CAST_OK)
+                    m_uiArcaneBlastTimer = urand(7000, 12000);
+            }
         }
         else
             m_uiArcaneBlastTimer -= uiDiff;
@@ -701,7 +684,11 @@ CreatureAI* GetAI_boss_ysondre(Creature* pCreature)
 // Summoned druid script
 struct MANGOS_DLL_DECL mob_demented_druidAI : public ScriptedAI
 {
-    mob_demented_druidAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    mob_demented_druidAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{
+		m_creature->SetAOEImmunity(true);
+		Reset();
+	}
 
     uint32 m_uiCurseOfThornsTimer;
     uint32 m_uiMoonfireTimer;

@@ -1613,6 +1613,18 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 m_modifier.periodictime = 30*IN_MILLISECONDS;
                 m_periodicTimer = m_modifier.periodictime;
                 return;
+			case 16468:                              // Mother's Milk
+                // expected to tick with 30 sec period (tick part see in Aura::PeriodicTick)
+                m_isPeriodic = true;
+                m_modifier.periodictime = 30*IN_MILLISECONDS;
+                m_periodicTimer = m_modifier.periodictime;
+                return;
+			case 24596:								// Intoxicating Venom
+				// expected to tick with 15 sec period (tick part see in Aura::PeriodicTick)
+                m_isPeriodic = true;
+                m_modifier.periodictime = 15*IN_MILLISECONDS;
+                m_periodicTimer = m_modifier.periodictime;
+				return;
             case 12292:								// Warriors' sweeping strikes should not be removed on stance change.
             {
                 SpellAuraHolder* holder = GetTarget()->GetSpellAuraHolder(GetId());
@@ -3103,19 +3115,30 @@ void Aura::HandleModCharm(bool apply, bool Real)
                 {
                     // creature with pet number expected have class set
                     if(target->GetByteValue(UNIT_FIELD_BYTES_0, 1)==0)
-                    {
-                        if(cinfo->unit_class==0)
-                            sLog.outErrorDb("Creature (Entry: %u) have unit_class = 0 but used in charmed spell, that will be result client crash.",cinfo->Entry);
-                        else
-                            sLog.outError("Creature (Entry: %u) have unit_class = %u but at charming have class 0!!! that will be result client crash.",cinfo->Entry,cinfo->unit_class);
-
                         target->SetByteValue(UNIT_FIELD_BYTES_0, 1, CLASS_MAGE);
-                    }
 
                     //just to enable stat window
                     charmInfo->SetPetNumber(sObjectMgr.GeneratePetNumber(), true);
                     //if charmed two demons the same session, the 2nd gets the 1st one's name
                     target->SetUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, uint32(time(NULL)));
+                    
+                    // Set a bunch of flags to make the demon behave as a pet.
+                    target->SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
+                    target->SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, 0);
+                    target->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
+                    target->SetByteValue(UNIT_FIELD_BYTES_0, 2, GENDER_NONE);
+                    target->SetSheath(SHEATH_STATE_MELEE);
+                    target->SetByteValue(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_UNK3 | UNIT_BYTE2_FLAG_AURAS | UNIT_BYTE2_FLAG_UNK5 );
+                    target->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE | UNIT_FLAG_RESTING | UNIT_FLAG_RENAME);
+
+                    
+                    target->GetMotionMaster()->MoveFollow(caster, 0.5f, 3.14f / 6.f);
+                    
+                    caster->SetPetGuid(target->GetObjectGuid());
+                    
+                    // Make sure that the caster doesn't get combat bugged.
+                    target->DeleteThreatList();
+                    target->getHostileRefManager().deleteReferences();
                 }
             }
         }
@@ -3126,15 +3149,15 @@ void Aura::HandleModCharm(bool apply, bool Real)
 
             playerCharmInfo->SetPetNumber(sObjectMgr.GeneratePetNumber(), true);
 
-			// A player afflicted by the Chromatic Mutation at Chromaggus should be aggressive.
-			if (GetId() == 23174)
-			{
-				playerCharmInfo->SetReactState(REACT_AGGRESSIVE);
-			}
-			else
-			{
-				playerCharmInfo->SetReactState(REACT_DEFENSIVE);
-			}
+            // A player afflicted by the Chromatic Mutation at Chromaggus should be aggressive.
+            if (GetId() == 23174)
+            {
+                playerCharmInfo->SetReactState(REACT_AGGRESSIVE);
+            }
+            else
+            {
+                playerCharmInfo->SetReactState(REACT_DEFENSIVE);
+            }
 
             Player* targetPlayer = dynamic_cast<Player*>(target);
 
@@ -4157,6 +4180,18 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     m_modifier.m_amount *= 1.17;
         }
     }
+    else
+    {
+        // Handle Doomguard Summoning for the Curse of Doom.
+        if (GetId() == 603)
+        {
+            if (target)
+            {
+                if (urand(0, 99) < 5 && (int32) target->GetHealth() <= m_modifier.m_amount)
+                    target->CastSpell(target, 18662, true);
+            }
+        }
+    }
 
     // Temp fix for Hakkar's Blood Siphon - disable control for player
     if (GetId() == 24323 && caster->GetTypeId() == TYPEID_PLAYER)
@@ -4711,7 +4746,7 @@ void Aura::HandleAuraModIncreaseHealth(bool apply, bool Real)
 	case 23782: // Lifegiving Gem
 	{
 		if (apply)
-			m_modifier.m_amount = float(target->GetHealth() * 0.15f);
+			m_modifier.m_amount = float(target->GetMaxHealth() * 0.15f);
 	}
     }
 
@@ -5412,8 +5447,8 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                 // Power Word: Shield
                 if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000001))
                 {
-                    //+30% from +healing bonus
-                    DoneActualBenefit = caster->SpellBaseHealingBonusDone(GetSpellSchoolMask(spellProto)) * 0.3f;
+                    //+10% from +healing bonus
+                    DoneActualBenefit = caster->SpellBaseHealingBonusDone(GetSpellSchoolMask(spellProto)) * 0.1f;
                     break;
                 }
                 break;
@@ -5951,6 +5986,11 @@ void Aura::PeriodicTick()
     case SPELL_AURA_PERIODIC_TRIGGER_SPELL:
     {
         TriggerSpell();
+
+        // Aura of Nature for the Emerald Dragon.
+        if (GetId() == 25041)
+            target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
+
         break;
     }
     default:
@@ -5993,6 +6033,21 @@ void Aura::PeriodicDummyTick()
             if (roll_chance_i(33))
                 target->CastSpell(target,m_modifier.m_amount,true,NULL,this);
             return;
+		case 16468:                                  // Mother's Milk
+            if (roll_chance_i(33))
+			{
+				target->CastSpell(target, 16469, true, NULL, this); // Web Explosion on the player
+				target->CastSpell(target, 15474, true, NULL, this); // Web Explosion on nearby players				
+			}
+            return;
+		case 24596:                                  // Intoxicating Venom
+			int32 r = irand(0, 99);
+
+            if (r <= 30)
+				target->CastSpell(target, 6869, true, NULL, this); //Cast Fall Down on the player
+			else if (r >= 70 && r <= 90)
+				target->CastSpell(target, 22691, true, NULL, this); // Disarm the player		
+			return;
         }
         break;
     }

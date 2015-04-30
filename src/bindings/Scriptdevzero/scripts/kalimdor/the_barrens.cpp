@@ -1449,10 +1449,7 @@ bool OnQuestRewarded_npc_feegly_the_exiled(Player* pPlayer, Creature* pCreature,
 	if (pQuest->GetQuestId() == QUEST_ID_THE_TEAR_OF_THE_MOONS)
     {
 		if (npc_feegly_the_exiledAI* pEscortAI = dynamic_cast<npc_feegly_the_exiledAI*>(pCreature->AI()))
-		{
-			pEscortAI->Start(false, pPlayer, pQuest);
 			pEscortAI->StartOutro();
-		}
 	}
 	return true;
 }

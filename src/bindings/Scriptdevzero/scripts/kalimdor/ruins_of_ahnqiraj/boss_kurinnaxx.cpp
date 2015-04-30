@@ -82,6 +82,13 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
             m_pInstance->SetData(TYPE_KURINNAXX, DONE);
     }
 
+	void SpellHit(Unit* pCaster, SpellEntry const* pSpell) // emote if he enrages
+    {
+        if (pSpell->Id == SPELL_ENRAGE)
+			m_creature->GenericTextEmote("Kurinnaxx goes into a frenzy!", NULL, false);
+	}
+
+
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -110,7 +117,7 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
 					pTarget->CastSpell(pTarget, SPELL_SAND_TRAP, true, 0, 0, m_creature->GetObjectGuid());
                     m_bIsSandTrap = true;
                 }
-                m_uiSandTrapTimer = 3000;
+                m_uiSandTrapTimer = 5000;//3000;
             }
             else
             {

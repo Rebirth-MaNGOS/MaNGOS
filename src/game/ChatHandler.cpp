@@ -426,7 +426,7 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
             if(msg.empty())
                 break;
 
-            if(ChannelMgr* cMgr = channelMgr(_player->GetTeam()))
+            if(ChannelMgr* cMgr = channelMgr(_player->GetTeam(), _player))
                 if(Channel *chn = cMgr->GetChannel(channel, _player))
                     chn->Say(_player->GetObjectGuid(), msg.c_str(), lang);
         } break;

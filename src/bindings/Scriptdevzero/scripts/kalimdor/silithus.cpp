@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Silithus
 SD%Complete: 100
-SDComment: Abbysal Council support, Quest support: 1126, 7785, 8304, 8534, 8538, 8539.
+SDComment: Abbysal Council support, Quest support: 1126, 7785, 8304, 8315, 8534, 8538, 8539.
 SDCategory: Silithus
 EndScriptData */
 
@@ -34,6 +34,7 @@ EndContentData */
 #include "precompiled.h"
 #include "../../../../game/MotionMaster.h"
 #include "../../../../game/TargetedMovementGenerator.h"
+#include "escort_ai.h"
 
 /*###
 ## boss_abyssal_council
@@ -968,7 +969,6 @@ struct MANGOS_DLL_DECL npc_cenarion_hold_infantryAI : public ScriptedAI
 			return;
 		}
 
-
 		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
 			return;
 
@@ -1006,6 +1006,542 @@ struct MANGOS_DLL_DECL npc_cenarion_hold_infantryAI : public ScriptedAI
 CreatureAI* GetAI_npc_cenarion_hold_infantry(Creature* pCreature)
 {
     return new npc_cenarion_hold_infantryAI(pCreature);
+}
+
+/*######
+## npc_the_calling_event
+######*/
+
+enum TheCallingEvent
+{
+	NPC_ALUNTIR							= 15288,
+	NPC_ARAKIS							= 15290,
+	NPC_XIL_XIX 						= 15286,
+
+	NPC_ROMAN_KHAN						= 14862,
+
+	WAVE_ONE							= 1,
+	WAVE_BOSS							= 2,
+};
+
+struct Loc
+{
+    float x, y, z;
+};
+
+static Loc aMobSpawnLoc[]= 
+{
+	{-7283.15f,863.34f,3.18f},
+	{-7270.11f, 841.34f, 3.94f},
+	{-7286.15f, 843.34f, 2.24f},
+	{-7276.38f, 852.34f, 3.64f},
+};
+
+struct MANGOS_DLL_DECL npc_the_calling_eventAI : public ScriptedAI
+{
+    npc_the_calling_eventAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+		m_creature->SetActiveObjectState(true); 
+		m_uiEventTimer = 1000;
+		m_uiPhase = 0;
+        Reset();
+    }
+
+    uint8 m_uiKilledCreatures;
+	uint8 m_uiPhase;
+
+	uint32 m_uiEventTimer;
+
+    void Reset()
+    {
+    }
+
+	void DoSummonWave(uint32 uiSummonId = 0)
+    {
+        if (uiSummonId == WAVE_ONE)
+        {
+            for (uint8 i = 0; i < 1; ++i)
+            {
+                m_creature->SummonCreature(NPC_ALUNTIR, aMobSpawnLoc[0].x, aMobSpawnLoc[0].y, aMobSpawnLoc[0].z, 5.48f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 600000);
+				m_creature->SummonCreature(NPC_ARAKIS, aMobSpawnLoc[1].x, aMobSpawnLoc[1].y, aMobSpawnLoc[1].z, 2.23f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 600000);
+				m_creature->SummonCreature(NPC_XIL_XIX, aMobSpawnLoc[2].x, aMobSpawnLoc[2].y, aMobSpawnLoc[2].z, 0.74f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 600000);
+            }
+        }
+        if (uiSummonId == WAVE_BOSS)
+        {
+            for (uint8 i = 0; i < 1; ++i)
+                m_creature->SummonCreature(NPC_ROMAN_KHAN, aMobSpawnLoc[3].x, aMobSpawnLoc[3].y, aMobSpawnLoc[3].z, 0.50f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1200000);
+        }
+    }
+
+    void JustSummoned(Creature* pSummoned)
+    {
+		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
+    }
+
+	void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        if (pSummoned->GetEntry() == NPC_ALUNTIR || pSummoned->GetEntry() == NPC_ARAKIS || pSummoned->GetEntry() == NPC_XIL_XIX)
+        {
+            ++m_uiKilledCreatures;
+		}
+
+		// If first wave is done
+        if (m_uiKilledCreatures >= 3)
+			m_uiEventTimer = 10000;
+
+		// if boss died, despawn dummy
+		if (pSummoned->GetEntry() == NPC_ROMAN_KHAN)
+			m_creature->ForcedDespawn();
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiEventTimer)
+		{
+			if (m_uiEventTimer <= uiDiff)
+			{
+				switch (m_uiPhase)
+				{
+					case 0:
+						DoSummonWave(WAVE_ONE);
+						m_uiEventTimer = 0;
+						break;
+					case 1:
+						DoSummonWave(WAVE_BOSS);
+						m_uiEventTimer = 0;
+						break;
+				}
+			++m_uiPhase;
+			}
+			else
+			{
+				m_uiEventTimer -= uiDiff;
+			}
+		}			
+	}
+};
+
+CreatureAI* GetAI_npc_the_calling_event(Creature* pCreature)
+{
+    return new npc_the_calling_eventAI(pCreature);
+}
+
+/*####
+# npc_geologist_larksbane
+####*/
+
+enum eLarksbane
+{
+	LARKSBANE_SAY1								= -1720088,
+	LARKSBANE_SAY2								= -1720089,
+	LARKSBANE_SAY3								= -1720090,
+	LARKSBANE_SAY4								= -1720091,
+	LARKSBANE_SAY5								= -1720092,
+	LARKSBANE_SAY6								= -1720093,
+	LARKSBANE_SAY7								= -1720094,
+	LARKSBANE_SAY8								= -1720095,
+	LARKSBANE_SAY9								= -1720096,
+	LARKSBANE_SAY10								= -1720097,
+	LARKSBANE_SAY11								= -1720098,
+	LARKSBANE_SAY12								= -1720099,
+	LARKSBANE_SAY13								= -1720100,
+	LARKSBANE_SAY14								= -1720101,
+	LARKSBANE_SAY15								= -1720102,
+	LARKSBANE_SAY16								= -1720103,
+	LARKSBANE_SAY17								= -1720104,
+	LARKSBANE_SAY18								= -1720105,
+	LARKSBANE_SAY19								= -1720106,
+	LARKSBANE_SAY20								= -1720107,
+	LARKSBANE_SAY21								= -1720108,
+	LARKSBANE_SAY22								= -1720109,
+
+	BARISTOLOTH_SAY								= -1720110,
+
+	NPC_BARISTOLOTH								= 15180,
+	NPC_BROOD_OF_NOZDORMU						= 15185,
+
+	GO_GLYPHED_CRYSTAL							= 180514,
+
+	QUEST_ID_THE_CALLING						= 8315,
+};
+
+struct MANGOS_DLL_DECL npc_geologist_larksbaneAI : public npc_escortAI
+{
+    npc_geologist_larksbaneAI(Creature* pCreature) : npc_escortAI(pCreature) 
+	{ 
+		m_creature->SetActiveObjectState(true); 
+		Reset();
+	}
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+
+	void JustStartedEscort()
+    {
+    }
+
+	void StartOutro()
+	{		
+		m_bOutro = true; 
+		m_uiSpeechTimer = 2000;
+		m_uiSpeechStep = 1;
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+	}
+
+	void Crystals(int action)
+	{
+		// Search for crystals and set them as active. Pref not all at the same time but for now all
+		std::list<GameObject*> m_lCrystals;
+		GetGameObjectListWithEntryInGrid(m_lCrystals, m_creature, GO_GLYPHED_CRYSTAL, 10.0f);
+		for (std::list<GameObject*>::const_iterator itr = m_lCrystals.begin(); itr != m_lCrystals.end(); ++itr)
+		{
+			if (action == 0)
+				(*itr)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NO_INTERACT);
+
+			if (action == 1)
+			{
+			if ((*itr)->GetGoState() == GO_STATE_ACTIVE)
+				continue;
+
+			(*itr)->SetGoState(GO_STATE_ACTIVE);
+			}
+			if (action == 2)
+			{
+			if ((*itr)->GetGoState() == GO_STATE_ACTIVE)
+				(*itr)->SetGoState(GO_STATE_READY);
+			}
+			if (action == 3)
+				(*itr)->Delete();
+		}
+	}
+
+	void JustSummoned(Creature* pSummoned)
+    {
+		if (pSummoned->GetEntry() == NPC_BROOD_OF_NOZDORMU)
+		{
+			pSummoned->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+			pSummoned->SetSplineFlags(SPLINEFLAG_FLYING);
+			pSummoned->GetMotionMaster()->MovePoint(1,-7039.02f,891.77f,133.02f);
+		}
+	}
+	
+	void UpdateAI(const uint32 uiDiff)
+    {
+		npc_escortAI::UpdateAI(uiDiff);
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {		
+				Creature* pBaristoloth = GetClosestCreatureWithEntry(m_creature, NPC_BARISTOLOTH, 30.0f);
+                switch(m_uiSpeechStep)
+                {
+					case 1:
+						m_creature->GetMotionMaster()->MovePoint(1, -6823.92f, 809.55f,51.66f);
+						m_creature->SummonCreature(NPC_BROOD_OF_NOZDORMU, -6667.05f,793.94f,133.01f,2.89f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 35000,true);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 2:			// craft emote
+						m_creature->HandleEmoteState(EMOTE_STATE_USESTANDING);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 3:			// spawn crystals
+						m_creature->HandleEmoteState(EMOTE_STATE_NONE);	
+						m_creature->SummonGameObject(GO_GLYPHED_CRYSTAL,600000,-6820.02f, 807.99f,51.66f,2.74f);
+						m_creature->SummonGameObject(GO_GLYPHED_CRYSTAL,600000,-6822.19f, 812.35f,51.66f,4.52f);
+						m_creature->SummonGameObject(GO_GLYPHED_CRYSTAL,600000,-6822.83f, 808.998f,51.66f,0.78f);
+
+                        m_uiSpeechTimer = 100;
+						break;
+					case 4:			// set no interact on crystals
+						Crystals(0);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 5:
+						Crystals(1);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 6:
+						DoScriptText(LARKSBANE_SAY2, m_creature);
+						m_uiSpeechTimer = 12000;
+						break;
+					case 7:
+						DoScriptText(LARKSBANE_SAY3, m_creature);
+						m_uiSpeechTimer = 24000;
+						break;
+					case 8:
+						DoScriptText(LARKSBANE_SAY4, m_creature);
+						m_uiSpeechTimer = 16000;
+						break;
+					case 9:
+						DoScriptText(LARKSBANE_SAY5, m_creature);
+						m_uiSpeechTimer = 24000;
+						break;
+					case 10:
+						DoScriptText(LARKSBANE_SAY6, m_creature);
+						m_uiSpeechTimer = 28000;
+						break;
+					case 11:		
+						DoScriptText(LARKSBANE_SAY7, m_creature);
+						m_uiSpeechTimer = 12000;
+						break;
+					case 12:
+						m_creature->GenericTextEmote("Geologist Larksbane regains her composure.", NULL, false);
+						m_uiSpeechTimer = 10000;
+						break;
+					case 13:
+						DoScriptText(LARKSBANE_SAY8, m_creature);
+						m_uiSpeechTimer = 8000;
+						break;
+					case 14:
+						DoScriptText(LARKSBANE_SAY9, m_creature);
+						m_uiSpeechTimer = 16000;
+						break;
+					case 15:
+						DoScriptText(LARKSBANE_SAY10, m_creature);
+						m_uiSpeechTimer = 12000;
+						break;
+					case 16:
+						DoScriptText(LARKSBANE_SAY11, m_creature);
+						m_uiSpeechTimer = 16000;
+						break;
+					case 17:
+						DoScriptText(LARKSBANE_SAY12, m_creature);
+						m_uiSpeechTimer = 24000;
+						break;
+					case 18:
+						DoScriptText(LARKSBANE_SAY13, m_creature);
+						m_uiSpeechTimer = 16000;
+						break;
+					case 19:
+						DoScriptText(LARKSBANE_SAY14, m_creature);
+						m_uiSpeechTimer = 16000;
+						break;
+					case 20:
+						DoScriptText(LARKSBANE_SAY15, m_creature);
+						m_uiSpeechTimer = 16000;
+						break;
+					case 21:
+						DoScriptText(LARKSBANE_SAY16, m_creature);
+						m_uiSpeechTimer = 16000;
+						break;
+					case 22:
+						DoScriptText(LARKSBANE_SAY17, m_creature);
+						m_uiSpeechTimer = 30000;
+						break;
+					case 23:
+						DoScriptText(LARKSBANE_SAY18, m_creature);
+						m_uiSpeechTimer = 14000;
+						break;
+					case 24:
+						DoScriptText(LARKSBANE_SAY19, m_creature);
+						m_uiSpeechTimer = 8000;
+						break;
+					case 25:
+						DoScriptText(LARKSBANE_SAY20, m_creature);
+						m_uiSpeechTimer = 20000;
+						break;
+					case 26:
+						DoScriptText(LARKSBANE_SAY21, m_creature);
+						m_uiSpeechTimer = 16000;
+						break;
+					case 27:
+						DoScriptText(LARKSBANE_SAY22, m_creature);
+						m_uiSpeechTimer = 8000;
+						break;
+					case 28:			// stop crystal glow and spawn the dragon that flies over them
+						Crystals(2);
+						m_creature->SummonCreature(NPC_BROOD_OF_NOZDORMU, -6667.05f,793.94f,133.01f,2.89f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000,true);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 29:
+						m_creature->GenericTextEmote("Baristolth of the Shifting Sands shifts uncomfortably.", NULL, false);
+						m_uiSpeechTimer = 8000;
+						break;
+					case 30:
+						if (pBaristoloth)
+							DoScriptText(BARISTOLOTH_SAY, pBaristoloth);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 31:			// despawn crystals
+						Crystals(3);
+						m_uiSpeechTimer = 2000;
+						break;
+					case 32:
+						m_creature->GetMotionMaster()->MoveTargetedHome();
+						m_uiSpeechTimer = 3000;
+						break;
+					case 33:						
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);					
+						m_bOutro = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_geologist_larksbane(Creature* pCreature)
+{
+    return new npc_geologist_larksbaneAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_geologist_larksbane(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_THE_CALLING)
+    {
+		DoScriptText(LARKSBANE_SAY1, pCreature);
+		if (npc_geologist_larksbaneAI* pEscortAI = dynamic_cast<npc_geologist_larksbaneAI*>(pCreature->AI()))
+			pEscortAI->StartOutro();
+	}
+	return true;
+}
+
+/*####
+# boss_roman_khan
+####*/
+
+enum eRomanKhan
+{
+	SPELL_WILT				= 23772,
+	SPELL_SYSTEM_SHOCK		= 23774,
+	//SPELL_EXPLODE			= 0,		// find out what spell this should be!
+	SPELL_ARCANE_ERUPTION	= 25672,   // from moam for now
+	SPELL_DRAIN_MANA         = 25671, // also from moam, trigger by wilt so he gets mana
+};
+
+struct MANGOS_DLL_DECL boss_roman_khanAI : public ScriptedAI
+{
+    boss_roman_khanAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiWiltTimer;
+    uint32 m_uiSystemShockTimer;
+	uint32 m_uiCheckoutManaTimer;
+
+    void Reset()
+    {
+        m_uiWiltTimer = urand(6000,11000);			// 5-10 sec on retail video
+        m_uiSystemShockTimer = urand(9000,15000);
+		m_uiCheckoutManaTimer = 15000;
+		m_creature->SetPower(POWER_MANA, 0);
+        m_creature->SetMaxPower(POWER_MANA, 0);
+    }
+
+	void Aggro(Unit* /*pWho*/)
+    {
+        m_creature->SetMaxPower(POWER_MANA, m_creature->GetCreatureInfo()->maxmana);
+    }
+
+	void KilledUnit(Unit* victim)
+    {
+        
+        if (victim->GetTypeId() != TYPEID_PLAYER)
+            return;
+
+        // heal for 2% everytime a player dies
+		m_creature->SetHealth(m_creature->GetHealth()+m_creature->GetMaxHealth()*0.02);
+	}
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_WILT && pTarget->GetTypeId() == TYPEID_PLAYER)
+			m_creature->CastSpell(pTarget,SPELL_DRAIN_MANA, true);				//added mana drain to wilt, probably should be in core but oh well
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // 100% mana -> explode        
+		if (m_uiCheckoutManaTimer <= uiDiff)
+        {
+			m_uiCheckoutManaTimer = 2000;
+			
+			if (m_creature->GetPower(POWER_MANA) == m_creature->GetMaxPower(POWER_MANA))
+				DoCastSpellIfCan(m_creature, SPELL_ARCANE_ERUPTION);
+        } 
+		else
+			m_uiCheckoutManaTimer -= uiDiff;
+
+        // Wilt
+        if (m_uiWiltTimer <= uiDiff)
+        {			
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_WILT);
+            m_uiWiltTimer = urand(6000,11000);
+        }
+        else
+            m_uiWiltTimer -= uiDiff;
+
+        // System Shock
+        if (m_uiSystemShockTimer <= uiDiff)			// cast time depends on how much mana the boss has, about 3 sec?
+        {
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            float percent = m_creature->GetPower(POWER_MANA) * 100 / m_creature->GetMaxPower(POWER_MANA);
+			if (percent <= 25.0f)
+            {
+				m_creature->CastSpell(pTarget, SPELL_SYSTEM_SHOCK, true);
+				m_uiSystemShockTimer = urand(25000,30000);
+            }
+			else if (percent > 25.0f && percent <= 50.0f)
+            {
+				m_creature->CastSpell(pTarget, SPELL_SYSTEM_SHOCK, true);
+				m_uiSystemShockTimer = urand(20000,25000);
+            }
+			else if (percent > 50.0f && percent <= 75.0f)
+            {
+				m_creature->CastSpell(pTarget, SPELL_SYSTEM_SHOCK, true);
+				m_uiSystemShockTimer = urand(15000,20000);
+            }
+			else if (percent > 75.0f)
+            {
+				m_creature->CastSpell(pTarget, SPELL_SYSTEM_SHOCK, true);
+				m_uiSystemShockTimer = urand(10000,15000);
+            }
+        }
+        else
+            m_uiSystemShockTimer -= uiDiff;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_boss_roman_khan(Creature* pCreature)
+{
+    return new boss_roman_khanAI(pCreature);
 }
 
 void AddSC_silithus()
@@ -1053,5 +1589,21 @@ void AddSC_silithus()
     pNewscript->Name = "npcs_rutgar_and_frankal";
     pNewscript->pGossipHello = &GossipHello_npcs_rutgar_and_frankal;
     pNewscript->pGossipSelect = &GossipSelect_npcs_rutgar_and_frankal;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_the_calling_event";
+    pNewscript->GetAI = &GetAI_npc_the_calling_event;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_geologist_larksbane";
+    pNewscript->GetAI = &GetAI_npc_geologist_larksbane;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_geologist_larksbane;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "boss_roman_khan";
+    pNewscript->GetAI = &GetAI_boss_roman_khan;
     pNewscript->RegisterSelf();
 }
