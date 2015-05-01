@@ -261,9 +261,6 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
         rData.posZ = spot.z;
         rData.mapid = spot.mapID;
         
-        sObjectMgr.AddCreatureToGrid(itr->GetCounter(), &rData);
-        Creature::SpawnInMaps(itr->GetCounter(), &rData);
-
         // Update the creature entry in the database.
         WorldDatabase.PQuery("UPDATE creature SET map=%u, position_x=%f, position_y=%f, position_z=%f WHERE guid=%u",
                              spot.mapID, spot.x, spot.y, spot.z, itr->GetCounter());
