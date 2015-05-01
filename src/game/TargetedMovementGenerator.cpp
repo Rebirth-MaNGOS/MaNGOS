@@ -40,8 +40,21 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 
     float x, y, z;
 
+    if (i_movingBack)
+    {
+        float reach = owner.GetFloatValue(UNIT_FIELD_COMBATREACH) + i_target->GetFloatValue(UNIT_FIELD_COMBATREACH) +
+                      BASE_MELEERANGE_OFFSET;
+        x = owner.GetPositionX() + reach * cosf(owner.GetAngle(i_target.getTarget()) + M_PI) * 2;
+        y = owner.GetPositionY() + reach * sinf(owner.GetAngle(i_target.getTarget()) + M_PI) * 2;
+        z = 0;
+
+        owner.UpdateAllowedPositionZ(x, y, z);
+
+        if (z == 0)
+            z = owner.GetPositionZ();
+    }
     // prevent redundant micro-movement for pets, other followers.
-    if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
+    else if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
     {
         if (i_destinationHolder.HasDestination())
             return;
@@ -51,7 +64,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     else if (!i_offset)
     {
         // to nearest contact position
-				i_target->GetAttackPoint(&owner,x,y,z);
+        i_target->GetAttackPoint(&owner,x,y,z);
     }
     else
     {
@@ -224,6 +237,16 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 
         float x,y,z;
         i_target->GetPosition(x, y, z);
+        
+        float targetDist = owner.GetDistance(i_target.getTarget());
+        if (targetDist < 0.1f && !i_movingBack)
+        {
+            i_recalculateTravel = true;
+            i_movingBack = true;
+        }
+        else if (targetDist > 5.f)
+            i_movingBack = false;
+
         PathNode next_point(x, y, z);
 
         bool targetMoved = false, needNewDest = false;
@@ -280,6 +303,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 	    
             static_cast<D*>(this)->_reachTarget(owner);
         }
+
     }
     return true;
 }
