@@ -29,8 +29,8 @@ EndScriptData */
 
 enum
 {
-    EMOTE_GENERIC_FRENZY_KILL   = -1000001,
-    EMOTE_SHIMMER               = -1469003,
+    //EMOTE_GENERIC_FRENZY_KILL   = -1000001,
+    //EMOTE_SHIMMER               = -1469003,
 
     // These spells are actually called elemental shield
     // What they do is decrease all damage by 75% then they increase
@@ -119,6 +119,7 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
     uint32 m_uiMutationCheckTimer;
     uint32 m_uiFrenzyTimer;
     bool m_bEnraged;
+	bool m_bFirstShimmer;
 
     void Reset()
     {
@@ -132,6 +133,7 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
         m_uiFrenzyTimer     = 15000;
 
         m_bEnraged          = false;
+		m_bFirstShimmer		= true;
 
         GameObject* pDoor = GetClosestGameObjectWithEntry(m_creature, 179116, 1000.f);
         if (pDoor && pDoor->GetGoState() == GO_STATE_ACTIVE)
@@ -173,6 +175,18 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
         if (m_pInstance)
             m_pInstance->SetData(TYPE_CHROMAGGUS, FAIL);
     }
+
+	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)							// Only do emotes when the spell actually hits in case something goes wrong
+    {
+        if (pSpell->Id == SPELL_FRENZY)
+        {
+			m_creature->GenericTextEmote("Chromaggus goes into a killing frenzy!", NULL, false);
+		}
+		if (pSpell->Id == SPELL_ENRAGE)
+        {
+			m_creature->GenericTextEmote("Chromaggus becomes enraged!", NULL, false);
+		}
+	}
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -231,7 +245,12 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
 
             m_uiCurrentVulnerabilitySpell = uiSpell;
 
-            DoScriptText(EMOTE_SHIMMER, m_creature);
+			if(m_bFirstShimmer)				// don't want emote on aggro
+				m_bFirstShimmer = false;
+			else
+				m_creature->GenericTextEmote("Chromaggus flinches as its skin shimmers.", NULL, false);
+			
+            //DoScriptText(EMOTE_SHIMMER, m_creature);
             m_uiShimmerTimer = 45000;
         }
         else
@@ -348,7 +367,7 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
         {
             m_creature->CastSpell(m_creature, SPELL_FRENZY, false);
 
-            DoScriptText(EMOTE_GENERIC_FRENZY_KILL, m_creature);
+            //DoScriptText(EMOTE_GENERIC_FRENZY_KILL, m_creature);
             m_uiFrenzyTimer = urand(10000, 15000);
 
         }
