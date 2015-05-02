@@ -38,18 +38,25 @@ enum Spells
     SPELL_CURSE_OF_THORNS       = 16247,
     SPELL_DEMORALIZING_SHOUT    = 16244,
     // Aspect of Corruption
-    SPELL_CORRUPTION            = 18376,
+    SPELL_CORRUPTION            = 23244,
     SPELL_SHADOW_WORD_PAIN      = 23268,
     // Aspect of Malice
     SPELL_CURSE_OF_BLOOD        = 16098,
     SPELL_REND                  = 13738,
     // Aspect of Shadow
-    SPELL_SHADOW_BOLT_ASPECT    = 15472,
+    SPELL_SHADOW_BOLT_ASPECT    = 15232,
     SPELL_SHADOW_BOLT_VOLLEY    = 17228,
     SPELL_SHADOW_SHIELD         = 22417,
     SPELL_SHADOW_SHOCK          = 17289,
     
-    EVENT_SPELL_PLACE_SCRYER    = 8436
+    EVENT_SPELL_PLACE_SCRYER    = 8436,
+
+	SPELL_JUDGEMENT_OF_WISDOM			= 20355,			// banality
+	SPELL_JUDGEMENT_OF_JUSTICE			= 20184,			// malicious
+	SPELL_JUDGEMENT_OF_RIGHTEOUSNESS	= 20286,			// corrupted
+	SPELL_JUDGEMENT_OF_LIGHT			= 20346,			// shadowed
+
+	YELL_SPAWN							= -1720042,
 };
 
 struct MANGOS_DLL_DECL boss_death_knight_darkreaverAI : public ScriptedAI
@@ -57,6 +64,8 @@ struct MANGOS_DLL_DECL boss_death_knight_darkreaverAI : public ScriptedAI
     boss_death_knight_darkreaverAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (instance_scholomance*)pCreature->GetInstanceData();
+		DoScriptText(YELL_SPAWN, m_creature);
+		m_creature->SetInCombatWithZone();
         Reset();
     }
 
@@ -160,71 +169,113 @@ struct MANGOS_DLL_DECL mob_aspectAI : public ScriptedAI
 
     instance_scholomance* m_pInstance;
 
-    bool m_bHit;
+	bool m_bNoMove;
     uint32 m_uiSpell1Entry;
     uint32 m_uiSpell2Entry;
     uint32 m_uiSpell3Entry;
     uint32 m_uiSpell4Entry;
+	uint32 m_uiSpell5Entry;
     uint32 m_uiSpell1Timer;
     uint32 m_uiSpell2Timer;
     uint32 m_uiSpell3Timer;
     uint32 m_uiSpell4Timer;
+	uint32 m_uiSpell5Timer;
 
     void Reset()
     {
-        m_bHit = false;
+        m_bNoMove = false;
         m_uiSpell1Timer = urand(4000,6000);
         m_uiSpell2Timer = urand(8000,12000);
         m_uiSpell3Timer = urand(15000,20000);
         m_uiSpell4Timer = urand(30000,40000);
+		m_uiSpell5Timer = urand(1500,3000);
 
-        switch(m_creature->GetEntry())
+        switch(m_creature->GetEntry())						// not doing some spells because they have no mana?
         {
+			case NPC_BANAL_SPIRIT:
+				m_uiSpell1Entry = 0;
+                m_uiSpell2Entry = SPELL_BEFUDDLEMENT;		// not doing this?
+                m_uiSpell3Entry = SPELL_DEMORALIZING_SHOUT;
+                m_uiSpell4Entry = 0;
+				m_uiSpell5Entry = 0;
+				break;
             case NPC_ASPECT_OF_BANALITY:
-                m_uiSpell1Entry = SPELL_BEFUDDLEMENT;
+                m_uiSpell1Entry = SPELL_BEFUDDLEMENT;		// not doing this?
                 m_uiSpell2Entry = SPELL_CURSE_OF_THORNS;
                 m_uiSpell3Entry = SPELL_DEMORALIZING_SHOUT;
                 m_uiSpell4Entry = 0;
+				m_uiSpell5Entry = 0;
                 break;
-            case NPC_ASPECT_OF_CORRUPTION:
-                m_uiSpell1Entry = 0;
-                m_uiSpell2Entry = SPELL_SHADOW_WORD_PAIN;
-                m_uiSpell3Entry = SPELL_CORRUPTION;
+			case NPC_MALICIOUS_SPIRIT:
+				m_uiSpell1Entry = 0;
+                m_uiSpell2Entry = SPELL_REND;
+                m_uiSpell3Entry = 0;
                 m_uiSpell4Entry = 0;
-                break;
+				m_uiSpell5Entry = 0;
+				break;
             case NPC_ASPECT_OF_MALICE:
                 m_uiSpell1Entry = SPELL_REND;
                 m_uiSpell2Entry = 0;
                 m_uiSpell3Entry = 0;
                 m_uiSpell4Entry = SPELL_CURSE_OF_BLOOD;
+				m_uiSpell5Entry = 0;
                 break;
-            case NPC_ASPECT_OF_SHADOW:
-                m_uiSpell1Entry = SPELL_SHADOW_BOLT_ASPECT;
-                m_uiSpell2Entry = SPELL_SHADOW_BOLT_VOLLEY;
-                m_uiSpell3Entry = SPELL_SHADOW_SHOCK;
+			case NPC_CORRUPTED_SPIRIT:
+				m_uiSpell1Entry = 0;
+                m_uiSpell2Entry = 0;
+                m_uiSpell3Entry = SPELL_CORRUPTION;		// not doing this? 
+                m_uiSpell4Entry = 0;
+				m_uiSpell5Entry = 0;
+				break;
+            case NPC_ASPECT_OF_CORRUPTION:
+                m_uiSpell1Entry = 0;
+                m_uiSpell2Entry = SPELL_SHADOW_WORD_PAIN;
+                m_uiSpell3Entry = SPELL_CORRUPTION;		// not doing this?
+                m_uiSpell4Entry = 0;
+				m_uiSpell5Entry = 0;
+                break;
+			case NPC_SHADOWED_SPIRIT:
+				m_uiSpell1Entry = 0;
+                m_uiSpell2Entry = 0;
+                m_uiSpell3Entry = 0;
                 m_uiSpell4Entry = SPELL_SHADOW_SHIELD;
+				m_uiSpell5Entry = SPELL_SHADOW_BOLT_ASPECT;
+				break;
+            case NPC_ASPECT_OF_SHADOW:
+                m_uiSpell1Entry = 0;
+                m_uiSpell2Entry = 0;
+                m_uiSpell3Entry = SPELL_SHADOW_SHOCK;		// not doing this?
+                m_uiSpell4Entry = SPELL_SHADOW_SHIELD;
+				m_uiSpell5Entry = SPELL_SHADOW_BOLT_ASPECT;
                 break;
         }
     }
 
     void JustReachedHome()
     {
-        if (m_pInstance)
-            m_pInstance->SetData(TYPE_GREAT_OSSUARY, FAIL);
-
-        m_creature->RemoveFromWorld();
     }
 
     void Aggro(Unit* /*pWho*/)
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_GREAT_OSSUARY, IN_PROGRESS);
+
+		switch(m_creature->GetEntry())
+        {
+			case NPC_CORRUPTED_SPIRIT:				// pull one and the whole room should come NOT WORKING
+				m_creature->CallForHelp(40.0f);
+		}
     }
+
+	void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)				// make sure they won't attack each other after holy blast
+    {
+		if (pDoneBy->GetTypeId() != TYPEID_PLAYER)
+			m_creature->getThreatManager().addThreat(pDoneBy, -10000);
+	}
 
     void JustDied(Unit* /*pKiller*/)
     {
-        if (m_pInstance)
-            m_pInstance->SetData(TYPE_GREAT_OSSUARY_WAVE, m_pInstance->GetData(TYPE_GREAT_OSSUARY_WAVE) + 1);
+		m_creature->ForcedDespawn();
     }
 
     void Execute(uint32 uiSpellEntry)
@@ -237,11 +288,11 @@ struct MANGOS_DLL_DECL mob_aspectAI : public ScriptedAI
                 break;
             case SPELL_DEMORALIZING_SHOUT:
             case SPELL_CURSE_OF_BLOOD:
-            case SPELL_REND:
-            case SPELL_SHADOW_BOLT:
+            case SPELL_REND:      
             case SPELL_SHADOW_BOLT_VOLLEY:
                 pTarget = m_creature->getVictim();
                 break;
+			case SPELL_SHADOW_BOLT_ASPECT:
             case SPELL_BEFUDDLEMENT:
             case SPELL_CURSE_OF_THORNS:
             case SPELL_CORRUPTION:
@@ -256,12 +307,66 @@ struct MANGOS_DLL_DECL mob_aspectAI : public ScriptedAI
 
     void SpellHit(Unit* pUnit, const SpellEntry* pSpell)
     {
-        if (!m_bHit && pSpell->Id == SPELL_JUDGMENT && pUnit->GetTypeId() == TYPEID_PLAYER)
-        {
-            m_creature->CastSpell(m_creature, SPELL_HOLY_BLAST, true);
-            m_bHit = true;
-        }
-    }
+		switch(m_creature->GetEntry())
+		{
+			case NPC_BANAL_SPIRIT:
+				if (pSpell->Id == SPELL_JUDGEMENT_OF_WISDOM)
+				{
+					m_creature->GenericTextEmote("Banal Spirit recoils in pain as the Judgement of Wisdom washes over it!", NULL, false);
+					DoCast(m_creature, SPELL_HOLY_BLAST, true);
+				}
+				break;
+			case NPC_ASPECT_OF_BANALITY:
+				if (pSpell->Id == SPELL_JUDGEMENT_OF_WISDOM)
+				{
+					m_creature->GenericTextEmote("Aspect of Banality recoils in pain as the Judgement of Wisdom washes over it!", NULL, false);
+					DoCast(m_creature, SPELL_HOLY_BLAST, true);
+				}
+                break;
+			case NPC_MALICIOUS_SPIRIT:
+				if (pSpell->Id == SPELL_JUDGEMENT_OF_JUSTICE)
+				{
+					m_creature->GenericTextEmote("Malicious Spirit recoils in pain as the Judgement of Justice washes over it!", NULL, false);
+					DoCast(m_creature, SPELL_HOLY_BLAST, true);
+				}
+				break;
+            case NPC_ASPECT_OF_MALICE:
+				if (pSpell->Id == SPELL_JUDGEMENT_OF_JUSTICE)
+				{
+					m_creature->GenericTextEmote("Aspect of Malice recoils in pain as the Judgement of Justice washes over it!", NULL, false);
+					DoCast(m_creature, SPELL_HOLY_BLAST, true);
+				}
+                break;
+			case NPC_CORRUPTED_SPIRIT:
+				if (pSpell->Id == SPELL_JUDGEMENT_OF_RIGHTEOUSNESS)
+				{
+					m_creature->GenericTextEmote("Corrupted Spirit recoils in pain as the Judgement of Righteousness washes over it!", NULL, false);
+					DoCast(m_creature, SPELL_HOLY_BLAST, true);
+				}
+				break;
+            case NPC_ASPECT_OF_CORRUPTION:
+				if (pSpell->Id == SPELL_JUDGEMENT_OF_RIGHTEOUSNESS)
+				{
+					m_creature->GenericTextEmote("Aspect of Corruption recoils in pain as the Judgement of Righteousness washes over it!", NULL, false);
+					DoCast(m_creature, SPELL_HOLY_BLAST, true);
+				}
+                break;
+			case NPC_SHADOWED_SPIRIT:
+				if (pSpell->Id == SPELL_JUDGEMENT_OF_LIGHT)
+				{
+					m_creature->GenericTextEmote("Shadowed Spirit recoils in pain as the Judgement of Light washes over it!", NULL, false);
+					DoCast(m_creature, SPELL_HOLY_BLAST, true);
+				}
+                break;
+            case NPC_ASPECT_OF_SHADOW:
+				if (pSpell->Id == SPELL_JUDGEMENT_OF_LIGHT)
+				{
+					m_creature->GenericTextEmote("Aspect of Shadow recoils in pain as the Judgement of Light washes over it!", NULL, false);
+					DoCast(m_creature, SPELL_HOLY_BLAST, true);
+				}
+                break;
+	    }
+	}
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -300,6 +405,14 @@ struct MANGOS_DLL_DECL mob_aspectAI : public ScriptedAI
         else
             m_uiSpell4Timer -= uiDiff;
 
+		if (m_uiSpell5Timer < uiDiff)		// only used for shadow bolt
+        {
+            Execute(m_uiSpell5Entry);
+            m_uiSpell5Timer = urand(2000,4000);
+        }
+        else
+            m_uiSpell5Timer -= uiDiff;
+
         DoMeleeAttackIfReady();
     }
 };
@@ -315,10 +428,10 @@ bool ProcessEventId_event_spell_place_scryer(uint32 uiEventId, Object* pSource, 
     {
         instance_scholomance* m_pInstance = (instance_scholomance*)((Player*)pSource)->GetInstanceData();
 
-        if (m_pInstance && m_pInstance->GetData(TYPE_GREAT_OSSUARY) == NOT_STARTED && m_pInstance->GetData(TYPE_GREAT_OSSUARY_WAVE) == NOT_STARTED)
+        if (m_pInstance && m_pInstance->GetData(TYPE_GREAT_OSSUARY) == NOT_STARTED)
         {
             m_pInstance->SetData(TYPE_GREAT_OSSUARY, IN_PROGRESS);
-            m_pInstance->SetData(TYPE_GREAT_OSSUARY_WAVE, IN_PROGRESS);
+			m_pInstance->OssuaryStartEvent();
         }
     }
     return true;

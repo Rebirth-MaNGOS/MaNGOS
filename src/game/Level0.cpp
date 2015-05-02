@@ -31,6 +31,57 @@
 #include "revision.h"
 #include "revision_nr.h"
 #include "Util.h"
+#include "BugReportMgr.h"
+
+bool ChatHandler::HandleBugReportListCommand(char* /*args*/)
+{
+    BugReportList list = sBugReportMgr.GetBugReportList();
+    
+    std::string playerName;
+    
+    size_t i;
+    for (i = 0; i < list.size(); ++i)
+    {
+        sObjectMgr.GetPlayerNameByGUID(list[i].m_creator, playerName);
+    
+        struct tm* timeinfo = localtime(&list[i].m_date);
+        char timeArr[25];
+        strftime(timeArr, 25, "%F %T", timeinfo);
+        
+        PSendSysMessage("%lu - Creator: %s, Title: %s, Date: %s", i + 1, playerName.c_str(), list[i].m_title.c_str(), timeArr);
+    }
+
+    if (i == 0)
+        PSendSysMessage("No bug reports exist!");
+
+    return true;
+}
+
+bool ChatHandler::HandleBugReportShowCommand(char* args)
+{
+    uint32 index;
+    ExtractUInt32(&args, index);
+    --index;
+
+    if (index >= sBugReportMgr.GetBugReportList().size())
+    {
+        PSendSysMessage("The given index was too large!");
+        return false;
+    }
+
+    BugReport const& report = sBugReportMgr.GetBugReport(index);
+
+    std::string playerName;
+    sObjectMgr.GetPlayerNameByGUID(report.m_creator, playerName);
+
+    struct tm* timeinfo = localtime(&report.m_date);
+    char timeArr[25];
+    strftime(timeArr, 25, "%F %T", timeinfo);
+
+    PSendSysMessage("%u - Creator: %s, Title: %s, Date: %s\n%s", index + 1, playerName.c_str(), report.m_title.c_str(), timeArr, report.m_text.c_str());
+
+    return true;
+}
 
 bool ChatHandler::HandleHelpCommand(char* args)
 {

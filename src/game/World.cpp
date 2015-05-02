@@ -61,11 +61,13 @@
 #include "MapPersistentStateMgr.h"
 #include "WaypointManager.h"
 #include "GMTicketMgr.h"
+#include "BugReportMgr.h"
 #include "Util.h"
 #include "CharacterDatabaseCleaner.h"
 #include "CreatureGroups.h"
 #include "extras/Mod.h"
 #include "Warden/WardenDataStorage.h"
+#include "ExclusivePoolMgr.h"
 
 #include <thread>
 
@@ -1013,6 +1015,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "Loading Objects Pooling Data...");
     sPoolMgr.LoadFromDB();
+    
+    sLog.outString("Loading exclusive pools...");
+    sExclusivePoolMgr.LoadFromDB();
 
     sLog.outString( "Loading Weather Data..." );
     sObjectMgr.LoadWeatherZoneChances();
@@ -1183,6 +1188,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "Loading GM tickets...");
     sTicketMgr.LoadGMTickets();
+
+    sLog.outString("Loading bug reports...");
+    sBugReportMgr.LoadBugReports();
 
 	sLog.outString( "Loading pathing barriers...");
 	sObjectMgr.LoadPathingBarriers();
@@ -1428,6 +1436,7 @@ void World::Update(uint32 diff)
 
     /// <li> Handle all other objects
     ///- Update objects (maps, transport, creatures,...)
+    sExclusivePoolMgr.CheckEvents();
     sMapMgr.Update(diff);
     sBattleGroundMgr.Update(diff);
 

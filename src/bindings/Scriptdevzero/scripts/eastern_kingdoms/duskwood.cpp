@@ -25,6 +25,7 @@ EndScriptData */
 EndContentData */
 
 #include "precompiled.h"
+#include "escort_ai.h"
 
 /*######
 ## npc_town_crier
@@ -307,11 +308,117 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 	}
 };
 
+/*####
+# npc_ello_ebonlock
+####*/
+
+enum
+{
+	ELLO_RANDOM_SAY_1				 = -1720058,
+
+    QUEST_ID_TRANSLATION_TO_ELLO	 = 252,
+};
+
+struct MANGOS_DLL_DECL npc_ello_ebonlockeAI : public npc_escortAI
+{
+    npc_ello_ebonlockeAI(Creature* pCreature) : npc_escortAI(pCreature) 
+	{ 
+		m_creature->SetActiveObjectState(true);
+		Reset(); 
+		m_uiRandomSayTimer = urand(20000,30000);
+	}
+	
+	uint32 m_uiRandomSayTimer;
+	uint32 m_uiStitchesTimer;
+	bool m_bStitches;
+	bool m_bSay;
+
+    void Reset()
+	{
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+
+	void JustStartedEscort()
+    {
+    }
+
+	void JustSummoned(Creature* pSummoned)
+    {
+		pSummoned->SetRespawnDelay(-10);			// make sure he won't respawn randomly
+	}
+
+	void SpawnStitches()
+	{
+		if (m_bStitches)					// If he gets to the last WP he'll despawn, so no need to force despawn
+		{
+			m_creature->SummonCreature(NPC_STITCHES, -10290.2f, 72.7811f, 38.8811f, 4.8015f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 180000, true);
+			m_bStitches = false; 
+			m_uiStitchesTimer = 1800000;		// 30 min before he can be summoned again
+		}
+	}
+
+	void Aggro(Unit* /*pWho*/)				// no random say while in combat
+    {
+        m_bSay = false;
+    }
+
+	void JustReachedHome()
+	{
+		m_bSay = true;
+		m_uiRandomSayTimer = urand(20000,120000);
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		npc_escortAI::UpdateAI(uiDiff);
+
+		if (m_uiStitchesTimer < uiDiff)
+			m_bStitches = true;
+        else
+            m_uiStitchesTimer -= uiDiff;
+
+		if (m_bSay && m_uiRandomSayTimer < uiDiff)
+		{
+			DoScriptText(ELLO_RANDOM_SAY_1, m_creature);
+			m_uiRandomSayTimer = 120000;
+		}
+
+        else
+            m_uiRandomSayTimer -= uiDiff;
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+	}
+};
+
+CreatureAI* GetAI_npc_ello_ebonlocke(Creature* pCreature)
+{
+    return new npc_ello_ebonlockeAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_ello_ebonlocke(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_TRANSLATION_TO_ELLO)
+    {
+		if (npc_ello_ebonlockeAI* pEscortAI = dynamic_cast<npc_ello_ebonlockeAI*>(pCreature->AI()))
+			pEscortAI->SpawnStitches();
+	}
+	return true;
+}
+
 CreatureAI* GetAI_mob_stitches(Creature* pCreature)
 {
     return new mob_stitchesAI(pCreature);
 }
-
 
 void AddSC_duskwood()
 {
@@ -331,4 +438,10 @@ void AddSC_duskwood()
 	pNewscript->Name = "mob_stitches";
 	pNewscript->GetAI = &GetAI_mob_stitches;
 	pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_ello_ebonlocke";
+    pNewscript->GetAI = &GetAI_npc_ello_ebonlocke;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_ello_ebonlocke;
+    pNewscript->RegisterSelf();
 }

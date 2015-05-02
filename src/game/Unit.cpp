@@ -276,6 +276,8 @@ Unit::Unit()
     // remove aurastates allowing special moves
     for(int i=0; i < MAX_REACTIVE; ++i)
         m_reactiveTimer[i] = 0;
+
+    m_isAOEImmune = false;
 }
 
 Unit::~Unit()
@@ -1344,28 +1346,8 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, S
     // Check spell crit chance
     bool crit = IsSpellCrit(pVictim, spellInfo, damageSchoolMask, attackType);
 
-    // damage bonus (per damage class)
-    switch (spellInfo->DmgClass)
-    {
-        // Melee and Ranged Spells
-    case SPELL_DAMAGE_CLASS_RANGED:
-    case SPELL_DAMAGE_CLASS_MELEE:
-    {
-        //Calculate damage bonus
-        damage = MeleeDamageBonusDone(pVictim, damage, attackType, spellInfo, SPELL_DIRECT_DAMAGE);
-        damage = pVictim->MeleeDamageBonusTaken(this, damage, attackType, spellInfo, SPELL_DIRECT_DAMAGE);
-
-        // if crit add critical bonus
-        if (crit)
-        {
-            damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
-            damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
-        }
-    }
-    break;
-    // Magical Attacks
-    case SPELL_DAMAGE_CLASS_NONE:
-    case SPELL_DAMAGE_CLASS_MAGIC:
+    // Judgement of Command should be counted as a spell. Speparate handling for it.
+    if (spellInfo->SpellVisual == 0 && spellInfo->SpellIconID == 561)
     {
         // Calculate damage bonus
         damage = SpellDamageBonusDone(pVictim, spellInfo, damage, SPELL_DIRECT_DAMAGE);
@@ -1377,8 +1359,49 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, S
             damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
             damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
         }
+
+        // Double the damage for a stunned target.
+        if (!pVictim->hasUnitState(UNIT_STAT_STUNNED))
+                damage /= 2;
     }
-    break;
+    else // Default calculations for damage class.
+    {    
+        // damage bonus (per damage class)
+        switch (spellInfo->DmgClass)
+        {
+            // Melee and Ranged Spells
+        case SPELL_DAMAGE_CLASS_RANGED:
+        case SPELL_DAMAGE_CLASS_MELEE:
+        {
+            //Calculate damage bonus
+            damage = MeleeDamageBonusDone(pVictim, damage, attackType, spellInfo, SPELL_DIRECT_DAMAGE);
+            damage = pVictim->MeleeDamageBonusTaken(this, damage, attackType, spellInfo, SPELL_DIRECT_DAMAGE);
+
+            // if crit add critical bonus
+            if (crit)
+            {
+                damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
+                damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
+            }
+        }
+        break;
+        // Magical Attacks
+        case SPELL_DAMAGE_CLASS_NONE:
+        case SPELL_DAMAGE_CLASS_MAGIC:
+        {
+            // Calculate damage bonus
+            damage = SpellDamageBonusDone(pVictim, spellInfo, damage, SPELL_DIRECT_DAMAGE);
+            damage = pVictim->SpellDamageBonusTaken(this, spellInfo, damage, SPELL_DIRECT_DAMAGE);
+
+            // If crit add critical bonus
+            if (crit)
+            {
+                damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
+                damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
+            }
+        }
+        break;
+        }
     }
 
     // Gnomish Death Ray
@@ -1390,7 +1413,6 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, S
             damage = (int32)((float)damage * 2.5f);
         }
     }
-
 
     // damage mitigation
     if (damage > 0)
@@ -6025,6 +6047,9 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
         case 302:										//Hammer of Wrath: 43% of maximum applied
             coeff = 0.43f;
             break;
+        case 561:									//Judgement of Command: 43% of maximum applied
+            tmpDamage += tmpDamage*0.43 > saveAuraMod ? saveAuraMod : tmpDamage*0.43;
+            break;
         case 156:
             if (spellProto->SpellVisual == 3400)
             {
@@ -6501,6 +6526,17 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
             if (itr->type == aura)
                 return true;
     }
+
+
+    if (IsAreaOfEffectSpell(spellInfo) && m_isAOEImmune)
+        return true;
+
+    for(uint8 i = 0; i < MAX_EFFECT_INDEX; ++i)
+    {
+        if (IsAreaAuraEffect(spellInfo->Effect[i]) && m_isAOEImmune)
+            return true;
+    }
+
     return false;
 }
 
@@ -6719,8 +6755,6 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
         {
             if (spellProto->SpellVisual == 5622)					//Seal of Command proc: 29% of maximum applied
                 tmpDamage += tmpDamage*0.29 > saveAuraMod ? saveAuraMod : tmpDamage*0.29;
-            else													//Judgement of Command: 43% of maximum applied
-                tmpDamage += tmpDamage*0.43 > saveAuraMod ? saveAuraMod : tmpDamage*0.43;
         }
     }
 
@@ -6817,6 +6851,16 @@ void Unit::Mount(uint32 mount, uint32 spellId)
                 }
                 else
                     pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,true);
+   
+            }
+            else if (Unit* pCharmed = GetCharm()) // For the Warlock spell Enslave Demon.
+            {
+                WorldPacket data(SMSG_PET_MODE, 12);
+                data << pCharmed->GetObjectGuid();
+                data << uint32(PET_MODE_DISABLE_ACTIONS);
+                ((Player*)this)->GetSession()->SendPacket(&data);
+
+                pCharmed->GetMotionMaster()->MoveChase(this, 0.5f, 3.14f / 6.f);
             }
         }
     }
@@ -6847,6 +6891,13 @@ void Unit::Unmount(bool from_aura)
     {
         if(Pet* pet = GetPet())
             pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,false);
+        else if (Unit* pCharmed = GetCharm()) // For the Warlock spell Enslave Demon.
+        {
+            WorldPacket data(SMSG_PET_MODE, 12);
+            data << pCharmed->GetObjectGuid();
+            data << uint32(PET_MODE_DEFAULT);
+            ((Player*)this)->GetSession()->SendPacket(&data);
+        }
         else
             ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
     }

@@ -628,10 +628,8 @@ void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo)
             plMover->SetInWater( !plMover->IsInWater() || plMover->GetTerrain()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z) );
         }
 
-        if (!movementInfo.HasMovementFlag(MOVEFLAG_FALLING) || plMover->HasAuraType(SPELL_AURA_FEATHER_FALL))
-            plMover->SetPosition(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
-        else
-            plMover->SetOrientation(movementInfo.GetPos()->o);
+        // Update the player's coordinates.
+        plMover->SetPosition(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
 
         plMover->m_movementInfo = movementInfo;
 

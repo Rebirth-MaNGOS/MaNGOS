@@ -352,15 +352,26 @@ template<>
 void FollowMovementGenerator<Creature>::_updateSpeed(Creature &u)
 {
     // pet only sync speed with owner
-    if (!((Creature&)u).IsPet() || !i_target.isValid() || i_target->GetObjectGuid() != u.GetOwnerGuid())
+    if ((!((Creature&)u).IsPet() && !u.GetCharmerOrOwner()) || !i_target.isValid() || i_target->GetObjectGuid() != u.GetCharmerOrOwnerGuid())
         return;
 
-	Player* owner = u.GetCharmerOrOwnerPlayerOrPlayerItself();
+    Player* owner = u.GetCharmerOrOwnerPlayerOrPlayerItself();
 
-	float ratio = 1.f;
+    float ratio = 1.f;
 
-	if (owner && !owner->isInCombat() && !u.isInCombat())
-		ratio = 1.05f;
+    if (owner)
+    {
+        if (owner->IsMounted())
+        {
+            ratio = 2.1f;
+        }
+        else if (!owner->isInCombat() && !u.isInCombat())
+            ratio = 1.05f;
+    }
+
+    if (u.HasSplineFlag(SPLINEFLAG_WALKMODE))
+        u.RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+    
 
     u.UpdateSpeed(MOVE_RUN,true, ratio);
     u.UpdateSpeed(MOVE_WALK,true, ratio);

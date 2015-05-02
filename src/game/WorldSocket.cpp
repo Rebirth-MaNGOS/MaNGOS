@@ -813,13 +813,12 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
                 address.c_str ());
 
     
-    // We want to keep the address the player logs on from as the player's recorded ip-address.
     // Update the last_ip in the database
     // No SQL injection, username escaped.
-//     static SqlStatementID updAccount;
+    static SqlStatementID updAccount;
 
-//     SqlStatement stmt = LoginDatabase.CreateStatement(updAccount, "UPDATE account SET last_ip = ? WHERE username = ?");
-//     stmt.PExecute(address.c_str(), account.c_str());
+    SqlStatement stmt = LoginDatabase.CreateStatement(updAccount, "UPDATE account SET last_ip = ? WHERE username = ?");
+    stmt.PExecute(address.c_str(), account.c_str());
 
     // NOTE ATM the socket is single-threaded, have this in mind ...
     ACE_NEW_RETURN (m_Session, WorldSession (id, this, AccountTypes(security), mutetime, locale), -1);

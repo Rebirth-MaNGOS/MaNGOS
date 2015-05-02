@@ -313,9 +313,11 @@ struct MANGOS_DLL_DECL boss_general_angerforgeAI : public ScriptedAI
     boss_general_angerforgeAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
 
 	uint32 m_uiSunderArmorTimer;
+	bool m_bCanSummon;
 
     void Reset()
     {
+		m_bCanSummon = true;
 		m_uiSunderArmorTimer = 2000;
     }
 
@@ -343,7 +345,7 @@ struct MANGOS_DLL_DECL boss_general_angerforgeAI : public ScriptedAI
 		}
 	}
 
-	void JustDied(Unit *)
+	void Summon()
 	{
 		m_creature->SummonCreature(NPC_ANVILRAGE_RESERVIST, 724.34f, 21.86f, -45.41f, 3.10f, TEMPSUMMON_DEAD_DESPAWN, 0);
         m_creature->SummonCreature(NPC_ANVILRAGE_RESERVIST, 724.34f, 21.86f, -45.41f, 3.10f, TEMPSUMMON_DEAD_DESPAWN, 0);
@@ -356,6 +358,12 @@ struct MANGOS_DLL_DECL boss_general_angerforgeAI : public ScriptedAI
     {
 		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+
+		if (HealthBelowPct(35) && m_bCanSummon)
+		{
+			m_bCanSummon = false;
+			Summon();
+		}
 
 		// Sunder Armor
 		if (m_uiSunderArmorTimer <= uiDiff)

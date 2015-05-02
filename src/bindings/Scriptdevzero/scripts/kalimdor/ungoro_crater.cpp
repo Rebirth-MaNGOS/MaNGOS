@@ -882,6 +882,123 @@ CreatureAI* GetAI_npc_captured_ooze(Creature *pCreature)
     return new npc_captured_ooze (pCreature);
 }
 
+/*####
+# npc_j_d_collie
+####*/
+
+enum
+{
+	COLLIE_SAY_1					 = -1720069,
+	COLLIE_SAY_2					 = -1720070,
+	COLLIE_SAY_3					 = -1720071,
+
+    QUEST_ID_MAKING_SENSE_OF_IT		 = 4321,
+};
+
+struct MANGOS_DLL_DECL npc_j_d_collieAI : public npc_escortAI
+{
+    npc_j_d_collieAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+	ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+		m_uiPlayerGUID.Clear();
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+
+	void JustStartedEscort()
+    {
+    }
+
+	void StartOutro(ObjectGuid pPlayerGUID)
+	{
+		if (!pPlayerGUID)
+            return;
+
+        m_uiPlayerGUID = pPlayerGUID;
+
+		m_bOutro = true; 
+		m_uiSpeechTimer = 1000;
+		m_uiSpeechStep = 1;
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		npc_escortAI::UpdateAI(uiDiff);
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+				Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+                switch(m_uiSpeechStep)
+                {
+                    case 1:
+						DoScriptText(COLLIE_SAY_1, m_creature);                        
+						m_uiSpeechTimer = 7000;
+                        break;
+					case 2:
+						DoScriptText(COLLIE_SAY_2, m_creature);
+                        m_uiSpeechTimer = 5000;
+                        break;
+					case 3:
+						DoScriptText(COLLIE_SAY_3, m_creature, pPlayer);
+                        m_uiSpeechTimer = 3000;
+						break;
+					case 4:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_j_d_collie(Creature* pCreature)
+{
+    return new npc_j_d_collieAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_j_d_collie(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_MAKING_SENSE_OF_IT)
+    {
+		if (npc_j_d_collieAI* pEscortAI = dynamic_cast<npc_j_d_collieAI*>(pCreature->AI()))
+			pEscortAI->StartOutro(pPlayer->GetObjectGuid());
+	}
+	return true;
+}
+
 void AddSC_ungoro_crater()
 {
     Script* pNewscript;
@@ -923,5 +1040,11 @@ void AddSC_ungoro_crater()
     pNewscript = new Script;
     pNewscript->Name="npc_captured_ooze";
     pNewscript->GetAI = &GetAI_npc_captured_ooze;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_j_d_collie";
+    pNewscript->GetAI = &GetAI_npc_j_d_collie;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_j_d_collie;
     pNewscript->RegisterSelf();
 }

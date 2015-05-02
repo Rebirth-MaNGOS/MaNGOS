@@ -38,6 +38,7 @@
 #include "ObjectGuid.h"
 #include "Policies/Singleton.h"
 #include "SQLStorages.h"
+#include "ExclusivePoolMgr.h"
 
 #include <string>
 #include <map>
@@ -423,6 +424,7 @@ class IdGenerator
 class ObjectMgr
 {
     friend class PlayerDumpReader;
+    friend class ExclusivePoolMgr;
 
     public:
         ObjectMgr();

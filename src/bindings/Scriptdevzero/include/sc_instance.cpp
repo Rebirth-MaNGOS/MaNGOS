@@ -216,39 +216,6 @@ bool ScriptedInstance::SetRareBoss(Creature* pCreature, uint32 uiChance)
     }
 }
 
-void ScriptedInstance::SetLavaState(Player* pPlayer, bool enter)
-{
-    if (!pPlayer)
-        return;
-
-    if (enter)
-        pPlayer->m_LavaTimer = LAVA_DAMAGE_PERIOD;
-    else
-        pPlayer->m_LavaTimer = DISABLED_MIRROR_TIMER;
-}
-
-void ScriptedInstance::DoLavaDamage(const uint32 uiDiff)
-{
-    Map::PlayerList const& lPlayers = instance->GetPlayers();
-    if (lPlayers.isEmpty())
-        return;
-
-    for(Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
-    {
-        Player* pPlayer = itr->getSource();
-        if (pPlayer && ((pPlayer->m_LavaActive == true && !pPlayer->IsInWater()) || pPlayer->IsInWater()))
-        {
-            if ((uint32) pPlayer->m_LavaTimer < uiDiff)
-            {
-                pPlayer->m_LavaTimer = LAVA_DAMAGE_PERIOD;
-                pPlayer->EnvironmentalDamage(DAMAGE_LAVA, urand(600, 700));
-            }
-            else
-                pPlayer->m_LavaTimer -= uiDiff;
-        }
-    }
-}
-
 Player* ScriptedInstance::GetRandomLivingPlayerInInstance(){
 		Map::PlayerList const& players = instance->GetPlayers();
 		std::vector<Player*> playersInMap;

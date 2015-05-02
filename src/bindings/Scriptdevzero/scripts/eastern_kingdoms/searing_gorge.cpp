@@ -255,7 +255,7 @@ struct MANGOS_DLL_DECL npc_dorius_stonetenderAI : public npc_escortAI
                     {
                         // Ambush
                         case 10:
-                            m_creature->MonsterSay("Wait, $N. I need to breathe for a while.", LANG_UNIVERSAL, pPlayer);
+                            m_creature->MonsterSay("Wait, $N. I need to breathe for a while.", LANG_UNIVERSAL, pPlayer);							
                             m_creature->SetStandState(UNIT_STAND_STATE_SIT);
                             m_uiEventTimer = 6000;
                             break;
@@ -712,6 +712,119 @@ bool QuestAccept_npc_dying_archaeologist(Player* pPlayer, Creature* pCreature, c
     return true;
 }
 
+/*####
+# npc_locheed
+####*/
+
+enum eLocheed
+{
+	LOCHEED_SAY_1					= -1720076,
+	LOCHEED_SAY_2					= -1720077,
+};
+
+struct MANGOS_DLL_DECL npc_locheedAI : public npc_escortAI
+{
+    npc_locheedAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+	ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+		m_uiPlayerGUID.Clear();
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+
+	void JustStartedEscort()
+    {
+    }
+
+	void StartOutro(ObjectGuid pPlayerGUID)
+	{
+		if (!pPlayerGUID)
+            return;
+
+        m_uiPlayerGUID = pPlayerGUID;
+
+		m_bOutro = true; 
+		m_uiSpeechTimer = 2000;
+		m_uiSpeechStep = 1;
+		m_creature->SetRespawnDelay(-10);			// don't want respawns
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		npc_escortAI::UpdateAI(uiDiff);
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+				Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+                switch(m_uiSpeechStep)
+                {
+					case 1:
+						DoScriptText(LOCHEED_SAY_1, m_creature, pPlayer);
+                        m_uiSpeechTimer = 4000;						
+						break;
+					case 2:
+						DoScriptText(LOCHEED_SAY_2, m_creature, pPlayer);
+						m_bOutro = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_locheed(Creature* pCreature)
+{
+    return new npc_locheedAI(pCreature);
+}
+
+enum eOuthouse
+{
+	QUEST_ID_THE_KEY_TO_FREEDOM		= 4451,
+	NPC_LOCHEED						= 9876,
+};
+
+bool QuestRewarded_go_wooden_outhouse(Player* pPlayer, GameObject* pGo, const Quest* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_THE_KEY_TO_FREEDOM)
+    {
+		if (Creature* pLocheed = pGo->SummonCreature(NPC_LOCHEED,-7026.23f,-1784.27f,265.77f,3.71687f, TEMPSUMMON_TIMED_DESPAWN, 60000, true))
+			if (npc_locheedAI* pEscortAI = dynamic_cast<npc_locheedAI*>(pLocheed->AI()))
+				pEscortAI->StartOutro(pPlayer->GetObjectGuid());
+	}
+	return true;
+}
+
 /*######
 ##
 ######*/
@@ -757,5 +870,15 @@ void AddSC_searing_gorge()
     pNewScript = new Script;
     pNewScript->Name = "npc_dying_archaeologist";
     pNewScript->pQuestAcceptNPC = &QuestAccept_npc_dying_archaeologist;
+    pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "npc_locheed";
+    pNewScript->GetAI = &GetAI_npc_locheed;
+    pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "go_wooden_outhouse";
+    pNewScript->pQuestRewardedGO = &QuestRewarded_go_wooden_outhouse;
     pNewScript->RegisterSelf();
 }

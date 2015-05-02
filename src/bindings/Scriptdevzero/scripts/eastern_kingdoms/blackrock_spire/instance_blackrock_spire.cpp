@@ -50,14 +50,12 @@ void instance_blackrock_spire::Initialize()
     m_lTempList.clear();
 }
 
-void instance_blackrock_spire::OnPlayerEnter(Player* pPlayer)
+void instance_blackrock_spire::OnPlayerEnter(Player* /*pPlayer*/)
 {
-    SetLavaState(pPlayer, true);
 }
 
-void instance_blackrock_spire::OnPlayerLeave(Player* pPlayer)
+void instance_blackrock_spire::OnPlayerLeave(Player* /*pPlayer*/)
 {
-    SetLavaState(pPlayer, false);
 }
 
 void instance_blackrock_spire::OnCreatureCreate(Creature* pCreature)
@@ -470,8 +468,6 @@ void instance_blackrock_spire::Update(uint32 uiDiff)
     }
     else
         m_uiRookeryEggsTimer -= uiDiff;
-
-    DoLavaDamage(uiDiff);
 }
 
 void instance_blackrock_spire::Load(const char* in)

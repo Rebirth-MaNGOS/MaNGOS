@@ -442,6 +442,247 @@ bool go_harpy_foodstuffs(Player* pPlayer, GameObject* /*pGo*/)
     return false;
 }
 
+/*####
+# npc_kravel_koalbeard
+####*/
+
+enum
+{
+	KRAVEL_SAY_1					 = -1720047,
+
+	GO_PARTS_CRATE					 = 175168,
+
+    QUEST_ID_PARTS_FOR_KRAVEL		 = 1112,
+};
+
+struct MANGOS_DLL_DECL npc_kravel_koalbeardAI : public npc_escortAI
+{
+    npc_kravel_koalbeardAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+	}
+
+	void JustStartedEscort()
+    {
+    }
+	
+	void StartOutro()
+	{
+		m_bOutro = true; 
+		m_uiSpeechTimer = 3000;
+		m_uiSpeechStep = 1;
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {
+                    case 1:
+                        m_creature->GenericTextEmote("Kravel Koalbeard places the crate of parts on the ground.", NULL, false);
+						
+						m_uiSpeechTimer = 3000;
+                        break;
+					case 2:
+						m_creature->SummonGameObject(GO_PARTS_CRATE, 13000, -6232.27f,-3854.748f,-58.74f,4.10f);
+                        m_uiSpeechTimer = 4000;
+                        break;
+					case 3:
+						m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+						m_uiSpeechTimer = 1000;
+						break;
+					case 4:
+						m_creature->GenericTextEmote("Kravel Koalbeard grabs a part and puts it in his pocket...", NULL, false);
+						m_uiSpeechTimer = 2000;
+						break;
+					case 5:
+						m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 6:
+						DoScriptText(KRAVEL_SAY_1, m_creature);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 7:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_kravel_koalbeard(Creature* pCreature)
+{
+    return new npc_kravel_koalbeardAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_kravel_koalbeard(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_PARTS_FOR_KRAVEL)
+    {
+		if (npc_kravel_koalbeardAI* pEscortAI = dynamic_cast<npc_kravel_koalbeardAI*>(pCreature->AI()))
+			pEscortAI->StartOutro();
+	}
+	return true;
+}
+
+/*####
+# npc_zamek
+####*/
+
+enum
+{
+	NPC_RIZZLE_BRASSBOLTS			= 4720,
+	ZAMEK_SAY						= -1720068,
+	GO_WEEGLIS_BARREL				= 141612,
+	GO_UNGUARDED_PLANS				= 20805,
+	QUEST_ID_ZAMEKS_DISTRACTION		= 1191,
+};
+
+struct MANGOS_DLL_DECL npc_zamekAI : public npc_escortAI
+{
+    npc_zamekAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+	
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro;
+
+    void Reset()
+	{
+		m_bOutro = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+	}
+
+	void WaypointReached(uint32 uiPointId)
+    {
+        if(uiPointId == 5)
+			DoScriptText(ZAMEK_SAY, m_creature);
+	}
+
+	void Rizzle()
+	{
+		Creature* pRizzle = GetClosestCreatureWithEntry(m_creature, NPC_RIZZLE_BRASSBOLTS, 50.0f);
+
+		pRizzle->GetMotionMaster()->MovePoint(1,-6249.65f,-3857.35f,58.749f);
+		pRizzle->ForcedDespawn(30000);
+		pRizzle->SetRespawnDelay(2);
+	}
+
+	void JustStartedEscort()
+    {
+    }
+
+	void StartOutro()
+	{
+		m_bOutro = true; 
+		m_uiSpeechTimer = 21000;
+		m_uiSpeechStep = 1;
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		npc_escortAI::UpdateAI(uiDiff);
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+				GameObject* GoBarrel = GetClosestGameObjectWithEntry(m_creature, GO_WEEGLIS_BARREL, 40.0f);
+                switch(m_uiSpeechStep)
+                {					
+					case 1:					
+						m_creature->SummonGameObject(GO_WEEGLIS_BARREL,10000,-6266.25f,-3846.25f,-58.75f,0);
+                        m_uiSpeechTimer = 5000;
+						break;
+					case 2:
+						Rizzle();
+						m_uiSpeechTimer = 1000;
+						break;
+					case 3:
+						if (GoBarrel->GetGoState() != GO_STATE_ACTIVE_ALTERNATIVE)
+                            GoBarrel->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);					
+						m_uiSpeechTimer = 1000;
+						break;
+					case 4:
+						m_creature->SummonGameObject(GO_UNGUARDED_PLANS,30000,-6237.90f,-3831.93f,-58.13f,0);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 5:
+						m_uiSpeechTimer = 3000;
+						break;
+					case 6:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
+};
+
+CreatureAI* GetAI_npc_zamek(Creature* pCreature)
+{
+    return new npc_zamekAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_zamek(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_ZAMEKS_DISTRACTION)
+    {
+		if (npc_zamekAI* pEscortAI = dynamic_cast<npc_zamekAI*>(pCreature->AI()))
+		{
+			pEscortAI->Start(true, pPlayer,pQuest,true,false);
+			pEscortAI->StartOutro();
+		}
+	}
+	return true;
+}
+
 void AddSC_thousand_needles()
 {
     Script* pNewscript;
@@ -484,5 +725,17 @@ void AddSC_thousand_needles()
     pNewscript = new Script;
     pNewscript->Name="go_harpy_foodstuffs";
     pNewscript->pGOUse = &go_harpy_foodstuffs;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_kravel_koalbeard";
+    pNewscript->GetAI = &GetAI_npc_kravel_koalbeard;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_kravel_koalbeard;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_zamek";
+    pNewscript->GetAI = &GetAI_npc_zamek;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_zamek;
     pNewscript->RegisterSelf();
 }
