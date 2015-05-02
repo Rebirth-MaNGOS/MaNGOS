@@ -256,7 +256,7 @@ struct MANGOS_DLL_DECL boss_emerissAI : public boss_emerald_dragonAI
         
         DoScriptText(SAY_CAST_CORRUPTION, m_creature);
 
-        return false;
+        return true;
     }
 
     void JustReachedHome()
