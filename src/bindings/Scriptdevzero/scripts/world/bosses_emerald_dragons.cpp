@@ -76,7 +76,6 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
         }
 		
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
-        m_creature->SetActiveObjectState(true);
         Reset();
         lSummonList.clear();
 
@@ -103,6 +102,9 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
         
         m_creature->CastSpell(m_creature, SPELL_MARK_OF_NATURE_AURA, true);
+        
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
     }
 
     void EnterCombat(Unit* pEnemy)

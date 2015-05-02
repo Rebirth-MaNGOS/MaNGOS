@@ -67,6 +67,9 @@ struct MANGOS_DLL_DECL boss_azuregosAI : public ScriptedAI
 
         m_creature->RemoveAurasDueToSpell(SPELL_MARK_OF_FROST_DRAKE);
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_ARCANE, true);
+        
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
 
 		MakeTauntImmune();
     }
