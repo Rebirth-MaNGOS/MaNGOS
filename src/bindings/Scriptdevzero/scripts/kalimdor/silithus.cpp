@@ -1501,7 +1501,7 @@ struct MANGOS_DLL_DECL boss_roman_khanAI : public ScriptedAI
         if (m_uiWiltTimer <= uiDiff)
         {			
             DoCastSpellIfCan(m_creature->getVictim(), SPELL_WILT);
-            m_uiWiltTimer = urand(6000,11000);
+            m_uiWiltTimer = urand(5000,10000);
         }
         else
             m_uiWiltTimer -= uiDiff;

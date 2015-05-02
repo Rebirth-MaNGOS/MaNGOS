@@ -480,6 +480,11 @@ void MotionMaster::SuspendChaseMovement()
 	if (GetCurrentMovementGeneratorType() == MovementGeneratorType::CHASE_MOTION_TYPE)
 	{
 		MovementGenerator* curr = top();
+
+        auto pGen = dynamic_cast<ChaseMovementGenerator<Creature>*>(curr);
+        if (pGen && pGen->IsBackingUp())
+            return;
+
 		pop();
 
 		curr->Finalize(*m_owner);
@@ -495,7 +500,9 @@ void MotionMaster::ResumeChaseMovement()
 	if (m_movementSuspended)
 	{
 		if (m_owner->getVictim())
-			MoveChase(m_owner->getVictim(), 0.01f);
+        {
+			MoveChase(m_owner->getVictim(), 3.f);
+        }
 
 		m_movementSuspended = false;
 	}

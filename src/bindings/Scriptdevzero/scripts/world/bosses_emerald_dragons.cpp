@@ -33,6 +33,7 @@ EndContentData */
 #include "precompiled.h"
 #include "Spell.h"
 #include "SpellMgr.h"
+#include "ObjectMgr.h"
 #include "TemporarySummon.h"
 
 /*######
@@ -58,7 +59,24 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
 {
     boss_emerald_dragonAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
+        uint32 zoneID, areaID;
+        m_creature->GetZoneAndAreaId(zoneID, areaID);
+        if (zoneID == 10 && areaID == 856)
+        {
+            m_creature->SetDefaultMovementType(WAYPOINT_MOTION_TYPE);
+            m_creature->GetMotionMaster()->MoveWaypoint();
+        }
+        else
+        {
+            m_creature->SetDefaultMovementType(IDLE_MOTION_TYPE);
+
+            // Make sure the dragon is standing in the correct spot if it shouldn't patrol.
+            const CreatureData* pData = sObjectMgr.GetCreatureData(m_creature->GetObjectGuid().GetCounter());
+            m_creature->RelocateCreature(pData->posX, pData->posY, pData->posZ, pData->orientation);
+        }
+		
+        m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
+        m_creature->SetActiveObjectState(true);
         Reset();
         lSummonList.clear();
 
@@ -75,6 +93,7 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
 
     void Reset()
     {
+
         m_uiEventCounter = 1;
 
         m_uiSeepingFogTimer = urand(15000, 20000);
@@ -103,6 +122,15 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
         }
 
         lSummonList.clear();
+    }
+
+    void JustDied(Unit* /* pKiller */)
+    {
+        uint32 respawn_time = urand(259200, 432000); // A random respawn time between 3 days and 5 days.
+        
+        m_creature->SetRespawnDelay(respawn_time);
+        m_creature->SetRespawnTime(respawn_time);
+        m_creature->SaveRespawnTime();
     }
 
     void KilledUnit(Unit* pVictim)

@@ -4,6 +4,7 @@
 #include "Policies/SingletonImp.h"
 #include "ObjectMgr.h"
 #include "MapManager.h"
+#include "GridNotifiers.h"
 
 #include <list>
 
@@ -99,8 +100,9 @@ void ExclusivePoolMgr::LoadFromDB()
             float x = fields[3].GetFloat();
             float y = fields[4].GetFloat();
             float z = fields[5].GetFloat();
+            float o = fields[6].GetFloat();
             
-            ExclusivePoolSpot spot = { mapID, x, y, z };
+            ExclusivePoolSpot spot = { mapID, x, y, z, o };
             m_poolSpots[poolID].push_back(spot);
         } while (result2->NextRow());
        
@@ -148,7 +150,7 @@ void ExclusivePoolMgr::CheckEvents()
 
 void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
 {
-    sLog.outBasic("ExclusivePool: Shuffling pool %u.", pool.poolID);
+    sLog.outBasic("ExclusivePool: Shuffling pool %u...", pool.poolID);
 
     // Get the spawn points and shuffle them.
     std::vector<ExclusivePoolSpot> poolSpotList;
@@ -174,11 +176,28 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
                 Map* pMap = sMapMgr.FindMap(pData->mapid);
                 if (pMap)
                 {
+                    if (!pMap->IsLoaded(pData->posX, pData->posY))
+                    {
+                        MaNGOS::ObjectUpdater updater(0);
+                        // for creature
+                        TypeContainerVisitor<MaNGOS::ObjectUpdater, GridTypeMapContainer  > grid_object_update(updater);
+                        // for pets
+                        TypeContainerVisitor<MaNGOS::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
+                        // Make sure that the creature is loaded before checking its status.
+                        CellPair cellPair = MaNGOS::ComputeCellPair(pData->posX, pData->posY);
+                        Cell cell(cellPair);
+                        pMap->Visit(cell, grid_object_update);
+                        pMap->Visit(cell, world_object_update);
+                    }
+
+
                     Creature* pCreature = pMap->GetCreature(currentCreature);
                     if (pCreature)
                     {
-                        if (pCreature->isAlive())
+                        // If the creature is alive or being looted we don't include it in the randomisation.
+                        if (pCreature->isAlive() || pCreature->HasFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE))
                         {
+                            sLog.outBasic("ExclusivePool: Skipping creature with guid %u.", currentCreature.GetCounter());
                             auto itr = std::find_if(poolSpotList.begin(), poolSpotList.end(),
                             [&](const ExclusivePoolSpot& spot)
                             {
@@ -194,20 +213,18 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
                             // If we found the spot on which the living creature is standing
                             // we remove that spot since it's occupied.
                             if (itr != poolSpotList.end())
+                            {
                                 poolSpotList.erase(itr);
+                                foundAlive = true;
+                            }
+                            else
+                            {
+                                sLog.outBasic("ExclusivePool: Could not find the pool position for creature %u. Moving it to avoid double spawns!", currentCreature.GetCounter());
+                            }
 
                             DespawnAllExcept(poolObjectList, currentCreature);
 
-                            foundAlive = true;
                             break;
-                        }
-                        else if (pCreature->HasFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE))
-                        {
-                            // If the creature is being looted we delay the handling
-                            // for this pool by 10 minutes.
-                            pool.currentRespawnTime +=  10 * 60;
-                            sLog.outBasic("ExclusivePool: The creature with guid %u in pool %u is currently being looted. Delaying the handling by 10 minutes.", currentCreature.GetCounter(), pool.poolID);
-                            return;
                         }
                     }
                 }
@@ -243,20 +260,20 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
         rData.posX = spot.x;
         rData.posY = spot.y;
         rData.posZ = spot.z;
+        rData.orientation = spot.orientation;
         rData.mapid = spot.mapID;
         
-        sObjectMgr.AddCreatureToGrid(itr->GetCounter(), &rData);
-        Creature::SpawnInMaps(itr->GetCounter(), &rData);
-
         // Update the creature entry in the database.
-        WorldDatabase.PQuery("UPDATE creature SET map=%u, position_x=%f, position_y=%f, position_z=%f WHERE guid=%u",
-                             spot.mapID, spot.x, spot.y, spot.z, itr->GetCounter());
+        WorldDatabase.PQuery("UPDATE creature SET map=%u, position_x=%f, position_y=%f, position_z=%f, orientation=%f WHERE guid=%u",
+                             spot.mapID, spot.x, spot.y, spot.z, spot.orientation, itr->GetCounter());
 
         // Make sure that all other creatures in the group are despawned.
         DespawnAllExcept(poolObjectList, *itr);
     }
     
     SaveRespawnTime(pool);
+
+    sLog.outBasic("ExclusivePool: Finished shuffling pool %u.", pool.poolID);
 }
 
 void ExclusivePoolMgr::SaveRespawnTime(ExclusivePool& pool)
@@ -266,6 +283,8 @@ void ExclusivePoolMgr::SaveRespawnTime(ExclusivePool& pool)
     WorldDatabase.PExecute("REPLACE INTO exclusive_pool_respawn (`poolID`, `spawntime`) VALUES (%u, %li)",
                            pool.poolID, nextTime);
     pool.currentRespawnTime = nextTime;    
+
+    sLog.outBasic("ExclusivePool: Next shuffle in %lu seconds.", pool.respawnDelay);
 }
 
 void ExclusivePoolMgr::DespawnAllExcept(const std::list<ObjectGuid>& group, const ObjectGuid& except) const

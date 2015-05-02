@@ -14,6 +14,7 @@ struct ExclusivePoolSpot
     float x;
     float y;
     float z;
+    float orientation;
 };
 
 struct ExclusivePool
