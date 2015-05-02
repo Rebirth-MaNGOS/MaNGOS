@@ -100,8 +100,9 @@ void ExclusivePoolMgr::LoadFromDB()
             float x = fields[3].GetFloat();
             float y = fields[4].GetFloat();
             float z = fields[5].GetFloat();
+            float o = fields[6].GetFloat();
             
-            ExclusivePoolSpot spot = { mapID, x, y, z };
+            ExclusivePoolSpot spot = { mapID, x, y, z, o };
             m_poolSpots[poolID].push_back(spot);
         } while (result2->NextRow());
        
@@ -259,11 +260,12 @@ void ExclusivePoolMgr::ExecuteEvent(ExclusivePool& pool)
         rData.posX = spot.x;
         rData.posY = spot.y;
         rData.posZ = spot.z;
+        rData.orientation = spot.orientation;
         rData.mapid = spot.mapID;
         
         // Update the creature entry in the database.
-        WorldDatabase.PQuery("UPDATE creature SET map=%u, position_x=%f, position_y=%f, position_z=%f WHERE guid=%u",
-                             spot.mapID, spot.x, spot.y, spot.z, itr->GetCounter());
+        WorldDatabase.PQuery("UPDATE creature SET map=%u, position_x=%f, position_y=%f, position_z=%f, orientation=%f WHERE guid=%u",
+                             spot.mapID, spot.x, spot.y, spot.z, spot.orientation, itr->GetCounter());
 
         // Make sure that all other creatures in the group are despawned.
         DespawnAllExcept(poolObjectList, *itr);
