@@ -238,10 +238,11 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         float x,y,z;
         i_target->GetPosition(x, y, z);
         
-        float targetDist = owner.GetDistance(i_target.getTarget());
+        float targetDist = owner.GetDistance2d(i_target.getTarget()->GetPositionX(), i_target.getTarget()->GetPositionY());
         float reach = owner.GetFloatValue(UNIT_FIELD_COMBATREACH) + i_target->GetFloatValue(UNIT_FIELD_COMBATREACH) +
                       BASE_MELEERANGE_OFFSET;
-        if (targetDist < 0.1f && !i_movingBack)
+        if (targetDist < 0.01f &&
+            !i_movingBack && !dynamic_cast<Pet*>(&owner))
         {
             i_recalculateTravel = true;
             i_movingBack = true;
