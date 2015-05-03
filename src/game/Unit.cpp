@@ -6753,8 +6753,8 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
         A->GetModifier()->m_amount = saveAuraMod;
         if (spellProto->SpellIconID == 561)
         {
-            if (spellProto->SpellVisual == 5622)					//Seal of Command proc: 29% of maximum applied
-                tmpDamage += tmpDamage*0.29 > saveAuraMod ? saveAuraMod : tmpDamage*0.29;
+            if (spellProto->SpellVisual == 39)					//Seal of Command proc: 29% of maximum applied
+                tmpDamage += tmpDamage*0.21 > saveAuraMod ? saveAuraMod : tmpDamage*0.21;
         }
     }
 
