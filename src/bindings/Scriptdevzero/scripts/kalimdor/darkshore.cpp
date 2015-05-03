@@ -754,7 +754,6 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
     npc_sentinel_aynashaAI(Creature* pCreature) : npc_escortAI(pCreature)
     {
 		m_uiPlayerGUID = ObjectGuid();
-		m_creature->SetActiveObjectState(true);
 		m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
 		SetCombatMovement(false);
 
@@ -783,6 +782,8 @@ struct MANGOS_DLL_DECL npc_sentinel_aynashaAI : public npc_escortAI
 
     void Reset()
     {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
     }
 
 	void QuestEndReset()				// make sure another player can do the quest after it's done

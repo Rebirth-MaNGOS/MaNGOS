@@ -46,7 +46,6 @@ struct MANGOS_DLL_DECL npc_southshore_crierAI : public ScriptedAI
     npc_southshore_crierAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
 		m_creature->SetStandState(UNIT_STAND_STATE_STAND);
-		m_creature->SetActiveObjectState(true);
 		DoScriptText(YELL_SPAWN, m_creature);
 		m_bOutro = false;
         Reset();
@@ -58,6 +57,9 @@ struct MANGOS_DLL_DECL npc_southshore_crierAI : public ScriptedAI
 
     void Reset()
     {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
+
 		m_bOutro = false;
 		m_uiSpeechTimer = 0;
         m_uiSpeechStep = 1;
@@ -127,7 +129,6 @@ struct MANGOS_DLL_DECL mob_shadowy_assassinAI : public ScriptedAI
 {
     mob_shadowy_assassinAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-		m_creature->SetActiveObjectState(true);
 		DoCastSpellIfCan(m_creature, SPELL_POISON_PROCC, CAST_AURA_NOT_PRESENT);
         Reset();
     }
@@ -135,6 +136,9 @@ struct MANGOS_DLL_DECL mob_shadowy_assassinAI : public ScriptedAI
     void Reset()
     {
 		DoCastSpellIfCan(m_creature, SPELL_STEALTH, CAST_AURA_NOT_PRESENT);
+        
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
     }
 
 	void UpdateAI(const uint32 uiDiff)
@@ -159,12 +163,13 @@ struct MANGOS_DLL_DECL npc_southshore_guardAI : public ScriptedAI
 {
     npc_southshore_guardAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-		m_creature->SetActiveObjectState(true);
         Reset();
     }
 
     void Reset()
     {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
     }
 
 	void UpdateAI(const uint32 uiDiff)

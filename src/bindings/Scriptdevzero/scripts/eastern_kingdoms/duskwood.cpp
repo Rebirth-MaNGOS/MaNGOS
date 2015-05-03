@@ -35,12 +35,13 @@ struct MANGOS_DLL_DECL npc_town_crierAI : public ScriptedAI							// used for zo
 {
     npc_town_crierAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-		m_creature->SetActiveObjectState(true);
         Reset();
     }
 
     void Reset()
     {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
     }
 
 	void UpdateAI(const uint32 uiDiff)
@@ -196,7 +197,6 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 {
     mob_stitchesAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-		m_creature->SetActiveObjectState(true); 
 		DoScriptText(YELL_SPAWN, m_creature);			// yell on spawn
 		m_bFirstGuardDown = false;
 
@@ -210,6 +210,9 @@ struct MANGOS_DLL_DECL mob_stitchesAI : public ScriptedAI
 
     void Reset()
     {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
+
 		m_uiYellTimer = 0;
 		m_uiAuraofRotTimer = urand(5000, 12000);
     }
@@ -323,7 +326,6 @@ struct MANGOS_DLL_DECL npc_ello_ebonlockeAI : public npc_escortAI
 {
     npc_ello_ebonlockeAI(Creature* pCreature) : npc_escortAI(pCreature) 
 	{ 
-		m_creature->SetActiveObjectState(true);
 		Reset(); 
 		m_uiRandomSayTimer = urand(20000,30000);
 	}
@@ -335,6 +337,8 @@ struct MANGOS_DLL_DECL npc_ello_ebonlockeAI : public npc_escortAI
 
     void Reset()
 	{
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
 	}
 
 	void WaypointReached(uint32 uiPointId)

@@ -55,8 +55,6 @@ struct MANGOS_DLL_DECL mob_demon_portalAI : public ScriptedAI
         m_uiDespawnSelfTimer = 31000;
 		m_uiSpawnDemonTimer = 30000;
 
-		m_creature->SetActiveObjectState(true);
-	
         Reset();
     }
 
@@ -65,6 +63,8 @@ struct MANGOS_DLL_DECL mob_demon_portalAI : public ScriptedAI
 
     void Reset()
     {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
     }
 
     void JustSummoned(Creature* pSummoned)
@@ -146,8 +146,6 @@ struct MANGOS_DLL_DECL npc_death_talon_triggerAI : public ScriptedAI
 {
     npc_death_talon_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-		m_creature->SetActiveObjectState(true);
-
         SetCombatMovement(false);
         m_creature->SetVisibility(VISIBILITY_OFF);
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
@@ -187,6 +185,8 @@ struct MANGOS_DLL_DECL npc_death_talon_triggerAI : public ScriptedAI
 
     void Reset()
     {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
     }
 
     void DisableDragons()
@@ -448,8 +448,6 @@ struct MANGOS_DLL_DECL npc_technician_pack_triggerAI : public ScriptedAI
 {
     npc_technician_pack_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-		m_creature->SetActiveObjectState(true);
-
         SetCombatMovement(false);
         m_creature->SetVisibility(VISIBILITY_OFF);
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
@@ -478,6 +476,8 @@ struct MANGOS_DLL_DECL npc_technician_pack_triggerAI : public ScriptedAI
 
     void Reset()
     {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
     }
 
     void DisablePack()
@@ -711,8 +711,6 @@ struct MANGOS_DLL_DECL npc_technician_threat_holderAI : public ScriptedAI
 {
     npc_technician_threat_holderAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-		m_creature->SetActiveObjectState(true);
-
 		m_pInstance = dynamic_cast<instance_blackwing_lair*>(m_creature->GetInstanceData());
 
         SetCombatMovement(false);
@@ -724,7 +722,11 @@ struct MANGOS_DLL_DECL npc_technician_threat_holderAI : public ScriptedAI
 
 	instance_blackwing_lair* m_pInstance;
 
-    void Reset() {}
+    void Reset() 
+    {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
+    }
 
     void UpdateAI(const uint32 /*uiDiff*/) 
 	{

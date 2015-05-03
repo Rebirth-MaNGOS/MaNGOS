@@ -181,7 +181,6 @@ enum short_mithril_jones
 struct MANGOS_DLL_DECL npc_short_mithril_jones : public npc_escortAI
 {
 	npc_short_mithril_jones(Creature* pCreature) : npc_escortAI(pCreature) {
-        m_creature->SetActiveObjectState(true);
 		b_eventStarted = false;
 		Reset(); 
 	}
@@ -195,6 +194,9 @@ struct MANGOS_DLL_DECL npc_short_mithril_jones : public npc_escortAI
 	void Reset() 
 	{
 		m_wait = 0;
+
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
 	}
 
 	void UpdateAI(const uint32 uiDiff)
@@ -400,7 +402,6 @@ struct MANGOS_DLL_DECL npc_molthor : public ScriptedAI
 {
     explicit npc_molthor(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        m_creature->SetActiveObjectState(true);
         Reset();
     }
     
@@ -413,6 +414,9 @@ struct MANGOS_DLL_DECL npc_molthor : public ScriptedAI
     {
         m_uiEventStage = 0;
         m_uiEventTimer = 0;
+
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
     }
     
     void UpdateAI(const uint32 uiDiff)

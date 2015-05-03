@@ -63,7 +63,6 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
     bosses_ancient_leaf_demonsAI(Creature* pCreature) : npc_patrolAI(pCreature, 0.f, true)
     {
 		m_uiDefaultEntry    = pCreature->GetEntry();
-		m_creature->SetActiveObjectState(true);				// gotta be active!
         m_uiResetOOCTimer   = 0;
         m_uiDemonTransTimer = 0;
 		m_uiChallengerGUID.Clear();
@@ -91,6 +90,10 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
     void Reset()					// only do these once
     {
 		npc_patrolAI::Reset();
+
+        if (m_creature->isAlive() && !m_creature->isActiveObject())
+            m_creature->SetActiveObjectState(true);
+
 		m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);				// make sure they don't run after OoC reset
 		m_uiSummonCount = 0;
 		m_bCanSay = true;
@@ -864,7 +867,6 @@ struct MANGOS_DLL_DECL mob_preciousAI : public ScriptedAI
     mob_preciousAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_uiDefaultEntry = pCreature->GetEntry();
-		m_creature->SetActiveObjectState(true); 
         Reset();
     }
 
@@ -872,6 +874,8 @@ struct MANGOS_DLL_DECL mob_preciousAI : public ScriptedAI
 
 	void Reset()
     {
+        if (m_creature->isAlive() && !m_creature->isActiveObject())
+            m_creature->SetActiveObjectState(true);
 	}
 	
 	void Aggro(Unit* pAttacker)

@@ -256,7 +256,6 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
     npc_ranshallaAI(Creature* pCreature) : npc_escortAI(pCreature),
         DialogueHelper(aIntroDialogue)
     {
-		m_creature->SetActiveObjectState(true); 
 		m_despawnTimer = 0;			// don't reset despawn timer if just got out of combat
         Reset();
     }
@@ -272,6 +271,9 @@ struct MANGOS_DLL_DECL npc_ranshallaAI : public npc_escortAI, private DialogueHe
 
     void Reset()
     {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
+
 		m_creature->SetStandState(UNIT_STAND_STATE_STAND);
         m_uiDelayTimer = 0;
 		if (GameObject* pGo = GetClosestGameObjectWithEntry(m_creature, GO_ELUNE_ALTAR, 500.0f))				// reset the altar so the quest can be done

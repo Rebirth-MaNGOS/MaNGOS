@@ -197,7 +197,6 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
     npc_grark_lorkrubAI(Creature* pCreature) : npc_escortAI(pCreature),
         DialogueHelper(aOutroDialogue)
     {
-		m_creature->SetActiveObjectState(true);
         Reset();
     }
 
@@ -215,7 +214,10 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
 
     void Reset()
     {
-		m_creature->SetStandState(UNIT_STAND_STATE_STAND);			// make sure he isn't playing dead after quest is done and he respawns
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
+		
+        m_creature->SetStandState(UNIT_STAND_STATE_STAND);			// make sure he isn't playing dead after quest is done and he respawns
 
         if (!HasEscortState(STATE_ESCORT_ESCORTING))
         {

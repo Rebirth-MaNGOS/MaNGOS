@@ -1041,7 +1041,6 @@ struct MANGOS_DLL_DECL npc_the_calling_eventAI : public ScriptedAI
 {
     npc_the_calling_eventAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-		m_creature->SetActiveObjectState(true); 
 		m_uiEventTimer = 1000;
 		m_uiPhase = 0;
         Reset();
@@ -1054,6 +1053,8 @@ struct MANGOS_DLL_DECL npc_the_calling_eventAI : public ScriptedAI
 
     void Reset()
     {
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
     }
 
 	void DoSummonWave(uint32 uiSummonId = 0)
@@ -1170,7 +1171,6 @@ struct MANGOS_DLL_DECL npc_geologist_larksbaneAI : public npc_escortAI
 {
     npc_geologist_larksbaneAI(Creature* pCreature) : npc_escortAI(pCreature) 
 	{ 
-		m_creature->SetActiveObjectState(true); 
 		Reset();
 	}
 	
@@ -1180,6 +1180,9 @@ struct MANGOS_DLL_DECL npc_geologist_larksbaneAI : public npc_escortAI
 
     void Reset()
 	{
+        if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
+
 		m_bOutro = false;
 		m_uiSpeechStep = 1;
 		m_uiSpeechTimer = 0;
