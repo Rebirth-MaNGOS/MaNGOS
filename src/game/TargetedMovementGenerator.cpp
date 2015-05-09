@@ -44,8 +44,8 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     {
         float reach = owner.GetFloatValue(UNIT_FIELD_COMBATREACH) + i_target->GetFloatValue(UNIT_FIELD_COMBATREACH) +
                       BASE_MELEERANGE_OFFSET;
-        x = owner.GetPositionX() + 0.9f * reach * cosf(owner.GetAngle(i_target.getTarget()) + M_PI);
-        y = owner.GetPositionY() + 0.9f * reach * sinf(owner.GetAngle(i_target.getTarget()) + M_PI);
+        x = owner.GetPositionX() + reach * cosf(owner.GetAngle(i_target.getTarget()) + M_PI) * 2;
+        y = owner.GetPositionY() + reach * sinf(owner.GetAngle(i_target.getTarget()) + M_PI) * 2;
         z = 0;
 
         owner.UpdateAllowedPositionZ(x, y, z);
@@ -239,14 +239,12 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         i_target->GetPosition(x, y, z);
         
         float targetDist = owner.GetDistance(i_target.getTarget());
-        float reach = owner.GetFloatValue(UNIT_FIELD_COMBATREACH) + i_target->GetFloatValue(UNIT_FIELD_COMBATREACH) +
-                      BASE_MELEERANGE_OFFSET;
         if (targetDist < 0.1f && !i_movingBack)
         {
             i_recalculateTravel = true;
             i_movingBack = true;
         }
-        else if (targetDist > reach * 0.5f)
+        else if (targetDist > 5.f)
             i_movingBack = false;
 
         PathNode next_point(x, y, z);

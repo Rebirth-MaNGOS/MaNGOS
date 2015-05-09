@@ -712,7 +712,7 @@ void Creature::Update(uint32 update_diff, uint32 diff)
 
         if (Unit* pVictim = getVictim())
         {
-            if (IsWithinDistInMap(pVictim, 0.1f))
+            if (IsWithinDistInMap(pVictim, 1.f))
                 GetMotionMaster()->top()->Update(*this, diff);
         }
     
