@@ -52,17 +52,6 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 
         if (z == 0)
             z = owner.GetPositionZ();
-
-        if (!owner.IsWithinLOS(x, y, z))
-        {
-            i_movingBack = false;
-            
-            if (!i_offset)
-                i_target->GetAttackPoint(&owner, x, y, z);
-            else
-                i_target->GetClosePoint(x, y, z, owner.GetObjectBoundingRadius(), i_offset, i_angle, &owner);
-        }
-
     }
     // prevent redundant micro-movement for pets, other followers.
     else if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
