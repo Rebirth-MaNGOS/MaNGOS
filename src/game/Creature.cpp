@@ -433,7 +433,6 @@ bool Creature::UpdateEntry(uint32 Entry, Team team, const CreatureData *data /*=
 
     m_aggroRangeOverride = GetCreatureInfo()->aggrorangeoverride;
 
-
     return true;
 }
 
@@ -710,12 +709,6 @@ void Creature::Update(uint32 update_diff, uint32 diff)
                 m_noCreatureMeleeHitResetTimer -= diff;
         }
 
-        if (Unit* pVictim = getVictim())
-        {
-            if (IsWithinDistInMap(pVictim, 1.f))
-                GetMotionMaster()->top()->Update(*this, diff);
-        }
-    
         break;
     }
     case CORPSE_FALLING:

@@ -43,13 +43,13 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
     protected:
         TargetedMovementGeneratorMedium()
             : TargetedMovementGeneratorBase(), i_offset(0), i_angle(0), i_recalculateTravel(false),
-                i_movingBack(false), i_path(NULL), m_pathPointsSent(0) {}
+                i_path(NULL), m_pathPointsSent(0) {}
         TargetedMovementGeneratorMedium(Unit &target)
             : TargetedMovementGeneratorBase(target), i_offset(0), i_angle(0), i_recalculateTravel(false),
-                i_movingBack(false), i_path(NULL), m_pathPointsSent(0) {}
+                i_path(NULL), m_pathPointsSent(0) {}
         TargetedMovementGeneratorMedium(Unit &target, float offset, float angle)
             : TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle), i_recalculateTravel(false),
-                i_movingBack(false), i_path(NULL), m_pathPointsSent(0) {}
+                i_path(NULL), m_pathPointsSent(0) {}
         ~TargetedMovementGeneratorMedium() { delete i_path; }
 
     public:
@@ -71,7 +71,6 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
 
         void unitSpeedChanged() { i_recalculateTravel=true; }
         void UpdateFinalDistance(float fDistance);
-        bool IsBackingUp() const { return i_movingBack; }
 
     protected:
         void _setTargetLocation(T &);
@@ -80,7 +79,6 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
         float i_angle;
         DestinationHolder< Traveller<T> > i_destinationHolder;
         bool i_recalculateTravel;
-        bool i_movingBack;
 
         PathInfo* i_path;
         uint32 m_pathPointsSent;

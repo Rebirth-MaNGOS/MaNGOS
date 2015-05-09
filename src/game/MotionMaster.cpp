@@ -480,11 +480,6 @@ void MotionMaster::SuspendChaseMovement()
 	if (GetCurrentMovementGeneratorType() == MovementGeneratorType::CHASE_MOTION_TYPE)
 	{
 		MovementGenerator* curr = top();
-
-        auto pGen = dynamic_cast<ChaseMovementGenerator<Creature>*>(curr);
-        if (pGen && pGen->IsBackingUp())
-            return;
-
 		pop();
 
 		curr->Finalize(*m_owner);
@@ -501,11 +496,7 @@ void MotionMaster::ResumeChaseMovement()
 	{
 		if (m_owner->getVictim())
         {
-<<<<<<< HEAD
-			MoveChase(m_owner->getVictim(), 1.f);
-=======
-			MoveChase(m_owner->getVictim(), 4.f);
->>>>>>> parent of 5137cfb... Tweaked the mob push back so they don't run as far.
+			MoveChase(m_owner->getVictim(), 0.01f);
         }
 
 		m_movementSuspended = false;
