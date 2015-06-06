@@ -1547,6 +1547,135 @@ CreatureAI* GetAI_boss_roman_khan(Creature* pCreature)
     return new boss_roman_khanAI(pCreature);
 }
 
+/*####
+# npc_mistress_natalia_maralith
+####*/
+
+enum eNatalia
+{
+	SPELL_BLACKOUT			= 15269,
+	SPELL_PSYCHIC_SCREAM	= 13704,
+	SPELL_SHADOW_WORD_PAIN	= 11639,
+	SPELL_MIND_FLAY			= 16568,
+	SPELL_DOMINATE_MIND		= 20740,
+	SPELL_HEALING_TOUCH		= 27527,
+
+	NATALIA_SAY_AGGRO		= -1720119,
+	NATALIA_SAY_DEATH		= -1720120,
+};
+
+struct MANGOS_DLL_DECL npc_mistress_natalia_maralithAI : public ScriptedAI
+{
+    npc_mistress_natalia_maralithAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiPsychicScreamTimer;
+    uint32 m_uiShadowWordPainTimer;
+	uint32 m_uiMindFlayTimer;
+	uint32 m_uiDominateMindTimer;
+	uint32 m_uiHealingTouchTimer;
+
+    void Reset()
+    {
+        m_uiPsychicScreamTimer = urand(6000,15000);
+        m_uiShadowWordPainTimer = urand(5000,10000);
+		m_uiMindFlayTimer = urand(12000,15000);
+		m_uiDominateMindTimer = urand(14000,22000);
+		m_uiHealingTouchTimer = 1000;
+    }
+
+	void Aggro(Unit* /*pWho*/)
+    {
+        int say = urand(0,2);
+		if (say == 1)
+			DoScriptText(NATALIA_SAY_AGGRO, m_creature);
+    }
+
+	  void JustDied(Unit* /*pKiller*/)
+    {
+		int say2 = urand(0,2);
+		if (say2 == 1)
+			DoScriptText(NATALIA_SAY_DEATH, m_creature);    
+    } 
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if ((pSpell->Id == SPELL_SHADOW_WORD_PAIN || pSpell->Id == SPELL_MIND_FLAY) && pTarget->GetTypeId() == TYPEID_PLAYER)
+		{
+			int blackoutProcc = urand(1,10);
+			if (blackoutProcc == 1)
+				m_creature->CastSpell(pTarget,SPELL_BLACKOUT, true);				//has to manually procc blackout
+		}
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // Psychic Scream
+        if (m_uiPsychicScreamTimer <= uiDiff)
+        {			
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_PSYCHIC_SCREAM);
+            m_uiPsychicScreamTimer = urand(10000,20000);
+        }
+        else
+            m_uiPsychicScreamTimer -= uiDiff;
+
+        // Shadow Word Pain
+        if (m_uiShadowWordPainTimer <= uiDiff)
+        {
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            
+			m_creature->CastSpell(pTarget, SPELL_SHADOW_WORD_PAIN, false);
+			m_uiShadowWordPainTimer = urand(15000,19000);          
+        }
+        else
+            m_uiShadowWordPainTimer -= uiDiff;
+
+		// Mind flay
+        if (m_uiMindFlayTimer <= uiDiff)
+        {			
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_MIND_FLAY);
+            m_uiMindFlayTimer = urand(8000,17000);
+        }
+        else
+            m_uiMindFlayTimer -= uiDiff;
+
+		// Dominate mind
+        if (m_uiDominateMindTimer <= uiDiff)
+        {
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            
+			m_creature->CastSpell(pTarget, SPELL_DOMINATE_MIND, false);
+			m_uiDominateMindTimer = urand(20000,30000);          
+        }
+        else
+            m_uiDominateMindTimer -= uiDiff;
+
+		if(HealthBelowPct(50))
+		{
+			// Healing touch
+			if (m_uiHealingTouchTimer <= uiDiff)
+			{			
+				DoCastSpellIfCan(m_creature, SPELL_HEALING_TOUCH);
+				m_uiHealingTouchTimer = urand(10000,15000);
+			}
+			else
+				m_uiHealingTouchTimer -= uiDiff;
+		}
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_mistress_natalia_maralith(Creature* pCreature)
+{
+    return new npc_mistress_natalia_maralithAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -1608,5 +1737,10 @@ void AddSC_silithus()
 	pNewscript = new Script;
     pNewscript->Name = "boss_roman_khan";
     pNewscript->GetAI = &GetAI_boss_roman_khan;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_mistress_natalia_maralith";
+    pNewscript->GetAI = &GetAI_npc_mistress_natalia_maralith;
     pNewscript->RegisterSelf();
 }
