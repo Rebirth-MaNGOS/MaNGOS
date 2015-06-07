@@ -78,7 +78,7 @@ void instance_stratholme::OnCreatureCreate(Creature* pCreature)
     {
 		//Rare Bosses
 		case 10809:
-		case 10393:
+		//case 10393:			// set his spawn in the pool instead
 			SetRareBoss(pCreature,5);
 			break;
         // Bosses
@@ -103,9 +103,9 @@ void instance_stratholme::OnCreatureCreate(Creature* pCreature)
         case NPC_THUZADIN_ACOLYTE:
             m_lAcolyteGUID.push_back(pCreature->GetObjectGuid());
             break;
-        case NPC_ASHARI_CRYSTAL:
+        case NPC_ASHARI_CRYSTAL:			
             m_lCrystalGUID.push_back(pCreature->GetObjectGuid());
-            pCreature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+			pCreature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);		// not working
             break;
     }
 }
