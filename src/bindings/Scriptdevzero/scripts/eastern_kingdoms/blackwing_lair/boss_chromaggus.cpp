@@ -345,15 +345,18 @@ struct MANGOS_DLL_DECL boss_chromaggusAI : public ScriptedAI
             {
                 Unit* pUnit = m_creature->GetMap()->GetUnit(*i);
 
-                // Chromatic mutation if target is effected by all afflictions
-                if (pUnit->HasAura(SPELL_BROODAF_BLUE, EFFECT_INDEX_0)
-                        && pUnit->HasAura(SPELL_BROODAF_BLACK, EFFECT_INDEX_0)
-                        && pUnit->HasAura(SPELL_BROODAF_RED, EFFECT_INDEX_0)
-                        && pUnit->HasAura(SPELL_BROODAF_BRONZE, EFFECT_INDEX_0)
-                        && pUnit->HasAura(SPELL_BROODAF_GREEN, EFFECT_INDEX_0))
+                if (pUnit)
                 {
-                    pUnit->RemoveAllAuras();
-                    m_creature->CastSpell(pUnit,SPELL_CHROMATIC_MUT_1, true);
+                    // Chromatic mutation if target is effected by all afflictions
+                    if (pUnit->HasAura(SPELL_BROODAF_BLUE, EFFECT_INDEX_0)
+                            && pUnit->HasAura(SPELL_BROODAF_BLACK, EFFECT_INDEX_0)
+                            && pUnit->HasAura(SPELL_BROODAF_RED, EFFECT_INDEX_0)
+                            && pUnit->HasAura(SPELL_BROODAF_BRONZE, EFFECT_INDEX_0)
+                            && pUnit->HasAura(SPELL_BROODAF_GREEN, EFFECT_INDEX_0))
+                    {
+                        pUnit->RemoveAllAuras();
+                        m_creature->CastSpell(pUnit,SPELL_CHROMATIC_MUT_1, true);
+                    }
                 }
             }
 
