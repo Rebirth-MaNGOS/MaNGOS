@@ -1783,9 +1783,19 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
         uint32 AttackerMeleeSkill=GetUnitMeleeSkill();
 
         Probability *= AttackerMeleeSkill/(float)VictimDefense;
-
+		
         if(Probability > 40.0f)
             Probability = 40.0f;
+
+		for (Aura* aura : pVictim->GetAurasByType(SPELL_AURA_SCHOOL_ABSORB))
+		{
+			if (sSpellMgr.GetFirstSpellInChain(aura->GetId()) == 17)			// Power Word: Shield
+				Probability = 0.0f;
+			else if (sSpellMgr.GetFirstSpellInChain(aura->GetId()) == 11426)	// Ice Barrier
+				Probability = 0.0f;
+			else if (sSpellMgr.GetFirstSpellInChain(aura->GetId()) == 7812)		// Sacrifice(Warlock)
+				Probability = 0.0f;
+		}
 
         if(roll_chance_f(Probability))
             CastSpell(pVictim, 1604, true);

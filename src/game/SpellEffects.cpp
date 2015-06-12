@@ -1165,8 +1165,13 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 m_caster->CastSpell(m_caster, 23445, true);
             else                                    // Transporter Malfunction - 1/6 miss the target
 			{
-				m_caster->NearTeleportTo(-7402.10f,-3493.21f,512.15f,2.833f,false);			// teleport the player up in the sky and SW of Gadgetzan
-				m_caster->CastSpell(m_caster, 23447, true);
+				Player* pPlayer = dynamic_cast<Player*>(m_caster);
+				if (pPlayer)						// teleport the player up in the sky and SW of Gadgetzan
+				{
+					pPlayer->UnsummonPetTemporaryIfAny();
+					pPlayer->TeleportTo(1, -7402.10f, -3493.21f, 512.15f, 2.833f, 0);
+					m_caster->CastSpell(m_caster, 23447, true);
+				}				
 				//m_caster->CastSpell(m_caster, 36902, true);			// old spell, not working
 			}
 
