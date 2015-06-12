@@ -7924,7 +7924,10 @@ bool Unit::SelectHostileTarget()
                 // check if currently selected target is reachable
                 // NOTE: path alrteady generated from AttackStart()
                 bool inEvadeMode = creature->IsInEvadeMode();
-                if(!GetMotionMaster()->operator->()->IsReachable())
+                Player* pTargetPlayer = dynamic_cast<Player*>(target);
+
+                // If a player is falling we wait until it has landed before we make the creature evade.
+                if(!GetMotionMaster()->operator->()->IsReachable() && (!pTargetPlayer || pTargetPlayer->HasMovementFlag(MOVEFLAG_FALLING)))
                 {
                     if (!inEvadeMode)
                     {
