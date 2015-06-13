@@ -3506,6 +3506,23 @@ void Spell::finish(bool ok)
 
     m_spellState = SPELL_STATE_FINISHED;
 
+    if (m_spellInfo->Id == 23017 && !ok)
+    {
+        Player* pPlayer = dynamic_cast<Player*>(m_caster);
+
+        if (pPlayer)
+        {
+            Player* owner = pPlayer->GetMap()->GetPlayer(pPlayer->m_summonMasterGuid);
+            if (owner)
+                owner->InterruptSpell(CURRENT_CHANNELED_SPELL);
+            
+            Player* participant = pPlayer->GetMap()->GetPlayer(pPlayer->m_summonParticipantGuid);
+            if (participant)
+                participant->InterruptSpell(CURRENT_CHANNELED_SPELL);
+        }
+
+    }
+
     // other code related only to successfully finished spells
     if(!ok)
         return;

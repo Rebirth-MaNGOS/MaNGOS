@@ -2294,12 +2294,16 @@ public:
         float  m_summon_x;
         float  m_summon_y;
         float  m_summon_z;
+    public:
+
+        // Ritual of summoning
+        ObjectGuid m_summonMasterGuid;
+        ObjectGuid m_summonParticipantGuid;
 
 		 /*********************************************************/
         /***                  Anti-Cheat System                ***/
         /*********************************************************/
 
-    public:
 		Sentinel* m_sentinel;
 		Sentinel* GetSentinel() { return m_sentinel; };
 

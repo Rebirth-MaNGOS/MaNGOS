@@ -1390,7 +1390,22 @@ void GameObject::Use(Unit* user)
                 spellCaster = player;
             }
 
+            // If there are enough participants no more should be allowed.
+            if (GetUniqueUseCount() >= info->summoningRitual.reqParticipants)
+                return;
+
             AddUniqueUse(player);
+
+            // Store the summon ritual's owner's guid.
+            // It is used to cancel the ritual if the player stops channeling.
+            player->m_summonMasterGuid = owner->GetObjectGuid();
+            player->m_summonParticipantGuid = [=]() { 
+                for (ObjectGuid guid : m_UniqueUsers) 
+                    if (guid != owner->GetObjectGuid()) 
+                        return owner->GetObjectGuid(); 
+
+                return ObjectGuid();
+            }();
 
             if (info->summoningRitual.animSpell)
             {
