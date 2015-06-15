@@ -70,6 +70,7 @@ bool ChatHandler::HandleBugReportTicketToReportCommand(char* args)
     
     uint32 index;
     ExtractUInt32(&args, index);
+    index -= 1; // Reduce the index by one to make it correspond to the listed ticket number.
 
     GMTicket* ticket = sTicketMgr.GetGMTicketByOrderPos(index);
     
