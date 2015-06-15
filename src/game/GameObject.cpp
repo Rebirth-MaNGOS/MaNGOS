@@ -1399,7 +1399,7 @@ void GameObject::Use(Unit* user)
             // Store the summon ritual's owner's guid.
             // It is used to cancel the ritual if the player stops channeling.
             player->m_summonMasterGuid = owner->GetObjectGuid();
-            player->m_summonParticipantGuid = [=]() { 
+            player->m_summonParticipantGuid = [=]() -> ObjectGuid { 
                 for (ObjectGuid guid : m_UniqueUsers) 
                     if (guid != owner->GetObjectGuid()) 
                         return owner->GetObjectGuid(); 
