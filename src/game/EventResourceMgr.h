@@ -6,6 +6,7 @@
 
 struct ResourceType
 {
+    uint32 id;
     uint32 current_count;
     uint32 full_count;
 };
@@ -14,8 +15,12 @@ typedef std::map<uint32, ResourceType> ResourceEvent ;
 
 class EventResourceMgr
 {
-    void LoadResourceEvents();
-    
+    public:
+        void LoadResourceEvents();
+        void AddResourceCount(uint32 event_id, uint32 resource_id, int count);
+        uint32 GetResourceCount(uint32 event_id, uint32 resource_id);
+        uint32 GetFullResourceCount(uint32 event_id, uint32 resource_id);
+        
     private:
         std::map<uint32, ResourceEvent> m_resourceEvents;
 };

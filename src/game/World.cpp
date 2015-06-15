@@ -68,6 +68,7 @@
 #include "extras/Mod.h"
 #include "Warden/WardenDataStorage.h"
 #include "ExclusivePoolMgr.h"
+#include "EventResourceMgr.h"
 
 #include <thread>
 
@@ -1224,6 +1225,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "Loading CreatureEventAI Scripts...");
     sEventAIMgr.LoadCreatureEventAI_Scripts();
+
+    sLog.outString("Loading event resources...");
+    sEventResourceMgr.LoadResourceEvents();
 
     sLog.outString("Initializing Scripts...");
     switch(sScriptMgr.LoadScriptLibrary(MANGOS_SCRIPT_NAME))
