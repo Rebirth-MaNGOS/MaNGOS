@@ -80,8 +80,8 @@ void EventResourceMgr::AddResourceCount(uint32 event_id, uint32 resource_id, int
 
     resource_type.current_count += count;
 
-    CharacterDatabase.PQuery("INSERT INTO event_resource_count (`id`, `event_id`, `resource_id`,"
-                             " `resource_count`) VALUES (%u, %u, %u, %u) ON DUPLICATE KEY UPDATE", 
+    CharacterDatabase.PQuery("REPLACE INTO event_resource_count (`id`, `event_id`, `resource_id`,"
+                             " `resource_count`) VALUES ('%u', '%u', '%u', '%u')", 
                              resource_type.id, event_id, resource_id, resource_type.current_count);
 }
 
