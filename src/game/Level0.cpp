@@ -33,6 +33,15 @@
 #include "Util.h"
 #include "BugReportMgr.h"
 
+bool ChatHandler::HandleBugReportCount(char* /*args*/)
+{
+    size_t count = sBugReportMgr.GetBugReportList().size();
+
+    PSendSysMessage("There are %lu bug reports.", count);
+
+    return true;
+}
+
 bool ChatHandler::HandleBugReportListCommand(char* /*args*/)
 {
     BugReportList list = sBugReportMgr.GetBugReportList();
