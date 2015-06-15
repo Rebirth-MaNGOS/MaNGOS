@@ -93,8 +93,6 @@ struct MANGOS_DLL_DECL boss_drektharAI : public ScriptedAI
                 pWolf->getThreatManager().clearReferences();
                 pWolf->CombatStop(true);
                 pWolf->SetEvadeMode(true);
-
-                sLog.outBasic("Resetting wolf! %u", pWolf->GetEntry());
             }
         }
     }
