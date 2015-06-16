@@ -154,6 +154,12 @@ void HostileReference::updateOnlineStatus()
             accessible = true;
 
     }
+
+    // Don't remove a player from the threat list while it's falling.
+    Player* pPlayer = dynamic_cast<Player*>(getTarget());
+    if (pPlayer && pPlayer->m_movementInfo.fallTime > 0)
+        return;
+
     setAccessibleState(accessible);
     setOnlineOfflineState(online);
 }
