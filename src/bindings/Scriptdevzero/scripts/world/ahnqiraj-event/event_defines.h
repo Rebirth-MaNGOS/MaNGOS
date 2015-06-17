@@ -4,7 +4,7 @@
 enum AhnQirajIDs
 {
     EVENT_ID = 0,
-    QUEST_ALLIANCE_ARTHAS_TEARS = 8509
+    QUEST_ALLIANCE_ARTHAS_TEARS = 8510
 };
 
 #endif

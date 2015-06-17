@@ -24,5 +24,6 @@ void AddSC_the_alliance_needs_arthas_tears()
     
     pScript->Name = "npc_sgt_maj_germaine";
     pScript->pQuestRewardedNPC = &QuestRewarded_npc_sgt_maj_germaine;
+    pScript->RegisterSelf();
 
 }
