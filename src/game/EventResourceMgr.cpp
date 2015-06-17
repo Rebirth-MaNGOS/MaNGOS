@@ -74,15 +74,21 @@ void EventResourceMgr::LoadResourceEvents()
     }
 }
 
-void EventResourceMgr::AddResourceCount(uint32 event_id, uint32 resource_id, int count)
+bool EventResourceMgr::AddResourceCount(uint32 event_id, uint32 resource_id, int count)
 {
+    bool notDone = true;
     ResourceType& resource_type = m_resourceEvents.at(event_id).at(resource_id);
+
+    if (resource_type.current_count + count >= resource_type.full_count)
+        notDone = false;
 
     resource_type.current_count += count;
 
     CharacterDatabase.PQuery("REPLACE INTO event_resource_count (`id`, `event_id`, `resource_id`,"
                              " `resource_count`) VALUES ('%u', '%u', '%u', '%u')", 
                              resource_type.id, event_id, resource_id, resource_type.current_count);
+
+    return notDone;
 }
 
 uint32 EventResourceMgr::GetResourceCount(uint32 event_id, uint32 resource_id)
@@ -97,4 +103,19 @@ uint32 EventResourceMgr::GetFullResourceCount(uint32 event_id, uint32 resource_i
     ResourceType& resource_type = m_resourceEvents.at(event_id).at(resource_id);
 
     return resource_type.full_count;
+}
+
+bool AddResourceCount(uint32 event_id, uint32 resource_id, int count)
+{
+    return sEventResourceMgr.AddResourceCount(event_id, resource_id, count);
+}
+
+uint32 GetResourceCount(uint32 event_id, uint32 resource_id)
+{
+    return sEventResourceMgr.GetResourceCount(event_id, resource_id);
+}
+
+uint32 GetFullResourceCount(uint32 event_id, uint32 resource_id)
+{
+    return sEventResourceMgr.GetFullResourceCount(event_id, resource_id);
 }

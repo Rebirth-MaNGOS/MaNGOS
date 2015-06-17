@@ -24,6 +24,7 @@
 #include "mersennetwister/MersenneTwister.h"
 #include <ace/TSS_T.h>
 #include <ace/INET_Addr.h>
+#include "EventResourceMgr.h"
 
 typedef ACE_TSS<MTRand> MTRandTSS;
 static MTRandTSS mtRand;
