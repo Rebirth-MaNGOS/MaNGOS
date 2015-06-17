@@ -3041,6 +3041,7 @@ void Spell::cast(bool skipCheck)
         return;
     }
 
+
     // different triggred (for caster) and precast (casted before apply effect to target) cases
     switch(m_spellInfo->SpellFamilyName)
     {
@@ -3126,6 +3127,17 @@ void Spell::cast(bool skipCheck)
     }
 
     if (!CheckPaladinBlessingStacking(spellProto))
+    {
+        SendCastResult(SPELL_FAILED_MORE_POWERFUL_SPELL_ACTIVE);
+        cancel();
+        finish(false);
+        m_caster->DecreaseCastCounter();
+        SetExecutedCurrently(false);
+        return;
+    }
+
+
+    if (!CheckBuffOverwrite(spellProto))
     {
         SendCastResult(SPELL_FAILED_MORE_POWERFUL_SPELL_ACTIVE);
         cancel();
@@ -5908,6 +5920,61 @@ bool Spell::CheckHOTStacking(SpellEntry const* spellProto)
             {
                 unitTarget->RemoveAurasDueToSpell(healingAura->GetId());
                 return true;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool Spell::CheckBuffOverwrite(SpellEntry const* spellProto)
+{
+    if (!spellProto)
+        return true;
+
+    // Buffs are positive spells.
+    if (spellProto->AttributesEx & SPELL_ATTR_EX_NEGATIVE)
+        return true;
+
+    for (short i = 0; i < MAX_EFFECT_INDEX; i++)
+    {
+        if (spellProto->EffectApplyAuraName[i] == SPELL_AURA_MOD_STAT)
+        {
+            
+            for(TargetList::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+            {
+                Unit* pTarget = m_caster->GetMap()->GetUnit(ihit->targetGUID);
+
+                if (!pTarget)
+                    continue;
+
+                Unit::AuraList const& list = pTarget->GetAurasByType(SPELL_AURA_MOD_STAT);
+
+                for (Aura* aura : list)
+                {
+                    Modifier* pMod = aura->GetModifier();
+
+                    // Make sure that the buffs affect the same stats.
+                    if (pMod->m_miscvalue == spellProto->EffectMiscValue[i])
+                    {
+                        // If the new buff has a shorter duration we don't allow overwriting.
+                        if (aura->GetAuraDuration() > CalculateSpellDuration(spellProto, m_caster))
+                           return false; 
+
+
+                        if (pTarget)
+                        {
+                            int32 m_currentBasePoints = spellProto->CalculateSimpleValue(SpellEffectIndex(i));
+
+                            int32 effect = m_caster->CalculateSpellDamage(pTarget, spellProto, SpellEffectIndex(i), &m_currentBasePoints);
+
+                            // If the already applied spell is more powerful we do
+                            // not allow it to be overwritten.
+                            if (abs(pMod->m_amount) > abs(effect))
+                                return false;
+                        }
+                    }
+                }
             }
         }
     }
