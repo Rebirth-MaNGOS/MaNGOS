@@ -2704,6 +2704,9 @@ void ObjectMgr::FlushRankPoints(uint32 dateTop)
     CharacterDatabase.PExecute("DELETE FROM character_honor_cp WHERE date < %u",dateTop - 7);
     CharacterDatabase.CommitTransaction();
 
+    // Set the highest rank to 1 for all characters that have more than the weekly requirement of honorable kills during their lifetime.
+    CharacterDatabase.PExecute("UPDATE characters SET honor_highest_rank = 5 WHERE honor_highest_rank < 5 AND stored_honorable_kills >= %u", sWorld.getConfig(CONFIG_UINT32_MIN_HONOR_KILLS));
+
     sLog.outString();
     sLog.outString( ">> Flushed all ranking points");
 
