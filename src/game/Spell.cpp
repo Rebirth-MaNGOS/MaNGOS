@@ -5938,40 +5938,43 @@ bool Spell::CheckBuffOverwrite(SpellEntry const* spellProto)
 
     for (short i = 0; i < MAX_EFFECT_INDEX; i++)
     {
-        if (spellProto->EffectApplyAuraName[i] == SPELL_AURA_MOD_STAT)
+        const AuraType auraTypes[2] = { SPELL_AURA_MOD_STAT, SPELL_AURA_MOD_RESISTANCE_EXCLUSIVE };
+        for (short y = 0; y < 2; y++)
         {
-            
-            for(TargetList::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+            if (spellProto->EffectApplyAuraName[i] == auraTypes[y])
             {
-                Unit* pTarget = m_caster->GetMap()->GetUnit(ihit->targetGUID);
-
-                if (!pTarget)
-                    continue;
-
-                Unit::AuraList const& list = pTarget->GetAurasByType(SPELL_AURA_MOD_STAT);
-
-                for (Aura* aura : list)
+                for(TargetList::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
                 {
-                    Modifier* pMod = aura->GetModifier();
+                    Unit* pTarget = m_caster->GetMap()->GetUnit(ihit->targetGUID);
 
-                    // Make sure that the buffs affect the same stats.
-                    if (pMod->m_miscvalue == spellProto->EffectMiscValue[i])
+                    if (!pTarget)
+                        continue;
+
+                    Unit::AuraList const& list = pTarget->GetAurasByType(auraTypes[y]);
+
+                    for (Aura* aura : list)
                     {
-                        // If the new buff has a shorter duration we don't allow overwriting.
-                        if (aura->GetAuraDuration() > CalculateSpellDuration(spellProto, m_caster))
-                           return false; 
+                        Modifier* pMod = aura->GetModifier();
 
-
-                        if (pTarget)
+                        // Make sure that the buffs affect the same stats.
+                        if (pMod->m_miscvalue == spellProto->EffectMiscValue[i])
                         {
-                            int32 m_currentBasePoints = spellProto->CalculateSimpleValue(SpellEffectIndex(i));
+                            // If the new buff has a shorter duration we don't allow overwriting.
+                            if (aura->GetAuraDuration() > CalculateSpellDuration(spellProto, m_caster))
+                                return false; 
 
-                            int32 effect = m_caster->CalculateSpellDamage(pTarget, spellProto, SpellEffectIndex(i), &m_currentBasePoints);
 
-                            // If the already applied spell is more powerful we do
-                            // not allow it to be overwritten.
-                            if (abs(pMod->m_amount) > abs(effect))
-                                return false;
+                            if (pTarget)
+                            {
+                                int32 m_currentBasePoints = spellProto->CalculateSimpleValue(SpellEffectIndex(i));
+
+                                int32 effect = m_caster->CalculateSpellDamage(pTarget, spellProto, SpellEffectIndex(i), &m_currentBasePoints);
+
+                                // If the already applied spell is more powerful we do
+                                // not allow it to be overwritten.
+                                if (abs(pMod->m_amount) > abs(effect))
+                                    return false;
+                            }
                         }
                     }
                 }
