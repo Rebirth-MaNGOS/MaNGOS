@@ -7937,7 +7937,7 @@ bool Unit::SelectHostileTarget()
                 Player* pTargetPlayer = dynamic_cast<Player*>(target);
 
                 // If a player is falling we wait until it has landed before we make the creature evade.
-                if(!GetMotionMaster()->operator->()->IsReachable() && (!pTargetPlayer || pTargetPlayer->HasMovementFlag(MOVEFLAG_FALLING)))
+                if(!GetMotionMaster()->operator->()->IsReachable() && (!pTargetPlayer || !pTargetPlayer->HasMovementFlag(MOVEFLAG_FALLING)))
                 {
                     if (!inEvadeMode)
                     {
