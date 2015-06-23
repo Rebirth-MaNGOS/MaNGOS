@@ -71,7 +71,7 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
             m_creature->SetDefaultMovementType(IDLE_MOTION_TYPE);
 
             // Make sure the dragon is standing in the correct spot if it shouldn't patrol.
-            const CreatureData* pData = sObjectMgr.GetCreatureData(m_creature->GetObjectGuid().GetCounter());
+            const CreatureData* pData = GetCreatureData(m_creature->GetObjectGuid().GetCounter());
             m_creature->RelocateCreature(pData->posX, pData->posY, pData->posZ, pData->orientation);
         }
 		

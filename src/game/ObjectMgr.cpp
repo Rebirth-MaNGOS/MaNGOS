@@ -8288,3 +8288,8 @@ GameObjectDataPair const* FindGOData::GetResult() const
 
     return i_anyData;
 }
+
+const CreatureData* GetCreatureData(uint32 guid)
+{
+    return sObjectMgr.GetCreatureData(guid);
+}
