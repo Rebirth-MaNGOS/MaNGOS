@@ -1360,8 +1360,8 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, S
             damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
         }
 
-        // Double the damage for a stunned target.
-        if (!pVictim->hasUnitState(UNIT_STAT_STUNNED))
+        // Double the damage for a stunned target for Judgement of Command.
+        if (spellInfo->SpellVisual == 0 && spellInfo->SpellIconID == 561 && !pVictim->hasUnitState(UNIT_STAT_STUNNED))
                 damage /= 2;
     }
     else // Default calculations for damage class.
