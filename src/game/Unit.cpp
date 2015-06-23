@@ -1346,8 +1346,8 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, S
     // Check spell crit chance
     bool crit = IsSpellCrit(pVictim, spellInfo, damageSchoolMask, attackType);
 
-    // Judgement of Command should be counted as a spell. Speparate handling for it.
-    if (spellInfo->SpellVisual == 0 && spellInfo->SpellIconID == 561)
+    // Judgement of Command and Arcane Shot should be counted as a spell. Speparate handling for it.
+    if ((spellInfo->SpellVisual == 0 && spellInfo->SpellIconID == 561) || sSpellMgr.GetFirstSpellInChain(spellInfo->Id) == 3044)
     {
         // Calculate damage bonus
         damage = SpellDamageBonusDone(pVictim, spellInfo, damage, SPELL_DIRECT_DAMAGE);
