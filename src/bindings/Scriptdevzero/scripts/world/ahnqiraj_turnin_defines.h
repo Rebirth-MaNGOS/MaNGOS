@@ -3,11 +3,48 @@
 
 enum AhnQirajIDs
 {
-    EVENT_ID = 1,
-    QUEST_ALLIANCE_ARTHAS_TEARS = 8510
+    EVENT_ID = 1
 };
 
-enum AhnQuirajResources
+// The quests with suffix "_REF" are not directly
+// referenced in the code. They are automatically
+// used by the "QuestReward_wrapper" macro in
+// ahnqiraj_turnin_scripts.cpp.
+enum AhnQirajQuest
+{
+    Q_A_ARTHAS_TEARS = 8509,
+    Q_A_ARTHAS_TEARS_REP = 8510,
+    Q_A_COPPER_BARS = 8492,
+    Q_A_COPPER_BARS_REP = 8493,
+    Q_A_LIGHT_LEATHER = 8511,
+    Q_A_LIGHT_LEATHER_REP = 8512,
+    Q_A_LINEN_BANDAGES = 8517,
+    Q_A_LINEN_BANDAGES_REP = 8518,
+    Q_A_MEDIUM_LEATHER = 8513,
+    Q_A_MEDIUM_LEATHER_REP = 8514,
+    Q_A_PURPLE_LOTUS = 8505,
+    Q_A_PURPLE_LOTUS_REP = 8506,
+    Q_A_ALBACORE = 8524,
+    Q_A_ALBACORE_REP = 8525,
+    Q_A_ROAST_RAPTOR = 8526,
+    Q_A_ROAST_RAPTOR_REP = 8527,
+    Q_A_RUNECLOTH_BANDAGES = 8522,
+    Q_A_RUNECLOTH_BANDAGES_REP = 8523,
+    Q_A_SILK_BANDAGES = 8520,
+    Q_A_SILK_BANDAGES_REP = 8521,
+    Q_A_SPOTTED_YELLOWTAIL = 8528,
+    Q_A_SPOTTED_YELLOWTAIL_REP = 8529,
+    Q_A_STRANGLEKELP = 8503,
+    Q_A_STRANGLEKELP_REP = 8504,
+    Q_A_THICK_LEATHER = 8515,
+    Q_A_THICK_LEATHER_REP = 8516,
+    Q_A_THORIUM_BARS = 8499,
+    Q_A_THORIUM_BARS_REP = 8500,
+    Q_A_IRON_BAR = 8494,
+    Q_A_IRON_BAR_REP = 8495
+};
+
+enum AhnQirajResources
 {
     COPPER_BAR = 0,
     PURPLE_LOTUS = 1,
