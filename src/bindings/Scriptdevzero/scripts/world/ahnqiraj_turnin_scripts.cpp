@@ -1,6 +1,6 @@
 #include "precompiled.h"
 #include "sc_creature.h"
-#include "event_defines.h"
+#include "ahnqiraj_turnin_defines.h"
 #include "EventResourceMgr.h"
 
 bool QuestRewarded_npc_sgt_maj_germaine(Player* /*pPlayer*/, Creature* pCreature, const Quest* pQuest)
