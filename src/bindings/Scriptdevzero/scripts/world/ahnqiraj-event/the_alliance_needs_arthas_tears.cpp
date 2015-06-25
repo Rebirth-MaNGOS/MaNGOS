@@ -11,7 +11,7 @@ bool QuestRewarded_npc_sgt_maj_germaine(Player* pPlayer, Creature* pCreature, co
         {
             // Add to the resource counter and remove the quest giver flag if the 
             // maximum amount of resources has been reached.
-            if (!AddResourceCount(EVENT_ID, QUEST_ALLIANCE_ARTHAS_TEARS, 20))
+            if (!AddResourceCount(EVENT_ID, ARTHAS_TEARS, 20))
                 pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
         }
     }
