@@ -70,6 +70,37 @@ QuestReward_wrapper(dame, THORIUM_BAR, 20, Q_A_THORIUM_BARS)
 
 QuestReward_wrapper(carnes, IRON_BAR, 20, Q_A_IRON_BAR)
 
+// Wrappers for the Horde quests.
+QuestReward_wrapper(sharpclaw, BAKED_SALMON, 20, Q_H_BAKED_SALMON)
+
+QuestReward_wrapper(cromwell, COPPER_BAR, 20, Q_H_COPPER_BARS)
+
+QuestReward_wrapper(pelekeiki, FIREBLOOM, 20, Q_H_FIREBLOOM)
+
+QuestReward_wrapper(jamani, HEAVY_LEATHER, 10, Q_H_HEAVY_LEATHER)
+
+QuestReward_wrapper(rawtar, LEAN_WOLF_STEAK, 20, Q_H_LEAN_WOLF_STEAKS)
+
+QuestReward_wrapper(callow, MAGEWEAVE_BANDAGE, 20, Q_H_MAGEWEAVE_BANDAGES)
+
+QuestReward_wrapper(tkelah, MITHRIL_BAR, 20, Q_H_MITHRIL_BARS)
+
+QuestReward_wrapper(proudfeather, PEACEBLOOM, 20, Q_H_PEACEBLOOM)
+
+QuestReward_wrapper(jezel, PURPLE_LOTUS, 20, Q_H_PURPLE_LOTUS)
+
+QuestReward_wrapper(serratus, RUGGED_LEATHER, 10, Q_H_RUGGED_LEATHER)
+
+QuestReward_wrapper(clayhoof, RUNECLOTH_BANDAGE, 20, Q_H_RUNECLOTH_BANDAGES)
+
+QuestReward_wrapper(lindo, SPOTTED_YELLOWTAIL, 20, Q_H_SPOTTED_YELLOWTAIL)
+
+QuestReward_wrapper(umala, THICK_LEATHER, 10, Q_H_THICK_LEATHER)
+
+QuestReward_wrapper(maugh, TIN_BAR, 20, Q_H_TIN_BARS)
+
+QuestReward_wrapper(longrunner, WOOL_BANDAGE, 20, Q_H_WOOL_BANDAGES)
+
 void AddSC_gate_turnin_scripts()
 {
     Script* pScript = new Script;
@@ -146,5 +177,80 @@ void AddSC_gate_turnin_scripts()
     pScript = new Script;
     pScript->Name = "npc_cpr_carnes";
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(carnes);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_chief_sharpclaw";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(sharpclaw);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_miner_cromwell";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(cromwell);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_batrdr_pelikeiki";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(pelekeiki);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_sknr_jamani";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(jamani);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_grd_rawtar";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(rawtar);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_ldy_callow";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(callow);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_snr_srg_tkelah";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(tkelah);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_hrb_proudfeather";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(proudfeather);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_apo_jezel";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(jezel);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_dr_serratus";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(serratus);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_grd_clayhoof";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(clayhoof);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_fish_lindo";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(lindo);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_sgt_umala";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(umala);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_grunt_maug";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(maugh);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_hlr_longrunner";
+    pScript->pQuestRewardedNPC = GetQuestReward_wrapper(longrunner);
     pScript->RegisterSelf();
 }
