@@ -3,7 +3,7 @@
 #include "event_defines.h"
 #include "EventResourceMgr.h"
 
-bool QuestRewarded_npc_sgt_maj_germaine(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+bool QuestRewarded_npc_sgt_maj_germaine(Player* /*pPlayer*/, Creature* pCreature, const Quest* pQuest)
 {
     if (pQuest)
     {
@@ -18,7 +18,7 @@ bool QuestRewarded_npc_sgt_maj_germaine(Player* pPlayer, Creature* pCreature, co
     return false;
 }
 
-void AddSC_the_alliance_needs_arthas_tears()
+void AddSC_gate_turnin_scripts()
 {
     Script* pScript = new Script;
     

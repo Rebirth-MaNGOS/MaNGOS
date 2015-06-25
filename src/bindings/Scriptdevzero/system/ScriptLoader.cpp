@@ -28,7 +28,7 @@ extern void AddSC_engineering();
 extern void AddSC_hallows_end();
 
 // Ahn'Qiraj gate event
-extern void AddSC_the_alliance_needs_arthas_tears();
+extern void AddSC_gate_turnin_scripts();
 
 //eastern kingdoms
 extern void AddSC_alterac_valley();                         // alterac valley
@@ -318,7 +318,7 @@ void AddScripts()
 	AddSC_hallows_end();
 
     // Ahn'Qiraj gate event
-    AddSC_the_alliance_needs_arthas_tears();
+    AddSC_gate_turnin_scripts();
 
     //eastern kingdoms
     AddSC_alterac_valley();                                 //alterac valley
