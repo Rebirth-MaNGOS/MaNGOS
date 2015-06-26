@@ -125,7 +125,7 @@ void AddSC_gate_turnin_scripts()
     pScript->RegisterSelf();
 
     pScript = new Script;
-    pScript->Name = "npc_prvt_porter";
+    pScript->Name = "npc_pvt_porter";
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(porter);
     pScript->RegisterSelf();
 
