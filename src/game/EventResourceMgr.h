@@ -1,14 +1,25 @@
 #ifndef EVENT_RESOURCE_MGR
 #define EVENT_RESOURCE_MGR
 #include <map>
+#include <list>
 #include "Database/DatabaseEnv.h"
 #include "Policies/Singleton.h"
+#include "ObjectMgr.h"
 
+struct ResourceCreatureInfo
+{
+    uint32 trigger_limit;
+    uint32 object_guid;
+};
+
+typedef std::list<ResourceCreatureInfo> ResourceCreatureList;
 struct ResourceType
 {
     uint32 id;
     uint32 current_count;
     uint32 full_count;
+
+    ResourceCreatureList objects;
 };
 
 typedef std::map<uint32, ResourceType> ResourceEvent ;
@@ -24,6 +35,8 @@ class EventResourceMgr
 
         uint32 GetResourceCount(uint32 event_id, uint32 resource_id);
         uint32 GetFullResourceCount(uint32 event_id, uint32 resource_id);
+
+        void CheckSpawnGOEvent(uint32 event_id);
         
     private:
         std::map<uint32, ResourceEvent> m_resourceEvents;

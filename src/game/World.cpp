@@ -1226,9 +1226,6 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading CreatureEventAI Scripts...");
     sEventAIMgr.LoadCreatureEventAI_Scripts();
 
-    sLog.outString("Loading event resources...");
-    sEventResourceMgr.LoadResourceEvents();
-
     sLog.outString("Initializing Scripts...");
     switch(sScriptMgr.LoadScriptLibrary(MANGOS_SCRIPT_NAME))
     {
@@ -1284,6 +1281,10 @@ void World::SetInitialWorldSettings()
     ///- Initialize MapManager
     sLog.outString( "Starting Map System" );
     sMapMgr.Initialize();
+    
+    sLog.outString("Loading event resources...");
+    sEventResourceMgr.LoadResourceEvents();
+
 
     ///- Load Warden Data
     sLog.outString("Loading Warden Data...");
