@@ -184,7 +184,7 @@ struct MANGOS_DLL_DECL boss_buruAI : public ScriptedAI			// Should hit for 750~~
         if (!m_bIsEnraged && HealthBelowPct(21))
         {
 			m_creature->SetSpeedRate(MOVE_RUN, 0.30f);
-			m_creature->SetArmor(4915);
+			m_creature->SetArmor(3795);
 			StopDueToStun(1);			
 			DoResetThreat();
 			m_bIsEnraged = true;
