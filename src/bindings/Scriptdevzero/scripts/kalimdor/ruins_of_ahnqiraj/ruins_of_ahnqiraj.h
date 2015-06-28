@@ -88,9 +88,14 @@ class MANGOS_DLL_DECL instance_ruins_of_ahnqiraj : public ScriptedInstance
 
         const char* Save() { return strInstData.c_str(); }
         void Load(const char* chrIn);
+		GUIDList& instance_ruins_of_ahnqiraj::GetBuruEggs()
+		{
+			return m_lBuruEggs;
+		}
+		GUIDList m_lBuruEggs;		
     protected:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
-        std::string strInstData;
+        std::string strInstData;		
 };
 
 #endif

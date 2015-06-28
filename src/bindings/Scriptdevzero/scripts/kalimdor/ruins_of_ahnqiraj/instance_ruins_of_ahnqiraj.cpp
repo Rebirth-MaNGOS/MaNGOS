@@ -80,6 +80,9 @@ void instance_ruins_of_ahnqiraj::OnCreatureCreate(Creature* pCreature)
         case NPC_OSSIRIAN:
             m_mNpcEntryGuidStore[pCreature->GetEntry()] = pCreature->GetObjectGuid();
             break;
+		case NPC_BURU_EGG:
+			m_lBuruEggs.push_back(pCreature->GetObjectGuid());	
+			break;
     }
 }
 
@@ -109,6 +112,23 @@ void instance_ruins_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
             break;
         case TYPE_BURU:
             m_auiEncounter[3] = uiData;
+			if (uiData == DONE)					// If Buru is dead despawn the eggs that are alive and set the respawn of all eggs to 1 week
+			{
+				if (!m_lBuruEggs.empty())
+				{
+					for(GUIDList::iterator itr = m_lBuruEggs.begin(); itr != m_lBuruEggs.end(); ++itr)
+					{
+						if (Creature* pTarget = instance->GetCreature(*itr))
+						{
+							if (pTarget->isAlive())
+								pTarget->ForcedDespawn();
+
+							pTarget->SetRespawnTime(604800);
+							pTarget->SaveRespawnTime();
+						}
+					}
+				}
+			}
             break;
         case TYPE_AYAMISS:
             m_auiEncounter[4] = uiData;
