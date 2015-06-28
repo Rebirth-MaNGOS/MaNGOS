@@ -96,7 +96,8 @@ struct MANGOS_DLL_DECL boss_buruAI : public ScriptedAI			// Should hit for 750~~
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_BURU, IN_PROGRESS);
-		
+
+		ChangeTarget();
         m_creature->SetArmor(20000);
     }
 	
@@ -287,12 +288,7 @@ struct MANGOS_DLL_DECL mob_buru_eggAI : public ScriptedAI
 
 		Creature* pBuru = m_pInstance->GetSingleCreatureFromStorage(NPC_BURU);
         if (pBuru && pBuru->isAlive() && !pBuru->isInCombat())
-		{
-            pBuru->AI()->AttackStart(GetRandomPlayerInCurrentMap(100));
-
-			if (boss_buruAI* pBuruAI = dynamic_cast<boss_buruAI*>(pBuru->AI()))
-				pBuruAI->ChangeTarget();
-		}
+			pBuru->SetInCombatWith(pDealer);
     }
 
 	void UpdateAI(const uint32 uiDiff)
