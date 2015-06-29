@@ -1735,6 +1735,12 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+        if (m_uiEventTimer > uiDiff)
+        {
+            m_uiEventTimer -= uiDiff;
+            return;
+        }
+
         switch (m_uiEventStage)
         {
             case 0:
@@ -1747,69 +1753,461 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 if (pSummon)
                 {
                     pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                    m_Anachronos = pSummon->GetObjectGuid();
-                }
+                    //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->setFaction(1601);
+                        m_Anachronos = pSummon->GetObjectGuid();
+                    }
 
-                pSummon = m_creature->SummonCreature(FANDRAL_STAGHELM, -8028.79f, 1536.57f, 2.61f, 2.662f, TEMPSUMMON_MANUAL_DESPAWN, 0);
-                if (pSummon)
+                    pSummon = m_creature->SummonCreature(FANDRAL_STAGHELM, -8028.79f, 1536.57f, 2.61f, 2.662f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->setFaction(1601);
+                        m_Fandral = pSummon->GetObjectGuid();
+                    }
+
+                    pSummon = m_creature->SummonCreature(MERITHRA, -8032.65f, 1538.06f, 2.61f, 5.923f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->setFaction(1601);
+                        m_Merithra = pSummon->GetObjectGuid();
+                    }
+
+                    pSummon = m_creature->SummonCreature(CAELESTRASZ, -8031.27f, 1535.84f, 2.61f, 0.629f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->setFaction(1601);
+                        m_Caelestrasz = pSummon->GetObjectGuid();
+                    }
+
+                    pSummon = m_creature->SummonCreature(ARYGOS, -8031.26f, 1539.59f, 2.61f, 5.427f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->setFaction(1601);
+                        m_Arygos = pSummon->GetObjectGuid();
+                    }
+
+                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.91f, 1503.81f, 2.63f, 1.414f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->GetMotionMaster()->MoveRandom();
+                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->setFaction(35);
+                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
+                        m_bugs.push_back(pSummon->GetObjectGuid());
+                    }
+
+                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8105.31f, 1547.41f, 3.88f, 4.79f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->GetMotionMaster()->MoveRandom();
+                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->setFaction(35);
+                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
+                        m_bugs.push_back(pSummon->GetObjectGuid());
+                    }
+
+                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.35f, 1544.08f, 2.61f, 4.50f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->GetMotionMaster()->MoveRandom();
+                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->setFaction(35);
+                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
+                        m_bugs.push_back(pSummon->GetObjectGuid());
+                    }
+
+                    m_uiEventTimer = 1000;
+                    ++m_uiEventStage;
+                    break;
+                }
+                case 1: // Anachronus first talk
                 {
-                    pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                    m_Fandral = pSummon->GetObjectGuid();
-                }
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
 
-                pSummon = m_creature->SummonCreature(MERITHRA, -8032.65f, 1538.06f, 2.61f, 5.923f, TEMPSUMMON_MANUAL_DESPAWN, 0);
-                if (pSummon)
+                    }
+
+                    m_uiEventTimer = 3000;
+                    ++m_uiEventStage;
+                    break;
+                }
+                case 2:
                 {
-                    pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                    m_Merithra = pSummon->GetObjectGuid();
+                    for (short i = 0; i < 5; i++)
+                    {
+                        float x = frand(-8107, -8087);
+                        float y = frand(1500, 1548);
+
+                        Unit* pSummon = m_creature->SummonCreature(QIRAJI_TANK, x, y, 2.9f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                        if (pSummon)
+                        {
+                            pSummon->GetMotionMaster()->MoveRandom();
+                            //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                            pSummon->setFaction(35);
+                            //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
+                            m_bugs.push_back(pSummon->GetObjectGuid());
+                        }
+                    }
+
+                    for (short i = 0; i < 8; i++)
+                    {
+                        float x = frand(-8107, -8087);
+                        float y = frand(1500, 1548);
+
+                        Unit* pSummon = m_creature->SummonCreature(QIRAJI_DRONE, x, y, 2.9f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                        if (pSummon)
+                        {
+                            pSummon->GetMotionMaster()->MoveRandom();
+                            //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                            pSummon->setFaction(35);
+                            //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
+                            m_bugs.push_back(pSummon->GetObjectGuid());
+                        }
+                    }
+
+                    for (short i = 0; i < 11; i++)
+                    {
+                        float x = frand(-8107, -8087);
+                        float y = frand(1500, 1548);
+
+                        Unit* pSummon = m_creature->SummonCreature(QIRAJI_WASP, x, y, 2.9f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                        if (pSummon)
+                        {
+                            pSummon->GetMotionMaster()->MoveRandom();
+                            //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                            pSummon->setFaction(35);
+                            //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
+                            m_bugs.push_back(pSummon->GetObjectGuid());
+                        }
+                    }
+
+                    for (short i = 0; i < 20; i++)
+                    {
+                        float x = frand(-8107, -8087);
+                        float y = frand(1500, 1548);
+
+                        Unit* pSummon = m_creature->SummonCreature(KALDOREI_INFANTRY, x, y, 2.9f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                        if (pSummon)
+                        {
+                            pSummon->GetMotionMaster()->MoveRandom();
+                            //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                            pSummon->setFaction(35);
+                            m_elfs.push_back(pSummon->GetObjectGuid());
+                    }
                 }
 
-                pSummon = m_creature->SummonCreature(CAELESTRASZ, -8031.27f, 1535.84f, 2.61f, 0.629f, TEMPSUMMON_MANUAL_DESPAWN, 0);
-                if (pSummon)
+                for (ObjectGuid guid : m_elfs)
                 {
-                    pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                    m_Caelestrasz = pSummon->GetObjectGuid();
+                    Unit* pElf = m_creature->GetMap()->GetCreature(guid);
+                    if (pElf)
+                    {
+                        if (!m_bugs.empty())
+                        {
+                            ObjectGuid targetGuid = m_bugs[urand(0, m_bugs.size() - 1)];
+                            Unit* pBug = m_creature->GetMap()->GetCreature(targetGuid);
+
+                            if (pBug)
+                            {
+                                pElf->Attack(pBug, false);
+                                pElf->getThreatManager().addThreatDirectly(pBug, 1000.f);
+                            }
+                        }
+                    }
                 }
 
-                pSummon = m_creature->SummonCreature(ARYGOS, -8031.26f, 1539.59f, 2.61f, 5.427f, TEMPSUMMON_MANUAL_DESPAWN, 0);
-                if (pSummon)
+                for (ObjectGuid guid : m_bugs)
                 {
-                    pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                    m_Arygos = pSummon->GetObjectGuid();
+                    Unit* pBug = m_creature->GetMap()->GetCreature(guid);
+                    if (pBug)
+                    {
+                        if (!m_elfs.empty())
+                        {
+                            ObjectGuid targetGuid = m_elfs[urand(0, m_elfs.size() - 1)];
+                            Unit* pElf = m_creature->GetMap()->GetCreature(targetGuid);
+
+                            if (pElf)
+                            {
+                                pBug->Attack(pElf, false);
+                                pBug->getThreatManager().addThreatDirectly(pElf, 1000.f);
+                            }
+                        }
+                    }
                 }
 
-                pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.91f, 1503.81f, 2.63f, 1.414f, TEMPSUMMON_MANUAL_DESPAWN, 0);
-                if (pSummon)
+                Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                if (pFandral && pAnachronos)
                 {
-                    pSummon->GetMotionMaster()->MoveRandom();
-                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                    m_bugs.push_back(pSummon->GetObjectGuid());
+                    pFandral->SetFacingToObject(pAnachronos);
                 }
 
-                pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8105.31f, 1547.41f, 3.88f, 4.79f, TEMPSUMMON_MANUAL_DESPAWN, 0);
-                if (pSummon)
+                m_uiEventTimer = 2000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 3: // Fandral - start talking
+            {
+                m_uiEventTimer = 5000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 4: // Fandral - turn towards Merithra
+            {
+                Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                if (pFandral && pMerithra)
                 {
-                    pSummon->GetMotionMaster()->MoveRandom();
-                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                    m_bugs.push_back(pSummon->GetObjectGuid());
+                    pFandral->SetFacingToObject(pMerithra);
                 }
 
-                pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.35f, 1544.08f, 2.61f, 4.50f, TEMPSUMMON_MANUAL_DESPAWN, 0);
-                if (pSummon)
+                m_uiEventTimer = 3000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 5: // Merithra - first talk
+            {
+                m_uiEventTimer = 6000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 6: // Caelestrasz - first talk
+            {
+                Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
+                if (pFandral && pCaelestrasz)
                 {
-                    pSummon->GetMotionMaster()->MoveRandom();
-                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                    m_bugs.push_back(pSummon->GetObjectGuid());
+                    pCaelestrasz->SetFacingToObject(pFandral);
                 }
 
+                m_uiEventTimer = 10000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 7: // Merithra - second talk
+            {
+                m_uiEventTimer = 6000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 8: // Merithra - runs away
+            {
+                m_uiEventTimer = 11000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 9: // Merithra - turns into a dragon
+            {
+                m_uiEventTimer = 9000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 10: // Merithra - breathes on monsters, Arygos - first talk
+            {
+                m_uiEventTimer = 3000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 11: // Arygos - runs over
+            {
+                m_uiEventTimer = 5000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 12: // Arygos - screams
+            {
+                m_uiEventTimer = 4000;
                 ++m_uiEventStage;
             }
-
+            case 13: // Arygos - turns into a dragon
+            {
+                m_uiEventTimer = 8000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 14: // Arygos -- breathes on the monsters
+            {
+                m_uiEventTimer = 1000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 15: // Arygos flies away
+            {
+                m_uiEventTimer = 1000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 16: // Caelestrasz - talks
+            {
+                m_uiEventTimer = 3000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 17: // Caelestrasz - runs off
+            {
+                m_uiEventTimer = 6000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 18: // Caelestrasz - screams
+            {
+                m_uiEventTimer = 3000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 19: // Caelestrasz turns into a dragon
+            {
+                m_uiEventTimer = 7000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 20: // Caelestrasz - breathes
+            {
+                m_uiEventTimer = 2000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 21: // Caelestrasz - flies away, Anachronos - speaks
+            {
+                m_uiEventTimer = 5000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 22: // Straghelm - talk
+            {
+                m_uiEventTimer = 3000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 23: // Anachronos - talk
+            {
+                m_uiEventTimer = 500;
+                ++m_uiEventStage;
+                break;
+            }
+            case 24: // Anachronos - run
+            {
+                m_uiEventTimer = 1000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 25: // Staghelm - run
+            {
+                m_uiEventTimer = 14000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 26: // Anachronos - use magic
+            {
+                m_uiEventTimer = 26000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 27: // Anachronos - talk
+            {
+                m_uiEventTimer = 3000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 28: // Straghelm - talk, magic
+            {
+                m_uiEventTimer = 8000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 29: // Anachronos - talk
+            {
+                m_uiEventTimer = 6000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 30: // Anachronos - talk
+            {
+                m_uiEventTimer = 4000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 31: // Anachronos - talk
+            {
+                m_uiEventTimer = 17000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 32: // Staghelm - talk
+            {
+                m_uiEventTimer = 8000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 33: // Staghelm - talk
+            {
+                m_uiEventTimer = 10000;
+                ++m_uiEventStage;
+            }
+            case 34: // Staghelm - throws thing on ground, glass breaking sound
+            {
+                m_uiEventTimer = 1000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 35: // Staghelm - walks, Anachronos - speaks
+            {
+                m_uiEventTimer = 6000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 36: // Staghelm - talk, Monsters - despawn
+            {
+                m_uiEventTimer = 7000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 37: // Staghelm - walks off
+            {
+                m_uiEventTimer = 10000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 38: // Anachronos - picks up thingie
+            {
+                m_uiEventTimer = 10000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 39: // Anachronos - talks
+            {
+                m_uiEventTimer = 7000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 40: // Anachronos - says "well done" in audio
+            {
+                m_uiEventTimer = 1000;
+                ++m_uiEventStage;
+            }
+            case 41: // Anachronos - runs off
+            {
+                m_uiEventTimer = 10000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 42: // Anachronos - turns into a dragon
+            {
+                m_uiEventTimer = 5000;
+                ++m_uiEventStage;
+                break;
+            }
+            case 43: // Anachronos - flies off
+            {
+            }
         }
     }
 };
