@@ -1676,6 +1676,149 @@ CreatureAI* GetAI_npc_mistress_natalia_maralith(Creature* pCreature)
     return new npc_mistress_natalia_maralithAI(pCreature);
 }
 
+/********************************************************
+ * Scripting for the quest "A Pawn on the Eternal Board *
+********************************************************/
+
+enum PawnValues
+{
+    MUSIC = 8493,
+    Q_A_PAWN_ON_THE_ETERNAL_BOARD = 8519,
+    ANACHRONOS_TRIGGER = 15454,
+    ANUBI_CONQUEROR = 15424,
+    QIRAJI_TANK = 15422,
+    QIRAJI_DRONE = 15421,
+    QIRAJI_WASP = 15414,
+    KALDOREI_INFANTRY = 15423,
+    ANACHRONOS_THE_ANCIENT = 15381,
+    FANDRAL_STAGHELM = 15382,
+    MERITHRA = 15378,
+    CAELESTRASZ = 15379,
+    ARYGOS = 15380
+};
+
+bool QuestAccept_crystalline_tear(Player* pPlayer, GameObject* pGO, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == Q_A_PAWN_ON_THE_ETERNAL_BOARD)
+    {
+        pGO->SummonCreature(ANACHRONOS_TRIGGER, -8091.f, 1534.f, 2.72f, 0.f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 300000); 
+    }
+
+    return false;
+}
+
+
+struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
+{
+    npc_anachronos_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiEventTimer;
+    uint32 m_uiEventStage;
+
+    std::vector<ObjectGuid> m_elfs;
+    std::vector<ObjectGuid> m_bugs;
+
+    ObjectGuid m_Anachronos;
+    ObjectGuid m_Fandral;
+    ObjectGuid m_Merithra;
+    ObjectGuid m_Caelestrasz;
+    ObjectGuid m_Arygos;
+
+    void Reset()
+    {
+        m_uiEventTimer = 2000;
+        m_uiEventStage = 0;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        switch (m_uiEventStage)
+        {
+            case 0:
+            {
+                // Stage 0 - Spawn the three NPCs and the Guards 
+                // Start playing the event music.
+                m_creature->PlayDirectSound(MUSIC, nullptr);
+
+                Unit* pSummon = m_creature->SummonCreature(ANACHRONOS_THE_ANCIENT, -8028.55f, 1539.27f, 2.61f, 4.1091f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                if (pSummon)
+                {
+                    pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    m_Anachronos = pSummon->GetObjectGuid();
+                }
+
+                pSummon = m_creature->SummonCreature(FANDRAL_STAGHELM, -8028.79f, 1536.57f, 2.61f, 2.662f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                if (pSummon)
+                {
+                    pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    m_Fandral = pSummon->GetObjectGuid();
+                }
+
+                pSummon = m_creature->SummonCreature(MERITHRA, -8032.65f, 1538.06f, 2.61f, 5.923f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                if (pSummon)
+                {
+                    pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    m_Merithra = pSummon->GetObjectGuid();
+                }
+
+                pSummon = m_creature->SummonCreature(CAELESTRASZ, -8031.27f, 1535.84f, 2.61f, 0.629f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                if (pSummon)
+                {
+                    pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    m_Caelestrasz = pSummon->GetObjectGuid();
+                }
+
+                pSummon = m_creature->SummonCreature(ARYGOS, -8031.26f, 1539.59f, 2.61f, 5.427f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                if (pSummon)
+                {
+                    pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    m_Arygos = pSummon->GetObjectGuid();
+                }
+
+                pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.91f, 1503.81f, 2.63f, 1.414f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                if (pSummon)
+                {
+                    pSummon->GetMotionMaster()->MoveRandom();
+                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    m_bugs.push_back(pSummon->GetObjectGuid());
+                }
+
+                pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8105.31f, 1547.41f, 3.88f, 4.79f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                if (pSummon)
+                {
+                    pSummon->GetMotionMaster()->MoveRandom();
+                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    m_bugs.push_back(pSummon->GetObjectGuid());
+                }
+
+                pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.35f, 1544.08f, 2.61f, 4.50f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                if (pSummon)
+                {
+                    pSummon->GetMotionMaster()->MoveRandom();
+                    pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    m_bugs.push_back(pSummon->GetObjectGuid());
+                }
+
+                ++m_uiEventStage;
+            }
+
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_anachronos_trigger(Creature* pCreature)
+{
+    return new npc_anachronos_triggerAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -1742,5 +1885,15 @@ void AddSC_silithus()
 	pNewscript = new Script;
     pNewscript->Name = "npc_mistress_natalia_maralith";
     pNewscript->GetAI = &GetAI_npc_mistress_natalia_maralith;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "go_crystalline_tear";
+    pNewscript->pQuestAcceptGO = &QuestAccept_crystalline_tear;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_anachronos_trigger";
+    pNewscript->GetAI = &GetAI_npc_anachronos_trigger;
     pNewscript->RegisterSelf();
 }
