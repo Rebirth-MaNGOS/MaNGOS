@@ -2037,7 +2037,7 @@ enum ChatMsg
     CHAT_MSG_BATTLEGROUND_LEADER    = 0x5D,
 
     // [-ZERO] Need find correct values
-    // CHAT_MSG_REPLY                  = 0x09,
+    CHAT_MSG_REPLY                  = 0x09,
     CHAT_MSG_MONSTER_PARTY          = 0x30, // 0x0D, just selected some free random value for avoid duplicates with really existed values
     // CHAT_MSG_MONEY                  = 0x1C,
     // CHAT_MSG_OPENING                = 0x1D,

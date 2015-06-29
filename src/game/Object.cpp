@@ -1379,7 +1379,9 @@ void WorldObject::BuildMonsterChat(WorldPacket *data, ObjectGuid senderGuid, uin
 	*data << uint32(language);
 	if (msgtype != CHAT_MSG_TEXT_EMOTE)
 	{
-		*data << ObjectGuid(senderGuid);
+        if(msgtype != CHAT_MSG_RAID_BOSS_WHISPER && msgtype != CHAT_MSG_MONSTER_WHISPER)
+            *data << ObjectGuid(senderGuid);
+
 		*data << uint32(strlen(name)+1);
 		*data << name;
 	}
