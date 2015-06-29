@@ -37,7 +37,6 @@ void EventResourceMgr::LoadResourceEvents()
 
             // Initialisation values
             m_resourceEvents[event_id][resource_id].current_count = 0;
-            m_resourceEvents[event_id][resource_id].id = 0;
             
             ++count;
         } while (result->NextRow());
@@ -46,7 +45,7 @@ void EventResourceMgr::LoadResourceEvents()
         sLog.outBasic(">> Loaded %u resource events.", count);
     }
 
-    result = CharacterDatabase.Query("SELECT id, event_id, resource_id, resource_count FROM event_resource_count");
+    result = CharacterDatabase.Query("SELECT event_id, resource_id, resource_count FROM event_resource_count");
     if (!result)
     {
         BarGoLink bar(1);
@@ -67,13 +66,11 @@ void EventResourceMgr::LoadResourceEvents()
             bar.step();
 
             fields = result->Fetch();
-            uint32 id = fields[0].GetUInt32();
-            uint32 event_id = fields[1].GetUInt32();
-            uint32 resource_id = fields[2].GetUInt32();
-            uint32 resource_count = fields[3].GetUInt32();
+            uint32 event_id = fields[0].GetUInt32();
+            uint32 resource_id = fields[1].GetUInt32();
+            uint32 resource_count = fields[2].GetUInt32();
 
             m_resourceEvents[event_id][resource_id].current_count = resource_count;
-            m_resourceEvents[event_id][resource_id].id = id;
         } while (result->NextRow());
         delete result;
 
@@ -105,9 +102,9 @@ void EventResourceMgr::LoadResourceEvents()
             uint32 resource_limit = fields[3].GetUInt32();
             uint32 object_guid = fields[4].GetUInt32();
 
-            ResourceCreatureList& list = m_resourceEvents[event_id][resource_id].objects;
+            ResourceGameObjectList& list = m_resourceEvents[event_id][resource_id].objects;
 
-            ResourceCreatureInfo info = { resource_limit, object_guid };
+            ResourceGameObjectInfo info = { resource_limit, object_guid };
             list.push_back(info);
         } while (result->NextRow());
         delete result;
@@ -132,9 +129,9 @@ bool EventResourceMgr::AddResourceCount(uint32 event_id, uint32 resource_id, int
 
     resource_type.current_count += count;
 
-    CharacterDatabase.PQuery("REPLACE INTO event_resource_count (`id`, `event_id`, `resource_id`,"
-                             " `resource_count`) VALUES ('%u', '%u', '%u', '%u')", 
-                             resource_type.id, event_id, resource_id, resource_type.current_count);
+    CharacterDatabase.PQuery("REPLACE INTO event_resource_count (`event_id`, `resource_id`,"
+                             " `resource_count`) VALUES ('%u', '%u', '%u')", 
+                             event_id, resource_id, resource_type.current_count);
 
     CheckSpawnGOEvent(event_id);
 
@@ -169,7 +166,7 @@ void EventResourceMgr::CheckSpawnGOEvent(uint32 event_id)
         ResourceType& resource = resourcePair.second;
 
         // Sum all the requirements for that gameObject.
-        for (ResourceCreatureInfo& goInfo : resource.objects)
+        for (ResourceGameObjectInfo& goInfo : resource.objects)
         {
             resourceSum[goInfo.object_guid].first += resource.current_count;
             resourceSum[goInfo.object_guid].second += goInfo.trigger_limit;

@@ -6,20 +6,19 @@
 #include "Policies/Singleton.h"
 #include "ObjectMgr.h"
 
-struct ResourceCreatureInfo
+struct ResourceGameObjectInfo
 {
     uint32 trigger_limit;
     uint32 object_guid;
 };
 
-typedef std::list<ResourceCreatureInfo> ResourceCreatureList;
+typedef std::list<ResourceGameObjectInfo> ResourceGameObjectList;
 struct ResourceType
 {
-    uint32 id;
     uint32 current_count;
     uint32 full_count;
 
-    ResourceCreatureList objects;
+    ResourceGameObjectList objects;
 };
 
 typedef std::map<uint32, ResourceType> ResourceEvent ;
