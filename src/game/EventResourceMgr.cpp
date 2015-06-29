@@ -34,6 +34,10 @@ void EventResourceMgr::LoadResourceEvents()
             uint32 resource_full_count = fields[2].GetUInt32();
 
             m_resourceEvents[event_id][resource_id].full_count = resource_full_count;
+
+            // Initialisation values
+            m_resourceEvents[event_id][resource_id].current_count = 0;
+            m_resourceEvents[event_id][resource_id].id = 0;
             
             ++count;
         } while (result->NextRow());
