@@ -214,6 +214,7 @@ enum eKeeperRemulos
     SPELL_SPAWN	                    = 17321,
     
     QUEST_WAKING_LEGENDS            = 8447,
+    QUEST_THE_NIGHTMARE_MANIFESTS   = 8736,
 
     NPC_MALFURION_STORMRAGE         = 15362,
 
@@ -287,6 +288,18 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI : public npc_escortAI
             if (GetPlayerForEscort())
                 GetPlayerForEscort()->GroupEventHappens(QUEST_WAKING_LEGENDS, m_creature);
         }
+    }
+
+    void SummonedCreatureDespawn(Creature* /*pSummoned*/)
+    {
+        m_creature->SetVisibility(VISIBILITY_ON);
+        m_creature->UpdateVisibilityAndView();
+    }
+
+    void SummonedCreatureJustDied(Creature* /*pSummoned*/)
+    {
+        m_creature->SetVisibility(VISIBILITY_ON);
+        m_creature->UpdateVisibilityAndView();
     }
 
     void UpdateEscortAI(const uint32 uiDiff)
@@ -418,14 +431,516 @@ CreatureAI* GetAI_npc_keeper_remulos(Creature* pCreature)
     return new npc_keeper_remulosAI(pCreature);
 }
 
+/*##################
+## BOSS ERANIKUS
+#############*/
+
+enum eranikus
+{
+    NIGHTMARE_PHANTASM = 15629,
+    NPC_REMULOS        = 11890,
+    SPELL_LEVEL_UP      = 24312,
+    BOSS_ERANIKUS       = 15491,
+    SPELL_SHADOWBOLT_VOLLEY = 27646,
+    SPELL_MASS_HEAL = 25839,
+    NPC_TYRANDE = 15633,
+    NPC_MOON_PRIESTESS = 15634,
+};
+
+struct SpawnLocation
+{
+    float m_fX, m_fY, m_fZ;
+};
+
+static const SpawnLocation aEranikusShades[6] =
+{
+    {7883.7f, -2581.3f, 486.95f},                       // Shade spawn location 1
+    {7888.2f, -2560.0f, 486.92f},                       // Shade spawn location 2
+    {7896.87f, -2573.236f, 487.75f},                    // Shade spawn location 3
+    {7885.69f, -2569.0f, 486.96f},                      // Shade spawn location 4
+    {7909.58f, -2559.56f, 487.73f},                     // Shade spawn location 5
+    {7899.9f, -2565.54f, 487.89f},                      // Eranikus landing spot
+};
+
+struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
+{
+    boss_eranikus_tyrant_of_the_dream(Creature* pCreature) : ScriptedAI(pCreature) 
+    {
+        start_moving = false;
+        Reset();
+    }
+    
+    bool start_moving;
+    bool tyrande_summoned;
+    bool isFriendly;
+    uint32 m_uiLanding_timer;
+    uint32 m_uilandEmoteTimer;
+    uint32 m_uiPhantasmCounter;
+    uint32 m_uiSummonTimer;
+    std::vector<Creature*> m_vecPhantasmList;
+
+    void Reset()
+    {
+        tyrande_summoned = false;
+        isFriendly = false;
+        m_uiLanding_timer = 0;
+        m_uilandEmoteTimer = 0;
+        m_uiPhantasmCounter = 0;
+        m_uiSummonTimer = 0;
+
+        if(start_moving)
+        {
+            m_creature->ForcedDespawn();
+            m_vecPhantasmList.clear();
+        }
+    }
+
+    void MoveToLand()
+    {
+        start_moving = true;
+        m_creature->MonsterMove(aEranikusShades[5].m_fX, aEranikusShades[5].m_fY, aEranikusShades[5].m_fZ, 6500);
+        m_uiLanding_timer = 6000;
+        m_uiSummonTimer = 3000;
+    }
+
+    void KilledUnit(Unit* pVictim)
+    {
+        if(pVictim && pVictim->GetTypeId() == TYPEID_PLAYER)
+        {
+            EmpowerPhantasms();
+        }
+    }
+
+    void EmpowerPhantasms()
+    {
+        for(Creature* phant : m_vecPhantasmList)
+        {
+            if(phant)
+            {
+                phant->AI()->DoCastSpellIfCan(phant, SPELL_LEVEL_UP, CAST_TRIGGERED);
+                phant->SetLevel(phant->getLevel() + 1);
+                phant->GenericTextEmote("Nightmare Phantasm drinks in the suffering of the fallen.", nullptr);
+            }
+        }
+    }
+
+    void DespawnShades()
+    {
+        for(Creature* phant : m_vecPhantasmList)
+        {
+            if(phant)
+            {
+                phant->ForcedDespawn();
+            }
+        }
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(m_uiLanding_timer)
+        {
+            if(m_uiLanding_timer <= uiDiff)
+            {
+                m_uiLanding_timer = 0;
+                m_creature->HandleEmote(EMOTE_ONESHOT_LAND);
+                m_creature->SetHover(false);
+                m_creature->SetSplineFlags(SPLINEFLAG_NONE);
+                m_uilandEmoteTimer = 3000;
+            }
+            else
+                m_uiLanding_timer -= uiDiff;
+        }
+
+        if(m_uilandEmoteTimer)
+        {
+            if(m_uilandEmoteTimer <= uiDiff)
+            {
+                m_uilandEmoteTimer = 0;
+                m_creature->setFaction(14);
+                AttackStart(m_creature->GetClosestCreatureWithEntry(m_creature, NPC_REMULOS, 100.0f));
+            }
+            else
+                m_uilandEmoteTimer -= uiDiff;
+        }
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+        
+        if(m_uiSummonTimer)
+        {
+            if(m_uiSummonTimer <= uiDiff)
+            {
+                if(m_uiPhantasmCounter == 30)
+                    m_uiSummonTimer = 0;
+                else
+                    m_uiSummonTimer = 60000;
+
+                for(int i = 0; i < 5; ++i)
+                {
+                    Creature *shade = m_creature->SummonCreature(NIGHTMARE_PHANTASM, aEranikusShades[i].m_fX, aEranikusShades[i].m_fY, aEranikusShades[i].m_fZ, 0, TEMPSUMMON_CORPSE_DESPAWN, 60000);
+                    ++m_uiPhantasmCounter;
+
+                    if(shade)
+                    {
+                        shade->AI()->AttackStart(m_creature->GetClosestCreatureWithEntry(m_creature, NPC_REMULOS, 500.0f));
+                        m_vecPhantasmList.push_back(shade);
+                    }
+                }
+            }
+            else
+                m_uiSummonTimer -= uiDiff;
+        }
+
+        if(m_creature->GetHealthPercent() <= 80.0f && !tyrande_summoned)
+        {
+            float x = 0, y = 0, z = 0;
+            m_creature->GetClosePoint(x, y, z, 2.0f, 5.0f);
+            Creature *tyrande = m_creature->SummonCreature(NPC_TYRANDE, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000); 
+            
+            if(tyrande)
+                tyrande->AI()->AttackStart(m_creature);
+
+            tyrande_summoned = true;
+        }
+
+        if(m_creature->GetHealthPercent() <= 30.0f && !isFriendly)
+        {
+            m_creature->CombatStop();
+            m_creature->setFaction(635);
+            DespawnShades();
+            isFriendly = true;
+        }
+
+        DoMeleeAttackIfReady();
+    }
+};
+    
+CreatureAI* GetAI_boss_eranikus_tyrant_of_the_dream(Creature* pCreature)
+{
+    return new boss_eranikus_tyrant_of_the_dream(pCreature);
+}
+
+/*##################
+## MOB NIGHTMARE PHANTASM
+#############*/
+
+struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
+{
+    mob_nightmare_phantasm(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+
+    uint32 m_uiShadowVolleyTimer;
+
+    void Reset()
+    {
+        m_uiShadowVolleyTimer = urand(5000, 20000);
+    }
+
+    void KilledUnit(Unit* pVictim)
+    {
+        if(pVictim && pVictim->GetTypeId() == TYPEID_PLAYER)
+        {
+            Creature* eranikus = m_creature->GetClosestCreatureWithEntry(m_creature, BOSS_ERANIKUS, 100.0f);
+
+            if(eranikus)
+            {
+                if(boss_eranikus_tyrant_of_the_dream* eranikusAi = dynamic_cast<boss_eranikus_tyrant_of_the_dream*>(eranikus->AI()))
+                {
+                    eranikusAi->EmpowerPhantasms();
+                }
+            }  
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if(m_uiShadowVolleyTimer)
+        {
+            if(m_uiShadowVolleyTimer <= uiDiff)
+            {
+                m_uiShadowVolleyTimer = urand(5000, 20000);
+
+                DoCast(m_creature, SPELL_SHADOWBOLT_VOLLEY, true);
+            }
+            else
+                m_uiShadowVolleyTimer -= uiDiff;
+        }
+        
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_nightmare_phantasm(Creature* pCreature)
+{
+    return new mob_nightmare_phantasm(pCreature);
+}
+
+struct MANGOS_DLL_DECL npc_tyrande : public ScriptedAI
+{
+    npc_tyrande(Creature* pCreature) : ScriptedAI(pCreature) {
+
+        Reset();
+    }
+
+    bool m_spawnedPriests;
+    uint32 m_uiHealTimer;
+
+    void Reset()
+    {
+        m_spawnedPriests = false;
+        m_uiHealTimer = urand(5000, 20000);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+
+
+        if(!m_spawnedPriests)
+        {
+            for(int i = 0; i < 5; ++i)
+            {
+                float x = 0, y = 0, z = 0;
+                m_creature->GetClosePoint(x, y, z, 2.0f, 5.0f);
+                Creature *priest = m_creature->SummonCreature(NPC_MOON_PRIESTESS, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+
+                if(priest)
+                {
+                    if(Creature *eranikus = GetClosestCreatureWithEntry(m_creature, BOSS_ERANIKUS, 500.0f))
+                        priest->AI()->AttackStart(eranikus);
+                }
+            }
+
+            m_spawnedPriests = true;
+        }
+
+        if(m_uiHealTimer)
+        {
+            if(m_uiHealTimer <= uiDiff)
+            {
+                m_uiHealTimer = urand(5000, 20000);
+
+                DoCast(m_creature, SPELL_MASS_HEAL, true);
+            }
+            else
+                m_uiHealTimer -= uiDiff;
+        }
+   
+        
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_tyrande(Creature* pCreature)
+{
+    return new npc_tyrande(pCreature);
+}
+
+/*##################
+## NPC REMOLUS AQ ESCORT
+#############*/
+
+enum remulos_AQ
+{
+    REMULOS_AQ_SAY_1 = -1720122,
+    REMULOS_AQ_SAY_2 = -1720123,
+    REMULOS_AQ_SAY_3 = -1720124,
+    REMULOS_AQ_SAY_4 = -1720125,
+    REMULOS_AQ_SAY_5 = -1720126,
+    REMULOS_AQ_SAY_6 = -1720127,
+    REMULOS_AQ_SAY_7 = -1720128,
+    REMULOS_AQ_SAY_8 = -1720129,
+};
+
+struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
+{
+    npc_keeper_remulosAI_AQ(Creature* pCreature) : npc_escortAI(pCreature) {Reset();}
+
+    uint8  m_uiEventPhase;
+    uint32 m_uiEventTimer;
+    uint32 m_uiLastReachedWPoint;
+
+    Creature* eranikus;
+
+    void Reset()
+    {
+        if (HasEscortState(STATE_ESCORT_ESCORTING) || HasEscortState(STATE_ESCORT_PAUSED))
+            return;
+
+        m_uiEventPhase = 0;
+        m_uiEventTimer = 0;
+        m_uiLastReachedWPoint = 0;
+    }
+
+    void WaypointReached(uint32 uiPointId)
+    {
+        m_uiLastReachedWPoint = uiPointId;
+
+        switch(uiPointId)
+        {
+        case 18:
+            SetEscortPaused(true);
+            m_uiEventPhase = 2;
+            m_uiEventTimer = 2000;
+            break;
+        case 24:
+            SetEscortPaused(true);
+            if (boss_eranikus_tyrant_of_the_dream* eranikusAi = dynamic_cast<boss_eranikus_tyrant_of_the_dream*>(eranikus->AI()))
+            {
+                eranikusAi->MoveToLand();
+            }
+            break;
+        }
+    }
+
+    void StartEscort(bool run, const Player* pPlayer, const Quest* pQuest, bool instantrespawn)
+    {    
+        m_uiEventPhase = 1;
+        m_uiEventTimer = 5000;
+        Start(run, pPlayer, pQuest, instantrespawn);
+        m_creature->SetRespawnEnabled(false);
+
+        if(Player *player = GetPlayerForEscort())
+            DoScriptText(REMULOS_AQ_SAY_1, m_creature, player);
+
+        SetEscortPaused(true);
+    }  
+
+    void JustDied(Unit* /*pKiller*/)
+    {
+        if(eranikus)
+        {
+            eranikus->ForcedDespawn();
+        }
+    }
+
+    void UpdateEscortAI(const uint32 uiDiff)
+    {
+        if (m_uiEventTimer)
+        {
+            if (!GetPlayerForEscort())
+                return;
+
+            if (m_uiEventTimer <= uiDiff)
+            {
+                switch(m_uiEventPhase)
+                {
+                    case 1:
+                      //  DoScriptText(SAY_REMULOS_2, m_creature, GetPlayerForEscort());
+                        DoScriptText(REMULOS_AQ_SAY_2, m_creature);
+                        SetEscortPaused(false);
+                        m_uiEventTimer = 0;
+                        break;
+                    case 2:
+                        if(Player *pPlayer = GetPlayerForEscort())
+                            DoScriptText(REMULOS_AQ_SAY_3, m_creature, pPlayer);
+                        m_uiEventTimer = 8000;
+                        break;
+					case 3:
+                        DoScriptText(REMULOS_AQ_SAY_4, m_creature);
+                        m_uiEventTimer = 8000;
+						break;
+                    case 4:
+                        DoScriptText(REMULOS_AQ_SAY_5, m_creature);
+                        m_uiEventTimer = 3000;
+                        break;
+					case 5:
+						DoCastSpellIfCan(m_creature, 25813);
+						m_uiEventTimer = 10000;
+                        break;
+					case 6:
+                        eranikus = m_creature->SummonCreature(15491, 7857, -2691, 491, 0.69, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000, true);
+                        //eranikus->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                        eranikus->setFaction(635);
+                        eranikus->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                        eranikus->SetHover(true);
+                        eranikus->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
+                        eranikus->SetSplineFlags(SPLINEFLAG_FLYING);
+                        m_uiEventTimer = 2000;
+                        break;
+                    case 7:
+                        eranikus->MonsterYell("Pitful predictable mortals... You know not what you have done! The master's will fulfilled. The Moonglade shall be destroyed and Malfurion along with it!", LANG_UNIVERSAL);
+                        m_uiEventTimer = 10000;
+                        break;
+                    case 8:
+                        DoScriptText(REMULOS_AQ_SAY_6, m_creature);
+                        m_uiEventTimer = 5000;
+                        break;
+                    case 9:
+                        eranikus->MonsterYell("You are certanly not your father, insect. Should it interest me, I would crush you with but a swipe of my claws. Turn Shan'do Stormrage over to me and your pitiful life will be spared along with the lives of your people.", LANG_UNIVERSAL);
+                        m_uiEventTimer = 10000;
+                        break;
+					case 10:
+                        DoScriptText(REMULOS_AQ_SAY_7, m_creature);
+                        m_uiEventTimer = 10000;
+                        break;
+                    case 11:
+                        eranikus->MonsterYell("My redemption? You are bold, little one. My redemption comes by the will of my god.", LANG_UNIVERSAL);
+                        m_uiEventTimer = 10000;
+                        break;
+                    case 12:
+                        if(Player *pPlayer = GetPlayerForEscort())
+                            DoScriptText(REMULOS_AQ_SAY_8, m_creature, pPlayer);
+                        m_uiEventTimer = 1000;
+                        break;
+                    case 13:
+                        SetEscortPaused(false);
+                        m_uiEventTimer = 0;
+                        break;
+                    case 14:
+                        break;
+                    case 15:
+                        break;
+                    case 16:
+                        break;
+                    case 17:
+                        break;
+                    case 18:
+                        break;
+                }
+                ++m_uiEventPhase;
+            }
+            else
+                m_uiEventTimer -= uiDiff;
+        }
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+        
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_keeper_remulos_AQ(Creature* pCreature)
+{
+    return new npc_keeper_remulosAI_AQ(pCreature);
+}
+
 bool QuestAccept_npc_keeper_remulos(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
 {
     if (pQuest->GetQuestId() == QUEST_WAKING_LEGENDS)
+    {
         if (npc_keeper_remulosAI* pEscortAI = dynamic_cast<npc_keeper_remulosAI*>(pCreature->AI()))
         {
             DoScriptText(SAY_REMULOS_1, pCreature, pPlayer);
             pEscortAI->Start(false, pPlayer, pQuest, true);
         }
+    }
+    else if(pQuest->GetQuestId() == QUEST_THE_NIGHTMARE_MANIFESTS)
+    {
+        Creature *remuloCopy = pCreature->SummonCreature(11890, pCreature->GetPositionX(), pCreature->GetPositionY(), pCreature->GetPositionZ(), pCreature->GetOrientation(), TEMPSUMMON_MANUAL_DESPAWN, 0, true);
+        pCreature->SetVisibility(VISIBILITY_OFF);
+        pCreature->UpdateVisibilityAndView();
+        if (npc_keeper_remulosAI_AQ* pEscortAI = dynamic_cast<npc_keeper_remulosAI_AQ*>(remuloCopy->AI()))
+        {
+            pEscortAI->StartEscort(true, pPlayer, pQuest, false);
+        }
+    }
     return true;
 }
 
@@ -455,5 +970,25 @@ void AddSC_moonglade()
     pNewScript->Name = "npc_keeper_remulos";
     pNewScript->GetAI = &GetAI_npc_keeper_remulos;
     pNewScript->pQuestAcceptNPC = &QuestAccept_npc_keeper_remulos;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "npc_keeper_remulos_AQ";
+    pNewScript->GetAI = &GetAI_npc_keeper_remulos_AQ;
+    pNewScript->RegisterSelf();
+    
+    pNewScript = new Script;
+    pNewScript->Name = "boss_eranikus_tyrant_of_the_dream";
+    pNewScript->GetAI = &GetAI_boss_eranikus_tyrant_of_the_dream;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "mob_nightmare_phantasm";
+    pNewScript->GetAI = &GetAI_mob_nightmare_phantasm;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "npc_tyrande";
+    pNewScript->GetAI = &GetAI_npc_tyrande;
     pNewScript->RegisterSelf();
 }
