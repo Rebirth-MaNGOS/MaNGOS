@@ -31,6 +31,7 @@ EndContentData */
 #include "precompiled.h"
 #include "escort_ai.h"
 #include "follower_ai.h"
+#include "Language.h"
 
 /*######
 ## mobs_spitelashes
@@ -475,6 +476,101 @@ CreatureAI* GetAI_npc_felhound_tracker(Creature* pCreature)
     return new npc_felhound_trackerAI(pCreature);
 }
 
+/*######
+## npc_azuregos_spirit
+######*/
+
+bool GossipHello_npc_azuregos_spirit(Player* pPlayer, Creature* pCreature)
+{
+    if (pPlayer->GetQuestStatus(8555) == QUEST_STATUS_COMPLETE && !pPlayer->HasItemCount(20949, 1, false))
+    {
+        pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "How did you know? I mean, yes... Yes I am looking for that shard. Do you have it?", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+        pPlayer->SEND_GOSSIP_MENU(7885, pCreature->GetObjectGuid());
+    }
+    else if(pPlayer->GetQuestStatus(8555) == QUEST_STATUS_COMPLETE && pPlayer->HasItemCount(20949, 1, true))
+    {
+        pPlayer->SEND_GOSSIP_MENU(7901, pCreature->GetObjectGuid());
+    }
+    else
+    {
+        pPlayer->SEND_GOSSIP_MENU(7881, pCreature->GetObjectGuid());
+    }
+    return true;
+}
+
+void GiveItemToPlayer(uint32 itemID, Player* player)
+{
+    ItemPosCountVec dest;
+    if (player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemID, 1) == EQUIP_ERR_OK)
+    {
+        Item* item = player->StoreNewItem( dest, itemID, true, Item::GenerateItemRandomPropertyId(itemID));
+        player->SendNewItem(item, 1, true, false);
+    }
+    else
+        player->GetSession()->SendNotification(LANG_NOT_FREE_TRADE_SLOTS);
+}
+
+bool GossipSelect_npc_azuregos_spirit(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+{
+    switch(uiAction)
+    {
+        case GOSSIP_ACTION_INFO_DEF+1:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Alright. Where?", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
+            pPlayer->SEND_GOSSIP_MENU(7886, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+2:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "By Bronzebeard's... um, beard! What are you talking about?", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+3);
+            pPlayer->SEND_GOSSIP_MENU(7887, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+3:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Fish? You gave a piece of what could be the key to saving all life on Kalimdor to a fish?", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+4);
+            pPlayer->SEND_GOSSIP_MENU(7888, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+4:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "A minnow? The oceans are filled with minnows! There could be a hundred million million minnows out there!", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+5);
+            pPlayer->SEND_GOSSIP_MENU(7889, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+5:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "...", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+6);
+            pPlayer->SEND_GOSSIP_MENU(7890, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+6:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "You put the piece on a minnow and placed the minnow somewhere in the waters of the sea between here and the Eastern Kingdoms? And this minnow has special powers?", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+7);
+            pPlayer->SEND_GOSSIP_MENU(7891, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+7:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "You're insane.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+8);
+            pPlayer->SEND_GOSSIP_MENU(7892, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+8:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "I'm all ears.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+9);
+            pPlayer->SEND_GOSSIP_MENU(7893, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+9:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Come again.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+10);
+            pPlayer->SEND_GOSSIP_MENU(7894, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+10:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Ok, let me get this straight. You put the scepter entrusted to your Flight by Anachronos on a minnow of your own making and now you expect me to build an... an arcanite buoy or something... to force your minnow out of hiding? AND potentially incur the wrath of an Elemental Lord? Did I miss anything? Perhaps I am to do this without any clothes on, during a solar eclipse, on a leap year?", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+11);
+            pPlayer->SEND_GOSSIP_MENU(7895, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+11:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "FINE! And how, dare I ask, am I supposed to acquire an arcanite buoy?", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+12);
+            pPlayer->SEND_GOSSIP_MENU(7896, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+12:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "But...", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+13);
+            pPlayer->SEND_GOSSIP_MENU(7897, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+13:
+            pPlayer->CLOSE_GOSSIP_MENU();
+            pCreature->MonsterSay("I said GOOD DAY!", LANG_UNIVERSAL);
+            GiveItemToPlayer(20949, pPlayer);
+            break;
+    }
+    return true;
+}
+
 void AddSC_azshara()
 {
     Script* pNewscript;
@@ -506,4 +602,10 @@ void AddSC_azshara()
 	pNewscript->Name = "npc_felhound_tracker";
 	pNewscript->GetAI = &GetAI_npc_felhound_tracker;
 	pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_azuregos_spirit";
+    pNewscript->pGossipHello = &GossipHello_npc_azuregos_spirit;
+    pNewscript->pGossipSelect = &GossipSelect_npc_azuregos_spirit;
+    pNewscript->RegisterSelf();
 }
