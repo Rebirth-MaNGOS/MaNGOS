@@ -445,6 +445,31 @@ enum eranikus
     SPELL_MASS_HEAL = 25839,
     NPC_TYRANDE = 15633,
     NPC_MOON_PRIESTESS = 15634,
+
+   ERANIKUS_AQ_YELL_1 = -1720130,
+   ERANIKUS_AQ_YELL_2 = -1720131,
+   ERANIKUS_AQ_YELL_3 = -1720132,
+   ERANIKUS_AQ_YELL_4 = -1720133,
+   ERANIKUS_AQ_YELL_5 = -1720134,
+   ERANIKUS_AQ_YELL_6 = -1720135,
+   ERANIKUS_AQ_YELL_7 = -1720136,
+   ERANIKUS_AQ_YELL_8 = -1720137,
+   ERANIKUS_AQ_YELL_10 = -1720138,
+   ERANIKUS_AQ_YELL_11 = -1720139,
+
+   ERANIKUS_AQ_SAYL_1 = -1720140,
+   ERANIKUS_AQ_SAYL_2 = -1720141,
+   ERANIKUS_AQ_SAYL_3 = -1720142,
+   ERANIKUS_AQ_SAYL_4 = -1720143,
+
+   TYRANDE_AQ_YELL_1 = -1720145,
+   TYRANDE_AQ_YELL_2 = -1720147,
+   TYRANDE_AQ_YELL_3 = -1720148,
+   TYRANDE_AQ_YELL_4 = -1720150,
+
+   TYRANDE_AQ_SAY_1 = -1720146,
+   TYRANDE_AQ_SAY_2 = -1720149,
+
 };
 
 struct SpawnLocation
@@ -452,14 +477,15 @@ struct SpawnLocation
     float m_fX, m_fY, m_fZ;
 };
 
-static const SpawnLocation aEranikusShades[6] =
+static const SpawnLocation aEranikusShades[7] =
 {
     {7883.7f, -2581.3f, 486.95f},                       // Shade spawn location 1
     {7888.2f, -2560.0f, 486.92f},                       // Shade spawn location 2
     {7896.87f, -2573.236f, 487.75f},                    // Shade spawn location 3
     {7885.69f, -2569.0f, 486.96f},                      // Shade spawn location 4
     {7909.58f, -2559.56f, 487.73f},                     // Shade spawn location 5
-    {7899.9f, -2565.54f, 487.89f},                      // Eranikus landing spot
+    {7924.96f, -2573.28f, 499.63f},                     // Hover spot
+    {7899.9f, -2565.54f, 487.89f},                      // Eranikus landing spot                  
 };
 
 struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
@@ -473,20 +499,31 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
     bool start_moving;
     bool tyrande_summoned;
     bool isFriendly;
+    bool firstSummon;
+    uint32 m_uiYellCount;
     uint32 m_uiLanding_timer;
     uint32 m_uilandEmoteTimer;
     uint32 m_uiPhantasmCounter;
     uint32 m_uiSummonTimer;
+    uint32 m_yellTimer;
+    uint32 m_endRpTimer;
+    uint32 m_uiSayCount;
     std::vector<Creature*> m_vecPhantasmList;
+    Creature *tyrande;
 
     void Reset()
     {
         tyrande_summoned = false;
         isFriendly = false;
+        firstSummon = true;
+        m_uiYellCount = 0;
         m_uiLanding_timer = 0;
         m_uilandEmoteTimer = 0;
         m_uiPhantasmCounter = 0;
         m_uiSummonTimer = 0;
+        m_yellTimer = 0;
+        m_endRpTimer = 0;
+        m_uiSayCount = 0;
 
         if(start_moving)
         {
@@ -499,8 +536,7 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
     {
         start_moving = true;
         m_creature->MonsterMove(aEranikusShades[5].m_fX, aEranikusShades[5].m_fY, aEranikusShades[5].m_fZ, 6500);
-        m_uiLanding_timer = 6000;
-        m_uiSummonTimer = 3000;
+        m_uiSummonTimer = 6500;
     }
 
     void KilledUnit(Unit* pVictim)
@@ -515,7 +551,7 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
     {
         for(Creature* phant : m_vecPhantasmList)
         {
-            if(phant)
+            if(phant != nullptr && phant->isAlive())
             {
                 phant->AI()->DoCastSpellIfCan(phant, SPELL_LEVEL_UP, CAST_TRIGGERED);
                 phant->SetLevel(phant->getLevel() + 1);
@@ -528,9 +564,28 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
     {
         for(Creature* phant : m_vecPhantasmList)
         {
-            if(phant)
+            if(phant != nullptr && phant->isAlive())
             {
                 phant->ForcedDespawn();
+            }
+        }
+    }
+
+    void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        if(pSummoned && pSummoned->GetEntry() == NIGHTMARE_PHANTASM)
+        {
+            if(firstSummon)
+            {
+                --m_uiPhantasmCounter;
+            }
+
+            if(m_uiPhantasmCounter == 0)
+            {
+                DoScriptText(ERANIKUS_AQ_YELL_6, m_creature);
+                m_uiLanding_timer = 1000;
+                m_uiSummonTimer = 10000;
+                firstSummon = false;
             }
         }
     }
@@ -562,9 +617,6 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
             else
                 m_uilandEmoteTimer -= uiDiff;
         }
-
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
         
         if(m_uiSummonTimer)
         {
@@ -574,6 +626,14 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
                     m_uiSummonTimer = 0;
                 else
                     m_uiSummonTimer = 60000;
+
+                if(firstSummon)
+                {
+                    m_creature->SetHover(true);
+                    DoScriptText(ERANIKUS_AQ_YELL_4, m_creature);
+                    m_uiSummonTimer = 0;
+                    m_yellTimer = 15000;
+                }
 
                 for(int i = 0; i < 5; ++i)
                 {
@@ -591,24 +651,122 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
                 m_uiSummonTimer -= uiDiff;
         }
 
+        if(m_yellTimer)
+        {
+            if(m_yellTimer <= uiDiff)
+            {
+                DoScriptText(ERANIKUS_AQ_YELL_5, m_creature);
+                m_yellTimer = 0;
+            }
+            else
+                m_yellTimer -= uiDiff;
+        }
+
+        if(m_endRpTimer)
+        {
+            if(m_endRpTimer <= uiDiff)
+            {
+                switch(m_uiSayCount)
+                {
+                case 1:
+                    m_creature->SetDisplayId(6984);
+                    m_creature->UpdateVisibilityAndView();
+                    m_endRpTimer = 5000;
+                    break;
+                case 2:
+                    DoScriptText(ERANIKUS_AQ_SAYL_1, m_creature);
+                    m_endRpTimer = 5000;                    
+                    break;
+                case 3:
+                    DoScriptText(ERANIKUS_AQ_SAYL_2, m_creature);
+                    m_endRpTimer = 5000;
+                    break;
+                case 4:
+                    DoScriptText(ERANIKUS_AQ_SAYL_3, m_creature);
+                    m_endRpTimer = 5000;
+                    break;
+                case 5:
+                    DoScriptText(ERANIKUS_AQ_SAYL_4, m_creature);
+                    m_endRpTimer = 0;
+                    break;
+                } 
+
+                ++m_uiSayCount;
+            }
+            else
+                m_endRpTimer -= uiDiff;
+        }
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
         if(m_creature->GetHealthPercent() <= 80.0f && !tyrande_summoned)
         {
             float x = 0, y = 0, z = 0;
             m_creature->GetClosePoint(x, y, z, 2.0f, 5.0f);
-            Creature *tyrande = m_creature->SummonCreature(NPC_TYRANDE, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000); 
+            tyrande = m_creature->SummonCreature(NPC_TYRANDE, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000); 
             
             if(tyrande)
+            {
                 tyrande->AI()->AttackStart(m_creature);
+                DoScriptText(TYRANDE_AQ_YELL_1, tyrande);
+            }
 
             tyrande_summoned = true;
         }
 
-        if(m_creature->GetHealthPercent() <= 30.0f && !isFriendly)
+        if(m_creature->GetHealthPercent() <= 85.0f && m_uiYellCount == 0)
         {
+            DoScriptText(ERANIKUS_AQ_YELL_7, m_creature);
+            ++m_uiYellCount;
+        }
+        else if(m_creature->GetHealthPercent() <= 70.0f && m_uiYellCount == 1)
+        {
+            if(tyrande)
+                DoScriptText(TYRANDE_AQ_YELL_2, tyrande);
+
+            ++m_uiYellCount;
+        }
+        else if(m_creature->GetHealthPercent() <= 65.0f && m_uiYellCount == 2)
+        {
+            if(tyrande)
+                DoScriptText(TYRANDE_AQ_YELL_3, tyrande);
+            ++m_uiYellCount;
+        }
+        else if(m_creature->GetHealthPercent() <= 60.0f && m_uiYellCount == 3)
+        {
+            if(tyrande)
+                DoScriptText(TYRANDE_AQ_SAY_2, tyrande);
+
+            DoScriptText(ERANIKUS_AQ_YELL_8, m_creature);
+            ++m_uiYellCount;
+        }
+        else if(m_creature->GetHealthPercent() <= 45.0f && m_uiYellCount == 4)
+        {
+            DoScriptText(ERANIKUS_AQ_YELL_10, m_creature);
+            ++m_uiYellCount;
+        }
+        else if(m_creature->GetHealthPercent() <= 30.0f && !isFriendly)
+        {
+            DoScriptText(ERANIKUS_AQ_YELL_11, m_creature);
+
+            m_creature->GenericTextEmote("Eranikus, Tyrant of the Dream is wholly consumed by the Light of Elune. Tranquility sets in over the Moonglade.", nullptr);
+
+            if(tyrande)
+            {
+                tyrande->GenericTextEmote("Tyrande falls to one knee.", nullptr);
+                DoScriptText(TYRANDE_AQ_YELL_4, tyrande);
+            }
+
+            m_creature->HandleEmoteState(EMOTE_STATE_DEAD);
+
+            DespawnShades();
+            m_uiSummonTimer = 0;
             m_creature->CombatStop();
             m_creature->setFaction(635);
-            DespawnShades();
             isFriendly = true;
+            m_endRpTimer = 5000;
+            m_uiSayCount = 1;
         }
 
         DoMeleeAttackIfReady();
@@ -681,17 +839,17 @@ CreatureAI* GetAI_mob_nightmare_phantasm(Creature* pCreature)
 struct MANGOS_DLL_DECL npc_tyrande : public ScriptedAI
 {
     npc_tyrande(Creature* pCreature) : ScriptedAI(pCreature) {
-
+        m_uiHealTimer = urand(5000, 20000);
+        m_spawnedPriests = false;
         Reset();
     }
 
     bool m_spawnedPriests;
     uint32 m_uiHealTimer;
+    std::vector<Creature*> priests;
 
     void Reset()
-    {
-        m_spawnedPriests = false;
-        m_uiHealTimer = urand(5000, 20000);
+    {   
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -710,8 +868,12 @@ struct MANGOS_DLL_DECL npc_tyrande : public ScriptedAI
                 {
                     if(Creature *eranikus = GetClosestCreatureWithEntry(m_creature, BOSS_ERANIKUS, 500.0f))
                         priest->AI()->AttackStart(eranikus);
+
+                    priests.push_back(priest);
                 }
             }
+
+            DoScriptText(TYRANDE_AQ_SAY_1, m_creature);
 
             m_spawnedPriests = true;
         }
@@ -731,6 +893,21 @@ struct MANGOS_DLL_DECL npc_tyrande : public ScriptedAI
         
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+
+        if(m_creature->getVictim())
+        {
+            if(m_creature->getVictim()->GetEntry() == BOSS_ERANIKUS)
+            {
+                if(m_creature->getVictim()->getFaction() == 635)
+                    m_creature->CombatStop();
+
+                for(Creature* prst : priests)
+                {
+                    if(prst && prst->isAlive())
+                        prst->CombatStop();
+                }
+            }
+        }
 
         DoMeleeAttackIfReady();
     }
@@ -755,6 +932,8 @@ enum remulos_AQ
     REMULOS_AQ_SAY_6 = -1720127,
     REMULOS_AQ_SAY_7 = -1720128,
     REMULOS_AQ_SAY_8 = -1720129,
+    REMULOS_AQ_SAY_9 = -1720144,
+    REMULOS_AQ_SAY_10 = -1720151,
 };
 
 struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
@@ -790,10 +969,6 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
             break;
         case 24:
             SetEscortPaused(true);
-            if (boss_eranikus_tyrant_of_the_dream* eranikusAi = dynamic_cast<boss_eranikus_tyrant_of_the_dream*>(eranikus->AI()))
-            {
-                eranikusAi->MoveToLand();
-            }
             break;
         }
     }
@@ -831,7 +1006,6 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
                 switch(m_uiEventPhase)
                 {
                     case 1:
-                      //  DoScriptText(SAY_REMULOS_2, m_creature, GetPlayerForEscort());
                         DoScriptText(REMULOS_AQ_SAY_2, m_creature);
                         SetEscortPaused(false);
                         m_uiEventTimer = 0;
@@ -855,16 +1029,16 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
                         break;
 					case 6:
                         eranikus = m_creature->SummonCreature(15491, 7857, -2691, 491, 0.69, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000, true);
-                        //eranikus->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
-                        eranikus->setFaction(635);
+                        eranikus->setFaction(35);
                         eranikus->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
                         eranikus->SetHover(true);
                         eranikus->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
                         eranikus->SetSplineFlags(SPLINEFLAG_FLYING);
+                        eranikus->GenericTextEmote("Eranikus, Tyrant of the Dream, has entered our world.", nullptr);
                         m_uiEventTimer = 2000;
                         break;
                     case 7:
-                        eranikus->MonsterYell("Pitful predictable mortals... You know not what you have done! The master's will fulfilled. The Moonglade shall be destroyed and Malfurion along with it!", LANG_UNIVERSAL);
+                        DoScriptText(ERANIKUS_AQ_YELL_1, eranikus);
                         m_uiEventTimer = 10000;
                         break;
                     case 8:
@@ -872,7 +1046,8 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
                         m_uiEventTimer = 5000;
                         break;
                     case 9:
-                        eranikus->MonsterYell("You are certanly not your father, insect. Should it interest me, I would crush you with but a swipe of my claws. Turn Shan'do Stormrage over to me and your pitiful life will be spared along with the lives of your people.", LANG_UNIVERSAL);
+                        eranikus->GenericTextEmote("Eranikus, Tyrant of the Dream lets loose a sinister laugh.", nullptr);
+                        DoScriptText(ERANIKUS_AQ_YELL_2, eranikus);
                         m_uiEventTimer = 10000;
                         break;
 					case 10:
@@ -880,23 +1055,40 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
                         m_uiEventTimer = 10000;
                         break;
                     case 11:
-                        eranikus->MonsterYell("My redemption? You are bold, little one. My redemption comes by the will of my god.", LANG_UNIVERSAL);
+                        DoScriptText(ERANIKUS_AQ_YELL_3, eranikus);
                         m_uiEventTimer = 10000;
                         break;
                     case 12:
+                        eranikus->GenericTextEmote("Eranikus, Tyrant of the Dream roars furiously.", nullptr);
                         if(Player *pPlayer = GetPlayerForEscort())
                             DoScriptText(REMULOS_AQ_SAY_8, m_creature, pPlayer);
                         m_uiEventTimer = 1000;
                         break;
                     case 13:
                         SetEscortPaused(false);
-                        m_uiEventTimer = 0;
+                        m_uiEventTimer = 10000;
                         break;
                     case 14:
+                        DoScriptText(REMULOS_AQ_SAY_10, m_creature);
+                        if (boss_eranikus_tyrant_of_the_dream* eranikusAi = dynamic_cast<boss_eranikus_tyrant_of_the_dream*>(eranikus->AI()))
+                        {
+                            eranikusAi->MoveToLand();
+                        }
+
+                        m_uiEventTimer = 0;
+
                         break;
                     case 15:
+                        DoScriptText(REMULOS_AQ_SAY_9, m_creature);
+                        
+                        if(Player *pPlayer = GetPlayerForEscort())
+                            pPlayer->GroupEventHappens(8736, m_creature);
+
+                        m_uiEventTimer = 5000;
                         break;
                     case 16:
+                        SetEscortPaused(false);
+                        m_uiEventTimer = 0;
                         break;
                     case 17:
                         break;
@@ -911,6 +1103,18 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+
+        if(m_creature->getVictim())
+        {
+            if(m_creature->getVictim()->GetEntry() == BOSS_ERANIKUS)
+            {
+                if(m_creature->getVictim()->getFaction() == 635)
+                    m_creature->CombatStop();
+
+                m_uiEventTimer = 30000;
+                m_uiEventPhase = 15;
+            }
+        }
         
         DoMeleeAttackIfReady();
     }
