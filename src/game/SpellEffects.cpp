@@ -4232,6 +4232,11 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
 {
     uint32 gameobject_id = m_spellInfo->EffectMiscValue[eff_idx];
 
+    if(gameobject_id == 180660) // Spell Place Loot - AQ quest chain.
+    {
+        gameobject_id = 500;
+    }
+
     GameObject* pGameObj = new GameObject;
 
     WorldObject* target = focusObject;
@@ -4287,6 +4292,7 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
         }
     }
 
+
     pGameObj->SummonLinkedTrapIfAny();
 
     if (m_caster->GetTypeId() == TYPEID_UNIT && ((Creature*)m_caster)->AI())
@@ -4298,6 +4304,19 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
     {
         m_caster->SummonGameObject(177749, duration, pGameObj->GetPositionX(), pGameObj->GetPositionY(), pGameObj->GetPositionZ(), pGameObj->GetOrientation());
         m_caster->SummonCreature(800010,  pGameObj->GetPositionX(), pGameObj->GetPositionY(), pGameObj->GetPositionZ(), pGameObj->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN, duration);
+    }
+    else if(m_spellInfo->Id == 25720 && m_caster)
+    {
+       Creature *weavilFLyingMachine = m_caster->SummonCreature(15553, 5096.95f, -5171.80f, 940.66f, 1.75f, TEMPSUMMON_TIMED_DESPAWN, 120000);
+       
+       if(weavilFLyingMachine)
+       {
+           weavilFLyingMachine->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+           weavilFLyingMachine->SetOwnerGuid(m_caster->GetObjectGuid());
+           weavilFLyingMachine->SetHover(true);
+           weavilFLyingMachine->SetSplineFlags(SPLINEFLAG_FLYING);
+           weavilFLyingMachine->MonsterMove(5086.29f, -5114.77f, 935.78f, 5000);
+       }
     }
 }
 
