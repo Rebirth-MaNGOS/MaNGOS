@@ -1593,6 +1593,12 @@ void WorldObject::GetNearPoint(WorldObject const* searcher, float &x, float &y, 
     GetNearPoint2D(x, y, distance2d+searcher_bounding_radius, absAngle);
     z = GetPositionZ();
 
+    // A negative distance2d makes no sense and causes crashing.
+    // Set 1 yd as the default value if the calculations result in a 
+    // negative value for the distance.
+    if (distance2d < 0)
+        distance2d = 1.f;
+
     // if detection disabled, return first point
     if(!sWorld.getConfig(CONFIG_BOOL_DETECT_POS_COLLISION))
     {
