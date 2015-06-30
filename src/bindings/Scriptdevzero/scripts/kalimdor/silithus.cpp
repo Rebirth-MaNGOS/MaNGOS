@@ -35,6 +35,7 @@ EndContentData */
 #include "../../../../game/MotionMaster.h"
 #include "../../../../game/TargetedMovementGenerator.h"
 #include "escort_ai.h"
+#include "TemporarySummon.h"
 
 /*###
 ## boss_abyssal_council
@@ -1698,7 +1699,9 @@ enum PawnValues
     SPELL_ARYGOS = 25149,
     SPELL_MERITHRA = 25145,
     SPELL_MERITHRA_VISUAL = 25172,
-    SPELL_CAELESTRASZ = 25150
+    SPELL_CAELESTRASZ = 25150,
+    SPELL_TIME_STOP = 25158,
+    SPELL_TIME_STOP_VISUAL = 25171
 };
 
 enum PawnTalks
@@ -1727,6 +1730,11 @@ enum PawnTalks
     TALK21 = -1720173,
     TALK22 = -1720174,
     TALK23 = -1720175
+};
+
+enum Emotes
+{
+    NOD = 67,
 };
 
 bool QuestAccept_crystalline_tear(Player* pPlayer, GameObject* pGO, const Quest* pQuest)
@@ -1761,7 +1769,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiEventTimer = 2000;
+        m_uiEventTimer = 4000;
         m_uiEventStage = 0;
     }
 
@@ -1826,7 +1834,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         m_Arygos = pSummon->GetObjectGuid();
                     }
 
-                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.91f, 1503.81f, 2.63f, 1.414f, TEMPSUMMON_DEAD_DESPAWN, 3000);
+                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.91f, 1503.81f, 2.63f, 1.414f, TEMPSUMMON_MANUAL_DESPAWN, 0);
                     if (pSummon)
                     {
                         pSummon->GetMotionMaster()->MoveRandom();
@@ -1836,7 +1844,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         m_bugs.push_back(pSummon->GetObjectGuid());
                     }
 
-                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8105.31f, 1547.41f, 3.88f, 4.79f, TEMPSUMMON_DEAD_DESPAWN, 3000);
+                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8105.31f, 1547.41f, 3.88f, 4.79f, TEMPSUMMON_MANUAL_DESPAWN, 0);
                     if (pSummon)
                     {
                         pSummon->GetMotionMaster()->MoveRandom();
@@ -1846,7 +1854,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         m_bugs.push_back(pSummon->GetObjectGuid());
                     }
 
-                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.35f, 1544.08f, 2.61f, 4.50f, TEMPSUMMON_DEAD_DESPAWN, 3000);
+                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.35f, 1544.08f, 2.61f, 4.50f, TEMPSUMMON_MANUAL_DESPAWN, 0);
                     if (pSummon)
                     {
                         pSummon->GetMotionMaster()->MoveRandom();
@@ -1857,10 +1865,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 1000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 1: // Anachronus first talk
+                case 100: // Anachronus first talk
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
@@ -1869,10 +1877,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 3000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 2:
+                case 200:
                 {
 
                     SpawnBugs();
@@ -1902,43 +1910,66 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 2000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 3: // Fandral - start talking
+                case 300: // Fandral - start talking
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
                         DoScriptText(TALK1, pFandral);
 
-                    m_uiEventTimer = 5000;
-                    ++m_uiEventStage;
+                    m_uiEventTimer = 2000;
+                    m_uiEventStage += 1;
                     break;
                 }
-                case 4: // Fandral - turn towards Merithra
+                case 301:
+                {
+                    Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                    if (pMerithra)
+                        pMerithra->GenericTextEmote("Mirithra of the Dream glances at her compatriots.", nullptr, true);
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage = 400;
+                    break;
+                }
+                case 400: // Fandral - turn towards Merithra
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
-                Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
-                if (pFandral && pMerithra)
-                {
-                    pFandral->SetFacingToObject(pMerithra);
-                }
+                    Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                    if (pFandral && pMerithra)
+                    {
+                        pFandral->SetFacingToObject(pMerithra);
+                    }
 
-                m_uiEventTimer = 3000;
-                ++m_uiEventStage;
-                break;
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 100;
+                    break;
                 }
-                case 5: // Merithra - first talk
+                case 500: // Merithra - first talk
                 {
                     Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
                     if (pMerithra)
                         DoScriptText(TALK2, pMerithra);
 
-                    m_uiEventTimer = 6000;
-                    ++m_uiEventStage;
+                    m_uiEventTimer = 4000;
+                    m_uiEventStage += 1;
                     break;
                 }
-                case 6: // Caelestrasz - first talk
+                case 501:
+                {
+                    Creature* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
+                    if (pArygos)
+                    {
+                        pArygos->HandleEmote(EMOTE_ONESHOT_YES);
+                        pArygos->GenericTextEmote("Arygos nods knowingly.", nullptr, true);
+                    }
+
+                    m_uiEventTimer = 2000;
+                    m_uiEventStage = 600;
+                    break;
+                }
+                case 600: // Caelestrasz - first talk
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
@@ -1949,20 +1980,20 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 10000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 7: // Merithra - second talk
+                case 700: // Merithra - second talk
                 {
                     Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
                     if (pMerithra)
                         DoScriptText(TALK4, pMerithra);
 
                     m_uiEventTimer = 6000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 8: // Merithra - runs away
+                case 800: // Merithra - runs away
                 {
                     Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
                     if (pMerithra)
@@ -1972,10 +2003,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 11000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 9: // Merithra - turns into a dragon
+                case 900: // Merithra - turns into a dragon
                 {
                     Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
                     if (pMerithra)
@@ -1985,10 +2016,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 9000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 10: // Merithra - breathes on monsters, Arygos - first talk
+                case 1000: // Merithra - breathes on monsters, Arygos - first talk
                 {
                     Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
                     if (pMerithra)
@@ -1999,10 +2030,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         DoScriptText(TALK6, pArygos);
 
                     m_uiEventTimer = 2300;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 11: // Cast the Merithra aura on all of the mobs.
+                case 1100: // Cast the Merithra aura on all of the mobs.
                 {
                     Creature* pTarget = m_creature->GetMap()->GetCreature(m_bugs[m_bugs.size() - 1]);
                     if (pTarget)
@@ -2024,10 +2055,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 2500;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 12: // Arygos - runs over
+                case 1200: // Arygos - runs over
                 {
                     Creature* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
                     if (pArygos)
@@ -2037,39 +2068,39 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 6000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 13: // Arygos - screams
+                case 1300: // Arygos - screams
                 {
                     Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
                     if (pArygos)
                         DoScriptText(TALK7, pArygos);
 
                     m_uiEventTimer = 4000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                 }
-                case 14: // Arygos - turns into a dragon
+                case 1400: // Arygos - turns into a dragon
                 {
                     Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
                     if (pArygos)
                         pArygos->SetDisplayId(15413);
 
                     m_uiEventTimer = 8000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 15: // Arygos -- breathes on the monsters
+                case 1500: // Arygos -- breathes on the monsters
                 {
                     Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
                     if (pArygos)
                         pArygos->CastSpell(m_creature, SPELL_ARYGOS, true);
 
                     m_uiEventTimer = 1000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 16: // Arygos flies away
+                case 1600: // Arygos flies away
                 {
                     Creature* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
                     if (pArygos)
@@ -2079,10 +2110,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 1000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 17: // Caelestrasz - talks
+                case 1700: // Caelestrasz - talks
                 {
                     Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
                     if (pCaelestrasz)
@@ -2092,10 +2123,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     AddThreat();
 
                     m_uiEventTimer = 3000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 18: // Caelestrasz - runs off
+                case 1800: // Caelestrasz - runs off
                 {
                     Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
                     if (pCaelestrasz)
@@ -2105,40 +2136,40 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 6000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 19: // Caelestrasz - screams
+                case 1900: // Caelestrasz - screams
                 {
                     Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
                     if (pCaelestrasz)
                         DoScriptText(TALK9, pCaelestrasz);
 
                     m_uiEventTimer = 3000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 20: // Caelestrasz turns into a dragon
+                case 2000: // Caelestrasz turns into a dragon
                 {
                     Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
                     if (pCaelestrasz)
                         pCaelestrasz->SetDisplayId(15414);
 
                     m_uiEventTimer = 7000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 21: // Caelestrasz - breathes
+                case 2100: // Caelestrasz - breathes
                 {
                     Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
                     if (pCaelestrasz)
                         pCaelestrasz->CastSpell(m_creature, SPELL_CAELESTRASZ, true);
 
                     m_uiEventTimer = 2000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 22: // Caelestrasz - flies away, Anachronos - speaks
+                case 2200: // Caelestrasz - flies away, Anachronos - speaks
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
@@ -2151,32 +2182,45 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pCaelestrasz->GetMotionMaster()->MovePoint(0, -8130.f, 1525.f, 47.f, false);
                     }
 
-
                     m_uiEventTimer = 5000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 23: // Straghelm - talk
+                case 2300: // Straghelm - talk
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
                         DoScriptText(TALK11, pFandral);
 
+                    auto itr = m_bugs.begin();
+                    while (itr != m_bugs.end())
+                    {
+                        TemporarySummon* pBug = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(*itr));
+                        if (pBug && pBug->isDead())
+                        {
+                            pBug->UnSummon();
+
+                            itr = m_bugs.erase(itr);
+                            continue;
+                        }
+                        ++itr;
+                    }
+
                     m_uiEventTimer = 3000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 24: // Anachronos - talk
+                case 2400: // Anachronos - talk
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
                         DoScriptText(TALK12, pAnachronos);
 
                     m_uiEventTimer = 500;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 25: // Anachronos - run
+                case 2500: // Anachronos - run
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
@@ -2186,10 +2230,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
 
                     m_uiEventTimer = 1000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 26: // Staghelm - run
+                case 2600: // Staghelm - run
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
@@ -2198,156 +2242,332 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pFandral->GetMotionMaster()->MovePoint(0, -8102.f, 1523.f, 2.61, true);
                     }
 
-                    m_uiEventTimer = 14000;
-                    ++m_uiEventStage;
+                    m_uiEventTimer = 10000;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 27: // Anachronos - use magic
+                case 2700:
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->CastSpell(pAnachronos, SPELL_TIME_STOP, false);
+
+                    for (ObjectGuid guid : m_bugs)
+                    {
+                        Creature* pBug = m_creature->GetMap()->GetCreature(guid);
+                        if (pBug)
+                           pBug->CastSpell(pBug, SPELL_TIME_STOP_VISUAL, true); 
+                    }
+
+                    for (ObjectGuid guid : m_elfs)
+                    {
+                        Creature* pElf = m_creature->GetMap()->GetCreature(guid);
+                        if (pElf)
+                           pElf->CastSpell(pElf, SPELL_TIME_STOP_VISUAL, true); 
+                    }
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 2701:
+                {
+                    for (ObjectGuid guid : m_bugs)
+                    {
+                        Creature* pBug = m_creature->GetMap()->GetCreature(guid);
+                        if (pBug)
+                        {
+                           pBug->getThreatManager().clearReferences();
+                           pBug->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                           pBug->CombatStop(true);
+                           pBug->GetMotionMaster()->MoveIdle();
+                        }
+                    }
+
+                    for (ObjectGuid guid : m_elfs)
+                    {
+                        Creature* pElf = m_creature->GetMap()->GetCreature(guid);
+                        if (pElf)
+                        {
+                           pElf->getThreatManager().clearReferences();
+                           pElf->CombatStop(true);
+                           pElf->GetMotionMaster()->MoveIdle();
+                        }
+                    }
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage = 2800;
+                    break;
+
+                }
+                case 2800: // Anachronos - use magic
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
                         DoScriptText(TALK13, pAnachronos);
 
                     m_uiEventTimer = 26000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 28: // Anachronos - talk
+                case 2900: // Anachronos - talk
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
                         DoScriptText(TALK14, pAnachronos);
 
                     m_uiEventTimer = 3000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 29: // Straghelm - talk, magic
+                case 3000: // Straghelm - talk, magic
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
                         DoScriptText(TALK15, pFandral);
 
-                    m_uiEventTimer = 8000;
-                    ++m_uiEventStage;
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage += 1;
                     break;
                 }
-                case 30: // Anachronos - talk
+                case 3001: // Staghelm - kneel
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->GenericTextEmote("Fandral Staghelm falls to one knee - exhausted.", nullptr, true);
+                        pFandral->SetStandState(UNIT_STAND_STATE_KNEEL);
+                    }
+
+                    m_uiEventTimer = 6000;
+                    m_uiEventStage = 3100;
+                    break;
+                }
+                case 3100:
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pFandral && pAnachronos)
+                        pAnachronos->SetFacingToObject(pFandral);
+
+                }
+                case 3200: // Anachronos - talk
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
                         DoScriptText(TALK16, pAnachronos);
 
                     m_uiEventTimer = 6000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 31: // Anachronos - talk
+                case 3300: // Anachronos - talk
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
                         DoScriptText(TALK17, pAnachronos);
 
                     m_uiEventTimer = 4000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 32: // Anachronos - talk
+                case 3400: // Anachronos - talk
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
                         DoScriptText(TALK18, pAnachronos);
 
-                    m_uiEventTimer = 17000;
-                    ++m_uiEventStage;
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                        pFandral->SetStandState(UNIT_STAND_STATE_STAND);
+
+                    m_uiEventTimer = 9000;
+                    m_uiEventStage += 1;
                     break;
                 }
-                case 33: // Staghelm - talk
+                case 3401:
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->GenericTextEmote("Anachronos the Ancient hands the Scepter of the Shifting Sands to Fandral Staghelm.", nullptr, true);
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage = 3402;
+                    break;
+                }
+                case 3402:
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->HandleEmote(EMOTE_ONESHOT_BEG);
+
+                    m_uiEventTimer = 7000;
+                    m_uiEventStage = 3500;
+                    break;
+                }
+                case 3500: // Staghelm - talk
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
                         DoScriptText(TALK19, pFandral);
 
                     m_uiEventTimer = 8000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 34: // Staghelm - talk
+                case 3600: // Staghelm - talk
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
                         DoScriptText(TALK20, pFandral);
 
                     m_uiEventTimer = 10000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                 }
-                case 35: // Staghelm - throws thing on ground, glass breaking sound
+                case 3700: // Staghelm - throws thing on ground, glass breaking sound
                 {
                     m_uiEventTimer = 1000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 36: // Staghelm - walks, Anachronos - speaks
+                case 3800: // Staghelm - walks, Anachronos - speaks
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
                         DoScriptText(TALK21, pAnachronos);
 
-                    m_uiEventTimer = 6000;
-                    ++m_uiEventStage;
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                        pFandral->GetMotionMaster()->MovePoint(0, -8105.5f, 1521.4f, 2.61f, true);
+                    }
+                    
+
+                    m_uiEventTimer = 2000;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 37: // Staghelm - talk, Monsters - despawn
+                case 3900: // Fandral Walk back
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                        pFandral->GetMotionMaster()->MovePoint(0, -8100.f, 1522.f, 2.64f, true);
+                    }
+
+                    m_uiEventTimer = 2800;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4000:
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pFandral && pAnachronos)
+                        pFandral->SetFacingToObject(pAnachronos);
+
+                    m_uiEventTimer = 1200;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4100: // Staghelm - talk, Monsters - despawn
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
                         DoScriptText(TALK22, pFandral);
 
+                    for (ObjectGuid guid : m_bugs)
+                    {
+                        TemporarySummon* pBug = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(guid));
+                        if (pBug)
+                            pBug->UnSummon();
+                    }
+
+                    for (ObjectGuid guid : m_elfs)
+                    {
+                        TemporarySummon* pElf = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(guid));
+                        if (pElf)
+                            pElf->UnSummon();
+                    }
+
                     m_uiEventTimer = 7000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 38: // Staghelm - walks off
+                case 4200: // Staghelm - walks off
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                        pFandral->GetMotionMaster()->MovePoint(1, -8071.f, 1524.f, 2.61f, true);
+                    }
+
+                    m_uiEventTimer = 10000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4300: // Anachronos - picks up thingie
                 {
                     m_uiEventTimer = 10000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 39: // Anachronos - picks up thingie
-                {
-                    m_uiEventTimer = 10000;
-                    ++m_uiEventStage;
-                    break;
-                }
-                case 40: // Anachronos - talks
+                case 4400: // Anachronos - talks
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
                         DoScriptText(TALK23, pAnachronos);
 
                     m_uiEventTimer = 7000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 41: // Anachronos - says "well done" in audio
+                case 4500: // Anachronos - says "well done" in audio
                 {
                     m_uiEventTimer = 1000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                 }
-                case 42: // Anachronos - runs off
+                case 4600: // Anachronos - runs off
                 {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->GetMotionMaster()->MovePoint(0, -8059.f, 1483.f, 2.62f, true);
+
                     m_uiEventTimer = 10000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 43: // Anachronos - turns into a dragon
+                case 4700: // Anachronos - turns into a dragon
                 {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->SetDisplayId(15500);
+
                     m_uiEventTimer = 5000;
-                    ++m_uiEventStage;
+                    m_uiEventStage += 100;
                     break;
                 }
-                case 44: // Anachronos - flies off
+                case 4800: // Anachronos - flies off
                 {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->SetSplineFlags(SPLINEFLAG_FLYING);
+                        pAnachronos->GetMotionMaster()->MovePoint(1, -7961.f, 1466.f, 42.f, false);
+                    }
+
+                    m_uiEventTimer = 12000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4900: // Anachronos - despawn
+                {
+                    TemporarySummon* pAnachronos = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(m_Anachronos));
+                    if (pAnachronos)
+                        pAnachronos->UnSummon();
                 }
         }
     }
@@ -2356,8 +2576,8 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
     {
         for (short i = 0; i < 5; i++)
         {
-            float x = frand(-8107, -8087);
-            float y = frand(1500, 1548);
+            float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
+            float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
 
             Unit* pSummon = m_creature->SummonCreature(QIRAJI_TANK, x, y, 5.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
             if (pSummon)
@@ -2372,8 +2592,8 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
 
         for (short i = 0; i < 8; i++)
         {
-            float x = frand(-8107, -8087);
-            float y = frand(1500, 1548);
+            float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
+            float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
 
             Unit* pSummon = m_creature->SummonCreature(QIRAJI_DRONE, x, y, 5.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
             if (pSummon)
@@ -2388,8 +2608,8 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
 
         for (short i = 0; i < 11; i++)
         {
-            float x = frand(-8107, -8087);
-            float y = frand(1500, 1548);
+            float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
+            float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
 
             Unit* pSummon = m_creature->SummonCreature(QIRAJI_WASP, x, y, 5.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
             if (pSummon)
