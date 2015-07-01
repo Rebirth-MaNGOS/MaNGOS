@@ -492,6 +492,17 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
 {
     boss_eranikus_tyrant_of_the_dream(Creature* pCreature) : ScriptedAI(pCreature) 
     {
+        tyrande_summoned = false;
+        isFriendly = false;
+        firstSummon = true;
+        m_uiYellCount = 0;
+        m_uiLanding_timer = 0;
+        m_uilandEmoteTimer = 0;
+        m_uiPhantasmCounter = 0;
+        m_uiSummonTimer = 0;
+        m_yellTimer = 0;
+        m_endRpTimer = 0;
+        m_uiSayCount = 0;
         start_moving = false;
         Reset();
     }
@@ -512,26 +523,12 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
     std::vector<ObjectGuid> m_vecPhantasmList;
     ObjectGuid remulos;
     ObjectGuid tyrande;
+    std::vector<ObjectGuid> m_vecPriestList;
 
     void Reset()
     {
-        tyrande_summoned = false;
-        isFriendly = false;
-        firstSummon = true;
-        m_uiYellCount = 0;
-        m_uiLanding_timer = 0;
-        m_uilandEmoteTimer = 0;
-        m_uiPhantasmCounter = 0;
-        m_uiSummonTimer = 0;
-        m_yellTimer = 0;
-        m_endRpTimer = 0;
-        m_uiSayCount = 0;
-
-        if(start_moving)
-        {
-            m_creature->ForcedDespawn();
-            m_vecPhantasmList.clear();
-        }
+        remulos = m_creature->GetOwnerGuid();
+        m_creature->SetRespawnEnabled(false);
     }
 
     void MoveToLand()
@@ -539,6 +536,11 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
         start_moving = true;
         m_creature->MonsterMove(aEranikusShades[5].m_fX, aEranikusShades[5].m_fY, aEranikusShades[5].m_fZ, 6500);
         m_uiSummonTimer = 6500;
+    }
+
+    void ResetToHome()
+    {
+        return;
     }
 
     void KilledUnit(Unit* pVictim)
@@ -586,158 +588,20 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
             if(firstSummon)
             {
                 --m_uiPhantasmCounter;
-            }
-
-            if(m_uiPhantasmCounter == 0)
-            {
-                DoScriptText(ERANIKUS_AQ_YELL_6, m_creature);
-                m_uiLanding_timer = 1000;
-                m_uiSummonTimer = 10000;
-                firstSummon = false;
+                
+                if(m_uiPhantasmCounter == 0)
+                {
+                    DoScriptText(ERANIKUS_AQ_YELL_6, m_creature);
+                    m_uiLanding_timer = 1000;
+                    m_uiSummonTimer = 10000;
+                    firstSummon = false;
+                }
             }
         }
     }
-    
-    void UpdateAI(const uint32 uiDiff)
+
+    void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
     {
-        if(m_uiLanding_timer)
-        {
-            if(m_uiLanding_timer <= uiDiff)
-            {
-                m_uiLanding_timer = 0;
-                m_creature->HandleEmote(EMOTE_ONESHOT_LAND);
-                m_creature->SetHover(false);
-                m_creature->SetSplineFlags(SPLINEFLAG_NONE);
-                m_uilandEmoteTimer = 3000;
-            }
-            else
-                m_uiLanding_timer -= uiDiff;
-        }
-
-        if(m_uilandEmoteTimer)
-        {
-            if(m_uilandEmoteTimer <= uiDiff)
-            {
-                m_uilandEmoteTimer = 0;
-                m_creature->setFaction(14);
-
-                if(Creature* pRemulos = m_creature->GetMap()->GetCreature(remulos))
-                {
-                    AttackStart(pRemulos);
-                }
-            }
-            else
-                m_uilandEmoteTimer -= uiDiff;
-        }
-        
-        if(m_uiSummonTimer)
-        {
-            if(m_uiSummonTimer <= uiDiff)
-            {
-                if(m_uiPhantasmCounter == 30)
-                    m_uiSummonTimer = 0;
-                else
-                    m_uiSummonTimer = 60000;
-
-                if(firstSummon)
-                {
-                    if(Creature* pRemulos = m_creature->GetClosestCreatureWithEntry(m_creature, NPC_REMULOS, 100.0f))
-                    {
-                        remulos = pRemulos->GetObjectGuid();
-                    }
-
-                    m_creature->SetHover(true);
-                    DoScriptText(ERANIKUS_AQ_YELL_4, m_creature);
-                    m_uiSummonTimer = 0;
-                    m_yellTimer = 15000;
-                }
-
-                for(int i = 0; i < 5; ++i)
-                {
-                    Creature *shade = m_creature->SummonCreature(NIGHTMARE_PHANTASM, aEranikusShades[i].m_fX, aEranikusShades[i].m_fY, aEranikusShades[i].m_fZ, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000);
-                    ++m_uiPhantasmCounter;
-
-                    if(shade)
-                    {
-                        shade->SetOwnerGuid(m_creature->GetObjectGuid());
-
-                        if(Creature *pRemulos = m_creature->GetMap()->GetCreature(remulos))
-                            shade->AI()->AttackStart(pRemulos);
-
-                        m_vecPhantasmList.push_back(shade->GetObjectGuid());
-                    }
-                }
-            }
-            else
-                m_uiSummonTimer -= uiDiff;
-        }
-
-        if(m_yellTimer)
-        {
-            if(m_yellTimer <= uiDiff)
-            {
-                DoScriptText(ERANIKUS_AQ_YELL_5, m_creature);
-                m_yellTimer = 0;
-            }
-            else
-                m_yellTimer -= uiDiff;
-        }
-
-        if(m_endRpTimer)
-        {
-            if(m_endRpTimer <= uiDiff)
-            {
-                switch(m_uiSayCount)
-                {
-                case 1:
-                    m_creature->SetDisplayId(6984);
-                    m_creature->UpdateVisibilityAndView();
-                    m_endRpTimer = 5000;
-                    break;
-                case 2:
-                    DoScriptText(ERANIKUS_AQ_SAYL_1, m_creature);
-                    m_endRpTimer = 5000;                    
-                    break;
-                case 3:
-                    DoScriptText(ERANIKUS_AQ_SAYL_2, m_creature);
-                    m_endRpTimer = 5000;
-                    break;
-                case 4:
-                    DoScriptText(ERANIKUS_AQ_SAYL_3, m_creature);
-                    m_endRpTimer = 5000;
-                    break;
-                case 5:
-                    DoScriptText(ERANIKUS_AQ_SAYL_4, m_creature);
-                    m_endRpTimer = 0;
-                    break;
-                } 
-
-                ++m_uiSayCount;
-            }
-            else
-                m_endRpTimer -= uiDiff;
-        }
-
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
-        if(m_creature->GetHealthPercent() <= 80.0f && !tyrande_summoned)
-        {
-            float x = 0, y = 0, z = 0;
-            m_creature->GetClosePoint(x, y, z, 2.0f, 5.0f);
-            Creature *pTyrande = m_creature->SummonCreature(NPC_TYRANDE, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000); 
-            
-            if(pTyrande)
-            {
-                pTyrande->SetOwnerGuid(m_creature->GetObjectGuid());
-                pTyrande->AI()->AttackStart(m_creature);
-                DoScriptText(TYRANDE_AQ_YELL_1, pTyrande);
-                tyrande = pTyrande->GetObjectGuid();
-            }
-
-            tyrande_summoned = true;
-        }
-
         if(m_creature->GetHealthPercent() <= 85.0f && m_uiYellCount == 0)
         {
             DoScriptText(ERANIKUS_AQ_YELL_7, m_creature);
@@ -778,19 +642,221 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
             if(Creature *pTyrande = m_creature->GetMap()->GetCreature(tyrande))
             {
                 pTyrande->GenericTextEmote("Tyrande falls to one knee.", nullptr);
-                pTyrande->HandleEmote(EMOTE_ONESHOT_KNEEL);
+                pTyrande->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                pTyrande->DeleteThreatList();
+                pTyrande->CombatStop(true);
+                pTyrande->SetStandState(UNIT_STAND_STATE_KNEEL);
                 DoScriptText(TYRANDE_AQ_YELL_4, pTyrande);
             }
 
-            m_creature->HandleEmoteState(EMOTE_STATE_DEAD);
+            for(ObjectGuid prst : m_vecPriestList)
+            {
+                if(Creature *pPriest = m_creature->GetMap()->GetCreature(prst))
+                {
+                    if(pPriest && pPriest->isAlive())
+                    {
+                        pPriest->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pPriest->DeleteThreatList();
+                        pPriest->CombatStop(true);
+                        
+                    }
+                }
+            }
+
+            if(Creature *pRemulos = m_creature->GetMap()->GetCreature(remulos))
+            {
+                pRemulos->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                pRemulos->DeleteThreatList();
+                pRemulos->CombatStop(true);         
+            }
 
             DespawnShades();
             m_uiSummonTimer = 0;
-            m_creature->CombatStop();
+            m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+            m_creature->DeleteThreatList();
+            m_creature->CombatStop(true);            
             m_creature->setFaction(635);
             isFriendly = true;
             m_endRpTimer = 5000;
             m_uiSayCount = 1;
+            m_creature->SetStandState(UNIT_STAND_STATE_SLEEP);
+        }
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(m_uiLanding_timer)
+        {
+            if(m_uiLanding_timer <= uiDiff)
+            {
+                m_uiLanding_timer = 0;
+                m_creature->HandleEmote(EMOTE_ONESHOT_LAND);
+                m_creature->SetHover(false);
+                m_creature->SetSplineFlags(SPLINEFLAG_NONE);
+                m_uilandEmoteTimer = 3000;
+            }
+            else
+                m_uiLanding_timer -= uiDiff;
+        }
+
+        if(m_uilandEmoteTimer)
+        {
+            if(m_uilandEmoteTimer <= uiDiff)
+            {
+                m_uilandEmoteTimer = 0;
+                m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+
+                if(Creature* pRemulos = m_creature->GetMap()->GetCreature(remulos))
+                {
+                    AttackStart(pRemulos);
+                    m_creature->Attack(pRemulos, true);
+                    m_creature->AddThreat(pRemulos, 0.1f);
+                    pRemulos->AddThreat(m_creature, 0.1f);
+                }
+                else if(Creature* pRemulos = m_creature->GetClosestCreatureWithEntry(m_creature, NPC_REMULOS, 500.0f))
+                {
+                    remulos = pRemulos->GetObjectGuid();
+                    AttackStart(pRemulos);
+                    m_creature->Attack(pRemulos, true);
+                    m_creature->AddThreat(pRemulos, 0.1f);
+                    pRemulos->AddThreat(m_creature, 0.1f);
+                    m_creature->MonsterYell("I FOUND YOU REMULOS!", LANG_UNIVERSAL);
+                }
+            }
+            else
+                m_uilandEmoteTimer -= uiDiff;
+        }
+        
+        if(m_uiSummonTimer)
+        {
+            if(m_uiSummonTimer <= uiDiff)
+            {
+                if(m_uiPhantasmCounter == 30)
+                    m_uiSummonTimer = 0;
+                else
+                    m_uiSummonTimer = 60000;
+
+                if(firstSummon)
+                {
+                    m_creature->SetHover(true);
+                    DoScriptText(ERANIKUS_AQ_YELL_4, m_creature);
+                    m_uiSummonTimer = 0;
+                    m_yellTimer = 15000;
+                }
+
+                for(int i = 0; i < 5; ++i)
+                {
+                    Creature *shade = m_creature->SummonCreature(NIGHTMARE_PHANTASM, aEranikusShades[i].m_fX, aEranikusShades[i].m_fY, aEranikusShades[i].m_fZ, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000);
+                    ++m_uiPhantasmCounter;
+
+                    if(shade)
+                    {
+                        shade->SetOwnerGuid(m_creature->GetObjectGuid());
+
+                        if(!m_creature->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE))
+                        {
+                            shade->AI()->AttackStart(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0));
+                        }
+                        else if(Creature *pRemulos = m_creature->GetMap()->GetCreature(remulos))
+                        {
+                            shade->AI()->AttackStart(pRemulos);
+                            shade->AddThreat(pRemulos, 0.1f);
+                        }
+
+                        m_vecPhantasmList.push_back(shade->GetObjectGuid());
+                    }
+                }
+            }
+            else
+                m_uiSummonTimer -= uiDiff;
+        }
+
+        if(m_yellTimer)
+        {
+            if(m_yellTimer <= uiDiff)
+            {
+                DoScriptText(ERANIKUS_AQ_YELL_5, m_creature);
+                m_yellTimer = 0;
+            }
+            else
+                m_yellTimer -= uiDiff;
+        }
+
+        if(m_endRpTimer)
+        {
+            if(m_endRpTimer <= uiDiff)
+            {
+                switch(m_uiSayCount)
+                {
+                case 1:
+                    m_creature->SetDisplayId(6984);
+                    m_creature->UpdateVisibilityAndView();
+                    m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+                    m_endRpTimer = 5000;
+                    break;
+                case 2:
+                    DoScriptText(ERANIKUS_AQ_SAYL_1, m_creature);
+                    m_endRpTimer = 5000;                    
+                    break;
+                case 3:
+                    DoScriptText(ERANIKUS_AQ_SAYL_2, m_creature);
+                    m_endRpTimer = 5000;
+                    break;
+                case 4:
+                    DoScriptText(ERANIKUS_AQ_SAYL_3, m_creature);
+                    m_endRpTimer = 5000;
+                    break;
+                case 5:
+                    DoScriptText(ERANIKUS_AQ_SAYL_4, m_creature);
+                    m_endRpTimer = 5000;
+                    break;
+                case 6:
+                    m_creature->ForcedDespawn();
+                    break;
+                } 
+
+                ++m_uiSayCount;
+            }
+            else
+                m_endRpTimer -= uiDiff;
+        }
+
+        if(m_creature->getFaction() == 635 && m_creature->isInCombat())
+        {
+            m_creature->DeleteThreatList();
+            m_creature->CombatStop(true);
+        }
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if(m_creature->GetHealthPercent() <= 80.0f && !tyrande_summoned)
+        {
+            float x = 0, y = 0, z = 0;
+            m_creature->GetClosePoint(x, y, z, 2.0f, 5.0f);
+            Creature *pTyrande = m_creature->SummonCreature(NPC_TYRANDE, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000); 
+            
+            if(pTyrande)
+            {
+                pTyrande->SetOwnerGuid(m_creature->GetObjectGuid());
+                pTyrande->AI()->AttackStart(m_creature);
+                pTyrande->AddThreat(m_creature, 0.1f);
+                DoScriptText(TYRANDE_AQ_YELL_1, pTyrande);
+                tyrande = pTyrande->GetObjectGuid();
+            }
+                for(int i = 0; i < 5; ++i)
+                {
+                    Creature *priest = m_creature->SummonCreature(NPC_MOON_PRIESTESS, aEranikusShades[i].m_fX, aEranikusShades[i].m_fY, aEranikusShades[i].m_fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+
+                    if(priest)
+                    {
+                        priest->AI()->AttackStart(m_creature);
+                        priest->AddThreat(m_creature, 0.1f);
+                        m_vecPriestList.push_back(priest->GetObjectGuid());
+                    }
+                }
+
+            tyrande_summoned = true;
         }
 
         DoMeleeAttackIfReady();
@@ -817,6 +883,7 @@ struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
     {
         m_uiShadowVolleyTimer = urand(5000, 20000);
         eranikus = m_creature->GetOwnerGuid();
+        m_creature->SetRespawnEnabled(false);
     }
 
     void KilledUnit(Unit* pVictim)
@@ -863,80 +930,50 @@ CreatureAI* GetAI_mob_nightmare_phantasm(Creature* pCreature)
 struct MANGOS_DLL_DECL npc_tyrande : public ScriptedAI
 {
     npc_tyrande(Creature* pCreature) : ScriptedAI(pCreature) {
-        m_uiHealTimer = urand(5000, 20000);
-        m_spawnedPriests = false;
+        m_uiHealTimer = urand(2000, 5000);
+        m_uiSpeakTimer = 5000;
         Reset();
     }
 
-    bool m_spawnedPriests;
     uint32 m_uiHealTimer;
-    std::vector<ObjectGuid> priests;
+    uint32 m_uiSpeakTimer;
     ObjectGuid eranikus;
 
     void Reset()
     {   
         eranikus = m_creature->GetOwnerGuid();
+        m_creature->SetRespawnEnabled(false);
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
 
-
-        if(!m_spawnedPriests)
-        {
-            for(int i = 0; i < 5; ++i)
-            {
-                float x = 0, y = 0, z = 0;
-                m_creature->GetClosePoint(x, y, z, 2.0f, 5.0f);
-                Creature *priest = m_creature->SummonCreature(NPC_MOON_PRIESTESS, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
-
-                if(priest)
-                {
-                    if(Creature *eranikus = GetClosestCreatureWithEntry(m_creature, BOSS_ERANIKUS, 500.0f))
-                        priest->AI()->AttackStart(eranikus);
-
-                    priests.push_back(priest->GetObjectGuid());
-                }
-            }
-
-            DoScriptText(TYRANDE_AQ_SAY_1, m_creature);
-
-            m_spawnedPriests = true;
-        }
-
         if(m_uiHealTimer)
         {
             if(m_uiHealTimer <= uiDiff)
             {
-                m_uiHealTimer = urand(5000, 20000);
+                m_uiHealTimer = urand(2000, 5000);
 
                 DoCast(m_creature, SPELL_MASS_HEAL, true);
             }
             else
                 m_uiHealTimer -= uiDiff;
         }
+
+        if(m_uiSpeakTimer)
+        {
+            if(m_uiSpeakTimer <= uiDiff)
+            {
+                m_uiSpeakTimer = 0;
+                DoScriptText(TYRANDE_AQ_SAY_1, m_creature);
+            }
+            else
+                m_uiSpeakTimer -= uiDiff;
+        }
    
         
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
-        if(Creature *pEranikus = m_creature->GetMap()->GetCreature(eranikus))
-        {
-            if(pEranikus->GetHealthPercent() <= 30)
-            {
-                m_creature->CombatStop();
-
-                for(ObjectGuid prst : priests)
-                {
-                    if(Creature *pPriest = m_creature->GetMap()->GetCreature(prst))
-                    {
-                        if(pPriest && pPriest->isAlive())
-                            pPriest->CombatStop();
-                    }
-
-                }
-            }
-        }
 
         DoMeleeAttackIfReady();
     }
@@ -1059,7 +1096,8 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
 					case 6:
                     {
                         Creature *pEranikus = m_creature->SummonCreature(15491, 7857, -2691, 491, 0.69, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000, true);
-                        pEranikus->setFaction(35);
+                        pEranikus->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pEranikus->SetOwnerGuid(m_creature->GetOwnerGuid());
                         pEranikus->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
                         pEranikus->SetHover(true);
                         pEranikus->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
@@ -1151,9 +1189,6 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
         {
             if(pEranikus->GetHealthPercent() <= 30)
             {
-                if(pEranikus->getFaction() == 635)
-                    m_creature->CombatStop();
-
                  m_uiEventTimer = 30000;
                  m_uiEventPhase = 15;
             }
