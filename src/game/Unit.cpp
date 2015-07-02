@@ -7044,7 +7044,8 @@ bool Unit::isTargetableForAttack(bool inverseAlive, bool isAOE) const
     if (GetTypeId()==TYPEID_PLAYER && ((Player *)this)->isGameMaster())
         return false;
 
-    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE))
+    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE) && 
+        (GetTypeId() != TYPEID_UNIT || !dynamic_cast<const Creature*>(this)->GetIgnoreNonCombatFlags()))
         return false;
 
     // to be removed if unit by any reason enter combat

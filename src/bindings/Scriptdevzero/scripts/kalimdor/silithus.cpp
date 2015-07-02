@@ -1189,7 +1189,7 @@ struct MANGOS_DLL_DECL npc_geologist_larksbaneAI : public npc_escortAI
 		m_uiSpeechTimer = 0;
 	}
 
-	void WaypointReached(uint32 uiPointId)
+	void WaypointReached(uint32 /*uiPointId*/)
     {
 	}
 
@@ -1420,7 +1420,7 @@ CreatureAI* GetAI_npc_geologist_larksbane(Creature* pCreature)
     return new npc_geologist_larksbaneAI(pCreature);
 }
 
-bool OnQuestRewarded_npc_geologist_larksbane(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+bool OnQuestRewarded_npc_geologist_larksbane(Player* /*pPlayer*/, Creature* pCreature, Quest const* pQuest)
 {
 	if (pQuest->GetQuestId() == QUEST_ID_THE_CALLING)
     {
@@ -1805,13 +1805,14 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     // Play the background music.
                     m_creature->PlayDirectSound(MUSIC, nullptr);
 
-                    Unit* pSummon = m_creature->SummonCreature(ANACHRONOS_THE_ANCIENT, -8028.55f, 1539.27f, 2.61f, 4.1091f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    Creature* pSummon = m_creature->SummonCreature(ANACHRONOS_THE_ANCIENT, -8028.55f, 1539.27f, 2.61f, 4.1091f, TEMPSUMMON_MANUAL_DESPAWN, 0);
                     if (pSummon)
                     {
                         pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
                         pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Anachronos = pSummon->GetObjectGuid();
+                        pSummon->SetIgnoreNonCombatFlags(true);
                     }
 
                     pSummon = m_creature->SummonCreature(FANDRAL_STAGHELM, -8028.79f, 1536.57f, 2.61f, 2.662f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1821,6 +1822,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Fandral = pSummon->GetObjectGuid();
+                        pSummon->SetIgnoreNonCombatFlags(true);
                     }
 
                     pSummon = m_creature->SummonCreature(MERITHRA, -8032.65f, 1538.06f, 2.61f, 5.923f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1830,6 +1832,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Merithra = pSummon->GetObjectGuid();
+                        pSummon->SetIgnoreNonCombatFlags(true);
                     }
 
                     pSummon = m_creature->SummonCreature(CAELESTRASZ, -8031.27f, 1535.84f, 2.61f, 0.629f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1839,6 +1842,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Caelestrasz = pSummon->GetObjectGuid();
+                        pSummon->SetIgnoreNonCombatFlags(true);
                     }
 
                     pSummon = m_creature->SummonCreature(ARYGOS, -8031.26f, 1539.59f, 2.61f, 5.427f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1848,6 +1852,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Arygos = pSummon->GetObjectGuid();
+                        pSummon->SetIgnoreNonCombatFlags(true);
                     }
 
                     pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.91f, 1503.81f, 2.63f, 1.414f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1856,6 +1861,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->GetMotionMaster()->MoveRandom();
                         pSummon->setFaction(310);
                         m_bugs.push_back(pSummon->GetObjectGuid());
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     }
 
                     pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8105.31f, 1547.41f, 3.88f, 4.79f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1864,6 +1870,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->GetMotionMaster()->MoveRandom();
                         pSummon->setFaction(310);
                         m_bugs.push_back(pSummon->GetObjectGuid());
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     }
 
                     pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.35f, 1544.08f, 2.61f, 4.50f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1872,6 +1879,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->GetMotionMaster()->MoveRandom();
                         pSummon->setFaction(310);
                         m_bugs.push_back(pSummon->GetObjectGuid());
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     }
 
                     m_uiEventTimer = 1000;
@@ -1892,6 +1900,12 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 }
                 case 200:
                 {
+                    for (ObjectGuid guid : m_bugs)
+                    {
+                        Creature* pCreature = m_creature->GetMap()->GetCreature(guid);
+                        if (pCreature)
+                            pCreature->SetIgnoreNonCombatFlags(true);
+                    }
 
                     SpawnBugs();
 
@@ -1900,12 +1914,13 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         float x = frand(-8107, -8087);
                         float y = frand(1500, 1548);
 
-                        Unit* pSummon = m_creature->SummonCreature(KALDOREI_INFANTRY, x, y, 5.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                        Creature* pSummon = m_creature->SummonCreature(KALDOREI_INFANTRY, x, y, 5.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
                         if (pSummon)
                         {
                             //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                             pSummon->setFaction(35);
                             m_elfs.push_back(pSummon->GetObjectGuid());
+                            pSummon->SetIgnoreNonCombatFlags(true);
                         }
                     }
 
@@ -2034,7 +2049,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
                     if (pMerithra)
                     {
-                        pMerithra->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pMerithra->CastSpell(m_creature, SPELL_MERITHRA, true);
                     }
 
@@ -2064,6 +2078,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pMerithra)
                     {
                         pMerithra->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pMerithra->SetIgnoreNonCombatFlags(false);
                         pMerithra->SetSplineFlags(SPLINEFLAG_FLYING);
                         pMerithra->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
                     }
@@ -2109,7 +2124,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
                     if (pArygos)
                     {
-                        pArygos->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pArygos->CastSpell(m_creature, SPELL_ARYGOS, true);
                     }
 
@@ -2123,6 +2137,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pArygos)
                     {
                         pArygos->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pArygos->SetIgnoreNonCombatFlags(false);
                         pArygos->SetSplineFlags(SPLINEFLAG_FLYING);
                         pArygos->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
                     }
@@ -2182,7 +2197,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
                     if (pCaelestrasz)
                     {
-                        pCaelestrasz->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pCaelestrasz->CastSpell(m_creature, SPELL_CAELESTRASZ, true);
                     }
 
@@ -2200,6 +2214,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pCaelestrasz)
                     {
                         pCaelestrasz->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pCaelestrasz->SetIgnoreNonCombatFlags(false);
                         pCaelestrasz->SetSplineFlags(SPLINEFLAG_FLYING);
                         pCaelestrasz->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
                     }
@@ -2759,12 +2774,14 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
             float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
             float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
 
-            Unit* pSummon = m_creature->SummonCreature(QIRAJI_TANK, x, y, 3.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+            Creature* pSummon = m_creature->SummonCreature(QIRAJI_TANK, x, y, 3.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
             if (pSummon)
             {
                 pSummon->GetMotionMaster()->MoveRandom();
                 pSummon->setFaction(310);
                 m_bugs.push_back(pSummon->GetObjectGuid());
+                pSummon->SetIgnoreNonCombatFlags(true);
+                pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             }
         }
 
@@ -2773,12 +2790,14 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
             float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
             float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
 
-            Unit* pSummon = m_creature->SummonCreature(QIRAJI_DRONE, x, y, 3.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+            Creature* pSummon = m_creature->SummonCreature(QIRAJI_DRONE, x, y, 3.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
             if (pSummon)
             {
                 pSummon->GetMotionMaster()->MoveRandom();
                 pSummon->setFaction(310);
                 m_bugs.push_back(pSummon->GetObjectGuid());
+                pSummon->SetIgnoreNonCombatFlags(true);
+                pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             }
         }
 
@@ -2787,12 +2806,14 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
             float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
             float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
 
-            Unit* pSummon = m_creature->SummonCreature(QIRAJI_WASP, x, y, 3.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+            Creature* pSummon = m_creature->SummonCreature(QIRAJI_WASP, x, y, 3.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
             if (pSummon)
             {
                 pSummon->GetMotionMaster()->MoveRandom();
                 pSummon->setFaction(310);
                 m_bugs.push_back(pSummon->GetObjectGuid());
+                pSummon->SetIgnoreNonCombatFlags(true);
+                pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             }
         }
     }
@@ -2872,7 +2893,7 @@ struct MANGOS_DLL_DECL npc_dragon_flightAI : public ScriptedAI
     {
     }
 
-    void MovementInform(uint32 uiMovementType, uint32 uiPointId)
+    void MovementInform(uint32 /*uiMovementType*/, uint32 uiPointId)
     {
         if (uiPointId == 1)
         {
@@ -2896,7 +2917,7 @@ struct MANGOS_DLL_DECL npc_merithraAI : public npc_dragon_flightAI
     {
     }
 
-    void UpdateAI(const uint32 uiDiff)
+    void UpdateAI(const uint32 /*uiDiff*/)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
@@ -2918,7 +2939,7 @@ struct MANGOS_DLL_DECL npc_arygosAI: public npc_dragon_flightAI
     {
     }
 
-    void UpdateAI(const uint32 uiDiff) override final
+    void UpdateAI(const uint32 /*uiDiff*/) override final
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
@@ -2940,7 +2961,7 @@ struct MANGOS_DLL_DECL npc_caelestraszAI: public npc_dragon_flightAI
     {
     }
 
-    void UpdateAI(const uint32 uiDiff)
+    void UpdateAI(const uint32 /*uiDiff*/)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
