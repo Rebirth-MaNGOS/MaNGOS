@@ -2390,9 +2390,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 }
                 case 3000: // Straghelm - talk, magic
                 {
-                    // Restart the background music.
-                    m_creature->PlayDirectSound(MUSIC, nullptr);
-
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
                     {
@@ -2401,11 +2398,20 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     }
                     
 
-                    m_uiEventTimer = 7000;
+                    m_uiEventTimer = 3000;
                     m_uiEventStage += 1;
                     break;
                 }
-                case 3001: // Staghelm - kneel
+                case 3001:
+                {
+                    // Restart the background music.
+                    m_creature->PlayDirectSound(MUSIC, nullptr);
+
+                    m_uiEventTimer = 4000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 3002: // Staghelm - kneel
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
