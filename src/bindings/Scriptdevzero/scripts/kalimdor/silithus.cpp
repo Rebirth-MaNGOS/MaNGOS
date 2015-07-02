@@ -2319,6 +2319,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                            pBug->CombatStop(true);
                            pBug->GetMotionMaster()->MoveIdle();
                            pBug->GetMotionMaster()->MovePoint(0, pBug->GetPositionX(), pBug->GetPositionY(), pBug->GetPositionZ(), false);
+                           pBug->SetIgnoreNonCombatFlags(false);
                         }
                     }
 
