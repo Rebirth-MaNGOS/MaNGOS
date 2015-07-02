@@ -1812,7 +1812,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Anachronos = pSummon->GetObjectGuid();
-                        pSummon->SetIgnoreNonCombatFlags(true);
                     }
 
                     pSummon = m_creature->SummonCreature(FANDRAL_STAGHELM, -8028.79f, 1536.57f, 2.61f, 2.662f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1822,7 +1821,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Fandral = pSummon->GetObjectGuid();
-                        pSummon->SetIgnoreNonCombatFlags(true);
                     }
 
                     pSummon = m_creature->SummonCreature(MERITHRA, -8032.65f, 1538.06f, 2.61f, 5.923f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1832,7 +1830,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Merithra = pSummon->GetObjectGuid();
-                        pSummon->SetIgnoreNonCombatFlags(true);
                     }
 
                     pSummon = m_creature->SummonCreature(CAELESTRASZ, -8031.27f, 1535.84f, 2.61f, 0.629f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1842,7 +1839,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Caelestrasz = pSummon->GetObjectGuid();
-                        pSummon->SetIgnoreNonCombatFlags(true);
                     }
 
                     pSummon = m_creature->SummonCreature(ARYGOS, -8031.26f, 1539.59f, 2.61f, 5.427f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1852,7 +1848,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Arygos = pSummon->GetObjectGuid();
-                        pSummon->SetIgnoreNonCombatFlags(true);
                     }
 
                     pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.91f, 1503.81f, 2.63f, 1.414f, TEMPSUMMON_MANUAL_DESPAWN, 0);
@@ -1911,8 +1906,8 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
 
                     for (short i = 0; i < 12; i++)
                     {
-                        float x = frand(-8107, -8087);
-                        float y = frand(1500, 1548);
+                        float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
+                        float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
 
                         Creature* pSummon = m_creature->SummonCreature(KALDOREI_INFANTRY, x, y, 5.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
                         if (pSummon)
@@ -2078,7 +2073,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pMerithra)
                     {
                         pMerithra->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                        pMerithra->SetIgnoreNonCombatFlags(false);
                         pMerithra->SetSplineFlags(SPLINEFLAG_FLYING);
                         pMerithra->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
                     }
@@ -2137,7 +2131,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pArygos)
                     {
                         pArygos->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                        pArygos->SetIgnoreNonCombatFlags(false);
                         pArygos->SetSplineFlags(SPLINEFLAG_FLYING);
                         pArygos->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
                     }
@@ -2214,7 +2207,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pCaelestrasz)
                     {
                         pCaelestrasz->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                        pCaelestrasz->SetIgnoreNonCombatFlags(false);
                         pCaelestrasz->SetSplineFlags(SPLINEFLAG_FLYING);
                         pCaelestrasz->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
                     }
@@ -2398,6 +2390,9 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 }
                 case 3000: // Straghelm - talk, magic
                 {
+                    // Restart the background music.
+                    m_creature->PlayDirectSound(MUSIC, nullptr);
+
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
                     {
@@ -2412,9 +2407,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 }
                 case 3001: // Staghelm - kneel
                 {
-                    // Restart the background music.
-                    m_creature->PlayDirectSound(MUSIC, nullptr);
-
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
                     {
