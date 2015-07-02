@@ -571,6 +571,54 @@ bool GossipSelect_npc_azuregos_spirit(Player* pPlayer, Creature* pCreature, uint
     return true;
 }
 
+enum maws
+{
+    SPELL_FRENZY                = 28371,
+};
+
+struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
+{
+    boss_maws(Creature* pCreature) : ScriptedAI(pCreature) {
+        Reset();
+    }
+
+    uint32 m_uiFrenzyTimer;
+
+    void Reset()
+    {   
+        m_uiFrenzyTimer = 25000;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if(m_uiFrenzyTimer)
+        {
+            if(m_uiFrenzyTimer <= uiDiff)
+            {
+                if(m_creature->GetHealthPercent() <= 20.0f)
+                    m_uiFrenzyTimer = 15000;
+                else
+                    m_uiFrenzyTimer = 25000;
+
+                DoCast(m_creature, SPELL_FRENZY, true);
+            }
+            else
+                m_uiFrenzyTimer -= uiDiff;
+        }
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_boss_maws(Creature* pCreature)
+{
+    return new boss_maws(pCreature);
+}
+
 void AddSC_azshara()
 {
     Script* pNewscript;
@@ -608,4 +656,9 @@ void AddSC_azshara()
     pNewscript->pGossipHello = &GossipHello_npc_azuregos_spirit;
     pNewscript->pGossipSelect = &GossipSelect_npc_azuregos_spirit;
     pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+	pNewscript->Name = "boss_maws";
+	pNewscript->GetAI = &GetAI_boss_maws;
+	pNewscript->RegisterSelf();
 }
