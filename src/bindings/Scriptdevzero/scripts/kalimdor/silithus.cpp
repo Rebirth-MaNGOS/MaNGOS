@@ -1685,6 +1685,7 @@ enum PawnValues
 {
     MUSIC = 8493,
     Q_A_PAWN_ON_THE_ETERNAL_BOARD = 8519,
+    MERITHRAS_WAKE_NPC = 15427,
     ANACHRONOS_TRIGGER = 15454,
     ANUBI_CONQUEROR = 15424,
     QIRAJI_TANK = 15422,
@@ -1701,7 +1702,17 @@ enum PawnValues
     SPELL_MERITHRA_VISUAL = 25172,
     SPELL_CAELESTRASZ = 25150,
     SPELL_TIME_STOP = 25158,
-    SPELL_TIME_STOP_VISUAL = 25171
+    SPELL_TIME_STOP_VISUAL = 25171,
+    SPELL_GREEN_DRAGON = 25105, 
+    SPELL_RED_DRAGON = 25106,
+    SPELL_BLUE_DRAGON = 25107,
+    SPELL_BRONZE_DRAGON = 25108,
+    SPELL_STAGHELM_BREAK = 25182,
+    SPELL_CALL_ANCIENTS = 25167,
+    SPELL_CALL_GLYPS_OF_WARDING = 25166,
+    AQ_RUNE = 180898,
+    AQ_ROOT = 180899,
+    AQ_ANCIENT_DOOR = 180904
 };
 
 enum PawnTalks
@@ -1766,6 +1777,11 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
     ObjectGuid m_Merithra;
     ObjectGuid m_Caelestrasz;
     ObjectGuid m_Arygos;
+    ObjectGuid m_Door;
+    ObjectGuid m_Roots;
+    ObjectGuid m_Runes;
+
+    const float m_BreathSpot[3] = { -8060.f, 1534.f, 2.62f };
 
     void Reset()
     {
@@ -1784,16 +1800,25 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
         switch (m_uiEventStage)
         {
             case 0:
-            {
-                // Stage 0 - Spawn the three NPCs and the Guards 
-                // Start playing the event music.
-                m_creature->PlayDirectSound(MUSIC, nullptr);
-
-                Unit* pSummon = m_creature->SummonCreature(ANACHRONOS_THE_ANCIENT, -8028.55f, 1539.27f, 2.61f, 4.1091f, TEMPSUMMON_MANUAL_DESPAWN, 0);
-                if (pSummon)
                 {
-                    pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                    //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+
+                    // Stage 0 - Spawn the three NPCs, the Guards and the door objects.
+                    // Start playing the event music.
+
+                    GameObject* pOSummon = m_creature->SummonGameObject(AQ_ANCIENT_DOOR, 0, -8124.28f, 1524.88f, 17.19f, -0.023624, GO_STATE_ACTIVE);
+                    m_Door = pOSummon->GetObjectGuid();
+
+                    pOSummon = m_creature->SummonGameObject(AQ_RUNE, 0, -8124.28f, 1524.88f, 17.19f, -0.023624, GO_STATE_ACTIVE);
+                    m_Runes = pOSummon->GetObjectGuid();
+
+                    // Play the background music.
+                    m_creature->PlayDirectSound(MUSIC, nullptr);
+
+                    Unit* pSummon = m_creature->SummonCreature(ANACHRONOS_THE_ANCIENT, -8028.55f, 1539.27f, 2.61f, 4.1091f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Anachronos = pSummon->GetObjectGuid();
                     }
@@ -1802,7 +1827,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pSummon)
                     {
                         pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Fandral = pSummon->GetObjectGuid();
                     }
@@ -1811,7 +1836,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pSummon)
                     {
                         pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Merithra = pSummon->GetObjectGuid();
                     }
@@ -1820,7 +1845,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pSummon)
                     {
                         pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Caelestrasz = pSummon->GetObjectGuid();
                     }
@@ -1829,7 +1854,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pSummon)
                     {
                         pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                        //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pSummon->setFaction(1601);
                         m_Arygos = pSummon->GetObjectGuid();
                     }
@@ -1915,6 +1940,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 }
                 case 300: // Fandral - start talking
                 {
+
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
                         DoScriptText(TALK1, pFandral);
@@ -1999,7 +2025,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pMerithra)
                     {
                         pMerithra->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-                        pMerithra->GetMotionMaster()->MovePoint(0, -8071.f, 1529.f, 2.61f, true);
+                        pMerithra->GetMotionMaster()->MovePoint(0, m_BreathSpot[0], m_BreathSpot[1], m_BreathSpot[2], true);
                     }
 
                     m_uiEventTimer = 11000;
@@ -2012,7 +2038,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pMerithra)
                     {
                         DoScriptText(TALK5, pMerithra);
-                        pMerithra->SetDisplayId(15412);
+                        pMerithra->CastSpell(pMerithra, SPELL_GREEN_DRAGON, false);
                     }
 
                     m_uiEventTimer = 9000;
@@ -2023,7 +2049,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 {
                     Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
                     if (pMerithra)
+                    {
+                        pMerithra->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pMerithra->CastSpell(m_creature, SPELL_MERITHRA, true);
+                    }
 
                     Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
                     if (pArygos)
@@ -2050,8 +2079,9 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
                     if (pMerithra)
                     {
+                        pMerithra->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pMerithra->SetSplineFlags(SPLINEFLAG_FLYING);
-                        pMerithra->GetMotionMaster()->MovePoint(0, -8130.f, 1525.f, 47.f, false);
+                        pMerithra->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
                     }
 
                     m_uiEventTimer = 2500;
@@ -2064,7 +2094,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pArygos)
                     {
                         pArygos->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-                        pArygos->GetMotionMaster()->MovePoint(0, -8071.f, 1529.f, 2.61f, true);
+                        pArygos->GetMotionMaster()->MovePoint(0, m_BreathSpot[0], m_BreathSpot[1], m_BreathSpot[2], true);
                     }
 
                     m_uiEventTimer = 6000;
@@ -2077,16 +2107,16 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pArygos)
                         DoScriptText(TALK7, pArygos);
 
-                    m_uiEventTimer = 4000;
+                    m_uiEventTimer = 3000;
                     m_uiEventStage += 100;
                 }
                 case 1400: // Arygos - turns into a dragon
                 {
                     Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
                     if (pArygos)
-                        pArygos->SetDisplayId(15413);
+                        pArygos->CastSpell(pArygos, SPELL_BLUE_DRAGON, false);
 
-                    m_uiEventTimer = 8000;
+                    m_uiEventTimer = 7000;
                     m_uiEventStage += 100;
                     break;
                 }
@@ -2094,9 +2124,12 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 {
                     Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
                     if (pArygos)
+                    {
+                        pArygos->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pArygos->CastSpell(m_creature, SPELL_ARYGOS, true);
+                    }
 
-                    m_uiEventTimer = 1000;
+                    m_uiEventTimer = 3000;
                     m_uiEventStage += 100;
                     break;
                 }
@@ -2105,8 +2138,9 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     Creature* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
                     if (pArygos)
                     {
+                        pArygos->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pArygos->SetSplineFlags(SPLINEFLAG_FLYING);
-                        pArygos->GetMotionMaster()->MovePoint(0, -8130.f, 1525.f, 47.f, false);
+                        pArygos->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
                     }
 
                     m_uiEventTimer = 1000;
@@ -2132,7 +2166,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pCaelestrasz)
                     {
                         pCaelestrasz->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-                        pCaelestrasz->GetMotionMaster()->MovePoint(0, -8071.f, 1529.f, 2.61f, true);
+                        pCaelestrasz->GetMotionMaster()->MovePoint(0, m_BreathSpot[0], m_BreathSpot[1], m_BreathSpot[2], true);
                     }
 
                     m_uiEventTimer = 6000;
@@ -2145,7 +2179,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pCaelestrasz)
                         DoScriptText(TALK9, pCaelestrasz);
 
-                    m_uiEventTimer = 3000;
+                    m_uiEventTimer = 2000;
                     m_uiEventStage += 100;
                     break;
                 }
@@ -2153,9 +2187,9 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 {
                     Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
                     if (pCaelestrasz)
-                        pCaelestrasz->SetDisplayId(15414);
+                        pCaelestrasz->CastSpell(pCaelestrasz, SPELL_RED_DRAGON, false);
 
-                    m_uiEventTimer = 7000;
+                    m_uiEventTimer = 6000;
                     m_uiEventStage += 100;
                     break;
                 }
@@ -2163,9 +2197,12 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 {
                     Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
                     if (pCaelestrasz)
+                    {
+                        pCaelestrasz->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pCaelestrasz->CastSpell(m_creature, SPELL_CAELESTRASZ, true);
+                    }
 
-                    m_uiEventTimer = 2000;
+                    m_uiEventTimer = 4000;
                     m_uiEventStage += 100;
                     break;
                 }
@@ -2178,8 +2215,9 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
                     if (pCaelestrasz)
                     {
+                        pCaelestrasz->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pCaelestrasz->SetSplineFlags(SPLINEFLAG_FLYING);
-                        pCaelestrasz->GetMotionMaster()->MovePoint(0, -8130.f, 1525.f, 47.f, false);
+                        pCaelestrasz->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
                     }
 
                     m_uiEventTimer = 5000;
@@ -2281,6 +2319,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                            pBug->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                            pBug->CombatStop(true);
                            pBug->GetMotionMaster()->MoveIdle();
+                           pBug->GetMotionMaster()->MovePoint(0, pBug->GetPositionX(), pBug->GetPositionY(), pBug->GetPositionZ(), false);
                         }
                     }
 
@@ -2291,8 +2330,15 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         {
                            pElf->getThreatManager().clearReferences();
                            pElf->CombatStop(true);
-                           pElf->GetMotionMaster()->MoveIdle();
+                           pElf->GetMotionMaster()->MovePoint(0, pElf->GetPositionX(), pElf->GetPositionY(), pElf->GetPositionZ(), false);
                         }
+                    }
+
+                    GameObject* pDoor = m_creature->GetMap()->GetGameObject(m_Door);
+                    if (pDoor)
+                    {
+                        pDoor->SetGoState(GO_STATE_READY);
+                        pDoor->UpdateVisibilityAndView();
                     }
 
                     m_uiEventTimer = 1000;
@@ -2304,10 +2350,28 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
+                    {
                         DoScriptText(TALK13, pAnachronos);
+                        pAnachronos->CastSpell(pAnachronos, SPELL_CALL_GLYPS_OF_WARDING, false);
+                    }
 
-                    m_uiEventTimer = 26000;
-                    m_uiEventStage += 100;
+
+                    m_uiEventTimer = 7000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 2801:
+                {
+
+                    GameObject* pGlyphs = m_creature->GetMap()->GetGameObject(m_Runes);
+                    if (pGlyphs)
+                    {
+                        pGlyphs->SetGoState(GO_STATE_READY);
+                        pGlyphs->UpdateVisibilityAndView();
+                    }
+
+                    m_uiEventTimer = 19000;
+                    m_uiEventStage = 2900;
                     break;
                 }
                 case 2900: // Anachronos - talk
@@ -2324,9 +2388,13 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 {
                     Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
                     if (pFandral)
+                    {
+                        pFandral->CastSpell(pFandral, SPELL_CALL_ANCIENTS, false);
                         DoScriptText(TALK15, pFandral);
+                    }
+                    
 
-                    m_uiEventTimer = 1000;
+                    m_uiEventTimer = 7000;
                     m_uiEventStage += 1;
                     break;
                 }
@@ -2339,7 +2407,15 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pFandral->SetStandState(UNIT_STAND_STATE_KNEEL);
                     }
 
-                    m_uiEventTimer = 6000;
+                    GameObject* pOSummon = m_creature->SummonGameObject(AQ_ROOT, 0, -8124.28f, 1524.88f, 17.19f, -0.023624, GO_STATE_ACTIVE);
+                    if (pOSummon)
+                    {
+                        m_Roots = pOSummon->GetObjectGuid();
+                        pOSummon->UpdateVisibilityAndView();
+                        pOSummon->SetGoState(GO_STATE_READY);
+                    }
+
+                    m_uiEventTimer = 3000;
                     m_uiEventStage = 3100;
                     break;
                 }
@@ -2349,6 +2425,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pFandral && pAnachronos)
                         pAnachronos->SetFacingToObject(pFandral);
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage = 3200;
+                    break;
 
                 }
                 case 3200: // Anachronos - talk
@@ -2426,6 +2506,14 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 }
                 case 3700: // Staghelm - throws thing on ground, glass breaking sound
                 {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->GenericTextEmote("Fandral Staghelm hurls the Scepter of the Shifting Sands into the barrier, shattering it.", nullptr, true);
+                        pFandral->CastSpell(-8114.f, 1517.f, 3.8f, SPELL_STAGHELM_BREAK, false);
+                    }
+
+                    m_creature->PlayDirectSound(8392, nullptr);
                     m_uiEventTimer = 1000;
                     m_uiEventStage += 100;
                     break;
@@ -2505,14 +2593,60 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pFandral->GetMotionMaster()->MovePoint(1, -8071.f, 1524.f, 2.61f, true);
                     }
 
-                    m_uiEventTimer = 10000;
-                    m_uiEventStage += 100;
+                    m_uiEventTimer = 6000;
+                    m_uiEventStage += 1;
                     break;
                 }
-                case 4300: // Anachronos - picks up thingie
+                case 4201:
                 {
-                    m_uiEventTimer = 10000;
-                    m_uiEventStage += 100;
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->GenericTextEmote("Anachronos the Ancient shakes his head in disappointment.", nullptr, true);
+                        pAnachronos->HandleEmote(EMOTE_ONESHOT_NO);
+                        pAnachronos->GetMotionMaster()->MovePoint(0, -8114.f, 1517.f, 3.1f, true);
+                    }
+
+                    m_uiEventTimer = 4000;
+                    m_uiEventStage = 4300;
+                    break;
+                }
+                case 4300: // Anachronos - picks up thingie, Staghelm - despawn
+                {
+                    TemporarySummon* pFandral = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(m_Fandral));
+                    if (pFandral)
+                        pFandral->UnSummon();
+
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->SetStandState(UNIT_STAND_STATE_KNEEL);
+                    
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 4301: // Anachronos - walks in front of port
+                {
+
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->SetStandState(UNIT_STAND_STATE_STAND);
+                        pAnachronos->GetMotionMaster()->MovePoint(0, -8113.f, 1525.f, 3.03f, true);
+                    }
+
+                    m_uiEventTimer = 4000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 4302: // Anachronos - walks more in front of port
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->GetMotionMaster()->MovePoint(0, -8114.f, 1533.f, 3.26f, true);
+
+                    m_uiEventTimer = 5000;
+                    m_uiEventStage = 4400;
                     break;
                 }
                 case 4400: // Anachronos - talks
@@ -2527,6 +2661,18 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 }
                 case 4500: // Anachronos - says "well done" in audio
                 {
+                    GameObject* pDoor = dynamic_cast<TemporaryGameObject*>(m_creature->GetMap()->GetGameObject(m_Door));
+                    if (pDoor)
+                        pDoor->Delete();
+
+                    GameObject* pRoots = dynamic_cast<TemporaryGameObject*>(m_creature->GetMap()->GetGameObject(m_Roots));
+                    if (pRoots)
+                        pRoots->Delete();
+
+                    GameObject* pRunes = dynamic_cast<TemporaryGameObject*>(m_creature->GetMap()->GetGameObject(m_Runes));
+                    if (pRunes)
+                        pRunes->Delete();
+
                     m_uiEventTimer = 1000;
                     m_uiEventStage += 100;
                 }
@@ -2536,7 +2682,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pAnachronos)
                         pAnachronos->GetMotionMaster()->MovePoint(0, -8059.f, 1483.f, 2.62f, true);
 
-                    m_uiEventTimer = 10000;
+                    m_uiEventTimer = 9000;
                     m_uiEventStage += 100;
                     break;
                 }
@@ -2544,9 +2690,9 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                 {
                     Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
                     if (pAnachronos)
-                        pAnachronos->SetDisplayId(15500);
+                        pAnachronos->CastSpell(pAnachronos, SPELL_BRONZE_DRAGON, false);
 
-                    m_uiEventTimer = 5000;
+                    m_uiEventTimer = 6000;
                     m_uiEventStage += 100;
                     break;
                 }
@@ -2670,6 +2816,94 @@ CreatureAI* GetAI_npc_anachronos_trigger(Creature* pCreature)
     return new npc_anachronos_triggerAI(pCreature);
 }
 
+struct MANGOS_DLL_DECL npc_dragon_flightAI : public ScriptedAI
+{
+    npc_dragon_flightAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+    }
+
+    void MovementInform(uint32 uiMovementType, uint32 uiPointId)
+    {
+        if (uiPointId == 1)
+        {
+            // Make the dragon fly to the despawn point.
+            m_creature->GetMotionMaster()->MovePoint(2, -8201.f, 1511.f, 34.f, false);
+        }
+        else if (uiPointId == 2)
+        {
+            TemporarySummon* pCreature = dynamic_cast<TemporarySummon*>(m_creature);
+            if (pCreature)
+                pCreature->UnSummon();
+        }
+    }
+};
+
+struct MANGOS_DLL_DECL npc_merithraAI : public npc_dragon_flightAI 
+{
+    npc_merithraAI(Creature* pCreature) : npc_dragon_flightAI(pCreature) {}
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_merithra(Creature* pCreature)
+{
+    return new npc_merithraAI(pCreature);
+}
+
+struct MANGOS_DLL_DECL npc_arygosAI: public npc_dragon_flightAI 
+{
+    npc_arygosAI(Creature* pCreature) : npc_dragon_flightAI(pCreature) {}
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 uiDiff) override final
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_arygos(Creature* pCreature)
+{
+    return new npc_arygosAI(pCreature);
+}
+
+struct MANGOS_DLL_DECL npc_caelestraszAI: public npc_dragon_flightAI 
+{
+    npc_caelestraszAI(Creature* pCreature) : npc_dragon_flightAI(pCreature) {}
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_caelestrasz(Creature* pCreature)
+{
+    return new npc_caelestraszAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -2746,5 +2980,20 @@ void AddSC_silithus()
     pNewscript = new Script;
     pNewscript->Name = "npc_anachronos_trigger";
     pNewscript->GetAI = &GetAI_npc_anachronos_trigger;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_merithra";
+    pNewscript->GetAI = &GetAI_npc_merithra;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_arygos";
+    pNewscript->GetAI = &GetAI_npc_arygos;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_caelestrasz";
+    pNewscript->GetAI = &GetAI_npc_caelestrasz;
     pNewscript->RegisterSelf();
 }
