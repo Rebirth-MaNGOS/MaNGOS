@@ -71,7 +71,7 @@ void instance_blackwing_lair::Initialize()
     m_uiUnusedEggCounter = 30;
     m_uiRazorgoreRespawnTimer = 0;
     m_bHasRazorUsedAggro = false;
-
+    
     // Reserve space for the summons and the used eggs to gain performance.
     m_vecSummonList.reserve(52);
     m_vecUsedEggList.reserve(30);
@@ -80,6 +80,9 @@ void instance_blackwing_lair::Initialize()
     
     m_uiLashlayerDoorTimer = 3000;
     m_bLashlayerDoorOpened = false;
+
+    m_uiNefariusScepterSpeechTimer = 0;
+    m_uiNefariusScepterSpeechCounter = 0;
 }
 
 void instance_blackwing_lair::SetRazorgorePhase(uint32 phase)
@@ -250,6 +253,10 @@ void instance_blackwing_lair::OnCreatureCreate(Creature* pCreature)
         return;
     case NPC_TECHNICIAN_THREAT_HOLDER:
         m_pSharedGoblinThreatList = new ThreatManager(pCreature);						// A custom shared threat list for all goblins after Lashlayer.
+        break;
+    case NPC_LORD_NEFARIAN:
+        if(pCreature->IsTemporarySummon())
+            return;
         break;
     default:
         return;
@@ -608,6 +615,44 @@ void instance_blackwing_lair::Update(uint32 uiDiff)
                 current_pair.first.second -= uiDiff;
         }
 
+    }
+
+    if(m_uiNefariusScepterSpeechTimer)
+    {
+        if(m_uiNefariusScepterSpeechTimer <= uiDiff)
+        {
+            if(m_uiNefariusScepterSpeechCounter < 2)
+            {
+                m_uiNefariusScepterSpeechTimer = urand(3600000, 5400000);
+
+                Creature *pNef = GetSingleCreatureFromStorage(NPC_LORD_NEFARIAN);
+
+                if(pNef)
+                {
+                    switch(m_uiNefariusScepterSpeechCounter)
+                    {
+                        case 0:     
+                            pNef->MonsterYellToZone(-1720178, LANG_UNIVERSAL, nullptr);
+                            pNef->GenericTextEmote("Lord Victor Nefarius's laughter echoes through the halls of Blackwing.", nullptr, true);
+                            ++m_uiNefariusScepterSpeechCounter;
+                            break;
+                        case 1:
+                            pNef->GenericTextEmote("Lord Victor Nefarius's laughter echoes through the halls of Blackwing.", nullptr, true);
+                            pNef->MonsterYellToZone(-1720179, LANG_UNIVERSAL, nullptr);
+                            ++m_uiNefariusScepterSpeechCounter;
+                            break;
+                        default:
+                            pNef->GenericTextEmote("Lord Victor Nefarius's laughter echoes through the halls of Blackwing.", nullptr, true);
+                            m_uiNefariusScepterSpeechCounter = 2;
+                            break;
+                    }
+                }
+            }
+            else
+                m_uiNefariusScepterSpeechTimer = 0;
+        }
+        else
+            m_uiNefariusScepterSpeechTimer -= uiDiff;
     }
 }
 

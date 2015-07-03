@@ -142,6 +142,9 @@ public:
     // Shared threat list for the Goblin Technicians after Lashlayer.
     ThreatManager* m_pSharedGoblinThreatList;
 
+    uint32 m_uiNefariusScepterSpeechTimer;
+    uint32 m_uiNefariusScepterSpeechCounter;
+
 private:
     // For Razorgore
     uint32 m_uiDragonCount;
@@ -150,6 +153,7 @@ private:
     uint32 m_uiUnusedEggCounter;
     uint32 m_uiRazorgoreRespawnTimer;
     uint32 m_uiLashlayerDoorTimer;
+
     bool m_bLashlayerDoorOpened;
     bool m_bHasRazorUsedAggro;						// At the end of phase one Razorgore will use his fireball volley once to get aggro.
     std::vector<Creature*> m_vecSummonList;
