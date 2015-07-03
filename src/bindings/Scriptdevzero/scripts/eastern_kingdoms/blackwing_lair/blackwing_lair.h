@@ -144,6 +144,7 @@ public:
 
     uint32 m_uiNefariusScepterSpeechTimer;
     uint32 m_uiNefariusScepterSpeechCounter;
+    bool m_FiveHourEvent;
 
 private:
     // For Razorgore

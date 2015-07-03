@@ -83,6 +83,7 @@ void instance_blackwing_lair::Initialize()
 
     m_uiNefariusScepterSpeechTimer = 0;
     m_uiNefariusScepterSpeechCounter = 0;
+    m_FiveHourEvent = false;
 }
 
 void instance_blackwing_lair::SetRazorgorePhase(uint32 phase)

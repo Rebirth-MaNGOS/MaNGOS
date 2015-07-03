@@ -48,6 +48,7 @@ enum
     NPC_GREEN_DRAKANOID             = 14262,
     NPC_BLACK_DRAKANOID             = 14265,
     NPC_CHROMATIC_DRAKANOID         = 14302,
+    NPC_NEFARIAN_AQ_SHARD           = 11584,
 
     SPELL_NEFARIUS_BARRIER          = 22663,                // immunity in phase 1
     SPELL_SHADOWBOLT                = 22677,
@@ -202,7 +203,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
 
     void JustSummoned(Creature* pSummoned)
     {
-        if (pSummoned->GetEntry() == NPC_NEFARIAN)
+        if (pSummoned->GetEntry() == NPC_NEFARIAN || pSummoned->GetEntry() == NPC_NEFARIAN_AQ_SHARD)
         {
             pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
             pSummoned->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
@@ -229,7 +230,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
     void SummonedMovementInform(Creature* pSummoned, uint32 uiMotionType, uint32 uiPointId)
     {
         // If Nefarian has reached combat area, let him attack
-        if (pSummoned->GetEntry() == NPC_NEFARIAN && uiMotionType == POINT_MOTION_TYPE && uiPointId == 1)
+        if ((pSummoned->GetEntry() == NPC_NEFARIAN || pSummoned->GetEntry() == NPC_NEFARIAN_AQ_SHARD) && uiMotionType == POINT_MOTION_TYPE && uiPointId == 1)
         {
             if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
                 pSummoned->AI()->AttackStart(pTarget);
@@ -239,13 +240,13 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
     void SummonedCreatureJustDied(Creature* pSummoned)
     {
         // Despawn self when Nefarian is killed
-        if (pSummoned->GetEntry() == NPC_NEFARIAN)
+        if (pSummoned->GetEntry() == NPC_NEFARIAN || pSummoned->GetEntry() == NPC_NEFARIAN_AQ_SHARD)
             m_creature->ForcedDespawn();
 
         ++m_uiKilledAdds;
 
         // When a dragon is killed it should turn in to a skeleton.
-        if (pSummoned->GetEntry() != NPC_NEFARIAN && pSummoned->GetDisplayId() != 12073)
+        if (pSummoned->GetEntry() != NPC_NEFARIAN && pSummoned->GetEntry() != NPC_NEFARIAN_AQ_SHARD && pSummoned->GetDisplayId() != 12073)
             pSummoned->SetDisplayId(12073);
 
     }
@@ -291,7 +292,17 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
 
                 // Spawn Nefarian
                 // Summon as active, to be able to work proper!
-                m_creature->SummonCreature(NPC_NEFARIAN, aNefarianLocs[2].m_fX, aNefarianLocs[2].m_fY, aNefarianLocs[2].m_fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 0, true);
+                instance_blackwing_lair *bwlInstance = dynamic_cast<instance_blackwing_lair*>(m_creature->GetInstanceData());
+
+                if(bwlInstance)
+                {
+                    if(bwlInstance->m_FiveHourEvent)
+                        m_creature->SummonCreature(NPC_NEFARIAN_AQ_SHARD, aNefarianLocs[2].m_fX, aNefarianLocs[2].m_fY, aNefarianLocs[2].m_fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 0, true);
+                    else
+                        m_creature->SummonCreature(NPC_NEFARIAN, aNefarianLocs[2].m_fX, aNefarianLocs[2].m_fY, aNefarianLocs[2].m_fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 0, true);
+                }
+                else
+                    m_creature->SummonCreature(NPC_NEFARIAN, aNefarianLocs[2].m_fX, aNefarianLocs[2].m_fY, aNefarianLocs[2].m_fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 0, true);
 
                 m_bIsNefarianSpawned = true;
             }
