@@ -1749,6 +1749,8 @@ enum Emotes
     NOD = 67,
 };
 
+static const float m_BreathSpot[3] = { -8060.f, 1534.f, 2.62f };
+
 struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
 {
     npc_anachronos_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -1771,8 +1773,6 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
     ObjectGuid m_Roots;
     ObjectGuid m_Runes;
     ObjectGuid m_Player;
-
-    const float m_BreathSpot[3] = { -8060.f, 1534.f, 2.62f };
 
     void Reset()
     {

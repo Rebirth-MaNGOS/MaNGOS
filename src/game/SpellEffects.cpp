@@ -2188,6 +2188,19 @@ void Spell::EffectSendEvent(SpellEffectIndex eff_idx)
     */
     DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell ScriptStart %u for spellid %u in EffectSendEvent ", m_spellInfo->EffectMiscValue[eff_idx], m_spellInfo->Id);
 
+    if(m_spellInfo->Id == 25783 && m_caster)
+    {
+        Creature *pMaws = m_caster->SummonCreature(15571, 3507.87f, -6554.89f, -3.93f, 2.80f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+
+        if(pMaws)
+        {
+            pMaws->AI()->AttackStart(m_caster);
+            pMaws->SetSplineFlags(SPLINEFLAG_FLYING);
+        }
+
+        return;
+    }
+
     if (!sScriptMgr.OnProcessEvent(m_spellInfo->EffectMiscValue[eff_idx], m_caster, focusObject, true))
         m_caster->GetMap()->ScriptsStart(sEventScripts, m_spellInfo->EffectMiscValue[eff_idx], m_caster, focusObject);
 }
