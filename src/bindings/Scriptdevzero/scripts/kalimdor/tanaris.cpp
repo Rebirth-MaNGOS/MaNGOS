@@ -34,6 +34,7 @@ EndContentData */
 #include "precompiled.h"
 #include "escort_ai.h"
 #include "follower_ai.h"
+#include "Language.h"
 
 /*######
 ## mob_aquementas
@@ -579,6 +580,110 @@ bool GOUse_go_landmark_treasure(Player *pPlayer, GameObject* /*pGo*/)
     return true;
 };
 
+/*######
+## npc_stone_watcher_of_norgannon
+######*/
+
+#define GOSSIP_ITEM_NNARAIN_1     "What function do you serve?"
+#define GOSSIP_ITEM_NNARAIN_2     "What are the Plates of Uldum?"
+#define GOSSIP_ITEM_NNARAIN_3     "Where are the Plates of Uldum?"
+#define GOSSIP_ITEM_NNARAIN_4     "Excuse me? We've been \"reschedueled for visitations\"? What does that mean?!"
+#define GOSSIP_ITEM_NNARAIN_5     "So, what's inside Uldum?"
+#define GOSSIP_ITEM_NNARAIN_6     "I will return when i have the Plates of Uldum."
+
+bool GossipHello_npc_narain_soothfancy(Player* pPlayer, Creature* pCreature)
+{
+    if (pCreature->isQuestGiver())
+        pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
+
+    if (pPlayer->GetQuestStatus(2954) == QUEST_STATUS_INCOMPLETE)
+        pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
+
+    pPlayer->SEND_GOSSIP_MENU(1674, pCreature->GetObjectGuid());
+
+    return true;
+}
+
+bool GossipSelect_npc_narain_soothfancy(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+{
+    switch(uiAction)
+    {
+        case GOSSIP_ACTION_INFO_DEF:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+            pPlayer->SEND_GOSSIP_MENU(1675, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+1:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_3, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
+            pPlayer->SEND_GOSSIP_MENU(1676, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+2:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_4, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+3);
+            pPlayer->SEND_GOSSIP_MENU(1677, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+3:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_5, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+4);
+            pPlayer->SEND_GOSSIP_MENU(1678, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+4:
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_6, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+5);
+            pPlayer->SEND_GOSSIP_MENU(1679, pCreature->GetObjectGuid());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+5:
+            pPlayer->CLOSE_GOSSIP_MENU();
+            pPlayer->AreaExploredOrEventHappens(2954);
+            break;
+    }
+    return true;
+}
+
+void GiveScepterToPlayer(uint32 itemID, Player* player)
+{
+    ItemPosCountVec dest;
+    if (player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemID, 1) == EQUIP_ERR_OK)
+    {
+        Item* item = player->StoreNewItem( dest, itemID, true, Item::GenerateItemRandomPropertyId(itemID));
+        player->SendNewItem(item, 1, true, false);
+    }
+    else
+        player->GetSession()->SendNotification(LANG_NOT_FREE_TRADE_SLOTS);
+}
+
+bool GossipHello_npc_anachronos(Player* pPlayer, Creature* pCreature)
+{
+    if(pPlayer && pCreature && pCreature->isQuestGiver())
+        pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
+
+    if(pPlayer && pPlayer->GetQuestStatus(8742) != QUEST_STATUS_COMPLETE)
+        pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetObjectGuid());
+    else
+    {
+        if(!pPlayer->HasItemCount(21175, 1, true))
+        {
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "I am ready, Anachronos. Please grant me the Scepter of the Shifting Sands.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+            pPlayer->SEND_GOSSIP_MENU(7822, pCreature->GetObjectGuid());
+        }
+        else
+            pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetObjectGuid());
+    }
+    return true;
+}
+
+bool GossipSelect_npc_anachronos(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+{
+    if(pPlayer && pCreature)
+    {
+        switch(uiAction)
+        {
+            case GOSSIP_ACTION_INFO_DEF+1:
+                GiveScepterToPlayer(21175, pPlayer);
+                pPlayer->CLOSE_GOSSIP_MENU();
+                break;
+        }
+    }
+
+    return true;
+}
+
 void AddSC_tanaris()
 {
     Script* pNewscript;
@@ -621,5 +726,11 @@ void AddSC_tanaris()
     pNewscript = new Script;
     pNewscript->Name = "go_landmark_treasure";
     pNewscript->pGOUse = &GOUse_go_landmark_treasure;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_anachronos";
+    pNewscript->pGossipHello =  &GossipHello_npc_anachronos;
+    pNewscript->pGossipSelect = &GossipSelect_npc_anachronos;
     pNewscript->RegisterSelf();
 }
