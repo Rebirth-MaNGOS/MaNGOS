@@ -432,6 +432,56 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
                     else
                         *data << (m_uint32Values[ index ] & ~UNIT_DYNFLAG_TAPPED);
                 }
+                // Hide mana/health absolute numbers for mobs and players of the other faction.
+                else if (index == UNIT_FIELD_HEALTH && 
+                         (GetTypeId() == TYPEID_UNIT || GetTypeId() == TYPEID_PLAYER) &&
+                         this != target)
+                {
+                    const Unit* pUnit = dynamic_cast<const Unit*>(this);
+                    const Player* pPlayer = dynamic_cast<const Player*>(this);
+                    if (pUnit && pUnit->GetOwner() != target && (!pPlayer || 
+                        pPlayer->GetTeam() != target->GetTeam()))
+                        *data << (uint32)(100.f * pUnit->GetHealth() / pUnit->GetMaxHealth());
+                    else
+                        *data << m_uint32Values[index];
+                }
+                else if (index == UNIT_FIELD_MAXHEALTH && 
+                         (GetTypeId() == TYPEID_UNIT || GetTypeId() == TYPEID_PLAYER) &&
+                         this != target)
+                {
+                    Unit const* pUnit = dynamic_cast<const Unit*>(this);
+                    const Player* pPlayer = dynamic_cast<const Player*>(this);
+                    if (pUnit && pUnit->GetOwner() != target && (!pPlayer || 
+                        pPlayer->GetTeam() != target->GetTeam()))
+                        *data << (uint32) 100;
+                    else
+                        *data << m_uint32Values[index];
+                }
+                else if ((index == UNIT_FIELD_POWER1 || index == UNIT_FIELD_POWER4) && 
+                         (GetTypeId() == TYPEID_UNIT || GetTypeId() == TYPEID_PLAYER) &&
+                         this != target)
+                {
+                    Unit const* pUnit = dynamic_cast<const Unit*>(this);
+                    const Player* pPlayer = dynamic_cast<const Player*>(this);
+                    if (pUnit && pUnit->GetOwner() != target && (!pPlayer || 
+                        pPlayer->GetTeam() != target->GetTeam()))
+                        *data << (uint32)(100.f * pUnit->GetPower(Powers(index - 0x11 - OBJECT_END)) / pUnit->GetMaxPower(Powers(index - 0x11 - OBJECT_END)));
+                    else
+                        *data << m_uint32Values[index];
+                }
+                else if ((index == UNIT_FIELD_MAXPOWER1 || index == UNIT_FIELD_MAXPOWER4) && 
+                         (GetTypeId() == TYPEID_UNIT || GetTypeId() == TYPEID_PLAYER) &&
+                         this != target)
+                {
+                    Unit const* pUnit = dynamic_cast<const Unit*>(this);
+                    const Player* pPlayer = dynamic_cast<const Player*>(this);
+                    if (pUnit && pUnit->GetOwner() != target && (!pPlayer || 
+                        pPlayer->GetTeam() != target->GetTeam()))        
+                        *data << (uint32) 100;
+                    else
+                        *data << m_uint32Values[index];
+
+                }
                 else
                 {
                     // send in current format (float as float, uint32 as uint32)
