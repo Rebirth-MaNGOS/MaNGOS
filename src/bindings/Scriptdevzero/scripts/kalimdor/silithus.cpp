@@ -35,6 +35,7 @@ EndContentData */
 #include "../../../../game/MotionMaster.h"
 #include "../../../../game/TargetedMovementGenerator.h"
 #include "escort_ai.h"
+#include "patrol_ai.h"
 #include "TemporarySummon.h"
 
 /*###
@@ -2974,6 +2975,90 @@ CreatureAI* GetAI_npc_caelestrasz(Creature* pCreature)
     return new npc_caelestraszAI(pCreature);
 }
 
+/*****************************************************
+ * npc_ahnqiraj_gate_trigger for opening the AQ gate *
+*****************************************************/
+
+enum GateSpawns
+{
+    COLOSSAL_ANUBISATH = 15743
+};
+
+struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI 
+{
+    npc_ahnqiraj_gate_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_creature->SetActiveObjectState(true);
+        Reset();
+    }
+
+    uint32 m_uiWaveSpawnTimer;
+
+    void Reset()
+    {
+        m_uiWaveSpawnTimer = 0;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiWaveSpawnTimer <= uiDiff)
+        {
+            for (short i = 0; i < 8; i++)
+            {
+                Creature* pSummon = m_creature->SummonCreature(COLOSSAL_ANUBISATH, 
+                        m_creature->GetPositionX() + 10.f * cosf(i * PI / 8.f),
+                        m_creature->GetPositionY() + 10.f * sinf(i * PI / 8.f),
+                        m_creature->GetPositionZ(),
+                        0.f,
+                        TEMPSUMMON_DEAD_DESPAWN,
+                        0,
+                        true);
+
+                if (pSummon)
+                    pSummon->GetMotionMaster()->MovePoint(0, -6829.f, 758.f, 44.f, true);
+            }
+
+            m_uiWaveSpawnTimer = 1800000;
+        }
+        else
+            m_uiWaveSpawnTimer -= uiDiff;
+    }
+};
+
+CreatureAI* GetAI_npc_ahnqiraj_gate_trigger(Creature* pCreature)
+{
+    return new npc_ahnqiraj_gate_triggerAI(pCreature);
+}
+
+struct npc_colossal_anubisathAI : public npc_patrolAI
+{
+    npc_colossal_anubisathAI(Creature* pCreature) : npc_patrolAI(pCreature, 0, true)
+    {
+        Reset();
+    }
+
+    void Reset()
+    {
+        npc_patrolAI::Reset();
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        npc_patrolAI::UpdateAI(uiDiff);
+        
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+
+};
+
+CreatureAI* GetAI_npc_colossal_anubisath(Creature* pCreature)
+{
+    return new npc_colossal_anubisathAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -3065,5 +3150,15 @@ void AddSC_silithus()
     pNewscript = new Script;
     pNewscript->Name = "npc_caelestrasz";
     pNewscript->GetAI = &GetAI_npc_caelestrasz;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script();
+    pNewscript->Name = "npc_ahnqiraj_gate_trigger";
+    pNewscript->GetAI = &GetAI_npc_ahnqiraj_gate_trigger;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script();
+    pNewscript->Name = "npc_colossal_anubisath";
+    pNewscript->GetAI = &GetAI_npc_colossal_anubisath;
     pNewscript->RegisterSelf();
 }
