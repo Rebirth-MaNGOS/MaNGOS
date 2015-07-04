@@ -341,4 +341,6 @@ uint32 CreatePIDFile(const std::string& filename);
 
 void hexEncodeByteArray(uint8* bytes, uint32 arrayLen, std::string& result);
 std::string ByteArrayToHexStr(uint8* bytes, uint32 length);
+
+void ReplaceStringInPlace(std::string& subject, const std::string& search, const std::string& replace);
 #endif
