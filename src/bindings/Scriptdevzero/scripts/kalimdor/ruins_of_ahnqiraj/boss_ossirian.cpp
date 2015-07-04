@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Boss_Ossirian
 SD%Complete: 90
-SDComment: Correct tornado, rework crystals without summoning them
+SDComment: rework crystals without summoning them
 SDCategory: Ruins of Ahn'Qiraj
 EndScriptData */
 
@@ -51,20 +51,22 @@ enum Spells
     SPELL_FROST_WEAKNESS          = 25178,
     SPELL_NATURE_WEAKNESS         = 25180,
     SPELL_ARCANE_WEAKNESS         = 25181,
-    SPELL_SHADOW_WEAKNESS         = 25183
+    SPELL_SHADOW_WEAKNESS         = 25183,
+	SPELL_SAND_STORM			  = 25160,                // tornado spell
 };
 
-static Loc Crystal[]=
-{
-    {-9449.53f, 1988.67f, 85.91f, 0, 0}, // first
-    {-9375.54f, 2061.64f, 85.91f, 0, 0},
-    {-9254.70f, 1952.90f, 85.55f, 0, 0},
-    {-9197.60f, 1849.50f, 85.55f, 0, 0},
-    {-9301.75f, 1748.75f, 85.55f, 0, 0},
-    {-9393.15f, 1835.80f, 85.55f, 0, 0},
-    {-9509.55f, 1864.75f, 85.55f, 0, 0}
-};
-
+//static Loc Crystal[]=
+//{
+//	{-9429.f, 1971.f, 85.65f},
+//    {-9449.53f, 1988.67f, 85.91f}, // first
+//    {-9375.54f, 2061.64f, 85.91f},
+//    {-9254.70f, 1952.90f, 85.55f},
+//    {-9197.60f, 1849.50f, 85.55f},
+//    {-9301.75f, 1748.75f, 85.55f},
+//    {-9393.15f, 1835.80f, 85.55f},
+//    {-9509.55f, 1864.75f, 85.55f}
+//};
+//
 static Loc Tornado[]=
 {
     {-9444.0f,1857.0f,85.55f, 0, 0},
@@ -90,13 +92,43 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
         if (m_pInstance)
         {
             m_pInstance->SetData(TYPE_OSSIRIAN, NOT_STARTED);
-            DespawnLastSummonedCrystal();
+            //DespawnLastSummonedCrystal();
+			TornadoesVisibility(1);
         }
 
         m_uiWarStompTimer = urand(8000,12000);
         m_uiCurseOfTonguesTimer = urand(15000,20000);
         m_uiEnvelopingWingsTimer = urand(15000,20000);
     }
+
+	void TornadoesVisibility(int Visible = 0)
+	{
+		instance_ruins_of_ahnqiraj* pInstance = dynamic_cast<instance_ruins_of_ahnqiraj*>(m_creature->GetInstanceData());
+		{
+			if (pInstance)
+			{
+				for (ObjectGuid guid : pInstance->GetTornadoes())
+				{
+					Creature* pCreature = m_creature->GetMap()->GetCreature(guid);
+					if (pCreature)
+					{
+						if (Visible == 0)
+						{
+							if (!pCreature->isAlive())
+								pCreature->Respawn();
+							pCreature->setFaction(14);
+							pCreature->SetVisibility(VISIBILITY_ON);
+						}
+						else if (Visible == 1)
+						{
+							pCreature->setFaction(35);
+							pCreature->SetVisibility(VISIBILITY_OFF);
+						}
+					}
+				}			
+			}
+		}
+	}
 
     void Aggro(Unit* /*pWho*/)
     {
@@ -109,12 +141,10 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
         /*uint32 zoneid = m_creature->GetZoneId();
         if (Weather* pWth = sWorld.FindWeather(zoneid))
             pWth->SetWeather(WeatherType(3), 2);*/
-
-        for (uint8 i = 0; i < 2; ++i)
-            m_creature->SummonCreature(NPC_TORNADO, Tornado[i].x, Tornado[i].y, Tornado[i].z, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+		TornadoesVisibility(0);
 
         // This spawn first Ossirian Crystal
-        //who->SummonGameObject(GO_OSSIRIAN_CRYSTAL, Crystal[i].x, Crystal[i].x, Crystal[i].x, 0, 0, 0, 0, 0, 0);
+        //m_creature->SummonGameObject(GO_OSSIRIAN_CRYSTAL, Crystal[0].x, Crystal[0].x, Crystal[0].x, 0, 0);
     }
     
     void KilledUnit(Unit* pVictim)
@@ -130,24 +160,18 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
         if (m_pInstance)
         {
             m_pInstance->SetData(TYPE_OSSIRIAN, DONE);
-            DespawnLastSummonedCrystal();
+            //DespawnLastSummonedCrystal();
+			TornadoesVisibility(1);
         }
-
-        std::list<Creature*> m_lTornados;
-        GetCreatureListWithEntryInGrid(m_lTornados, m_creature, NPC_TORNADO, MAX_VISIBILITY_DISTANCE);
-        if (!m_lTornados.empty())
-            for(std::list<Creature*>::iterator itr = m_lTornados.begin(); itr != m_lTornados.end(); ++itr)
-                if ((*itr) && (*itr)->isAlive())
-                    (*itr)->RemoveFromWorld();
     }
 
-    void DespawnLastSummonedCrystal()
+    /*void DespawnLastSummonedCrystal()
     {
 		if (GameObject* pLastCrystal = m_pInstance->GetSingleGameObjectFromStorage(GO_OSSIRIAN_CRYSTAL))
             pLastCrystal->AddObjectToRemoveList();
-    }
+    }*/
 
-    void TeleportFarAwayPlayerBack(float /*range = 0.0f*/, bool alive = true)
+    void TeleportFarAwayPlayerBack(float /*range = 0.0f*/, bool alive = true)			// not working, should it?
     {
         Map* map = m_creature->GetMap();
         if(!map->IsDungeon()) return;
@@ -167,14 +191,24 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
                 mO = m_creature->GetOrientation();
                 
                 if(alive)
-                if(i->getSource()->isAlive())
-                    DoTeleportPlayer(i->getSource(), mX, mY, mZ+1, mO);
-                if(!alive)
-                    DoTeleportPlayer(i->getSource(), mX, mY, mZ+1, mO);
+					if(i->getSource()->isAlive())
+						DoTeleportPlayer(i->getSource(), mX, mY, mZ+1, mO);
+					if(!alive)
+						DoTeleportPlayer(i->getSource(), mX, mY, mZ+1, mO);
             }
             if(i == PlayerList.end()) i = PlayerList.begin(); // make impossible reach end
         }
     }
+
+	void SpellHit(Unit* /*pCaster*/, const SpellEntry* pSpell)			// Remove Supreme if hit by a crystal
+    {
+        if (pSpell->Id == SPELL_FIRE_WEAKNESS || pSpell->Id == SPELL_FROST_WEAKNESS || pSpell->Id == SPELL_NATURE_WEAKNESS ||
+			pSpell->Id == SPELL_ARCANE_WEAKNESS || pSpell->Id == SPELL_SHADOW_WEAKNESS)
+		{
+			m_creature->RemoveAurasDueToSpell(SPELL_STRENGTH_OF_OSSIRIAN);
+			m_creature->SetSpeedRate(MOVE_RUN, 0.95f);
+		}
+	}
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -182,9 +216,11 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
             return;
 
         // If has not boost nor weakness  
-        if (!m_creature->HasAura(SPELL_STRENGTH_OF_OSSIRIAN, EFFECT_INDEX_0) && !m_creature->HasAura(SPELL_FIRE_WEAKNESS, EFFECT_INDEX_0) && !m_creature->HasAura(SPELL_FROST_WEAKNESS, EFFECT_INDEX_0) && !m_creature->HasAura(SPELL_NATURE_WEAKNESS, EFFECT_INDEX_0) && !m_creature->HasAura(SPELL_ARCANE_WEAKNESS, EFFECT_INDEX_0) && !m_creature->HasAura(SPELL_SHADOW_WEAKNESS, EFFECT_INDEX_0))
+        if (!m_creature->HasAura(SPELL_STRENGTH_OF_OSSIRIAN, EFFECT_INDEX_0) && !m_creature->HasAura(SPELL_FIRE_WEAKNESS) && !m_creature->HasAura(SPELL_FROST_WEAKNESS) &&
+			!m_creature->HasAura(SPELL_NATURE_WEAKNESS) && !m_creature->HasAura(SPELL_ARCANE_WEAKNESS) && !m_creature->HasAura(SPELL_SHADOW_WEAKNESS))
         {
-            DoCastSpellIfCan(m_creature, SPELL_STRENGTH_OF_OSSIRIAN);
+            m_creature->CastSpell(m_creature, SPELL_STRENGTH_OF_OSSIRIAN, true);
+			m_creature->SetSpeedRate(MOVE_RUN, 1.3f);
             switch(urand(0,2))
             {
                 case 0:
@@ -244,13 +280,6 @@ bool GOUse_go_ossirian_crystal(Player* pPlayer, GameObject* pGo)
 
     if (Creature* pOssirian = GetClosestCreatureWithEntry(pGo, NPC_OSSIRIAN, 20.0f))
     {
-        pOssirian->RemoveAurasDueToSpell(SPELL_STRENGTH_OF_OSSIRIAN);
-        pOssirian->RemoveAurasDueToSpell(SPELL_FIRE_WEAKNESS);
-        pOssirian->RemoveAurasDueToSpell(SPELL_FROST_WEAKNESS);
-        pOssirian->RemoveAurasDueToSpell(SPELL_NATURE_WEAKNESS);
-        pOssirian->RemoveAurasDueToSpell(SPELL_ARCANE_WEAKNESS);
-        pOssirian->RemoveAurasDueToSpell(SPELL_SHADOW_WEAKNESS);
-
         switch(urand(0,4))
         {
             case 0:
@@ -272,23 +301,58 @@ bool GOUse_go_ossirian_crystal(Player* pPlayer, GameObject* pGo)
     }
     
     // Spawn next Ossirian Crystal at random position
-    bool RollAgain = true;
-    while(RollAgain)
-    {
-        uint8 random = rand()%8;
-        // If positionX of new crystal != positionX current crystal, spawn new crystal and stop roll
-        if(pGo->GetPositionX() != Crystal[random].x)
-        {
-            //GameObject* Crystal = player->SummonGameObject(GO_OSSIRIAN_CRYSTAL, Crystal[random].x, Crystal[random].y, Crystal[random].z, 0, 0, 0, 0, 0, 0);
-            RollAgain = false;
-        }
-    }
+    //bool RollAgain = true;
+    //while(RollAgain)
+    //{
+    //    uint8 random = rand()%8;
+    //    // If positionX of new crystal != positionX current crystal, spawn new crystal and stop roll
+    //    if(pGo->GetPositionX() != Crystal[random].x)
+    //    {
+    //        pPlayer->SummonGameObject(GO_OSSIRIAN_CRYSTAL, Crystal[random].x, Crystal[random].y, Crystal[random].z,0,0);
+    //        RollAgain = false;
+    //    }
+    //}
     
-    pGo->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE + GO_FLAG_INTERACT_COND); // clicked crystal become unclickable
+    //pGo->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE + GO_FLAG_INTERACT_COND); // clicked crystal become unclickable
     pGo->SetGoState(GO_STATE_ACTIVE);
-    pGo->SetRespawnTime(10); // despawn after 10 secs
+    pGo->SetRespawnTime(5); // despawn after 5 secs
     
     return true;
+}
+
+/*######
+## npc_sand_vortex
+######*/
+
+struct MANGOS_DLL_DECL npc_sand_vortexAI : public ScriptedAI
+{
+    npc_sand_vortexAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+        Reset();
+    }
+
+    void Reset()
+    {
+		if (!m_creature->HasAura(SPELL_SAND_STORM))
+			m_creature->CastSpell(m_creature, SPELL_SAND_STORM, true);
+    }
+
+	void MoveInLineOfSight(Unit* /*pWho*/)
+    {
+        // Must to be empty to ignore aggro
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+	}
+};
+
+CreatureAI* GetAI_npc_sand_vortex(Creature* pCreature)
+{
+    return new npc_sand_vortexAI(pCreature);
 }
 
 void AddSC_boss_ossirian()
@@ -304,4 +368,9 @@ void AddSC_boss_ossirian()
     pNewscript->Name = "go_ossirian_crystal";
     pNewscript->pGOUse = &GOUse_go_ossirian_crystal;
     pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+	pNewscript->Name = "npc_sand_vortex";
+	pNewscript->GetAI = &GetAI_npc_sand_vortex;
+	pNewscript->RegisterSelf();
 }

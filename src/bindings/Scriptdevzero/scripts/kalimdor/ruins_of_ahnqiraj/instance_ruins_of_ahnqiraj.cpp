@@ -83,6 +83,11 @@ void instance_ruins_of_ahnqiraj::OnCreatureCreate(Creature* pCreature)
 		case NPC_BURU_EGG:
 			m_lBuruEggs.push_back(pCreature->GetObjectGuid());	
 			break;
+		case NPC_TORNADO:
+			m_lTornadoes.push_back(pCreature->GetObjectGuid());		
+			pCreature->setFaction(35);
+			pCreature->SetVisibility(VISIBILITY_OFF);
+			break;
     }
 }
 
