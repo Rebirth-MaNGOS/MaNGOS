@@ -3012,10 +3012,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
                         0.f,
                         TEMPSUMMON_DEAD_DESPAWN,
                         0,
-                        true);
-
-                if (pSummon)
-                    pSummon->GetMotionMaster()->MovePoint(0, -6829.f, 758.f, 44.f, true);
+                        false);
             }
 
             m_uiWaveSpawnTimer = 1800000;
@@ -3035,6 +3032,8 @@ struct npc_colossal_anubisathAI : public npc_patrolAI
     npc_colossal_anubisathAI(Creature* pCreature) : npc_patrolAI(pCreature, 0, true)
     {
         Reset();
+
+        StartPatrol(0, false);
     }
 
     void Reset()
