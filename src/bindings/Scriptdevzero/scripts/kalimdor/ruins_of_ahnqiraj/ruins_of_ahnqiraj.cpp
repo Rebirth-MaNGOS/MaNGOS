@@ -269,6 +269,85 @@ CreatureAI* GetAI_mob_flesh_hunter(Creature* pCreature)
     return new mob_flesh_hunterAI(pCreature);
 }
 
+/*######
+## mob_obsidian_destroyer
+######*/
+
+enum eObsidianDestroyer
+{
+    SPELL_PURGE       = 25756,
+	SPELL_DRAIN_MANA  = 25755,
+
+	SMALL_OBSIDIAN_CHUNK = 181068,
+	LARGE_OBSIDIAN_CHUNK = 181069,
+};
+
+struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
+{
+    mob_obsidian_destroyerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiManaDrainTimer;
+
+    void Reset() 
+    {
+		m_uiManaDrainTimer = 10000;
+		m_creature->SetPower(POWER_MANA, 0);
+        m_creature->SetMaxPower(POWER_MANA, 0);
+    }
+
+	void Aggro(Unit* /*pWho*/)
+    {
+        m_creature->SetMaxPower(POWER_MANA, m_creature->GetCreatureInfo()->maxmana);
+    }
+
+	void JustDied(Unit* /*pKiller*/)
+    {
+		// spawn a random obsidian
+		int Size = urand(0,1);
+		if (Size == 0)
+			m_creature->SummonGameObject(SMALL_OBSIDIAN_CHUNK,0, m_creature->GetPositionX()+urand(-3,3),m_creature->GetPositionY()+urand(-3,3), m_creature->GetPositionZ(), 0);
+		else if (Size == 1)
+			m_creature->SummonGameObject(LARGE_OBSIDIAN_CHUNK,0, m_creature->GetPositionX()+urand(-3,3),m_creature->GetPositionY()+urand(-3,3), m_creature->GetPositionZ(), 0);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiManaDrainTimer <= uiDiff)
+        {
+			const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+
+			if(!threatList.empty())
+			{
+				for (HostileReference *currentReference : threatList)
+				{
+					Unit *target = currentReference->getTarget();
+					if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 30.0f)
+						m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
+				}
+			}
+			m_uiManaDrainTimer = urand(8000, 12000);
+         } 
+		else
+			m_uiManaDrainTimer -= uiDiff;
+
+		if (m_creature->GetPower(POWER_MANA) == m_creature->GetMaxPower(POWER_MANA))
+			DoCastSpellIfCan(m_creature, SPELL_PURGE);
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_obsidian_destroyer(Creature* pCreature)
+{
+    return new mob_obsidian_destroyerAI(pCreature);
+}
+
 void AddSC_ruins_of_ahnqiraj()
 {
     Script* pNewscript;
@@ -281,5 +360,10 @@ void AddSC_ruins_of_ahnqiraj()
     pNewscript = new Script;
     pNewscript->Name = "mob_flesh_hunter";
     pNewscript->GetAI = &GetAI_mob_flesh_hunter;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_obsidian_destroyer";
+    pNewscript->GetAI = &GetAI_mob_obsidian_destroyer;
     pNewscript->RegisterSelf();
 }

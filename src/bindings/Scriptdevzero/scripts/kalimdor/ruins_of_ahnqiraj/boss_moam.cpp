@@ -32,6 +32,7 @@ enum eMoam
 
     SPELL_TRAMPLE            = 15550,
     SPELL_DRAIN_MANA         = 25671,
+	SPELL_DRAIN_MANA_VISUAL  = 26639,
     SPELL_ARCANE_ERUPTION    = 25672,
     SPELL_SUMMON_MANAFIEND_1 = 25681,
     SPELL_SUMMON_MANAFIEND_2 = 25682,
@@ -55,6 +56,7 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
     instance_ruins_of_ahnqiraj* m_pInstance;
 
     uint8 m_uiPhase;
+	uint8 m_uiDrain_count;
     
     uint32 m_uiTrampleTimer;
     uint32 m_uiManaDrainTimer;
@@ -64,6 +66,7 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
 
     void Reset()
     {
+		m_uiDrain_count = 0;
         m_uiTrampleTimer = 9000;
         m_uiManaDrainTimer = 3000;
         m_uiSummonManaFiendsTimer = 90000;
@@ -91,6 +94,12 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
     {
 		if (pSummoned->GetEntry() == NPC_MANA_FIEND)
 			pSummoned->CastSpell(pSummoned,SPELL_IVUS_TELEPORT_VISUAL,true);			
+	}
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_DRAIN_MANA)
+			pTarget->CastSpell(m_creature,SPELL_DRAIN_MANA_VISUAL, true);				// animation for mana drain
 	}
 
     void UpdateAI(const uint32 uiDiff)
@@ -129,9 +138,6 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
 							if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))							
 								pFiend->AI()->AttackStart(pTarget);
 
-                    /*DoCastSpellIfCan(m_creature->getVictim(), SPELL_SUMMON_MANAFIEND_1, CAST_TRIGGERED);
-                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_SUMMON_MANAFIEND_2, CAST_TRIGGERED);
-                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_SUMMON_MANAFIEND_3, CAST_TRIGGERED);*/
 					DoCastSpellIfCan(m_creature, SPELL_ENERGIZE);
 					m_creature->GenericTextEmote("Moam drains your mana and turns to stone.", NULL, false);
                     m_uiSummonManaFiendsTimer = 90000;
@@ -144,9 +150,24 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
 
                 if (m_uiManaDrainTimer <= uiDiff)
                 {
-                    if (Unit* pTarget = SelectUnitWithPower(POWER_MANA))
-                        DoCastSpellIfCan(pTarget, SPELL_DRAIN_MANA);
+					const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
 
+					if(!threatList.empty())
+					{
+						for (HostileReference *currentReference : threatList)
+						{
+							Unit *target = currentReference->getTarget();
+							if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 40.0f)
+							{	
+								uint32 rndm_counter = urand(2,6);
+								m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
+								++m_uiDrain_count;
+								if(rndm_counter == m_uiDrain_count)
+									break;
+							}							
+						}
+					}
+					
                     m_uiManaDrainTimer = urand(2000, 6000);
                 } 
                 else
