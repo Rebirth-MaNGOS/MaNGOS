@@ -48,7 +48,7 @@ enum Creatures
     NPC_BURU_EGG_TRIGGER          = 15964,
     NPC_HIVEZARA_HATCHLING        = 15521,
     NPC_OSSIRIAN_CRYSTAL_TRIGGER  = 15590,
-    NPC_TORNADO                   = 19922,
+    NPC_TORNADO                   = 15428,
 };
 
 enum GameObjects
@@ -92,7 +92,12 @@ class MANGOS_DLL_DECL instance_ruins_of_ahnqiraj : public ScriptedInstance
 		{
 			return m_lBuruEggs;
 		}
-		GUIDList m_lBuruEggs;		
+		GUIDList& instance_ruins_of_ahnqiraj::GetTornadoes()
+		{
+			return m_lTornadoes;
+		}
+		GUIDList m_lBuruEggs;
+		GUIDList m_lTornadoes;
     protected:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
         std::string strInstData;		
