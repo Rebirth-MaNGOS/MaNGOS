@@ -60,7 +60,7 @@ void WorldSession::HandlePetAction(WorldPacket& recv_data)
     if (!pet->isAlive())
         return;
 
-    if (pet->GetTypeId() == TYPEID_PLAYER)
+    if (pet->GetTypeId() == TYPEID_PLAYER || pet->HasAura(1002))
     {
         // controller player can only do melee attack
         if (!(flag == ACT_COMMAND && spellid == COMMAND_ATTACK))

@@ -3834,25 +3834,28 @@ void Spell::EffectSummonPet(SpellEffectIndex eff_idx)
     // if pet requested type already exist
     if( OldSummon )
     {
-        if(petentry == 0 || OldSummon->GetEntry() == petentry)
+        if(m_caster->getClass() != CLASS_WARLOCK)
         {
-            // pet in corpse state can't be summoned
-            if( OldSummon->isDead() )
-                return;
-
-            OldSummon->GetMap()->Remove((Creature*)OldSummon,false);
-
-            float px, py, pz;
-            m_caster->GetClosePoint(px, py, pz, OldSummon->GetObjectBoundingRadius());
-
-            OldSummon->Relocate(px, py, pz, OldSummon->GetOrientation());
-            m_caster->GetMap()->Add((Creature*)OldSummon);
-
-            if(m_caster->GetTypeId() == TYPEID_PLAYER && OldSummon->isControlled() )
+            if(petentry == 0 || OldSummon->GetEntry() == petentry)
             {
-                ((Player*)m_caster)->PetSpellInitialize();
+                // pet in corpse state can't be summoned
+                if( OldSummon->isDead() )
+                    return;
+
+                OldSummon->GetMap()->Remove((Creature*)OldSummon,false);
+
+                float px, py, pz;
+                m_caster->GetClosePoint(px, py, pz, OldSummon->GetObjectBoundingRadius());
+
+                OldSummon->Relocate(px, py, pz, OldSummon->GetOrientation());
+                m_caster->GetMap()->Add((Creature*)OldSummon);
+
+                if(m_caster->GetTypeId() == TYPEID_PLAYER && OldSummon->isControlled() )
+                {
+                    ((Player*)m_caster)->PetSpellInitialize();
+                }
+                return;
             }
-            return;
         }
 
         if(m_caster->GetTypeId() == TYPEID_PLAYER)
