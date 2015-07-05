@@ -88,11 +88,11 @@ class MANGOS_DLL_DECL instance_ruins_of_ahnqiraj : public ScriptedInstance
 
         const char* Save() { return strInstData.c_str(); }
         void Load(const char* chrIn);
-		GUIDList& instance_ruins_of_ahnqiraj::GetBuruEggs()
+		GUIDList& GetBuruEggs()
 		{
 			return m_lBuruEggs;
 		}
-		GUIDList& instance_ruins_of_ahnqiraj::GetTornadoes()
+		GUIDList& GetTornadoes()
 		{
 			return m_lTornadoes;
 		}
