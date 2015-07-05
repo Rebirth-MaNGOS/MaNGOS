@@ -1308,6 +1308,80 @@ bool OnQuestRewarded_npc_krog(Player* pPlayer, Creature* pCreature, Quest const*
 	return true;
 }
 
+enum doctor_weavil
+{
+    SPELL_MIND_SHATTER = 25774,
+    SPELL_CREATURE_OF_NIGHTMARE = 25806,
+};
+
+struct MANGOS_DLL_DECL boss_doctor_weavil : public ScriptedAI
+{
+    boss_doctor_weavil(Creature* pCreature) : ScriptedAI(pCreature) {
+        Reset();
+    }
+
+    uint32 m_uiMindShatterTimer;
+    uint32 m_uiMindControlTimer;
+
+    void Reset()
+    {   
+        m_uiMindShatterTimer = urand(5000, 15000);
+        m_uiMindControlTimer = urand(35000, 50000);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if(m_uiMindShatterTimer)
+        {
+            if(m_uiMindShatterTimer <= uiDiff)
+            {
+                m_uiMindShatterTimer = urand(5000, 15000);
+                DoCast(m_creature, SPELL_MIND_SHATTER, true);
+            }
+            else
+                m_uiMindShatterTimer -= uiDiff;
+        }
+
+        if(m_uiMindControlTimer)
+        {
+            if(m_uiMindControlTimer <= uiDiff)
+            {
+                m_uiMindControlTimer = urand(35000, 50000);
+
+                const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+
+                for (HostileReference* currentReference : threatList)
+                {
+                    Unit* target = currentReference->getTarget();
+                    if (target)
+                    {
+
+                        DoCast(target, SPELL_CREATURE_OF_NIGHTMARE, true);
+
+                        if (!m_creature->getVictim())
+                            return;
+
+                        break;
+                    }
+                }
+            }
+            else
+                m_uiMindControlTimer -= uiDiff;
+        }
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_boss_doctor_weavil(Creature* pCreature)
+{
+    return new boss_doctor_weavil(pCreature);
+}
+
 /* AddSC */
 
 void AddSC_dustwallow_marsh()
@@ -1371,4 +1445,9 @@ void AddSC_dustwallow_marsh()
     pNewScript->GetAI = &GetAI_npc_krog;
     pNewScript->pQuestRewardedNPC = &OnQuestRewarded_npc_krog;
     pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+	pNewScript->Name = "boss_doctor_weavil";
+	pNewScript->GetAI = &GetAI_boss_doctor_weavil;
+	pNewScript->RegisterSelf();
 }

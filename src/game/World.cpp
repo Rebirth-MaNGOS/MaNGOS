@@ -68,6 +68,7 @@
 #include "extras/Mod.h"
 #include "Warden/WardenDataStorage.h"
 #include "ExclusivePoolMgr.h"
+#include "EventResourceMgr.h"
 
 #include <thread>
 
@@ -1280,6 +1281,10 @@ void World::SetInitialWorldSettings()
     ///- Initialize MapManager
     sLog.outString( "Starting Map System" );
     sMapMgr.Initialize();
+    
+    sLog.outString("Loading event resources...");
+    sEventResourceMgr.LoadResourceEvents();
+
 
     ///- Load Warden Data
     sLog.outString("Loading Warden Data...");

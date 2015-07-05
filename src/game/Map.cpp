@@ -398,6 +398,16 @@ Map::Add(T *obj)
         obj->GetViewPoint().Event_AddedToWorld(&(*grid)(cell.CellX(), cell.CellY()));
         UpdateObjectVisibility(obj,cell,p);
     }
+
+    // We want all creatures on the continents to be active.
+    // This should prevent players from getting stuck in combat.
+    // It should also make sure patrolling mobs eventually show up.
+    if (GetId() == 1 || GetId() == 0)
+    {
+        Creature* pCreature = dynamic_cast<Creature*>(obj);
+        if (pCreature && !pCreature->isActiveObject())
+            pCreature->SetActiveObjectState(true);
+    }
 }
 
 void Map::MessageBroadcast(Player *player, WorldPacket *msg, bool to_self)
@@ -562,6 +572,19 @@ void Map::Update(const uint32 &t_diff)
     {
         if (!obj->IsInWorld() || !obj->IsPositionValid())
             return;
+
+        // For Creatures on the continent we only update the 
+        // patrolling ones or the ones in/after combat.
+        if (GetId() == 0 || GetId() == 1)
+        {
+            Creature* pCreature = dynamic_cast<Creature*>(obj);
+            if (pCreature)
+            {
+                if (!pCreature->isInCombat() && !pCreature->IsInEvadeMode() &&
+                    pCreature->GetDefaultMovementType() != WAYPOINT_MOTION_TYPE)
+                    continue;
+            }
+        }
 
         //lets update mobs/objects in ALL visible cells around player!
         CellArea area = Cell::CalculateCellArea(obj->GetPositionX(), obj->GetPositionY(), GetVisibilityDistance());

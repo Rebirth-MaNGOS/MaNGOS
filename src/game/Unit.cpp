@@ -7044,7 +7044,8 @@ bool Unit::isTargetableForAttack(bool inverseAlive, bool isAOE) const
     if (GetTypeId()==TYPEID_PLAYER && ((Player *)this)->isGameMaster())
         return false;
 
-    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE))
+    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE) && 
+        (GetTypeId() != TYPEID_UNIT || !dynamic_cast<const Creature*>(this)->GetIgnoreNonCombatFlags()))
         return false;
 
     // to be removed if unit by any reason enter combat
@@ -9849,7 +9850,7 @@ void Unit::RemovePetAura(PetAura const* petSpell)
         pet->RemoveAurasDueToSpell(petSpell->GetAura(pet->GetEntry()));
 }
 
-TemporaryGameObject* Unit::SummonGameObject(uint32 entry, uint32 duration, float x, float y, float z, float ang)
+TemporaryGameObject* Unit::SummonGameObject(uint32 entry, uint32 duration, float x, float y, float z, float ang, GOState initialState)
 {
     TemporaryGameObject* pGameObj = new TemporaryGameObject(duration);
 
@@ -9859,6 +9860,8 @@ TemporaryGameObject* Unit::SummonGameObject(uint32 entry, uint32 duration, float
         delete pGameObj;
         return nullptr;
     }
+
+    pGameObj->SetGoState(initialState);
 
     pGameObj->SetOwnerGuid(GetGUID());
 

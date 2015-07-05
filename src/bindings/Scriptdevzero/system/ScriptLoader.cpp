@@ -27,6 +27,9 @@ extern void AddSC_dungeon_set2();
 extern void AddSC_engineering();
 extern void AddSC_hallows_end();
 
+// Ahn'Qiraj gate event
+extern void AddSC_gate_turnin_scripts();
+
 //eastern kingdoms
 extern void AddSC_alterac_valley();                         // alterac valley
 extern void AddSC_boss_balinda_stonehearth();
@@ -313,6 +316,9 @@ void AddScripts()
 	AddSC_dungeon_set2();
 	AddSC_engineering();
 	AddSC_hallows_end();
+
+    // Ahn'Qiraj gate event
+    AddSC_gate_turnin_scripts();
 
     //eastern kingdoms
     AddSC_alterac_valley();                                 //alterac valley

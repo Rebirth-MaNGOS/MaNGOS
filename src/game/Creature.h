@@ -729,6 +729,9 @@ public:
 
 	DamageTrackingMap& GetDamageTrackingMap() { return m_DamageTrackingMap; } // Gets a reference to the map that keeps track of how much damage an ObjectGuid has inflicted on the Unit.
 
+    void SetIgnoreNonCombatFlags(bool ignore) { m_ignoreNonCombatFlags = ignore; }
+    bool GetIgnoreNonCombatFlags() const { return m_ignoreNonCombatFlags; }
+
 protected:
 	bool CreateFromProto(uint32 guidlow, CreatureInfo const* cinfo, Team team, const CreatureData *data = NULL, GameEventCreatureData const* eventData =NULL);
 	bool InitEntry(uint32 entry, Team team=ALLIANCE, const CreatureData* data = NULL, GameEventCreatureData const* eventData = NULL);
@@ -796,6 +799,8 @@ private:
 	bool m_respawnEnabled;
 
 	DamageTrackingMap m_DamageTrackingMap;
+
+    bool m_ignoreNonCombatFlags;
 };
 
 class AssistDelayEvent : public BasicEvent
