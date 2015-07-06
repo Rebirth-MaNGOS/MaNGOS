@@ -88,7 +88,6 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
 			m_creature->GenericTextEmote("Kurinnaxx goes into a frenzy!", NULL, false);
 	}
 
-
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -127,7 +126,7 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
                     pTrap->GetPosition(fX, fY, fZ);
 
                     if (Creature* pTrigger = m_creature->SummonCreature(NPC_AHNQIRAJ_TRIGGER, fX, fY, fZ, 0, TEMPSUMMON_TIMED_DESPAWN, 2000))
-                        pTrigger->CastSpell(pTrigger, SPELL_SAND_TRAP_EFFECT, false);
+                        pTrigger->CastSpell(pTrigger, SPELL_SAND_TRAP_EFFECT, false, 0, 0, m_creature->GetObjectGuid());
 
                     m_creature->SendObjectDeSpawnAnim(pTrap->GetObjectGuid());
                     pTrap->Delete();
