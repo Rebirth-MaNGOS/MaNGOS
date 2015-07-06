@@ -107,10 +107,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_turninAI : public ScriptedAI
     npc_ahnqiraj_turninAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         if (IsEventCompleted(EVENT_ID) || GetResourceCount(EVENT_ID, RESOURCE) >= GetFullResourceCount(EVENT_ID, RESOURCE))
-        {
             m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-            sLog.outBasic("Removing the quest flag for the NPC!");
-        }
     }
 
     void Reset() {}
