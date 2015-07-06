@@ -48,12 +48,16 @@ class EventResourceMgr
 
         uint32 GetResourceCount(uint32 event_id, uint32 resource_id);
         uint32 GetFullResourceCount(uint32 event_id, uint32 resource_id);
+        // Change all resources in an event by a percentage, ex. 0.8 to reduce it by 20 %.
+        void ChangeAllResourcesByPercentage(uint32 event_id, float percentage);
 
         void CheckSpawnGOEvent(uint32 event_id);
 
         bool IsEventCompleted(uint32 event_id);
         
     private:
+        void SaveResourceCount(uint32 event_id, uint32 resource_id, uint32 value);
+
         std::map<uint32, ResourceEvent> m_resourceEvents;
         std::map<uint32, ResourceEventStatus> m_resourceEventStatuses;
 };
@@ -65,5 +69,6 @@ class EventResourceMgr
 bool MANGOS_DLL_SPEC AddResourceCount(uint32 event_id, uint32 resource_id, int count);
 uint32 MANGOS_DLL_SPEC GetResourceCount(uint32 event_id, uint32 resource_id);
 uint32 MANGOS_DLL_SPEC GetFullResourceCount(uint32 event_id, uint32 resource_id);
+void MANGOS_DLL_SPEC ChangeAllResourcesByPercentage(uint32 event_id, float percentage);
 bool MANGOS_DLL_SPEC IsEventCompleted(uint32 event_id);
 #endif

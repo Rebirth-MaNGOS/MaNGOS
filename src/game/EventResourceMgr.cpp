@@ -160,11 +160,7 @@ bool EventResourceMgr::AddResourceCount(uint32 event_id, uint32 resource_id, int
 
     resource_type.current_count += count;
 
-    CharacterDatabase.PQuery("REPLACE INTO event_resource_count (`event_id`, `resource_id`,"
-                             " `resource_count`) VALUES ('%u', '%u', '%u')", 
-                             event_id, resource_id, resource_type.current_count);
-
-    CheckSpawnGOEvent(event_id);
+    SaveResourceCount(event_id, resource_id, resource_type.current_count);
 
     return notDone;
 }
@@ -181,6 +177,19 @@ uint32 EventResourceMgr::GetFullResourceCount(uint32 event_id, uint32 resource_i
     ResourceType& resource_type = m_resourceEvents.at(event_id).at(resource_id);
 
     return resource_type.full_count;
+}
+
+void EventResourceMgr::ChangeAllResourcesByPercentage(uint32 event_id, float percentage)
+{
+    for (std::pair<const uint32, ResourceType>& resourcePair : m_resourceEvents[event_id])
+    {
+        ResourceType& resource = resourcePair.second;
+
+        if (percentage * resource.full_count <= resource.current_count)
+            resource.current_count  -= percentage * resource.full_count;
+
+        SaveResourceCount(event_id, resourcePair.first, resource.current_count);
+    }
 }
 
 void EventResourceMgr::CheckSpawnGOEvent(uint32 event_id)
@@ -285,6 +294,15 @@ bool EventResourceMgr::IsEventCompleted(uint32 event_id)
     return complete;
 }
 
+void EventResourceMgr::SaveResourceCount(uint32 event_id, uint32 resource_id, uint32 value)
+{
+    CharacterDatabase.PQuery("REPLACE INTO event_resource_count (`event_id`, `resource_id`,"
+                             " `resource_count`) VALUES ('%u', '%u', '%u')", 
+                             event_id, resource_id, value);
+
+    CheckSpawnGOEvent(event_id);
+}
+
 bool AddResourceCount(uint32 event_id, uint32 resource_id, int count)
 {
     return sEventResourceMgr.AddResourceCount(event_id, resource_id, count);
@@ -298,6 +316,11 @@ uint32 GetResourceCount(uint32 event_id, uint32 resource_id)
 uint32 GetFullResourceCount(uint32 event_id, uint32 resource_id)
 {
     return sEventResourceMgr.GetFullResourceCount(event_id, resource_id);
+}
+
+void ChangeAllResourcesByPercentage(uint32 event_id, float percentage)
+{
+    sEventResourceMgr.ChangeAllResourcesByPercentage(event_id, percentage);
 }
 
 bool IsEventCompleted(uint32 event_id)

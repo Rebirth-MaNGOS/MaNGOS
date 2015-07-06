@@ -127,6 +127,48 @@ CreatureAI* GetAI_npc_ahnqiraj_turnin(Creature* pCreature)
     return new npc_ahnqiraj_turninAI<RESOURCE>(pCreature);
 }
 
+struct MANGOS_DLL_DECL npc_ahnqiraj_resource_reducing_triggerAI : public ScriptedAI
+{
+    npc_ahnqiraj_resource_reducing_triggerAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    {
+        m_creature->SetActiveObjectState(true);
+
+        Reset();
+    }
+
+    uint32 m_uiReducingTimer;
+
+    void Reset()
+    {
+        m_uiReducingTimer = 3600000;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!IsEventCompleted(EVENT_ID))
+            return;
+
+        if (m_uiReducingTimer <= uiDiff)
+        {
+            // Make the resources go down to 5 % over a span of 
+            // five days.
+            ChangeAllResourcesByPercentage(EVENT_ID, 0.0083334);
+
+            basic_log("Ahn'Qiraj event: Reducing resources!");
+
+            m_uiReducingTimer = 3600000;
+        }
+        else
+            m_uiReducingTimer -= uiDiff;
+
+    }
+};
+
+CreatureAI* GetAI_npc_ahnqiraj_resource_reducing_trigger(Creature* pCreature)
+{
+    return new npc_ahnqiraj_resource_reducing_triggerAI(pCreature);
+}
+
 void AddSC_gate_turnin_scripts()
 {
     Script* pScript = new Script;
@@ -308,5 +350,10 @@ void AddSC_gate_turnin_scripts()
     pScript->Name = "npc_hlr_longrunner";
     pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<WOOL_BANDAGE>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(longrunner);
+    pScript->RegisterSelf();
+
+    pScript = new Script;
+    pScript->Name = "npc_ahnqiraj_resource_reducing_trigger";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_resource_reducing_trigger;
     pScript->RegisterSelf();
 }
