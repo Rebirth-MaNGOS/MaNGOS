@@ -2984,6 +2984,13 @@ enum GateSpawns
     COLOSSAL_ANUBISATH = 15743
 };
 
+enum AhnQirajDoor
+{
+    GATE = 176146,
+    RUNES = 176148,
+    ROOTS = 176147
+};
+
 struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI 
 {
     npc_ahnqiraj_gate_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -2993,10 +3000,14 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
     }
 
     uint32 m_uiWaveSpawnTimer;
+    uint32 m_uiGateOpenTimer;
+    uint32 m_uiGateOpenStage;
 
     void Reset()
     {
         m_uiWaveSpawnTimer = 0;
+        m_uiGateOpenStage = 0;
+        m_uiGateOpenTimer = 10000;
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -3019,6 +3030,46 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
         }
         else
             m_uiWaveSpawnTimer -= uiDiff;
+
+        if (m_uiGateOpenStage)
+        {
+            if (m_uiGateOpenTimer <= uiDiff)
+            {
+                switch (m_uiGateOpenStage)
+                {
+                case 1:
+                    {
+                        GameObject* pGo = m_creature->GetClosestGameObjectWithEntry(m_creature, RUNES, 40.f);
+                        if (pGo)
+                            pGo->SetGoState(GO_STATE_ACTIVE);
+
+                        m_uiGateOpenTimer = 1000;
+                        break;
+                    }
+                case 2:
+                    {
+                        GameObject* pGo = m_creature->GetClosestGameObjectWithEntry(m_creature, ROOTS, 40.f);
+                        if (pGo)
+                            pGo->SetGoState(GO_STATE_ACTIVE);
+
+                        m_uiGateOpenTimer = 4000;
+                        break;
+                    }
+                case 3:
+                    {
+                        GameObject* pGo = m_creature->GetClosestGameObjectWithEntry(m_creature, GATE, 40.f);
+                        if (pGo)
+                            pGo->SetGoState(GO_STATE_ACTIVE);
+
+                        break;
+                    }
+                }
+
+                ++m_uiGateOpenStage;
+            }
+            else
+                m_uiGateOpenTimer -= uiDiff;
+        }
     }
 };
 
@@ -3056,6 +3107,23 @@ struct npc_colossal_anubisathAI : public npc_patrolAI
 CreatureAI* GetAI_npc_colossal_anubisath(Creature* pCreature)
 {
     return new npc_colossal_anubisathAI(pCreature);
+}
+
+bool GORewarded_scarab_gong(Player* pPlayer, GameObject* pGO, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == 8743)
+    {
+        Creature* pTrigger = pGO->GetClosestCreatureWithEntry(pGO, 17091, 150.f);
+        if (pTrigger)
+        {
+            // Trigger the gate opening.
+            npc_ahnqiraj_gate_triggerAI* pAI = dynamic_cast<npc_ahnqiraj_gate_triggerAI*>(pTrigger->AI());
+            if (pAI)
+                pAI->m_uiGateOpenStage = 1;
+        }
+
+    }
+    return false;
 }
 
 void AddSC_silithus()
@@ -3159,5 +3227,10 @@ void AddSC_silithus()
     pNewscript = new Script();
     pNewscript->Name = "npc_colossal_anubisath";
     pNewscript->GetAI = &GetAI_npc_colossal_anubisath;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script();
+    pNewscript->Name = "go_scarab_gong";
+    pNewscript->pQuestRewardedGO = &GORewarded_scarab_gong;
     pNewscript->RegisterSelf();
 }
