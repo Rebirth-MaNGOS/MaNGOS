@@ -23,6 +23,20 @@ struct ResourceType
 
 typedef std::map<uint32, ResourceType> ResourceEvent ;
 
+// Wrote this simple wrapper around bool
+// to ensure that it's always initialised
+// to false.
+class ResourceEventStatus
+{
+    public:
+        ResourceEventStatus() : m_completed(false) {}
+
+        bool& operator=(const bool &lhs) { m_completed = lhs; return m_completed; }
+        operator bool() { return m_completed; }
+    private:
+        bool m_completed;
+};
+
 class EventResourceMgr
 {
     public:
@@ -36,9 +50,12 @@ class EventResourceMgr
         uint32 GetFullResourceCount(uint32 event_id, uint32 resource_id);
 
         void CheckSpawnGOEvent(uint32 event_id);
+
+        bool IsEventCompleted(uint32 event_id);
         
     private:
         std::map<uint32, ResourceEvent> m_resourceEvents;
+        std::map<uint32, ResourceEventStatus> m_resourceEventStatuses;
 };
 
 #define sEventResourceMgr MaNGOS::Singleton<EventResourceMgr>::Instance()
@@ -48,4 +65,5 @@ class EventResourceMgr
 bool MANGOS_DLL_SPEC AddResourceCount(uint32 event_id, uint32 resource_id, int count);
 uint32 MANGOS_DLL_SPEC GetResourceCount(uint32 event_id, uint32 resource_id);
 uint32 MANGOS_DLL_SPEC GetFullResourceCount(uint32 event_id, uint32 resource_id);
+bool MANGOS_DLL_SPEC IsEventCompleted(uint32 event_id);
 #endif

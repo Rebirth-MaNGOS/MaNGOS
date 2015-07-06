@@ -101,156 +101,215 @@ QuestReward_wrapper(maugh, TIN_BAR, 20, Q_H_TIN_BARS)
 
 QuestReward_wrapper(longrunner, WOOL_BANDAGE, 20, Q_H_WOOL_BANDAGES)
 
+template<AhnQirajResources RESOURCE>
+struct MANGOS_DLL_DECL npc_ahnqiraj_turninAI : public ScriptedAI
+{
+    npc_ahnqiraj_turninAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        if (IsEventCompleted(EVENT_ID) || GetResourceCount(EVENT_ID, RESOURCE) >= GetFullResourceCount(EVENT_ID, RESOURCE))
+        {
+            m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+            sLog.outBasic("Removing the quest flag for the NPC!");
+        }
+    }
+
+    void Reset() {}
+
+    void UpdateAI(const uint32 /*uiDiff*/)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+template<AhnQirajResources RESOURCE>
+CreatureAI* GetAI_npc_ahnqiraj_turnin(Creature* pCreature)
+{
+    return new npc_ahnqiraj_turninAI<RESOURCE>(pCreature);
+}
+
 void AddSC_gate_turnin_scripts()
 {
     Script* pScript = new Script;
     
     pScript->Name = "npc_sgt_maj_germaine";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<ARTHAS_TEARS>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(germaine);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_sgt_stonebrow";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<COPPER_BAR>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(stonebrow);
     pScript->RegisterSelf();
     
     pScript = new Script;
     pScript->Name = "npc_bonnie_stoneflayer";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<LIGHT_LEATHER>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(bonnie);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_sent_silversky";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<LINEN_BANDAGE>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(silversky);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_pvt_porter";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<MEDIUM_LEATHER>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(porter);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_master_nightsong";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<PURPLE_LOTUS>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(nightsong);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_slicky";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<RAINBOW_FIN_ALBACORE>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(slicky);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_sarah_sadwhistle";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<ROAST_RAPTOR>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(sarah);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_kpr_moonshade";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<RUNECLOTH_BANDAGE>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(moonshade);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_nrs_stonefield";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<SILK_BANDAGE>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(stonefield);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_hntr_swiftriver";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<SPOTTED_YELLOWTAIL>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(swiftriver);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_pvt_draxlegauge";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<STRANGLEKELP>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(draxlegauge);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_marta_finespindle";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<THICK_LEATHER>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(marta);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_dame_twinbraid";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<THORIUM_BAR>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(dame);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_cpr_carnes";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<IRON_BAR>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(carnes);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_chief_sharpclaw";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<BAKED_SALMON>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(sharpclaw);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_miner_cromwell";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<COPPER_BAR>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(cromwell);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_batrdr_pelikeiki";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<FIREBLOOM>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(pelekeiki);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_sknr_jamani";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<HEAVY_LEATHER>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(jamani);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_grd_rawtar";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<LEAN_WOLF_STEAK>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(rawtar);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_ldy_callow";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<MAGEWEAVE_BANDAGE>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(callow);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_snr_srg_tkelah";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<MITHRIL_BAR>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(tkelah);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_hrb_proudfeather";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<PEACEBLOOM>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(proudfeather);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_apo_jezel";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<PURPLE_LOTUS>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(jezel);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_dr_serratus";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<RUGGED_LEATHER>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(serratus);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_grd_clayhoof";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<RUNECLOTH_BANDAGE>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(clayhoof);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_fish_lindo";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<SPOTTED_YELLOWTAIL>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(lindo);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_sgt_umala";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<THICK_LEATHER>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(umala);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_grunt_maug";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<TIN_BAR>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(maugh);
     pScript->RegisterSelf();
 
     pScript = new Script;
     pScript->Name = "npc_hlr_longrunner";
+    pScript->GetAI = &GetAI_npc_ahnqiraj_turnin<WOOL_BANDAGE>;
     pScript->pQuestRewardedNPC = GetQuestReward_wrapper(longrunner);
     pScript->RegisterSelf();
 }

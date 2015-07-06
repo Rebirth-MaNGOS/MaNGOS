@@ -112,6 +112,37 @@ void EventResourceMgr::LoadResourceEvents()
         sLog.outBasic(">> Loaded %u resource gameobjects for the resource events.", count);
     }
 
+    result = CharacterDatabase.Query("SELECT event_id, completed FROM event_resource_status");
+    if (!result)
+    {
+        BarGoLink bar(1);
+        bar.step();
+
+        sLog.outBasic(">> Loaded 0 resource event statuses for the resource events.");
+    }
+    else
+    {
+        BarGoLink bar(result->GetRowCount());
+        uint32 count = 0;
+
+        Field* fields;
+        do
+        {
+            ++count;
+            bar.step();
+
+            fields = result->Fetch();
+            uint32 event_id = fields[0].GetUInt32();
+            bool completed = fields[1].GetBool();
+
+            m_resourceEventStatuses[event_id]= completed;
+
+        } while (result->NextRow());
+        delete result;
+
+        sLog.outBasic(">> Loaded %u resource event statuses for the resource events.", count);
+    }
+
     // Load the initial states for all the objects.
     for (std::pair<const uint32, ResourceEvent>& eventPair : m_resourceEvents)
         CheckSpawnGOEvent(eventPair.first);
@@ -228,6 +259,32 @@ void EventResourceMgr::CheckSpawnGOEvent(uint32 event_id)
     }
 }
 
+bool EventResourceMgr::IsEventCompleted(uint32 event_id)
+{
+    if (m_resourceEventStatuses[event_id])
+        return true;
+
+    bool complete = true;
+    for (std::pair<const uint32, ResourceType>& resource_pair : m_resourceEvents[event_id])
+    {
+        ResourceType& resource = resource_pair.second;
+
+        if (resource.current_count < resource.full_count)
+        {
+            complete = false;
+            break;
+        }
+    }
+
+    if (complete)
+    {
+        CharacterDatabase.PQuery("REPLACE INTO event_resource_status (`event_id`, `completed`) VALUES (%u, b'1')", event_id);
+        m_resourceEventStatuses[event_id] = true;
+    }
+
+    return complete;
+}
+
 bool AddResourceCount(uint32 event_id, uint32 resource_id, int count)
 {
     return sEventResourceMgr.AddResourceCount(event_id, resource_id, count);
@@ -241,4 +298,9 @@ uint32 GetResourceCount(uint32 event_id, uint32 resource_id)
 uint32 GetFullResourceCount(uint32 event_id, uint32 resource_id)
 {
     return sEventResourceMgr.GetFullResourceCount(event_id, resource_id);
+}
+
+bool IsEventCompleted(uint32 event_id)
+{
+    return sEventResourceMgr.IsEventCompleted(event_id);
 }
