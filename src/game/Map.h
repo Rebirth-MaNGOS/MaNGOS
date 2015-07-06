@@ -251,6 +251,11 @@ public:
     void AddToActive(WorldObject* obj);
     // must called with RemoveFromWorld
     void RemoveFromActive(WorldObject* obj);
+    
+    // Add all contient creatures to their own update list.
+    void AddToContinent(WorldObject* obj);
+
+    void RemoveFromContinent(WorldObject* obj);
 
     Player* GetPlayer(ObjectGuid guid);
     Creature* GetCreature(ObjectGuid guid);
@@ -358,6 +363,7 @@ protected:
 
     typedef std::list<WorldObject*> ActiveNonPlayers;
     ActiveNonPlayers m_activeNonPlayers;
+    ActiveNonPlayers m_continentMobs;
     
     MapStoredObjectTypesContainer m_objectsStore;
 

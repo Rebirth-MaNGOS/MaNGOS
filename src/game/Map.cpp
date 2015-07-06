@@ -406,7 +406,7 @@ Map::Add(T *obj)
     {
         Creature* pCreature = dynamic_cast<Creature*>(obj);
         if (pCreature && !pCreature->isActiveObject())
-            pCreature->SetActiveObjectState(true);
+            AddToContinent(pCreature);
     }
 }
 
@@ -573,17 +573,43 @@ void Map::Update(const uint32 &t_diff)
         if (!obj->IsInWorld() || !obj->IsPositionValid())
             return;
 
+        //lets update mobs/objects in ALL visible cells around player!
+        CellArea area = Cell::CalculateCellArea(obj->GetPositionX(), obj->GetPositionY(), GetVisibilityDistance());
+
+        for(uint32 x = area.low_bound.x_coord; x <= area.high_bound.x_coord; ++x)
+        {
+            for(uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
+            {
+                // marked cells are those that have been visited
+                // don't visit the same cell twice
+                uint32 cell_id =(y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
+
+                if(!isCellMarked(cell_id))
+                {
+                    markCell(cell_id);
+                    CellPair pair(x,y);
+                    Cell cell(pair);
+                    cell.SetNoCreate();
+                    Visit(cell, grid_object_update);
+                    Visit(cell, world_object_update);
+                }
+            }
+        }
+    }
+
+    for (WorldObject* obj : m_continentMobs)
+    {
+        if (!obj->IsInWorld() || !obj->IsPositionValid())
+            return;
+
         // For Creatures on the continent we only update the 
         // patrolling ones or the ones in/after combat.
-        if (GetId() == 0 || GetId() == 1)
+        Creature* pCreature = dynamic_cast<Creature*>(obj);
+        if (pCreature)
         {
-            Creature* pCreature = dynamic_cast<Creature*>(obj);
-            if (pCreature)
-            {
-                if (!pCreature->isInCombat() && !pCreature->IsInEvadeMode() &&
-                    pCreature->GetDefaultMovementType() != WAYPOINT_MOTION_TYPE)
-                    continue;
-            }
+            if (!pCreature->isInCombat() && !pCreature->IsInEvadeMode() &&
+                pCreature->GetDefaultMovementType() != WAYPOINT_MOTION_TYPE)
+                continue;
         }
 
         //lets update mobs/objects in ALL visible cells around player!
@@ -708,6 +734,8 @@ Map::Remove(T *obj, bool remove)
 
     if(obj->isActiveObject())
         RemoveFromActive(obj);
+    else if (GetId() == 1 || GetId() == 0)
+        RemoveFromContinent(obj);
 
     if(remove)
         obj->CleanupsBeforeDelete();
@@ -1168,6 +1196,62 @@ void Map::AddToActive( WorldObject* obj )
 void Map::RemoveFromActive( WorldObject* obj )
 {
     m_activeNonPlayers.remove(obj);
+
+    // also allow unloading spawn grid
+    if (obj->GetTypeId()==TYPEID_UNIT)
+    {
+        Creature* c= (Creature*)obj;
+
+        if(!c->IsPet() && c->HasStaticDBSpawnData())
+        {
+            float x,y,z;
+            c->GetRespawnCoord(x,y,z);
+            GridPair p = MaNGOS::ComputeGridPair(x, y);
+            if(getNGrid(p.x_coord, p.y_coord))
+                getNGrid(p.x_coord, p.y_coord)->decUnloadActiveLock();
+            else
+            {
+                GridPair p2 = MaNGOS::ComputeGridPair(c->GetPositionX(), c->GetPositionY());
+                sLog.outError("Active creature (GUID: %u Entry: %u) removed from grid[%u,%u] but spawn grid[%u,%u] not loaded.",
+                              c->GetGUIDLow(), c->GetEntry(), p.x_coord, p.y_coord, p2.x_coord, p2.y_coord);
+            }
+        }
+    }
+}
+
+void Map::AddToContinent( WorldObject* obj )
+{
+    // If the active object is already in the list we shouldn't mark it as active again.
+    if (std::find(m_continentMobs.begin(), m_continentMobs.end(), obj) != m_continentMobs.end())
+        return;
+    
+    m_continentMobs.push_back(obj);
+    
+    // also not allow unloading spawn grid to prevent creating creature clone at load
+    if (obj->GetTypeId()==TYPEID_UNIT)
+    {
+        Creature* c= (Creature*)obj;
+
+        if (!c->IsPet() && c->HasStaticDBSpawnData())
+        {
+            float x,y,z;
+            c->GetRespawnCoord(x,y,z);
+            GridPair p = MaNGOS::ComputeGridPair(x, y);
+            if(getNGrid(p.x_coord, p.y_coord))
+                getNGrid(p.x_coord, p.y_coord)->incUnloadActiveLock();
+            else
+            {
+                GridPair p2 = MaNGOS::ComputeGridPair(c->GetPositionX(), c->GetPositionY());
+                sLog.outError("Active creature (GUID: %u Entry: %u) added to grid[%u,%u] but spawn grid[%u,%u] not loaded.",
+                              c->GetGUIDLow(), c->GetEntry(), p.x_coord, p.y_coord, p2.x_coord, p2.y_coord);
+            }
+        }
+    }
+}
+
+void Map::RemoveFromContinent( WorldObject* obj )
+{
+    m_continentMobs.remove(obj);
 
     // also allow unloading spawn grid
     if (obj->GetTypeId()==TYPEID_UNIT)
