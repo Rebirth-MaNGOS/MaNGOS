@@ -693,6 +693,7 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
         m_uiMoveStep = 0;
         m_uiDoctorSpeakTimer = 0;
         m_uiDoctorsSayCntr = 1;
+        m_creature->SetRespawnEnabled(false);
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -713,8 +714,7 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
                     m_nextMoveTimer = 5000;
                 if(m_uiMoveStep == 3)
                 {
-                    m_creature->SetVisibility(VISIBILITY_OFF);
-                    m_creature->UpdateVisibilityAndView();
+                    m_creature->ForcedDespawn();
                 }
             }
             else
@@ -731,6 +731,8 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
                 if(doctorW)
                 {
                     doctorW->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                    doctorW->setFaction(35);
+                    doctorW->CombatStop();
                     doctorW->GetMotionMaster()->MovePoint(0, aFlyingMachine[3].m_fX, aFlyingMachine[3].m_fY, aFlyingMachine[3].m_fZ, true);
                     doctorW->SetRespawnEnabled(false);
                     doctor = doctorW->GetObjectGuid();
@@ -752,7 +754,9 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
                     switch(m_uiDoctorsSayCntr)
                     {
                     case 1:
-                        doctorW->SetFacingTo(1.11f);
+                        if(Unit *pPlayer = m_creature->GetMap()->GetUnit(m_creature->GetOwnerGuid()))
+                            doctorW->SetFacingToObject(pPlayer);
+
                         doctorW->MonsterSay("No hello for your old friend, Narain? Who were you expecting???", LANG_UNIVERSAL);
                         m_uiDoctorSpeakTimer = 5000;
                         break;
@@ -761,7 +765,9 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
                         m_uiDoctorSpeakTimer = 5000;
                         break;
                     case 3:
-                        doctorW->MonsterSay(std::string("I see right through your disguise, " + std::string(m_creature->GetMap()->GetUnit(m_creature->GetOwnerGuid())->GetName()) + ". Number Two! Number Two kill!").c_str(), LANG_UNIVERSAL); 
+                        if(Unit *pPlayer = m_creature->GetMap()->GetUnit(m_creature->GetOwnerGuid()))
+                            doctorW->MonsterSay(std::string("I see right through your disguise, " + std::string(pPlayer->GetName()) + ". Number Two! Number Two kill!").c_str(), LANG_UNIVERSAL); 
+
                         m_uiDoctorSpeakTimer = 5000;
                         break;
                     case 4:
@@ -771,7 +777,11 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
                         if(numberTwoApe)
                         {
                             numberTwoApe->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-                            numberTwoApe->GetMotionMaster()->MovePoint(0, aFlyingMachine[3].m_fX, aFlyingMachine[3].m_fY, aFlyingMachine[3].m_fZ, true);
+
+                            if(Unit *pPlayer = m_creature->GetMap()->GetUnit(m_creature->GetOwnerGuid()))
+                                numberTwoApe->GetMotionMaster()->MoveChase(pPlayer);
+                            else
+                                numberTwoApe->GetMotionMaster()->MovePoint(0, aFlyingMachine[3].m_fX, aFlyingMachine[3].m_fY, aFlyingMachine[3].m_fZ, true);
                             numberTwo = numberTwoApe->GetObjectGuid();
                         }
 
