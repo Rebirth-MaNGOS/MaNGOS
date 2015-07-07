@@ -116,7 +116,7 @@ ReactorAI::ResetToHome()
     m_creature->CombatStop(true);
     m_creature->SetLootRecipient(NULL);
 
-    // Remove ChaseMovementGenerator from MotionMaster stack list, and add HomeMovementGenerator instead
-    if (m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE)
+    // Move target home if it is alive.
+    if (m_creature->isAlive())
         m_creature->GetMotionMaster()->MoveTargetedHome();
 }
