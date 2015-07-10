@@ -26,8 +26,8 @@ EndScriptData */
 
 #define SPELL_CLEAVE        26350
 #define SPELL_TOXIC_VOLLEY  25812
-#define SPELL_POISON_CLOUD  38718                           //Only Spell with right dmg.
-#define SPELL_ENRAGE        34624                           //Changed cause 25790 is casted on gamers too. Same prob with old explosion of twin emperors.
+#define SPELL_POISON_CLOUD  23861                           //Only Spell with right dmg.
+#define SPELL_ENRAGE        28798                           //Changed cause 25790 is casted on gamers too. Same prob with old explosion of twin emperors.
 
 #define SPELL_CHARGE        26561
 #define SPELL_KNOCKBACK     26027
@@ -72,6 +72,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
 
             m_pInstance->SetData(DATA_BUG_TRIO_DEATH, 1);
         }
+        DoCast(m_creature->getVictim(), SPELL_POISON_CLOUD, true);
     }
     void UpdateAI(const uint32 diff)
     {
@@ -82,22 +83,16 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         //Cleave_Timer
         if (Cleave_Timer < diff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_CLEAVE);
+            DoCast(m_creature->getVictim(), SPELL_CLEAVE, true);
             Cleave_Timer = urand(5000, 12000);
         }else Cleave_Timer -= diff;
 
         //ToxicVolley_Timer
         if (ToxicVolley_Timer < diff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_TOXIC_VOLLEY);
+            DoCast(m_creature->getVictim(), SPELL_TOXIC_VOLLEY, true);
             ToxicVolley_Timer = urand(10000, 15000);
         }else ToxicVolley_Timer -= diff;
-
-        if (m_creature->GetHealthPercent() < 5.0f && !Death)
-        {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_POISON_CLOUD);
-            Death = true;
-        }
 
         if (!VemDead)
         {
@@ -106,7 +101,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
             {
                 if (m_pInstance && m_pInstance->GetData(TYPE_VEM) == DONE)
                 {
-                    DoCastSpellIfCan(m_creature, SPELL_ENRAGE);
+                    DoCast(m_creature, SPELL_ENRAGE, true);
                     VemDead = true;
                 }
                 Check_Timer = 2000;
@@ -166,7 +161,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         if (Charge_Timer < diff)
         {
             if (Unit* target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
-                DoCastSpellIfCan(target, SPELL_CHARGE);
+                DoCast(target, SPELL_CHARGE, true);
 
             Charge_Timer = urand(8000, 16000);
         }else Charge_Timer -= diff;
@@ -174,7 +169,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         //KnockBack_Timer
         if (KnockBack_Timer < diff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_KNOCKBACK);
+            DoCast(m_creature->getVictim(), SPELL_KNOCKBACK, true);
             if (m_creature->getThreatManager().getThreat(m_creature->getVictim()))
                 m_creature->getThreatManager().modifyThreatPercent(m_creature->getVictim(),-80);
             KnockBack_Timer = urand(15000, 25000);
@@ -183,7 +178,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         //Enrage_Timer
         if (!Enraged && Enrage_Timer < diff)
         {
-            DoCastSpellIfCan(m_creature,SPELL_ENRAGE);
+            DoCast(m_creature, SPELL_ENRAGE, true);
             Enraged = true;
         }else Charge_Timer -= diff;
 
@@ -244,7 +239,7 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         //Fear_Timer
         if (Fear_Timer < diff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_FEAR);
+            DoCast(m_creature->getVictim(), SPELL_FEAR, true);
             DoResetThreat();
             Fear_Timer = 20000;
         }else Fear_Timer -= diff;
@@ -285,7 +280,7 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
                 {
                     if (m_pInstance->GetData(TYPE_VEM) == DONE)
                     {
-                        DoCastSpellIfCan(m_creature, SPELL_ENRAGE);
+                        DoCast(m_creature, SPELL_ENRAGE, true);
                         VemDead = true;
                     }
                 }

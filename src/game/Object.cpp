@@ -1361,7 +1361,9 @@ namespace MaNGOS
 
                     // Allow the usage of %s and %t in emotes.
                     ReplaceStringInPlace(modified_text, "%s", i_object.GetName());
-                    ReplaceStringInPlace(modified_text, "%t", i_target->GetName());
+
+                    if(i_target)
+                        ReplaceStringInPlace(modified_text, "%t", i_target->GetName());
 
 
                     WorldObject::BuildMonsterChat(&data, i_object.GetObjectGuid(), i_msgtype, modified_text.c_str(), i_language, i_object.GetNameForLocaleIdx(loc_idx), i_target ? i_target->GetObjectGuid() : ObjectGuid(), i_target ? i_target->GetNameForLocaleIdx(loc_idx) : "");
