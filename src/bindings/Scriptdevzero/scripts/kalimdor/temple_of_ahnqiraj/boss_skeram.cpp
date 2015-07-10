@@ -26,17 +26,17 @@ EndScriptData */
 #include "Group.h"
 
 #define SAY_AGGRO1                  -1531000
-#define SAY_AGGRO2                  -1531001
-#define SAY_AGGRO3                  -1531002
+#define SAY_RANDOM4                  -1531001
+#define SAY_RANDOM5                  -1531002
 #define SAY_SLAY1                   -1531003
-#define SAY_SLAY2                   -1531004
-#define SAY_SLAY3                   -1531005
-#define SAY_SPLIT                   -1531006
+#define SAY_RANDOM1                  -1531004
+#define SAY_RANDOM2                   -1531005
+#define SAY_RANDOM3                   -1531006
 #define SAY_DEATH                   -1531007
 
 #define SPELL_ARCANE_EXPLOSION      25679
 #define SPELL_EARTH_SHOCK           26194
-#define SPELL_TRUE_FULFILLMENT4     26526
+#define SPELL_TRUE_FULFILLMENT4     785
 #define SPELL_BLINK                 28391
 
 class ov_mycoordinates
@@ -65,6 +65,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
     uint32 FullFillment_Timer;
     uint32 Blink_Timer;
     uint32 Invisible_Timer;
+    uint32 m_uiRandomYellTimer;
 
     Creature *Image1, *Image2;
 
@@ -81,6 +82,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
         FullFillment_Timer = 15000;
         Blink_Timer = urand(8000, 20000);
         Invisible_Timer = 500;
+        m_uiRandomYellTimer = urand(600000, 1800000);
 
         Images75 = false;
         Images50 = false;
@@ -96,12 +98,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
 
     void KilledUnit(Unit* /*victim*/)
     {
-        switch(urand(0, 2))
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-            case 2: DoScriptText(SAY_SLAY3, m_creature); break;
-        }
+        DoScriptText(SAY_SLAY1, m_creature);
     }
 
     void JustDied(Unit* /*Killer*/)
@@ -120,12 +117,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
         if (IsImage || Images75)
             return;
 
-        switch(urand(0, 2))
-        {
-            case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
-            case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
-            case 2: DoScriptText(SAY_AGGRO3, m_creature); break;
-        }
+        DoScriptText(SAY_AGGRO1, m_creature);
 
         if (m_pInstance)
             m_pInstance->SetData(TYPE_SKERAM, IN_PROGRESS);
@@ -139,6 +131,35 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
+        if(!m_creature->isInCombat())
+        {
+            if(m_uiRandomYellTimer <= diff)
+            {
+                m_uiRandomYellTimer = urand(600000, 1800000);
+
+                switch(urand(0,4))
+                {
+                case 0:
+                    DoScriptText(SAY_RANDOM1, m_creature);
+                    break;
+                case 1:
+                    DoScriptText(SAY_RANDOM2, m_creature);
+                    break;
+                case 2:
+                    DoScriptText(SAY_RANDOM3, m_creature);
+                    break;
+                case 3:
+                    DoScriptText(SAY_RANDOM4, m_creature);
+                    break;
+                case 4:
+                    DoScriptText(SAY_RANDOM5, m_creature);
+                    break;
+                }
+            }
+            else
+                m_uiRandomYellTimer -= diff;
+        }
+
         //Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
@@ -146,8 +167,24 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
         //ArcaneExplosion_Timer
         if (ArcaneExplosion_Timer < diff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(), SPELL_ARCANE_EXPLOSION);
+                uint8 uiTargetInRangeCount = 0;
+
+                GUIDVector vGuids;
+                m_creature->FillGuidsListFromThreatList(vGuids);
+
+                for (GUIDVector::const_iterator itr = vGuids.begin(); itr != vGuids.end(); ++itr)
+                {
+                    Unit* pTarget = m_creature->GetMap()->GetUnit(*itr);
+
+                    if (pTarget && pTarget->GetTypeId() == TYPEID_PLAYER && m_creature->CanReachWithMeleeAttack(pTarget))
+                        ++uiTargetInRangeCount;
+                }
+
+                if (uiTargetInRangeCount > 3)
+                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_ARCANE_EXPLOSION);            
+            
             ArcaneExplosion_Timer = urand(8000, 18000);
+
         }else ArcaneExplosion_Timer -= diff;
 
         //If we are within range melee the target
@@ -169,9 +206,28 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
             }else EarthShock_Timer -= diff;
         }
 
+        // MC timer
+        if(FullFillment_Timer)
+        {
+            if(FullFillment_Timer <= diff)
+            {
+                FullFillment_Timer = 15000;
+
+                Unit *pTarget = GetRandomTargetFromThreatList();
+
+                if(pTarget && pTarget->isAlive())
+                    DoCast(pTarget, SPELL_TRUE_FULFILLMENT4, true);
+            }
+            else
+                FullFillment_Timer -= diff;
+        }
+
         //Blink_Timer
         if (Blink_Timer < diff)
         {
+            m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            m_creature->SetVisibility(VISIBILITY_OFF);
+            DoStopAttack();
             //DoCastSpellIfCan(m_creature, SPELL_BLINK);
             switch(urand(0, 2))
             {
@@ -188,7 +244,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
                     DoResetThreat();
                     break;
             }
-            DoStopAttack();
+            Invisible = true;
 
             Blink_Timer = urand(20000, 40000);
         }else Blink_Timer -= diff;
@@ -216,7 +272,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
                 m_creature->SetVisibility(VISIBILITY_ON);
                 m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 
-                Invisible_Timer = 2500;
+                Invisible_Timer = 500;
                 Invisible = false;
             }else Invisible_Timer -= diff;
         }
@@ -226,8 +282,6 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
 
     void DoSplit(int atPercent /* 75 50 25 */)
     {
-        DoScriptText(SAY_SPLIT, m_creature);
-
         ov_mycoordinates *place1 = new ov_mycoordinates(-8340.782227f, 2083.814453f, 125.648788f, 0.0f);
         ov_mycoordinates *place2 = new ov_mycoordinates(-8341.546875f, 2118.504639f, 133.058151f, 0.0f);
         ov_mycoordinates *place3 = new ov_mycoordinates(-8318.822266f, 2058.231201f, 133.058151f, 0.0f);

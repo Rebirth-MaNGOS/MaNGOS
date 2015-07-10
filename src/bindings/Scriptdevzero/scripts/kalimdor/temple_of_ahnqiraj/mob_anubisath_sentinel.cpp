@@ -115,7 +115,7 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
                     if(pAnubAi)
                         pAnubAi->DoTransferAbility(m_uiMyAbility);
 
-                    pAnub->SetHealth(pAnub->GetMaxHealth()/2);
+                    pAnub->SetHealth(pAnub->GetHealth() + (pAnub->GetMaxHealth()/2));
                 }
             }
         }
@@ -143,7 +143,7 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
                             std::random_shuffle(m_spellList.begin(), m_spellList.end());
                             uint32 m_spell = m_spellList.front();
                             pAnubAi->DoTransferAbility(m_spell);
-                            m_spellList.erase(std::remove(m_spellList.begin(), m_spellList.end(), m_spell));
+                            m_spellList.erase(std::remove(m_spellList.begin(), m_spellList.end(), m_spell), m_spellList.end());
                         }
                     }
                 }
@@ -234,7 +234,7 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        if (!m_bEnraged && m_creature->GetHealthPercent() < 30.0f)
+        if (m_creature->isAlive() && !m_bEnraged && m_creature->GetHealthPercent() < 30.0f)
         {
             if (DoCastSpellIfCan(m_creature, SPELL_ENRAGE) == CAST_OK)
             {
