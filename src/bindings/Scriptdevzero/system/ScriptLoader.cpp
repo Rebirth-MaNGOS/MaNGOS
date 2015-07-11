@@ -255,6 +255,7 @@ extern void AddSC_boss_cthun();                             //temple_of_ahnqiraj
 extern void AddSC_boss_fankriss();
 extern void AddSC_boss_huhuran();
 extern void AddSC_bug_trio();
+extern void AddSC_boss_viscidus();
 extern void AddSC_boss_sartura();
 extern void AddSC_boss_skeram();
 extern void AddSC_boss_twinemperors();
@@ -544,6 +545,7 @@ void AddScripts()
     AddSC_boss_fankriss();
     AddSC_boss_huhuran();
     AddSC_bug_trio();
+	AddSC_boss_viscidus();
     AddSC_boss_sartura();
     AddSC_boss_skeram();
     AddSC_boss_twinemperors();
