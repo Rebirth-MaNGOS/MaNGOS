@@ -99,13 +99,6 @@ void instance_ruins_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
             m_auiEncounter[0] = uiData;
             if (uiData == DONE)
             {
-				if (Creature* pRajaxx = this->GetSingleCreatureFromStorage(NPC_RAJAXX))
-                    if (Creature* pAndorov = pRajaxx->SummonCreature(NPC_GENERAL_ANDOROV, -8873.42f, 1647.67f, 21.38f, 5.69f, TEMPSUMMON_CORPSE_DESPAWN, 0))
-                    {
-                        pAndorov->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR);
-                        pAndorov->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-                    }
-
                 DoOrSimulateScriptTextForThisInstance(YELL_OSSIRIAN_BREACHED, NPC_OSSIRIAN);
             }
             break;

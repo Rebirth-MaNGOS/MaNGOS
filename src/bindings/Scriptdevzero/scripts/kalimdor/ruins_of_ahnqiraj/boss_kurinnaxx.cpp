@@ -80,6 +80,13 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_KURINNAXX, DONE);
+
+        // Summon Andorov
+        if (Creature* pAndorov = m_creature->SummonCreature(NPC_GENERAL_ANDOROV, -8873.42f, 1647.67f, 21.38f, 5.69f, TEMPSUMMON_CORPSE_DESPAWN, 0))
+        {
+            pAndorov->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR);
+            pAndorov->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+        }
     }
 
 	void SpellHit(Unit* pCaster, SpellEntry const* pSpell) // emote if he enrages

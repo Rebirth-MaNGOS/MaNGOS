@@ -23,6 +23,7 @@ EndScriptData */
 
 #include "precompiled.h"
 #include "ruins_of_ahnqiraj.h"
+#include "TemporarySummon.h"
 
 #define GOSSIP_START  "Let's find out."
 
@@ -71,14 +72,6 @@ static Move Andorov[]=
     {-8939.8f, 1550.3f, 21.58f}
 };
 
-static Loc NPCs[]=
-{
-    {-8871.37f, 1650.34f, 21.38f, 5.49f, NPC_KALDOREI_ELITE},
-    {-8872.51f, 1648.88f, 21.38f, 5.62f, NPC_KALDOREI_ELITE},   
-    {-8874.36f, 1646.08f, 21.38f, 5.69f, NPC_KALDOREI_ELITE},
-    {-8875.29f, 1644.89f, 21.38f, 5.69f, NPC_KALDOREI_ELITE},
-    {-8873.42f, 1647.67f, 21.38f, 5.69f, NPC_GENERAL_ANDOROV},
-};
 
 static Loc WaveOne[]=
 {
@@ -161,8 +154,21 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
 {
     boss_rajaxxAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
+        if (!m_creature->isActiveObject())
+            m_creature->SetActiveObjectState(true);
+
+
         m_pInstance = (instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData();
-        Reset();
+
+        m_bHasEnraged = false;
+
+        m_uiDeadWaveMemberCount = 0;
+        m_uiEventCheckTimer = 5000;
+        m_uiDisarmTimer = 5000;
+        m_uiThunderCrashTimer = 25000;
+        m_uiWaveCount = 0;
+        m_uiWaveTimer = 180000;
+
     }    
 
     instance_ruins_of_ahnqiraj* m_pInstance;
@@ -170,24 +176,29 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
     bool m_bHasEnraged;
 
     uint32 m_uiDeadWaveMemberCount;
+    uint32 m_uiEventCheckTimer;
     uint32 m_uiDisarmTimer;
     uint32 m_uiThunderCrashTimer;
     uint32 m_uiWaveCount;
     uint32 m_uiWaveTimer;
 
-    GUIDList m_uiSummonList;
+    std::vector<ObjectGuid> m_uiSummonList;
 
     void Reset()
     {
+        RestartEvent();
+
         m_bHasEnraged = false;
 
         m_uiDeadWaveMemberCount = 0;
+        m_uiEventCheckTimer = 5000;
         m_uiDisarmTimer = 5000;
         m_uiThunderCrashTimer = 25000;
         m_uiWaveCount = 0;
-        m_uiWaveTimer = 1000;
+        m_uiWaveTimer = 180000;
 
         m_uiSummonList.clear();
+
     }
 
     void JustReachedHome()
@@ -238,15 +249,8 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
             DoScriptText(SAY_DEAGGRO, m_creature, pVictim);
     }
 
-    void JustSummoned(Creature* pSummoned)
-    {
-		m_uiSummonList.push_front(pSummoned->GetObjectGuid());
-    }
-
     void SummonedCreatureJustDied(Creature* pSummoned)
     {
-        m_uiSummonList.remove(pSummoned->GetObjectGuid());
-
         switch(pSummoned->GetEntry())
         {
             case NPC_CAPTAIN_QEEZ:
@@ -260,12 +264,6 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
             case NPC_SWARMGUARD_NEEDLER:
                 ++m_uiDeadWaveMemberCount;
                 break;
-        }
-
-        if (m_uiDeadWaveMemberCount == 6)
-        {
-            m_uiWaveTimer = 1000;
-            m_uiDeadWaveMemberCount = 0;
         }
     }
 
@@ -289,11 +287,12 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
             m_pInstance->SetData(TYPE_RAJAXX, NOT_STARTED);
 
         // Despawn current army
-        for(GUIDList::iterator itr = m_uiSummonList.begin(); itr != m_uiSummonList.end(); ++itr)
-            if (Creature* pSummon = m_creature->GetMap()->GetCreature(*itr))
-                pSummon->RemoveFromWorld();
-
-        Reset();
+        for (ObjectGuid currentGuid : m_uiSummonList)
+        {
+            TemporarySummon* pSummon = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(currentGuid));
+            if (pSummon)
+                pSummon->UnSummon();
+        } 
 
         // Summon Andorov
         if (Creature* pAndorov = m_creature->SummonCreature(NPC_GENERAL_ANDOROV, NPCs[4].x, NPCs[4].y, NPCs[4].z, NPCs[4].o, TEMPSUMMON_CORPSE_DESPAWN,0))
@@ -303,56 +302,60 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
         }
     }
 
-    void AttackWave(uint32 uiEntry)
+    void AttackWave()
     {
-        if (!uiEntry || !m_pInstance)
+        if (!m_uiWaveCount)
             return;
 
-        if (Creature* pCommander = m_pInstance->GetSingleCreatureFromStorage(uiEntry))
+        if (m_uiWaveCount < 8 && m_uiSummonList.size() >= 7 * 7)
         {
-            pCommander->CallForHelp(25.0f);
-            pCommander->SetInCombatWithZone();
-            
-            if (Creature* pAndorov = m_pInstance->GetSingleCreatureFromStorage(NPC_GENERAL_ANDOROV))
+            for (short i = 0; i < 7; i++)
             {
-                if (pAndorov->isInCombat())
-                    pAndorov->CombatStop(true);
-                pAndorov->AI()->AttackStart(pCommander);
-                pAndorov->CallForHelp(10.0f);
+                // The +1 in the offset is because Andorov is first in the list.
+                // 1 is removed from the wave count because its index starts at 1.
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i + 7 * (m_uiWaveCount - 1)]);
+
+                if (pCreature)
+                    pCreature->SetInCombatWithZone();
+            }
+        }
+        else if (m_uiWaveCount == 8)
+        {
+            Creature* pRajaxx = GetSummon(NPC_RAJAXX);
+            if (pRajaxx)
+                pRajaxx->SetInCombatWithZone();
+        }
+
+    }
+
+    Creature* GetSummon(uint32 uiEntry)
+    {
+        Creature* pCreature = nullptr;
+        std::find_if(m_uiSummonList.begin(), m_uiSummonList.end(), [&pCreature, uiEntry, this](const ObjectGuid& obj)
+        {
+            pCreature = m_creature->GetMap()->GetCreature(obj);
+            if (pCreature)
+            {
+                if (pCreature->GetEntry() == uiEntry)
+                    return true;
             }
 
-            // kaldorei attack
-            std::list<Creature*> m_lKaldorei;
-            GetCreatureListWithEntryInGrid(m_lKaldorei, pCommander, NPC_KALDOREI_ELITE, DEFAULT_VISIBILITY_INSTANCE);
-            if (!m_lKaldorei.empty())
-                for(std::list<Creature*>::iterator itr = m_lKaldorei.begin(); itr != m_lKaldorei.end(); ++itr)
-                    if ((*itr) && (*itr)->isAlive())
-                        (*itr)->AI()->AttackStart(pCommander);
-        }
+            return false;
+        });
+
+        return pCreature;
     }
 
-    bool IsWaveDead(uint32 uiEntry)
+    bool IsWaveDead()
     {
-        if (!uiEntry)
+        if (m_uiDeadWaveMemberCount >= m_uiWaveCount * 7)
             return true;
 
-        //simplify this!
-        if (Creature* pCommander = m_pInstance->GetSingleCreatureFromStorage(uiEntry))
-            if (pCommander->isAlive())
-                if (!pCommander->isInCombat())
-                {
-                    RestartEvent();
-                    return false;
-                }
-                else
-                    return false;
-            else
-                return true;
-        else
-            return false;
+        return false;
     }
 
-    uint32 WaveConversion(uint8 uiCount)
+    static uint32 WaveConversion(uint8 uiCount)
     {
         switch(uiCount)
         {
@@ -379,34 +382,32 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
 
     void SummonArmy()
     {
-        // Waves
-        for(uint8 i = 0; i < sizeof(WaveOne)/sizeof(Loc); ++i)
-            m_creature->SummonCreature(WaveOne[i].id, WaveOne[i].x, WaveOne[i].y, WaveOne[i].z, WaveOne[i].o, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000);
+        Loc* waves[7] = { WaveOne, WaveTwo, WaveThree, WaveFour, WaveFive, WaveSix, WaveSeven };
 
-        for(uint8 i = 0; i < sizeof(WaveTwo)/sizeof(Loc); ++i)
-            m_creature->SummonCreature(WaveTwo[i].id, WaveTwo[i].x, WaveTwo[i].y, WaveTwo[i].z, WaveTwo[i].o, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000);
-
-        for(uint8 i = 0; i < sizeof(WaveThree)/sizeof(Loc); ++i)
-            m_creature->SummonCreature(WaveThree[i].id, WaveThree[i].x, WaveThree[i].y, WaveThree[i].z, WaveThree[i].o, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000);
-
-        for(uint8 i = 0; i < (sizeof(WaveFour)); ++i)
-            m_creature->SummonCreature(WaveFour[i].id, WaveFour[i].x, WaveFour[i].y, WaveFour[i].z, WaveFour[i].o, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000);
-
-        for(uint8 i = 0; i < sizeof(WaveFive)/sizeof(Loc); ++i)
-            m_creature->SummonCreature(WaveFive[i].id, WaveFive[i].x, WaveFive[i].y,WaveFive[i].z, WaveFive[i].o, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000);
-
-        for(uint8 i = 0; i < sizeof(WaveSix)/sizeof(Loc); ++i)
-            m_creature->SummonCreature(WaveSix[i].id, WaveSix[i].x, WaveSix[i].y, WaveSix[i].z, WaveSix[i].o, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000);
-
-        for(uint8 i = 0; i < sizeof(WaveSeven)/sizeof(Loc); ++i)
-            m_creature->SummonCreature(WaveSeven[i].id, WaveSeven[i].x, WaveSeven[i].y, WaveSeven[i].z, WaveSeven[i].o, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000);
-
+        for (short j = 0; j < 7; j++)
+        {
+            // Waves
+            for(uint8 i = 0; i < 7; ++i)
+            {
+                Creature* pSummon = m_creature->SummonCreature(waves[j][i].id, waves[j][i].x, waves[j][i].y, waves[j][i].z, waves[j][i].o, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000, true);
+                if (pSummon)
+                    m_uiSummonList.push_back(pSummon->GetObjectGuid());
+            }
+        }
+        
         // Kaldorei Elites
         for(uint8 i = 0; i < 4 ; ++i)
         {
             if (Creature* pKaldorei = m_creature->SummonCreature(NPC_KALDOREI_ELITE, NPCs[i].x, NPCs[i].y, NPCs[i].z, NPCs[i].o, TEMPSUMMON_CORPSE_DESPAWN, 0))
+            {
                 if (Creature* pAndorov = m_pInstance->GetSingleCreatureFromStorage(NPC_GENERAL_ANDOROV))
+                {
+                    pKaldorei->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
                     pKaldorei->GetMotionMaster()->MoveFollow(pAndorov, 2, i+1.5);
+                }
+
+                m_uiSummonList.push_back(pKaldorei->GetObjectGuid());
+            }
         }
     }  
 
@@ -415,18 +416,42 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
         // Call attack of next wave
         if (m_pInstance && m_pInstance->GetData(TYPE_RAJAXX) == IN_PROGRESS)
         {
-            //if (m_uiWaveTimer <= uiDiff || IsWaveDead(WaveConversion(m_uiWaveCount)))
-            if (m_uiWaveTimer <= uiDiff)
+            bool newWaveSpawned = false;
+            if (m_uiWaveTimer <= uiDiff || IsWaveDead())
             {
                 ++m_uiWaveCount;
-                AttackWave(WaveConversion(m_uiWaveCount));
+                AttackWave();
                 if (m_uiWaveCount > 2)
                     DoScriptText(SAY_WAVE3 - m_uiWaveCount + 3, m_creature);
 
+                newWaveSpawned = true;
                 m_uiWaveTimer = 180000;
             }
             else
                 m_uiWaveTimer -= uiDiff;
+
+            if (!newWaveSpawned)
+            {
+                if (m_uiEventCheckTimer <= uiDiff)
+                {
+                    if (m_uiWaveCount <= 8)
+                    {
+                        bool inCombat = false;
+                        for (ObjectGuid guid : m_uiSummonList)
+                        {
+                            Creature* pSummon = m_creature->GetMap()->GetCreature(guid);
+                            if (pSummon && pSummon->isInCombat())
+                                inCombat = true;
+                        }
+
+                        if (!inCombat)
+                            RestartEvent();
+                    }
+                }
+                else
+                    m_uiEventCheckTimer -= uiDiff;
+            }
+
         }
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -545,6 +570,17 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
             m_creature->SetSummonPoint(pos);
             m_bWaypointEnd = true;
 
+            Creature* pRajaxx = m_pInstance->GetSingleCreatureFromStorage(NPC_RAJAXX);
+            if (pRajaxx)
+            {
+                boss_rajaxxAI* pAI = dynamic_cast<boss_rajaxxAI*>(pRajaxx->AI());
+                if (pAI)
+                {
+                    pAI->m_uiWaveCount = 1;
+                    pAI->AttackWave();
+                }
+            }
+
             if (m_pInstance)
                 m_pInstance->SetData(TYPE_RAJAXX, IN_PROGRESS);
         }
@@ -558,7 +594,12 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
         if (!m_bArmySummoned)
         {
             m_bArmySummoned = true;
-            ((boss_rajaxxAI*)m_creature->AI())->SummonArmy();
+            if (m_pInstance)
+            {
+                Creature* pRajaxx = m_pInstance->GetSingleCreatureFromStorage(NPC_RAJAXX);
+                if (pRajaxx)
+                    ((boss_rajaxxAI*)pRajaxx->AI())->SummonArmy();
+            }
         }
 
         if (!m_bWaypointEnd)
@@ -573,6 +614,21 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
             }
             else
                 m_uiWaitForOthersTimer -= uiDiff;
+
+            if (m_pInstance)
+            {
+                Creature* pRajaxx = m_pInstance->GetSingleCreatureFromStorage(NPC_RAJAXX);
+                if (pRajaxx)
+                {
+                    boss_rajaxxAI* pAI = dynamic_cast<boss_rajaxxAI*>(pRajaxx->AI());
+                    if (pAI)
+                    {
+                        auto pos = std::find(pAI->m_uiSummonList.begin(), pAI->m_uiSummonList.end(), m_creature->GetObjectGuid());
+                        if (pos == pAI->m_uiSummonList.end())
+                            pAI->m_uiSummonList.push_back(m_creature->GetObjectGuid());
+                    }
+                }
+            }
 	}
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
