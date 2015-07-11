@@ -633,6 +633,21 @@ void Creature::Update(uint32 update_diff, uint32 diff)
             } else
                 m_evadeResetTimer -= diff;
         }
+
+        // Count down the evade timer for when a creature can't reach its target.
+        if (m_unreachableTimeout)
+        {
+            if (m_unreachableTimeout <= diff)
+            {
+                if (!m_inEvadeMode)
+                    SetEvadeMode(true);
+
+                m_unreachableTimeout = 0;
+            }
+            else
+                m_unreachableTimeout -= diff;
+        }
+
         if(!GetMotionMaster() || GetMotionMaster()->GetCurrentMovementGeneratorType() != HOME_MOTION_TYPE)
         {
             if (AI())

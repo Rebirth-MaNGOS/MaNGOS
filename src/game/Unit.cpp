@@ -7940,9 +7940,10 @@ bool Unit::SelectHostileTarget()
                 // If a player is falling we wait until it has landed before we make the creature evade.
                 if(!GetMotionMaster()->operator->()->IsReachable() && (!pTargetPlayer || !pTargetPlayer->HasMovementFlag(MOVEFLAG_FALLING)))
                 {
-                    if (!inEvadeMode)
+                    if (creature->GetUnreachableTimeout() == 0 && !inEvadeMode)
                     {
-                        creature->SetEvadeMode(true);
+                        // Set a timeout of four seconds before a creature evades.
+                        creature->SetUnreachableTimeout(4000);
                     }
 
                     return false;
@@ -7950,6 +7951,8 @@ bool Unit::SelectHostileTarget()
                 {
                     creature->SetEvadeMode(false);
                 }
+                else
+                    creature->SetUnreachableTimeout(0);
             }
         }
         return true;

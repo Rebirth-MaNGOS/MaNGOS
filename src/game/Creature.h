@@ -697,6 +697,9 @@ public:
 	void SetCreatureMeleeHitResetTimer(uint32 ms_time) { m_noCreatureMeleeHitResetTimer = ms_time; }
 	// Set the leash timer for how long a creature can go without being hit before resetting.
 	void SetPlayerHitResetTimer(uint32 ms_time) { m_noPlayerHitResetTimer = ms_time; }
+    
+    void SetUnreachableTimeout(uint32 timeout) { m_unreachableTimeout = timeout; }
+    uint32 GetUnreachableTimeout() { return m_unreachableTimeout; }
 
 	void SetSummonPoint(CreatureCreatePos const& pos) { m_summonPos = pos.m_pos; }
 	void GetSummonPoint(float &fX, float &fY, float &fZ, float &fOrient) const { fX = m_summonPos.x; fY = m_summonPos.y; fZ = m_summonPos.z; fOrient = m_summonPos.o; }
@@ -784,6 +787,7 @@ protected:
 	float m_aggroRangeOverride;
 	uint32 m_noPlayerHitResetTimer;			    // Should be set to 12 seconds and will be reset every time the player hits the creature.
 	uint32 m_noCreatureMeleeHitResetTimer;		    // Timer between 5 to 9 seconds that resets when the creature hits the player.
+    uint32 m_unreachableTimeout;                // Timeout for resetting the creature if it can't reach it's target.
 
 	Position m_summonPos;
 
