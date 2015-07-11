@@ -26,7 +26,7 @@ EndScriptData */
 
 #define SPELL_CLEAVE        26350
 #define SPELL_TOXIC_VOLLEY  25812
-#define SPELL_POISON_CLOUD  23861                           //Only Spell with right dmg.
+#define SPELL_POISON_CLOUD  25786                           //Only Spell with right dmg.
 #define SPELL_ENRAGE        28798                           //Changed cause 25790 is casted on gamers too. Same prob with old explosion of twin emperors.
 
 #define SPELL_CHARGE        26561
