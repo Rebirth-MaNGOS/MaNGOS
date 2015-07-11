@@ -35,6 +35,18 @@ EndScriptData */
 // Enrage for his spawns
 #define SPELL_ENRAGE       28798
 
+struct BugTunnels
+{
+    float m_fX, m_fY, m_fZ, m_fO;
+};
+
+static const BugTunnels aFankrissBugTunnels[7] =
+{
+    {-8000.50f, 1222.50f, -81.232f, 3.22f},  //Bug Tunnel 1
+    {-8043.267f, 1256.22f, -83.59f, 4.64f},  //Bug Tunnel 2
+    {-8022.94f, 1150.68f, -89.59f, 2.19f},   //Bug Tunnel 3              
+};
+
 struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
 {
     boss_fankrissAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
@@ -46,7 +58,6 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
     int RandX;
     int RandY;
 
-    Creature* Hatchling;
     Creature* Spawn;
 
     void Reset()
@@ -126,53 +137,15 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
                     if (m_creature->getThreatManager().getThreat(target))
                         m_creature->getThreatManager().modifyThreatPercent(target, -100);
 
-                    switch(urand(0, 2))
+                    uint8 bugTunnel = urand(0,2);
+
+                    DoTeleportPlayer(target, aFankrissBugTunnels[bugTunnel].m_fX, aFankrissBugTunnels[bugTunnel].m_fY, aFankrissBugTunnels[bugTunnel].m_fZ, aFankrissBugTunnels[bugTunnel].m_fO);
+                    
+                    for(int i = 0; i < 4; ++i)
                     {
-                        case 0:
-                            DoTeleportPlayer(target, -8106.0142f, 1289.2900f, -74.419533f, 5.112f);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-3, target->GetPositionY()-3, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-3, target->GetPositionY()+3, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-5, target->GetPositionY()-5, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-5, target->GetPositionY()+5, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            break;
-                        case 1:
-                            DoTeleportPlayer(target, -7990.135354f, 1155.1907f, -78.849319f, 2.608f);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-3, target->GetPositionY()-3, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-3, target->GetPositionY()+3, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-5, target->GetPositionY()-5, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-5, target->GetPositionY()+5, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            break;
-                        case 2:
-                            DoTeleportPlayer(target, -8159.7753f, 1127.9064f, -76.868660f, 0.675f);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-3, target->GetPositionY()-3, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-3, target->GetPositionY()+3, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-5, target->GetPositionY()-5, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            Hatchling = m_creature->SummonCreature(15962, target->GetPositionX()-5, target->GetPositionY()+5, target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                            if (Hatchling)
-                                Hatchling->AI()->AttackStart(target);
-                            break;
+                        Creature* Hatchling = m_creature->SummonCreature(15962, aFankrissBugTunnels[bugTunnel].m_fX, aFankrissBugTunnels[bugTunnel].m_fY, aFankrissBugTunnels[bugTunnel].m_fZ, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+                        if (Hatchling)
+                            Hatchling->AI()->AttackStart(target);
                     }
                 }
                 SpawnHatchlings_Timer = urand(45000, 60000);
