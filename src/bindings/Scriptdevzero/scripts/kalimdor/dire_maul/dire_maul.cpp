@@ -30,6 +30,7 @@ npc_knot_thimblejack
 npc_lorekeeper_lydros
 npc_mizzle_the_crafty
 npc_shendralar_ancient
+mob_phase_lasher
 EndContentData */
 
 #include "precompiled.h"
@@ -470,6 +471,10 @@ bool GossipSelect_npc_shendralar_ancient(Player* pPlayer, Creature* pCreature, u
     }
     return true;
 }
+
+/*####
+# mob_phase_lasher
+####*/
 
 enum ePhaseLasher
 {
