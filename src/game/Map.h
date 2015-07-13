@@ -234,7 +234,7 @@ public:
         return !m_mapRefManager.isEmpty();
     }
     uint32 GetPlayersCountExceptGMs() const;
-    bool ActiveObjectsNearGrid(uint32 x,uint32 y) const;
+    bool ActiveObjectsNearGrid(uint32 x,uint32 y);
 
     void SendToPlayers(WorldPacket const* data) const;
 
@@ -361,7 +361,7 @@ protected:
     MapRefManager m_mapRefManager;
     MapRefManager::iterator m_mapRefIter;
 
-    typedef std::list<WorldObject*> ActiveNonPlayers;
+    typedef std::list<ObjectGuid> ActiveNonPlayers;
     ActiveNonPlayers m_activeNonPlayers;
     ActiveNonPlayers m_continentMobs;
     
