@@ -471,6 +471,218 @@ bool GossipSelect_npc_shendralar_ancient(Player* pPlayer, Creature* pCreature, u
     return true;
 }
 
+enum ePhaseLasher
+{
+	// Should start in shadow then after 8 sec chose random phase for 8 sec then go back to shadow. Rinse and repeat.
+	// Phases
+	PHASE_SHADOW						= 1,
+	PHASE_FIRE							= 2,
+	PHASE_FROST							= 3,
+	PHASE_NATURE						= 4,
+	PHASE_ARCANE						= 5,
+	// Model
+	MODELID_SHADOW						= 13109,
+	MODELID_FIRE						= 13110,
+	MODELID_FROST						= 12962,
+	MODELID_NATURE						= 8172,
+	// Spells
+	SPELL_SHADOW_BOLT_VOLLEY			= 17228,
+	SPELL_FIREBALL_VOLLEY				= 15285,
+	SPELL_ICE_NOVA						= 22519,
+	SPELL_THORN_VOLLEY					= 21749,
+	SPELL_SLOW							= 22356,
+	
+};
+
+struct MANGOS_DLL_DECL mob_phase_lasherAI : public ScriptedAI
+{
+	mob_phase_lasherAI(Creature* pCreature) : ScriptedAI(pCreature) { Reset(); }
+
+	uint8 choosePhase;
+
+	bool m_uiShadow;
+	bool m_uiFire;
+	bool m_uiFrost;
+	bool m_uiArcane;
+	bool m_uiNature;
+
+	uint32 m_uiShadowBoltVolleyTimer;
+	uint32 m_uiFireballVolleyTimer;
+	uint32 m_uiIceNovaTimer;
+	uint32 m_uiThornVolleyTimer;
+	uint32 m_uiSlowTimer;
+
+	uint32 m_uiPhaseTimer;
+	uint32 m_uiPhase;
+
+	void Reset()
+	{
+		choosePhase = 0;
+		m_uiShadowBoltVolleyTimer = urand(2000,6000);
+		m_uiFireballVolleyTimer = urand(2000,6000);
+		m_uiIceNovaTimer = urand(2000,6000);
+		m_uiThornVolleyTimer = urand(2000,6000);
+		m_uiSlowTimer = urand(2000,6000);
+
+		m_uiPhaseTimer = 16000;
+		ShadowPhase();
+	}
+
+	void NoResistance()
+	{
+		m_creature->SetResistance(SPELL_SCHOOL_SHADOW, 0);
+		m_creature->SetResistance(SPELL_SCHOOL_FIRE, 0);
+		m_creature->SetResistance(SPELL_SCHOOL_FROST, 0);
+		m_creature->SetResistance(SPELL_SCHOOL_NATURE, 0);
+		m_creature->SetResistance(SPELL_SCHOOL_ARCANE, 0);
+	}
+
+	void ShadowPhase()
+	{
+		m_uiPhase = PHASE_SHADOW;
+		m_creature->SetDisplayId(MODELID_SHADOW);
+		NoResistance();		// reset all resistances then add the new
+		m_creature->SetResistance(SPELL_SCHOOL_SHADOW, 255);
+	}
+
+	void ChangePhase(int Phase = 0)
+	{
+		m_uiPhase = NULL;
+		if (Phase == 0)					// set Shadow phase			
+			ShadowPhase();
+		else
+		{
+			int Rand = irand(0,3);				// set a random phase
+			switch(Rand)
+			{
+				case 0:					// set Fire phase
+					m_uiPhase = PHASE_FIRE;
+					m_creature->SetDisplayId(MODELID_FIRE);
+					NoResistance();
+					m_creature->SetResistance(SPELL_SCHOOL_FIRE, 255);
+					
+					break;
+				case 1:					// set Frost phase
+					m_uiPhase = PHASE_FROST;
+					m_creature->SetDisplayId(MODELID_FROST);
+					NoResistance();
+					m_creature->SetResistance(SPELL_SCHOOL_FROST, 255);;
+					break;
+				case 2:					// set Nature phase
+					m_uiPhase = PHASE_NATURE;
+					m_creature->SetDisplayId(MODELID_NATURE);
+					NoResistance();
+					m_creature->SetResistance(SPELL_SCHOOL_NATURE, 255);
+					break;
+				case 3:					// set Arcane phase
+					m_uiPhase = PHASE_ARCANE;
+					m_creature->SetDisplayId(MODELID_NATURE);
+					NoResistance();
+					m_creature->SetResistance(SPELL_SCHOOL_ARCANE, 255);
+					break;
+			}
+		}
+		m_creature->UpdateVisibilityAndView();			// just in case since we change model
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+	{
+		// Return since we have no target
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+			return;
+
+		if (m_uiPhaseTimer < uiDiff)
+		{
+			if (m_uiPhase != PHASE_SHADOW)
+				ChangePhase(0);
+			else
+				ChangePhase(1);			
+			m_uiPhaseTimer = 16000;
+		}
+		else
+			m_uiPhaseTimer -= uiDiff;
+
+		switch(m_uiPhase)
+        {
+			case PHASE_SHADOW:
+			{
+				// Shadow_bolt_volley_Timer
+				if (m_uiShadowBoltVolleyTimer < uiDiff)
+				{
+					if (Unit* pTarget = m_creature->getVictim())
+						m_creature->CastSpell(pTarget, SPELL_SHADOW_BOLT_VOLLEY, false);
+					m_uiShadowBoltVolleyTimer = urand(4000, 8000);
+				}
+				else
+					m_uiShadowBoltVolleyTimer -= uiDiff;
+				break;
+			}
+
+			case PHASE_FIRE:
+			{
+				// Fireball_Volley_Timer
+				if (m_uiFireballVolleyTimer < uiDiff)
+				{
+					if (Unit* pTarget = m_creature->getVictim())
+						m_creature->CastSpell(pTarget, SPELL_FIREBALL_VOLLEY, false);
+					m_uiFireballVolleyTimer = urand(4000, 8000);
+				}
+				else
+					m_uiFireballVolleyTimer -= uiDiff;	
+				break;
+			}
+
+			case PHASE_FROST:
+			{
+				//Ice_Nova_timer
+				if (m_uiIceNovaTimer < uiDiff)
+				{
+					if (Unit* pTarget = m_creature->getVictim())
+						m_creature->CastSpell(pTarget, SPELL_ICE_NOVA, false);
+					m_uiIceNovaTimer = urand(5000, 11000);
+				}
+				else
+					m_uiIceNovaTimer -= uiDiff;	
+				break;
+			}
+
+			case PHASE_NATURE:
+			{
+				// Thorn Volley timer
+				if (m_uiThornVolleyTimer < uiDiff)
+				{
+					if (Unit* pTarget = m_creature->getVictim())
+						m_creature->CastSpell(pTarget, SPELL_THORN_VOLLEY, false);
+					m_uiThornVolleyTimer = urand(4000, 8000);
+				}
+				else
+					m_uiThornVolleyTimer -= uiDiff;
+				break;
+			}
+
+			case PHASE_ARCANE:
+			{
+				// Slow timer
+				if (m_uiSlowTimer < uiDiff)
+				{
+					if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
+						m_creature->CastSpell(pTarget, SPELL_SLOW, false);
+					m_uiSlowTimer = urand(4000, 6000);
+				}
+				else
+					m_uiSlowTimer -= uiDiff;	
+				break;
+			}
+		}
+		DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_mob_phase_lasher(Creature* pCreature)
+{
+	return new mob_phase_lasherAI(pCreature);
+}
+
 void AddSC_dire_maul()
 {
     Script* pNewscript;
@@ -525,5 +737,10 @@ void AddSC_dire_maul()
     pNewscript->Name = "npc_shendralar_ancient";
     pNewscript->pGossipHello = &GossipHello_npc_shendralar_ancient;
     pNewscript->pGossipSelect = &GossipSelect_npc_shendralar_ancient;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_phase_lasher";
+    pNewscript->GetAI = &GetAI_mob_phase_lasher;
     pNewscript->RegisterSelf();
 }
