@@ -498,14 +498,6 @@ struct MANGOS_DLL_DECL mob_phase_lasherAI : public ScriptedAI
 {
 	mob_phase_lasherAI(Creature* pCreature) : ScriptedAI(pCreature) { Reset(); }
 
-	uint8 choosePhase;
-
-	bool m_uiShadow;
-	bool m_uiFire;
-	bool m_uiFrost;
-	bool m_uiArcane;
-	bool m_uiNature;
-
 	uint32 m_uiShadowBoltVolleyTimer;
 	uint32 m_uiFireballVolleyTimer;
 	uint32 m_uiIceNovaTimer;
@@ -517,7 +509,6 @@ struct MANGOS_DLL_DECL mob_phase_lasherAI : public ScriptedAI
 
 	void Reset()
 	{
-		choosePhase = 0;
 		m_uiShadowBoltVolleyTimer = urand(2000,6000);
 		m_uiFireballVolleyTimer = urand(2000,6000);
 		m_uiIceNovaTimer = urand(2000,6000);
@@ -566,7 +557,7 @@ struct MANGOS_DLL_DECL mob_phase_lasherAI : public ScriptedAI
 					m_uiPhase = PHASE_FROST;
 					m_creature->SetDisplayId(MODELID_FROST);
 					NoResistance();
-					m_creature->SetResistance(SPELL_SCHOOL_FROST, 255);;
+					m_creature->SetResistance(SPELL_SCHOOL_FROST, 255);
 					break;
 				case 2:					// set Nature phase
 					m_uiPhase = PHASE_NATURE;
