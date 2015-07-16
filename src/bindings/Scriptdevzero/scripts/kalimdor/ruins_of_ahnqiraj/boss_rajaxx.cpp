@@ -160,15 +160,15 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
 
         m_pInstance = (instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData();
 
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_RAJAXX, NOT_STARTED);
+
         m_bHasEnraged = false;
 
-        m_uiDeadWaveMemberCount = 0;
-        m_uiEventCheckTimer = 5000;
         m_uiDisarmTimer = 5000;
         m_uiThunderCrashTimer = 25000;
-        m_uiWaveCount = 0;
-        m_uiWaveTimer = 180000;
 
+        RestartEvent();
     }    
 
     instance_ruins_of_ahnqiraj* m_pInstance;
@@ -190,21 +190,14 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
 
         m_bHasEnraged = false;
 
-        m_uiDeadWaveMemberCount = 0;
-        m_uiEventCheckTimer = 5000;
         m_uiDisarmTimer = 5000;
         m_uiThunderCrashTimer = 25000;
-        m_uiWaveCount = 0;
-        m_uiWaveTimer = 180000;
-
-        m_uiSummonList.clear();
-
     }
 
     void JustReachedHome()
     {
         if (m_pInstance)
-            m_pInstance->SetData(TYPE_RAJAXX, NOT_STARTED);
+            m_pInstance->SetData(TYPE_RAJAXX, FAIL);
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -286,6 +279,11 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
         if (m_pInstance)
             m_pInstance->SetData(TYPE_RAJAXX, NOT_STARTED);
 
+        m_uiWaveCount = 0;
+        m_uiEventCheckTimer = 120000;
+        m_uiDeadWaveMemberCount = 0;
+        m_uiEventCheckTimer = 2000;
+
         // Despawn current army
         for (ObjectGuid currentGuid : m_uiSummonList)
         {
@@ -294,15 +292,12 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 pSummon->UnSummon();
         } 
 
-        // Summon Andorov
-        if (Creature* pAndorov = m_creature->SummonCreature(NPC_GENERAL_ANDOROV, NPCs[4].x, NPCs[4].y, NPCs[4].z, NPCs[4].o, TEMPSUMMON_CORPSE_DESPAWN,0))
-        {
-            pAndorov->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-            pAndorov->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR);
-        }
+        m_uiSummonList.clear();
+
+        SummonArmy();
     }
 
-    void AttackWave()
+    void AttackWave(Unit* pTarget = nullptr)
     {
         if (!m_uiWaveCount)
             return;
@@ -311,20 +306,30 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
         {
             for (short i = 0; i < 7; i++)
             {
-                // The +1 in the offset is because Andorov is first in the list.
-                // 1 is removed from the wave count because its index starts at 1.
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i + 7 * (m_uiWaveCount - 1)]);
 
                 if (pCreature)
-                    pCreature->SetInCombatWithZone();
+                {
+                    if (pTarget)
+                    {
+                        pCreature->SetInCombatWithZone();
+                        pCreature->Attack(pTarget, false);
+                    }
+                    else
+                    {
+                        pCreature->SetInCombatWithZone();
+
+                        pCreature->GetMotionMaster()->MovePoint(0, -8836.f, 1637.f, 22.f, true);
+                    }
+                }
             }
         }
         else if (m_uiWaveCount == 8)
         {
-            Creature* pRajaxx = GetSummon(NPC_RAJAXX);
-            if (pRajaxx)
-                pRajaxx->SetInCombatWithZone();
+            m_creature->setFaction(73);
+            m_creature->SetInCombatWithZone();
+            m_creature->GetMotionMaster()->MovePoint(0, -8836.f, 1637.f, 22.f, true);
         }
 
     }
@@ -394,29 +399,14 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                     m_uiSummonList.push_back(pSummon->GetObjectGuid());
             }
         }
-        
-        // Kaldorei Elites
-        for(uint8 i = 0; i < 4 ; ++i)
-        {
-            if (Creature* pKaldorei = m_creature->SummonCreature(NPC_KALDOREI_ELITE, NPCs[i].x, NPCs[i].y, NPCs[i].z, NPCs[i].o, TEMPSUMMON_CORPSE_DESPAWN, 0))
-            {
-                if (Creature* pAndorov = m_pInstance->GetSingleCreatureFromStorage(NPC_GENERAL_ANDOROV))
-                {
-                    pKaldorei->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-                    pKaldorei->GetMotionMaster()->MoveFollow(pAndorov, 2, i+1.5);
-                }
-
-                m_uiSummonList.push_back(pKaldorei->GetObjectGuid());
-            }
-        }
     }  
+
 
     void UpdateAI(const uint32 uiDiff)
     {
         // Call attack of next wave
         if (m_pInstance && m_pInstance->GetData(TYPE_RAJAXX) == IN_PROGRESS)
         {
-            bool newWaveSpawned = false;
             if (m_uiWaveTimer <= uiDiff || IsWaveDead())
             {
                 ++m_uiWaveCount;
@@ -424,35 +414,54 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 if (m_uiWaveCount > 2)
                     DoScriptText(SAY_WAVE3 - m_uiWaveCount + 3, m_creature);
 
-                newWaveSpawned = true;
-                m_uiWaveTimer = 180000;
+                m_uiEventCheckTimer = 20000;
+                m_uiWaveTimer = 120000;
             }
             else
                 m_uiWaveTimer -= uiDiff;
 
-            if (!newWaveSpawned)
-            {
-                if (m_uiEventCheckTimer <= uiDiff)
-                {
-                    if (m_uiWaveCount <= 8)
-                    {
-                        bool inCombat = false;
-                        for (ObjectGuid guid : m_uiSummonList)
-                        {
-                            Creature* pSummon = m_creature->GetMap()->GetCreature(guid);
-                            if (pSummon && pSummon->isInCombat())
-                                inCombat = true;
-                        }
-
-                        if (!inCombat)
-                            RestartEvent();
-                    }
-                }
-                else
-                    m_uiEventCheckTimer -= uiDiff;
-            }
 
         }
+
+        if (m_uiEventCheckTimer <= uiDiff)
+        {
+            if (m_uiWaveCount < 8)
+            {
+                bool inCombat = false;
+                Unit* pTarget = nullptr;
+                for (ObjectGuid guid : m_uiSummonList)
+                {
+                    Creature* pSummon = m_creature->GetMap()->GetCreature(guid);
+                    if (pSummon && pSummon->isInCombat())
+                    {
+                        inCombat = true;
+                        Unit* pVictim = pSummon->getVictim();
+                        if (pVictim)
+                            pTarget = pVictim;
+                    }
+                }
+
+                if (!inCombat && m_pInstance && m_pInstance->GetData(TYPE_RAJAXX) == IN_PROGRESS)
+                {
+                    m_pInstance->SetData(TYPE_RAJAXX, FAIL);
+
+                    RestartEvent();
+                }
+                else if (inCombat && m_pInstance && m_pInstance->GetData(TYPE_RAJAXX) != IN_PROGRESS)
+                {
+                    m_pInstance->SetData(TYPE_RAJAXX, IN_PROGRESS);
+
+                    m_uiWaveCount = 1;
+                    m_uiWaveTimer = 120000;
+
+                    AttackWave(pTarget);
+                }
+
+                m_uiEventCheckTimer = 2000;
+            }
+        }
+        else
+            m_uiEventCheckTimer -= uiDiff;
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
@@ -496,13 +505,16 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
 {
     npc_general_andorovAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
+        m_creature->setFaction(1254);
         m_pInstance = (instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData();
+
+        SummonKaldorei();
+
         Reset();
     }
 
     instance_ruins_of_ahnqiraj* m_pInstance;
 
-    bool m_bArmySummoned;
     bool m_bCanMoveNext;
     bool m_bWaypointEnd;
 
@@ -514,7 +526,6 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
 
     void Reset() 
     {
-        m_bArmySummoned = false;
         m_bCanMoveNext = false;
         m_bWaypointEnd = false;
 
@@ -524,6 +535,37 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
 
         m_uiWaypoint = 0;
         m_uiWaitForOthersTimer = 500;
+    }
+
+    void SummonKaldorei()
+    {
+        // Kaldorei Elites
+        for(uint8 i = 0; i < 4 ; ++i)
+        {
+            if (Creature* pKaldorei = m_creature->SummonCreature(NPC_KALDOREI_ELITE, NPCs[i].x, NPCs[i].y, NPCs[i].z, NPCs[i].o, TEMPSUMMON_CORPSE_DESPAWN, 0))
+            {
+                if (Creature* pAndorov = m_pInstance->GetSingleCreatureFromStorage(NPC_GENERAL_ANDOROV))
+                {
+                    pKaldorei->setFaction(1254);
+                    pKaldorei->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                    pKaldorei->GetMotionMaster()->MoveFollow(pAndorov, 2, i+1.5);
+                }
+            }
+        }
+    }
+
+    void RelocateKaldorei(float x, float y, float z, float orientation)
+    {
+/*
+        for (ObjectGuid guid : m_uiSummonList)
+        {
+            if (guid.GetEntry() != NPC_KALDOREI_ELITE)
+                continue;
+
+            Creature* pKaldorei = pAndorov->GetMap()->GetCreature(guid);
+            if (pKaldorei)
+                pKaldorei->RelocateCreature(x, y, z, orientation);
+        }*/
     }
 
     void Aggro(Unit* pWho)
@@ -570,6 +612,9 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
             m_creature->SetSummonPoint(pos);
             m_bWaypointEnd = true;
 
+            m_creature->RelocateCreature(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), m_creature->GetOrientation());
+            RelocateKaldorei(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), m_creature->GetOrientation());
+
             Creature* pRajaxx = m_pInstance->GetSingleCreatureFromStorage(NPC_RAJAXX);
             if (pRajaxx)
             {
@@ -591,17 +636,6 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_bArmySummoned)
-        {
-            m_bArmySummoned = true;
-            if (m_pInstance)
-            {
-                Creature* pRajaxx = m_pInstance->GetSingleCreatureFromStorage(NPC_RAJAXX);
-                if (pRajaxx)
-                    ((boss_rajaxxAI*)pRajaxx->AI())->SummonArmy();
-            }
-        }
-
         if (!m_bWaypointEnd)
 	{
             if (m_bCanMoveNext && m_uiWaitForOthersTimer <= uiDiff)
@@ -615,20 +649,6 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
             else
                 m_uiWaitForOthersTimer -= uiDiff;
 
-            if (m_pInstance)
-            {
-                Creature* pRajaxx = m_pInstance->GetSingleCreatureFromStorage(NPC_RAJAXX);
-                if (pRajaxx)
-                {
-                    boss_rajaxxAI* pAI = dynamic_cast<boss_rajaxxAI*>(pRajaxx->AI());
-                    if (pAI)
-                    {
-                        auto pos = std::find(pAI->m_uiSummonList.begin(), pAI->m_uiSummonList.end(), m_creature->GetObjectGuid());
-                        if (pos == pAI->m_uiSummonList.end())
-                            pAI->m_uiSummonList.push_back(m_creature->GetObjectGuid());
-                    }
-                }
-            }
 	}
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
