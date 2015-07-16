@@ -37,6 +37,7 @@
 #include "VMapFactory.h"
 #include "MoveMap.h"
 #include "BattleGroundMgr.h"
+#include "Database/DatabaseEnv.h"
 
 #include <thread>
 
@@ -1385,18 +1386,26 @@ DungeonMap::DungeonMap(uint32 id, time_t expiry, uint32 InstanceId)
 
     // Load all grids in the instance. Using parallel_for to speed it up.
     sWorld.GetThreadPool()->schedule(
-    [this] ()
+    [this, id] ()
     {
 
-        for (int y = 0; y < TOTAL_NUMBER_OF_CELLS_PER_MAP; ++y)
+        QueryResult* result = WorldDatabase.PQuery("SELECT position_x, position_y FROM creature WHERE map = %u", id);
+        if (!result)
+            return;
+
+        do
         {
-            for (int x= 0; x < TOTAL_NUMBER_OF_CELLS_PER_MAP; ++x)
-            {
-                CellPair pair(x, y);
-                Cell cell(pair);
-                LoadGrid(cell);
-            }
-        }
+            Field* fields = result->Fetch();
+
+            float x = fields[0].GetFloat();
+            float y = fields[1].GetFloat();
+
+            CellPair pair(x, y);
+            Cell cell(pair);
+            LoadGrid(cell);
+        } while (result->NextRow());
+
+        delete result;
     });
 }
 
