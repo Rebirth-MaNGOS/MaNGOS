@@ -1385,28 +1385,23 @@ DungeonMap::DungeonMap(uint32 id, time_t expiry, uint32 InstanceId)
     m_unloadTimer = std::max(sWorld.getConfig(CONFIG_UINT32_INSTANCE_UNLOAD_DELAY), (uint32)MIN_UNLOAD_DELAY);
 
     // Load all grids in the instance. Using parallel_for to speed it up.
-    sWorld.GetThreadPool()->schedule(
-    [this, id] ()
+    QueryResult* result = WorldDatabase.PQuery("SELECT position_x, position_y FROM creature WHERE map = %u", id);
+    if (!result)
+        return;
+
+    do
     {
+        Field* fields = result->Fetch();
 
-        QueryResult* result = WorldDatabase.PQuery("SELECT position_x, position_y FROM creature WHERE map = %u", id);
-        if (!result)
-            return;
+        float x = fields[0].GetFloat();
+        float y = fields[1].GetFloat();
 
-        do
-        {
-            Field* fields = result->Fetch();
+        CellPair pair(x, y);
+        Cell cell(pair);
+        LoadGrid(cell);
+    } while (result->NextRow());
 
-            float x = fields[0].GetFloat();
-            float y = fields[1].GetFloat();
-
-            CellPair pair(x, y);
-            Cell cell(pair);
-            LoadGrid(cell);
-        } while (result->NextRow());
-
-        delete result;
-    });
+    delete result;
 }
 
 DungeonMap::~DungeonMap()
