@@ -463,6 +463,24 @@ namespace MaNGOS
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) {}
     };
 
+    class AllPlayersInRangeCheck
+    {
+        public:
+            AllPlayersInRangeCheck(const WorldObject* pObject, float fMaxRange) : m_pObject(pObject), m_fRange(fMaxRange) {}
+            WorldObject const& GetFocusObject() const { return *m_pObject; }
+            bool operator() (Player* pPlayer)
+            {
+                if (pPlayer->IsWithinDist(pPlayer, m_fRange, false))
+                    return true;
+
+                return false;
+            }
+
+        private:
+            const WorldObject* m_pObject;
+            float m_fRange;
+    };
+
     template<class Do>
     struct MANGOS_DLL_DECL PlayerWorker
     {

@@ -23,6 +23,9 @@
 #include "Creature.h"
 #include "DestinationHolderImp.h"
 #include "World.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "CellImpl.h"
 
 #define SMALL_ALPHA 0.05f
 
@@ -197,6 +200,33 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         return true;
 
     Traveller<T> traveller(owner);
+
+    if (m_uiResendTimer <= time_diff)
+    {
+        if (i_path)
+        {
+            // send 10 nodes, or send all nodes if there are less than 10 left
+            uint32 endIndex = m_pathPointsSent + 1;
+
+            float x, y, z;
+            i_path->getNextPosition(x, y, z);
+
+            // dist to next node + world-unit length of the path
+            x -= owner.GetPositionX();
+            y -= owner.GetPositionY();
+            z -= owner.GetPositionZ();
+            float dist = sqrt(x*x + y*y + z*z) + i_path->getFullPath().GetTotalLength(1, endIndex);
+
+            // calculate travel time, set spline, then send path
+            uint32 traveltime = uint32(dist / (traveller.Speed()*0.001f));
+            SplineFlags flags = (owner.GetTypeId() == TYPEID_UNIT) ? ((Creature*)&owner)->GetSplineFlags() : SPLINEFLAG_WALKMODE;
+            owner.SendMonsterMoveByPath(i_path->getFullPath(), 1, endIndex, flags, traveltime);
+        }
+
+        m_uiResendTimer = 3000;
+    }
+    else
+        m_uiResendTimer -= time_diff;
 
     if (!i_destinationHolder.HasDestination())
         _setTargetLocation(owner);
