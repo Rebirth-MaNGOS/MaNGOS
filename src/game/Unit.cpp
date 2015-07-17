@@ -1767,9 +1767,9 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
     CleanDamage cleanDamage(damageInfo->cleanDamage,damageInfo->attackType,damageInfo->hitOutCome);
     DealDamage(pVictim, damageInfo->damage, &cleanDamage, DIRECT_DAMAGE, SpellSchoolMask(damageInfo->damageSchoolMask), NULL, durabilityLoss);
 
-    // If this is a creature and it attacks from behind it has a probability to daze it's victim
+    // If this is a creature, the attack isn't absorbed and it attacks from behind it has a probability to daze it's victim 
     if( (damageInfo->hitOutCome==MELEE_HIT_CRIT || damageInfo->hitOutCome==MELEE_HIT_CRUSHING || damageInfo->hitOutCome==MELEE_HIT_NORMAL || damageInfo->hitOutCome==MELEE_HIT_GLANCING) &&
-            !GetCharmerOrOwnerOrOwnGuid().IsPlayer() && pVictim->GetObjectGuid().IsPlayer() && !pVictim->HasInArc(M_PI_F, this) )
+            !GetCharmerOrOwnerOrOwnGuid().IsPlayer() && pVictim->GetObjectGuid().IsPlayer() && !pVictim->HasInArc(M_PI_F, this) && !damageInfo->absorb)
     {
         // -probability is between 0% and 40%
         // 20% base chance
@@ -1797,19 +1797,8 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                 Probability = 0;
         }
 
-		
         if(Probability > 40.0f)
             Probability = 40.0f;
-
-		for (Aura* aura : pVictim->GetAurasByType(SPELL_AURA_SCHOOL_ABSORB))
-		{
-			if (sSpellMgr.GetFirstSpellInChain(aura->GetId()) == 17)			// Power Word: Shield
-				Probability = 0.0f;
-			else if (sSpellMgr.GetFirstSpellInChain(aura->GetId()) == 11426)	// Ice Barrier
-				Probability = 0.0f;
-			else if (sSpellMgr.GetFirstSpellInChain(aura->GetId()) == 7812)		// Sacrifice(Warlock)
-				Probability = 0.0f;
-		}
 
         if(roll_chance_f(Probability))
             CastSpell(pVictim, 1604, true);
