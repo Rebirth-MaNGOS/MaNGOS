@@ -1782,7 +1782,21 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
         uint32 VictimDefense=pVictim->GetDefenseSkillValue();
         uint32 AttackerMeleeSkill=GetUnitMeleeSkill();
 
-        Probability *= AttackerMeleeSkill/(float)VictimDefense;
+        if (VictimDefense <= 300)
+        {
+            Probability *= AttackerMeleeSkill/(float)VictimDefense;
+        }
+        else
+        {
+            // When the player has more defense than the attacking creature's melee skill
+            // we do a linear approximation that should make a player with 440 defense
+            // immune to dase from a level 63, i.e. boss, mob.
+            Probability = 20.f - 0.16f * (VictimDefense - AttackerMeleeSkill);
+
+            if (Probability < 0)
+                Probability = 0;
+        }
+
 		
         if(Probability > 40.0f)
             Probability = 40.0f;
