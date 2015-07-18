@@ -208,7 +208,7 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
 		m_uiTurnTimer = 0;
         m_uiPoisonBoltTimer = 10000;
         m_uiTrashTimer = 15000;
-        m_uiConsumeTimer = 10000;//urand(10000,30000);
+        m_uiConsumeTimer = urand(10000,30000);
         m_uiConsumeDamageTimer = 1000;
 		if (m_creature->HasAura(SPELL_CONSUME_ROOT))
 			m_creature->RemoveAurasDueToSpell(SPELL_CONSUME_ROOT);
@@ -258,7 +258,7 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
 				m_uiTurnTimer = 3000;
 				m_uiConsumeRemoveTimer = 15010;			// slightly longer so we're sure the aura is removed
             }
-            m_uiConsumeTimer = 30000;
+            m_uiConsumeTimer = urand(25000,35000);
         }
         else
             m_uiConsumeTimer -= uiDiff;
