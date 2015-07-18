@@ -221,6 +221,13 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
             m_creature->CastSpell(m_creature, SPELL_CONSUME_HEAL, true);
     }
 
+	void JustDied(Unit* /*pKiller*/)
+    {
+		if (Unit* pConsumeTarget = m_creature->GetMap()->GetUnit(m_uiConsumeVictim))
+            if (pConsumeTarget->HasAura(SPELL_CONSUME))
+				pConsumeTarget->RemoveAurasDueToSpell(SPELL_CONSUME);
+	}
+
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
