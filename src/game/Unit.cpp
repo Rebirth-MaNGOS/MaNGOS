@@ -1974,7 +1974,7 @@ float Unit::GetTargetResistancePctVersusSpell(Unit *victim, SpellEntry const *sp
     return std::max(std::min(resistPct,75.0f),0.0f);
 }
 
-void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster,SpellSchoolMask schoolMask, DamageEffectType /*damagetype*/, const uint32 damage, uint32 *absorb, uint32 *resist, bool /*canReflect*/,PartialResistInfo partialResist)
+void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster,SpellSchoolMask schoolMask, DamageEffectType damagetype, const uint32 damage, uint32 *absorb, uint32 *resist, bool /*canReflect*/,PartialResistInfo partialResist)
 {
     if(!pCaster || !isAlive() || !damage)
         return;
@@ -2100,13 +2100,16 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster,SpellSchoolMask schoolMa
     // should still be interrupted.
     if (RemainingDamage == 0)
     {
-        for (uint8 i = 0; i < 4; i++)
+        if (damagetype != DOT)
         {
-            Spell* spell = GetCurrentSpell(CurrentSpellTypes(i));
-            if(spell && spell->getState() == SPELL_STATE_PREPARING)
+            for (uint8 i = 0; i < 4; i++)
             {
-                if(spell->m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_ABORT_ON_DMG)
-                    InterruptSpell(CurrentSpellTypes(i));
+                Spell* spell = GetCurrentSpell(CurrentSpellTypes(i));
+                if(spell && spell->getState() == SPELL_STATE_PREPARING)
+                {
+                    if(spell->m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_ABORT_ON_DMG)
+                        InterruptSpell(CurrentSpellTypes(i));
+                }
             }
         }
 
