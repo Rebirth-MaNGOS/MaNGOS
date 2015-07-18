@@ -24,6 +24,8 @@ EndScriptData */
 /* ContentData
 mob_anubisath_guardian
 mob_flesh_hunter
+mob_obsidian_destroyer
+mob_qiraji_swarmguard
 EndContentData */
 
 #include "precompiled.h"
@@ -401,6 +403,57 @@ CreatureAI* GetAI_mob_obsidian_destroyer(Creature* pCreature)
     return new mob_obsidian_destroyerAI(pCreature);
 }
 
+/*######
+## mob_qiraji_swarmguard
+######*/
+
+enum eQirajiSwarmguard
+{
+    SPELL_SUNDERING_CLEAVE       = 25174,
+};
+
+struct MANGOS_DLL_DECL mob_qiraji_swarmguardAI : public ScriptedAI
+{
+    mob_qiraji_swarmguardAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiCleaveTimer;
+
+    void Reset() 
+    {		
+		m_uiCleaveTimer = urand(8000,12000);
+    }
+	void MovementInform(uint32 /*uiMotiontype*/, uint32 uiPointId)
+	{
+		if(uiPointId)
+			m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiCleaveTimer <= uiDiff)
+        {
+			if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                DoCastSpellIfCan(pTarget, SPELL_SUNDERING_CLEAVE);
+			m_uiCleaveTimer = urand(8000, 12000);
+         } 
+		else
+			m_uiCleaveTimer -= uiDiff;
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_qiraji_swarmguard(Creature* pCreature)
+{
+    return new mob_qiraji_swarmguardAI(pCreature);
+}
+
 void AddSC_ruins_of_ahnqiraj()
 {
     Script* pNewscript;
@@ -418,5 +471,10 @@ void AddSC_ruins_of_ahnqiraj()
 	pNewscript = new Script;
     pNewscript->Name = "mob_obsidian_destroyer";
     pNewscript->GetAI = &GetAI_mob_obsidian_destroyer;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_qiraji_swarmguard";
+    pNewscript->GetAI = &GetAI_mob_qiraji_swarmguard;
     pNewscript->RegisterSelf();
 }
