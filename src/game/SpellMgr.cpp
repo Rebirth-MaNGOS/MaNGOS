@@ -688,6 +688,8 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
     {
     case 12042: // Arcane power should be a positive effect.
         return true;
+	case 16713:	// Ghostly is not a positive effect.
+		return false;
 	case 17246: // Baroness Anastari's Possess is not a positive effect.
 		return false;
     case 23603: // The Wild Polymorph spell is not a positive effect.

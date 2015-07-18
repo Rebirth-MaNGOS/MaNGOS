@@ -140,6 +140,156 @@ CreatureAI* GetAI_npc_lazy_peon(Creature* pCreature)
     return new npc_lazy_peonAI(pCreature);
 }
 
+/*######
+## npc_bom_bay
+######*/
+
+enum eBomBay
+{
+	QUEST_ZALAZANE			        =   826,
+    GOSSIP_TEXTID_BOM_BAY1			=   3794,
+    GOSSIP_TEXTID_BOM_BAY2			=   3795,
+
+	EMOTE_FLEE = -47,
+
+	SPELL_HEX_FROG = 16707,
+	SPELL_HEX_SNAKE = 16708,
+	SPELL_HEX_CHIKEN = 16709,	
+	SPELL_GROW	= 16711,
+	//SPELL_SPECIAL_BREW = 16712,			// Drunk state never gets removed, so too risky using it
+	SPELL_GHOSTLY	= 16713,
+	SPELL_LAUNCH = 16716,
+	
+	SPELL_VOODOO = 17009,				// cast this, trigger random one of the above
+};
+
+struct npc_bom_bayAI : public ScriptedAI
+{
+    npc_bom_bayAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+
+	bool m_bFleeing;
+	bool m_bNoAttack;
+	bool m_bLaugh;
+
+	uint32 m_uiNoAttackTimer;
+	uint32 m_uiLaughTimer;
+
+    void Reset()
+    {
+		m_bLaugh = false;
+		m_bFleeing = false;
+		m_bNoAttack = false;
+		m_uiNoAttackTimer = 0;
+    }
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_VOODOO && pTarget->GetTypeId() == TYPEID_PLAYER)
+		{
+			int rand = urand(0,5);
+			switch(rand)
+			{
+				case 0:
+					m_creature->CastSpell(pTarget, SPELL_HEX_FROG, true);
+					break;
+				case 1:
+					m_creature->CastSpell(pTarget, SPELL_HEX_SNAKE, true);
+					break;
+				case 2:
+					m_creature->CastSpell(pTarget, SPELL_HEX_CHIKEN, true);
+					break;
+				case 3:
+					m_creature->CastSpell(pTarget, SPELL_LAUNCH, true);
+					m_bLaugh = true;
+					m_uiLaughTimer = 8000;					
+					break;
+				case 4:
+					m_creature->CastSpell(pTarget, SPELL_GHOSTLY, true);
+					break;
+				case 5:
+					m_creature->CastSpell(pTarget, SPELL_GROW, true);
+					break;
+			}
+		}
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+		if(m_bLaugh)
+			if (m_uiLaughTimer <= uiDiff)
+			{
+				m_creature->HandleEmoteCommand(EMOTE_ONESHOT_LAUGH_NOSHEATHE);
+				m_bLaugh = false;
+			}
+			else
+				m_uiLaughTimer -= uiDiff;
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if(HealthBelowPct(15) && !m_bFleeing)
+		{
+			m_creature->DoFleeToGetAssistance();
+			DoScriptText(EMOTE_FLEE, m_creature, NULL);
+			m_bFleeing = true;
+			m_bNoAttack = true;
+			m_uiNoAttackTimer = 8000;
+		}
+
+		if (m_uiNoAttackTimer <= uiDiff)				// timer so npc starts to attack after he has fled
+			m_bNoAttack = false;
+		else
+			m_uiNoAttackTimer -= uiDiff;
+
+		DoMeleeAttackIfReady();
+    }
+};
+
+#define GOSSIP_ITEM_BOMBAY1 "Low spirits"
+#define GOSSIP_ITEM_BOMBAY2 "Bad hang nail"
+#define GOSSIP_ITEM_BOMBAY3 "Feeling underpowered"
+#define GOSSIP_ITEM_BOMBAY4 "Jungle Fever"
+#define GOSSIP_ITEM_BOMBAY5 "Uni-brow"
+#define GOSSIP_ITEM_BOMBAY6 "Whiplash"
+#define GOSSIP_ITEM_BOMBAY7 "I don't want to go back to work"
+
+bool GossipHello_npc_bom_bay(Player* pPlayer, Creature* pCreature)
+{
+    if (pCreature->isQuestGiver())
+        pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
+
+    if (pPlayer->GetQuestStatus(QUEST_ZALAZANE) == QUEST_STATE_COMPLETE)
+	{		
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_BOMBAY1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_BOMBAY2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_BOMBAY3, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_BOMBAY4, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_BOMBAY5, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_BOMBAY6, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_BOMBAY7, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
+		pPlayer->SEND_GOSSIP_MENU(GOSSIP_TEXTID_BOM_BAY2, pCreature->GetObjectGuid());
+	}
+	else
+		pPlayer->SEND_GOSSIP_MENU(GOSSIP_TEXTID_BOM_BAY1, pCreature->GetObjectGuid());
+    return true;
+}
+
+bool GossipSelect_npc_bom_bay(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+{
+    switch(uiAction)
+    {
+        case GOSSIP_ACTION_INFO_DEF:
+			pCreature->CastSpell(pPlayer, SPELL_VOODOO, false);
+            break;
+    }
+    return true;
+}
+
+CreatureAI* GetAI_npc_bom_bay(Creature* pCreature)
+{
+    return new npc_bom_bayAI(pCreature);
+}
+
 void AddSC_durotar()
 {
     Script* pNewscript;
@@ -147,5 +297,12 @@ void AddSC_durotar()
     pNewscript = new Script;
     pNewscript->Name = "npc_lazy_peon";
     pNewscript->GetAI = &GetAI_npc_lazy_peon;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_bom_bay";
+    pNewscript->GetAI = &GetAI_npc_bom_bay;
+	pNewscript->pGossipHello = &GossipHello_npc_bom_bay;
+    pNewscript->pGossipSelect = &GossipSelect_npc_bom_bay;
     pNewscript->RegisterSelf();
 }
