@@ -530,6 +530,7 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
     uint32 m_uiStrikeTimer;
     uint32 m_uiWaypoint;
     uint32 m_uiWaitForOthersTimer;
+    uint32 m_uiKaldoreiTurnTimer;
 
     void Reset() 
     {
@@ -541,6 +542,7 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
         m_uiStrikeTimer = 15000;
 
         m_uiWaypoint = 0;
+        m_uiKaldoreiTurnTimer = 0;
         m_uiWaitForOthersTimer = 500;
     }
 
@@ -559,6 +561,21 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
               //  }
             }
         }
+    }
+
+    void SetKaldoreiFollow()
+    {
+        std::list<Creature*> m_lKaldorei;
+        GetCreatureListWithEntryInGrid(m_lKaldorei, m_creature, NPC_KALDOREI_ELITE, DEFAULT_VISIBILITY_DISTANCE);
+        uint8 i = 0;
+
+        if (!m_lKaldorei.empty())
+            for(std::list<Creature*>::iterator itr = m_lKaldorei.begin(); itr != m_lKaldorei.end(); ++itr)
+                if ((*itr) && (*itr)->isAlive())
+                {
+                    (*itr)->GetMotionMaster()->MoveFollow(m_creature, 2, i+1.5);
+                    ++i;
+                }
     }
 
     void RelocateKaldorei(float x, float y, float z, float orientation)
@@ -595,6 +612,8 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
         }
     }
 
+    
+
     void MovementInform(uint32 uiType, uint32 uiPointId)
     {
         if (uiType != POINT_MOTION_TYPE || m_bWaypointEnd)
@@ -604,24 +623,16 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
 
         switch(uiPointId)
         {
+        case 0:
+            {
+                SetKaldoreiFollow();
+                break;
+            }
         case 3:
             {
                 m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                 m_creature->SetFacingTo(5.69f);
-
-                std::list<Creature*> m_lKaldorei;
-                GetCreatureListWithEntryInGrid(m_lKaldorei, m_creature, NPC_KALDOREI_ELITE, DEFAULT_VISIBILITY_DISTANCE);
-                uint8 i = 0;
-
-                if (!m_lKaldorei.empty())
-                    for(std::list<Creature*>::iterator itr = m_lKaldorei.begin(); itr != m_lKaldorei.end(); ++itr)
-                        if ((*itr) && (*itr)->isAlive())
-                        {
-                            (*itr)->StopMoving();
-                            (*itr)->GetMotionMaster()->MoveFollow(m_creature, 2, i+1.5);
-                            ++i;
-                        }
-
+                m_uiKaldoreiTurnTimer = 5000;
                 return;
             }
         case 2:
@@ -666,6 +677,25 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+        if(m_uiKaldoreiTurnTimer)
+        {
+            if(m_uiKaldoreiTurnTimer <= uiDiff)
+            {
+                m_uiKaldoreiTurnTimer = 0;
+
+                std::list<Creature*> m_lKaldorei;
+                GetCreatureListWithEntryInGrid(m_lKaldorei, m_creature, NPC_KALDOREI_ELITE, DEFAULT_VISIBILITY_DISTANCE);
+
+                if (!m_lKaldorei.empty())
+                    for(std::list<Creature*>::iterator itr = m_lKaldorei.begin(); itr != m_lKaldorei.end(); ++itr)
+                        if ((*itr) && (*itr)->isAlive())
+                            (*itr)->SetFacingTo(5.69f);
+
+            }
+            else
+                m_uiKaldoreiTurnTimer -= uiDiff;
+        }
+
         if (!m_bWaypointEnd)
 	    {
             if (m_bCanMoveNext && m_uiWaitForOthersTimer <= uiDiff)
