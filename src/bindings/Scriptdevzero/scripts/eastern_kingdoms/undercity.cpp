@@ -181,6 +181,141 @@ bool GossipSelect_npc_parqual_fintallas(Player* pPlayer, Creature* pCreature, ui
     return true;
 }
 
+/*####
+# npc_bethor_iceshard
+####*/
+
+enum eBethor
+{
+	GUNTHER_SAY_1					 = -1720183,
+	SPELL_NETHER_GEM				 = 7673,
+	QUEST_ID_PRODIGAL_LICH_RETURNS	 = 411,
+	NPC_GUNTHER_VISAGE				 = 5666
+};
+
+struct MANGOS_DLL_DECL npc_bethor_iceshardAI : public ScriptedAI
+{
+    npc_bethor_iceshardAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro411;
+
+	ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+	{
+		m_bOutro411 = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+		m_uiPlayerGUID.Clear();
+	}
+
+	void StartOutro(ObjectGuid pPlayerGUID, uint32 uiQuestId = 0)
+	{		
+		if (!pPlayerGUID)
+            return;
+
+        m_uiPlayerGUID = pPlayerGUID;
+
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+		
+		if (uiQuestId == 411)
+		{
+			m_bOutro411 = true; 
+			m_uiSpeechTimer = 2000;
+			m_uiSpeechStep = 1;
+		}
+	}
+
+	void JustSummoned(Creature* pSummoned)
+    {
+        if(pSummoned->GetEntry() == NPC_GUNTHER_VISAGE)
+        {
+			pSummoned->SetSpeedRate(MOVE_WALK, 0.7f);
+			pSummoned->GetMotionMaster()->MovePoint(0, 1768.88f,63.3057f,-46.3214f);
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro411)							// handle RP at quest end 411
+		{
+			if(!m_uiSpeechStep)
+				return;
+		
+			if(m_uiSpeechTimer <= uiDiff)
+            {
+				Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+				Creature* pGunther = GetClosestCreatureWithEntry(m_creature, NPC_GUNTHER_VISAGE, 10.0f);
+                switch(m_uiSpeechStep)
+                {					
+                    case 1:
+						m_creature->CastSpell(m_creature, SPELL_NETHER_GEM, false);
+						m_creature->GenericTextEmote("Bethor Iceshard uses the Nether Gem to communicate with Gunther.", NULL, false);
+						m_uiSpeechTimer = 4000;
+                        break;
+					case 2:
+						m_creature->SummonCreature(NPC_GUNTHER_VISAGE,1772.62f,57.5082f,-46.3214f,2.188f,TEMPSUMMON_TIMED_DESPAWN, 23000, true);
+                        m_uiSpeechTimer = 6000;
+                        break;
+					case 3:
+						if(pGunther)
+						{
+							pGunther->SetFacingTo(2.36f);
+							DoScriptText(GUNTHER_SAY_1, pGunther, pPlayer);
+						}
+                        m_uiSpeechTimer = 12000;
+						break;
+					case 4:
+						if(pGunther)
+							pGunther->HandleEmoteCommand(EMOTE_ONESHOT_WAVE);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 5:
+						if(pGunther)
+							pGunther->GetMotionMaster()->MovePoint(1,1772.62f,57.5082f,-46.3214f);
+						m_creature->HandleEmoteCommand(EMOTE_ONESHOT_WAVE);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 6:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro411 = false;
+						break;
+					/*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_bethor_iceshard(Creature* pCreature)
+{
+    return new npc_bethor_iceshardAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_bethor_iceshard(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_PRODIGAL_LICH_RETURNS)
+    {
+		if (npc_bethor_iceshardAI* pBethorAI = dynamic_cast<npc_bethor_iceshardAI*>(pCreature->AI()))
+			pBethorAI->StartOutro(pPlayer->GetObjectGuid(), 411);
+	}
+	return true;
+}
+
 /*######
 ## AddSC
 ######*/
@@ -199,5 +334,11 @@ void AddSC_undercity()
     pNewscript->Name = "npc_parqual_fintallas";
     pNewscript->pGossipHello = &GossipHello_npc_parqual_fintallas;
     pNewscript->pGossipSelect = &GossipSelect_npc_parqual_fintallas;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_bethor_iceshard";
+    pNewscript->GetAI = &GetAI_npc_bethor_iceshard;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_bethor_iceshard;
     pNewscript->RegisterSelf();
 }
