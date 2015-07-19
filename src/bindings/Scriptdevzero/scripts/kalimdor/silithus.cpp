@@ -1797,10 +1797,10 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     // Stage 0 - Spawn the three NPCs, the Guards and the door objects.
                     // Start playing the event music.
 
-                    GameObject* pOSummon = m_creature->SummonGameObject(AQ_ANCIENT_DOOR, 0, -8124.28f, 1524.88f, 17.19f, -0.023624, GO_STATE_ACTIVE);
+                    GameObject* pOSummon = m_creature->SummonGameObject(AQ_ANCIENT_DOOR, 0, -8124.28f, 1524.88f, 17.19f, -0.023624f, GO_STATE_ACTIVE);
                     m_Door = pOSummon->GetObjectGuid();
 
-                    pOSummon = m_creature->SummonGameObject(AQ_RUNE, 0, -8124.28f, 1524.88f, 17.19f, -0.023624, GO_STATE_ACTIVE);
+                    pOSummon = m_creature->SummonGameObject(AQ_RUNE, 0, -8124.28f, 1524.88f, 17.19f, -0.023624f, GO_STATE_ACTIVE);
                     m_Runes = pOSummon->GetObjectGuid();
 
                     // Play the background music.
@@ -2269,7 +2269,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                     if (pFandral)
                     {
                         pFandral->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-                        pFandral->GetMotionMaster()->MovePoint(0, -8102.f, 1523.f, 2.61, true);
+                        pFandral->GetMotionMaster()->MovePoint(0, -8102.f, 1523.f, 2.61f, true);
                     }
 
                     m_uiEventTimer = 10000;
@@ -2421,7 +2421,7 @@ struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
                         pFandral->SetStandState(UNIT_STAND_STATE_KNEEL);
                     }
 
-                    GameObject* pOSummon = m_creature->SummonGameObject(AQ_ROOT, 0, -8124.28f, 1524.88f, 17.19f, -0.023624, GO_STATE_ACTIVE);
+                    GameObject* pOSummon = m_creature->SummonGameObject(AQ_ROOT, 0, -8124.28f, 1524.88f, 17.19f, -0.023624f, GO_STATE_ACTIVE);
                     if (pOSummon)
                     {
                         m_Roots = pOSummon->GetObjectGuid();
@@ -3126,6 +3126,288 @@ bool GORewarded_scarab_gong(Player* pPlayer, GameObject* pGO, const Quest* pQues
     return false;
 }
 
+/*####
+# npc_beetix_ficklespragg
+####*/
+
+enum eBeetix
+{
+	NOGGLE_SAY1					 = -1720180,
+	NOGGLE_SAY2					 = -1720181,
+
+	QUEST_ID_DEADLY_DESERT_VENOM	 = 8277,
+    QUEST_ID_NOGGLES_LAST_HOPE		 = 8278,
+
+	NPC_NOGGLE_FRICKLESPRAGG = 15190
+};
+
+struct MANGOS_DLL_DECL npc_beetix_ficklespraggAI : public ScriptedAI
+{
+    npc_beetix_ficklespraggAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro8277;
+
+	uint8 m_uiSpeechStep2;
+	uint32 m_uiSpeechTimer2;
+	bool m_bOutro8278;
+
+    void Reset()
+	{
+		m_bOutro8277 = false;
+		m_bOutro8278 = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechStep2 = 1;
+		m_uiSpeechTimer = 0;
+		m_uiSpeechTimer2 = 0;
+	}
+
+	void StartOutro(uint32 uiQuestId = 0)
+	{		
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+		
+		if (uiQuestId == 8277)
+		{
+			m_bOutro8277 = true; 
+			m_uiSpeechTimer = 1000;
+			m_uiSpeechStep = 1;
+		}
+		if (uiQuestId == 8278)
+		{
+			Creature* pNoggle = GetClosestCreatureWithEntry(m_creature, NPC_NOGGLE_FRICKLESPRAGG, 10.0f);
+			if(pNoggle)
+				pNoggle->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+			m_bOutro8278 = true; 
+			m_uiSpeechTimer2 = 1000;
+			m_uiSpeechStep2 = 1;
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro8277)							// handle RP at quest end 8277
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+				Creature* pNoggle = GetClosestCreatureWithEntry(m_creature, NPC_NOGGLE_FRICKLESPRAGG, 10.0f);
+                switch(m_uiSpeechStep)
+                {						
+                    case 1:
+						if(pNoggle)
+						{
+							pNoggle->SetStandState(UNIT_STAND_STATE_STAND);
+							pNoggle->HandleEmoteState(EMOTE_STATE_STUN);
+							DoScriptText(NOGGLE_SAY1, pNoggle, NULL);
+						}
+						m_uiSpeechTimer = 5000;
+                        break;
+					case 2:
+						if(pNoggle)
+						{
+							pNoggle->HandleEmoteState(EMOTE_STATE_NONE);
+							pNoggle->SetStandState(UNIT_STAND_STATE_DEAD);	
+						}
+                        m_uiSpeechTimer = 4000;
+						break;
+					case 3:						
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						if(pNoggle)
+							pNoggle->Respawn();				// get him back to his original position
+						m_bOutro8277 = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+
+		if (m_uiSpeechTimer2 && m_bOutro8278)							// handle RP at quest end 8278
+		{
+			if (!m_uiSpeechStep2)
+				return;
+		
+			if (m_uiSpeechTimer2 <= uiDiff)
+            {
+				Creature* pNoggle = GetClosestCreatureWithEntry(m_creature, NPC_NOGGLE_FRICKLESPRAGG, 10.0f);
+                switch(m_uiSpeechStep2)
+                {			
+                    case 1:
+						if(pNoggle)
+							pNoggle->SetStandState(UNIT_STAND_STATE_STAND);
+						m_uiSpeechTimer2 = 2000;
+                        break;
+					case 2:
+						if(pNoggle)
+						{
+							DoScriptText(NOGGLE_SAY2, pNoggle, NULL);
+							pNoggle->HandleEmoteState(EMOTE_STATE_STUN);
+						}
+                        m_uiSpeechTimer2 = 4500;
+						break;
+					case 3:
+						if(pNoggle)
+						{
+							pNoggle->HandleEmoteState(EMOTE_STATE_NONE);
+							pNoggle->SetStandState(UNIT_STAND_STATE_DEAD);
+						}
+                        m_uiSpeechTimer2 = 4000;
+						break;
+					case 4:
+						if(pNoggle)
+						{
+							pNoggle->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+							pNoggle->Respawn();			// get him back to his original position
+						}
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro8278 = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep2;
+            }
+            else
+                m_uiSpeechTimer2 -= uiDiff;
+		}
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_beetix_ficklespragg(Creature* pCreature)
+{
+    return new npc_beetix_ficklespraggAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_beetix_ficklespragg(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_DEADLY_DESERT_VENOM)
+    {
+		if (npc_beetix_ficklespraggAI* pBeetixAI = dynamic_cast<npc_beetix_ficklespraggAI*>(pCreature->AI()))
+			pBeetixAI->StartOutro(8277);
+	}
+	if (pQuest->GetQuestId() == QUEST_ID_NOGGLES_LAST_HOPE)
+    {
+		if (npc_beetix_ficklespraggAI* pBeetixAI = dynamic_cast<npc_beetix_ficklespraggAI*>(pCreature->AI()))
+			pBeetixAI->StartOutro(8278);
+	}
+	return true;
+}
+
+/*####
+# npc_noggle_ficklespragg
+####*/
+
+enum eNoggle
+{
+	NOGGLE_SAY_1					 = -1720182,
+
+	QUEST_ID_NOGGLES_LOST_SATCHEL	 = 8282,
+};
+
+struct MANGOS_DLL_DECL npc_noggle_ficklespraggAI : public ScriptedAI
+{
+    npc_noggle_ficklespraggAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro8282;
+
+    void Reset()
+	{
+		m_bOutro8282 = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+	}
+
+	void StartOutro(uint32 uiQuestId = 0)
+	{		
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+		
+		if (uiQuestId == 8282)
+		{
+			m_bOutro8282 = true; 
+			m_uiSpeechTimer = 1000;
+			m_uiSpeechStep = 1;
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro8282)							// handle RP at quest end 8282
+		{
+			if(!m_uiSpeechStep)
+				return;
+		
+			if(m_uiSpeechTimer <= uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {					
+                    case 1:
+						m_creature->SetStandState(UNIT_STAND_STATE_SIT);
+						m_uiSpeechTimer = 1000;
+                        break;
+					case 2:
+						DoScriptText(NOGGLE_SAY_1, m_creature, NULL);
+                        m_uiSpeechTimer = 3000;
+                        break;
+					case 3:
+						m_creature->SetStandState(UNIT_STAND_STATE_DEAD);
+                        m_uiSpeechTimer = 4000;
+						break;
+					case 4:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro8282 = false;
+						m_creature->Respawn();			// get him back to his original position
+						break;
+					/*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_noggle_ficklespragg(Creature* pCreature)
+{
+    return new npc_noggle_ficklespraggAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_noggle_ficklespragg(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_NOGGLES_LOST_SATCHEL)
+    {
+		if (npc_noggle_ficklespraggAI* pNoggleAI = dynamic_cast<npc_noggle_ficklespraggAI*>(pCreature->AI()))
+			pNoggleAI->StartOutro(8282);
+	}
+	return true;
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -3232,5 +3514,17 @@ void AddSC_silithus()
     pNewscript = new Script();
     pNewscript->Name = "go_scarab_gong";
     pNewscript->pQuestRewardedGO = &GORewarded_scarab_gong;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_beetix_ficklespragg";
+    pNewscript->GetAI = &GetAI_npc_beetix_ficklespragg;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_beetix_ficklespragg;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_noggle_ficklespragg";
+    pNewscript->GetAI = &GetAI_npc_noggle_ficklespragg;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_noggle_ficklespragg;
     pNewscript->RegisterSelf();
 }
