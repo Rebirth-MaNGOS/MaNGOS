@@ -2112,8 +2112,6 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster,SpellSchoolMask schoolMa
                 }
             }
         }
-
-        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
     }
 
     // only split damage if not damaging yourself
@@ -2273,6 +2271,18 @@ void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool ex
             AttackerStateUpdate(pVictim, BASE_ATTACK, true);
             if(m_extraAttacks > 0)
                 --m_extraAttacks;
+        }
+    }
+
+    // If the auto-attack hits it should break CCs if the target is shielded.
+    if (damageInfo.hitOutCome >= 5 && damageInfo.hitOutCome <= 8)
+    {
+        std::list<Aura*> const& vManaShield = pVictim->GetAurasByType(SPELL_AURA_MANA_SHIELD);
+        std::list<Aura*> const& vSchoolAbsorb = pVictim->GetAurasByType(SPELL_AURA_SCHOOL_ABSORB);
+
+        if (!vManaShield.empty() || !vSchoolAbsorb.empty())
+        {
+            pVictim->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
         }
     }
 }

@@ -1319,8 +1319,8 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
                 if (!unit->IsPassiveToSpells())
                 {
                     if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 &&
-                        m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641  &&
-                        m_spellInfo->Id != 25042))
+                        m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && 
+                        m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 && m_spellInfo->Id != 25042))
                     {
                         if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
                             ((Creature*)unit)->AI()->AttackedBy(realCaster);
@@ -1332,17 +1332,17 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
                     }
                     else
                     {
-                        if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 &&
-                            m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641  &&
-                            m_spellInfo->Id != 25042))
+                        if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && 
+                            m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 &&
+                            m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 && m_spellInfo->Id != 25042))
                         {
                             unit->AddThreat(realCaster);
                         }
                     }
 
-                    if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 &&
-                        m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 &&
-                        m_spellInfo->Id != 25042))
+                    if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && 
+                        m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 &&
+                        m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 && m_spellInfo->Id != 25042))
                     {
                         unit->SetInCombatWith(realCaster);
                         realCaster->SetInCombatWith(unit);
@@ -1407,6 +1407,30 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
     }
     else
         m_spellAuraHolder = NULL;
+
+    if (unitTarget)
+    {
+        std::list<Aura*> const& vManaShield = unitTarget->GetAurasByType(SPELL_AURA_MANA_SHIELD);
+        std::list<Aura*> const& vSchoolAbsorb = unitTarget->GetAurasByType(SPELL_AURA_SCHOOL_ABSORB);
+
+        if (!vManaShield.empty() || !vSchoolAbsorb.empty())
+        {
+            // Make sure that CC and other things are interrupted through absorb auras.
+            for (int effectNumber = 0; effectNumber < MAX_EFFECT_INDEX; ++effectNumber)
+            {
+                if (m_spellInfo->Effect[effectNumber] == SPELL_EFFECT_SCHOOL_DAMAGE ||
+                     m_spellInfo->Effect[effectNumber] == SPELL_EFFECT_WEAPON_DAMAGE_NOSCHOOL ||
+                     m_spellInfo->Effect[effectNumber] == SPELL_EFFECT_WEAPON_PERCENT_DAMAGE ||
+                     m_spellInfo->Effect[effectNumber] == SPELL_EFFECT_WEAPON_DAMAGE ||
+                     m_spellInfo->Effect[effectNumber] == SPELL_EFFECT_NORMALIZED_WEAPON_DMG)
+                {
+                    unitTarget->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
+                    break;
+                }
+
+            }
+        }
+    }
 
     for(int effectNumber = 0; effectNumber < MAX_EFFECT_INDEX; ++effectNumber)
     {
