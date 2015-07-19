@@ -72,6 +72,13 @@ static Move Andorov[]=
     {-8939.8f, 1550.3f, 21.58f}
 };
 
+static Loc AndorovKaldoreiSpawn[] =
+{
+    {-8724.16f, 1576.59f, 21.38f, 2.37f, NPC_KALDOREI_ELITE},
+    {-8727.11f, 1573.41f, 21.48f, 2.37f, NPC_KALDOREI_ELITE},
+    {-8717.14f, 1584.30f, 21.41f, 2.37f, NPC_KALDOREI_ELITE},
+    {-8714.63f, 1587.17f, 21.67f, 2.37f, NPC_KALDOREI_ELITE},
+};
 
 static Loc WaveOne[]=
 {
@@ -523,6 +530,7 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
     uint32 m_uiStrikeTimer;
     uint32 m_uiWaypoint;
     uint32 m_uiWaitForOthersTimer;
+    uint32 m_uiKaldoreiTurnTimer;
 
     void Reset() 
     {
@@ -534,6 +542,7 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
         m_uiStrikeTimer = 15000;
 
         m_uiWaypoint = 0;
+        m_uiKaldoreiTurnTimer = 0;
         m_uiWaitForOthersTimer = 500;
     }
 
@@ -542,16 +551,31 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
         // Kaldorei Elites
         for(uint8 i = 0; i < 4 ; ++i)
         {
-            if (Creature* pKaldorei = m_creature->SummonCreature(NPC_KALDOREI_ELITE, NPCs[i].x, NPCs[i].y, NPCs[i].z, NPCs[i].o, TEMPSUMMON_CORPSE_DESPAWN, 0))
+            if (Creature* pKaldorei = m_creature->SummonCreature(NPC_KALDOREI_ELITE, AndorovKaldoreiSpawn[i].x, AndorovKaldoreiSpawn[i].y, AndorovKaldoreiSpawn[i].z, AndorovKaldoreiSpawn[i].o, TEMPSUMMON_CORPSE_DESPAWN, 0))
             {
-                if (Creature* pAndorov = m_pInstance->GetSingleCreatureFromStorage(NPC_GENERAL_ANDOROV))
-                {
+              //  if (Creature* pAndorov = m_pInstance->GetSingleCreatureFromStorage(NPC_GENERAL_ANDOROV))
+               // {
                     pKaldorei->setFaction(1254);
                     pKaldorei->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-                    pKaldorei->GetMotionMaster()->MoveFollow(pAndorov, 2, i+1.5);
-                }
+                    pKaldorei->GetMotionMaster()->MovePoint(0, NPCs[i].x, NPCs[i].y, NPCs[i].z);
+              //  }
             }
         }
+    }
+
+    void SetKaldoreiFollow()
+    {
+        std::list<Creature*> m_lKaldorei;
+        GetCreatureListWithEntryInGrid(m_lKaldorei, m_creature, NPC_KALDOREI_ELITE, DEFAULT_VISIBILITY_DISTANCE);
+        uint8 i = 0;
+
+        if (!m_lKaldorei.empty())
+            for(std::list<Creature*>::iterator itr = m_lKaldorei.begin(); itr != m_lKaldorei.end(); ++itr)
+                if ((*itr) && (*itr)->isAlive())
+                {
+                    (*itr)->GetMotionMaster()->MoveFollow(m_creature, 2, i+1.5);
+                    ++i;
+                }
     }
 
     void RelocateKaldorei(float x, float y, float z, float orientation)
@@ -588,6 +612,8 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
         }
     }
 
+    
+
     void MovementInform(uint32 uiType, uint32 uiPointId)
     {
         if (uiType != POINT_MOTION_TYPE || m_bWaypointEnd)
@@ -595,39 +621,54 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
 
         m_uiWaypoint = uiPointId + 1;
 
-        if (uiPointId == 2)
+        switch(uiPointId)
         {
-            DoScriptText(SAY_ANDOROV_READY, m_creature);
-            DoScriptText(SAY_ANDOROV_ATTACK, m_creature);
-            m_creature->HandleEmote(EMOTE_STATE_READY1H);
-
-            std::list<Creature*> m_lKaldorei;
-            GetCreatureListWithEntryInGrid(m_lKaldorei, m_creature, NPC_KALDOREI_ELITE, 10.0f);
-            if (!m_lKaldorei.empty())
-                for(std::list<Creature*>::iterator itr = m_lKaldorei.begin(); itr != m_lKaldorei.end(); ++itr)
-                    if ((*itr) && (*itr)->isAlive())
-                        (*itr)->HandleEmote(EMOTE_STATE_READY1H);
-
-            CreatureCreatePos pos(m_creature->GetMap(), m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), m_creature->GetOrientation());
-            m_creature->SetSummonPoint(pos);
-            m_bWaypointEnd = true;
-
-            m_creature->RelocateCreature(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), m_creature->GetOrientation());
-            RelocateKaldorei(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), m_creature->GetOrientation());
-
-            Creature* pRajaxx = m_pInstance->GetSingleCreatureFromStorage(NPC_RAJAXX);
-            if (pRajaxx)
+        case 0:
             {
-                boss_rajaxxAI* pAI = dynamic_cast<boss_rajaxxAI*>(pRajaxx->AI());
-                if (pAI)
-                {
-                    pAI->m_uiWaveCount = 1;
-                    pAI->AttackWave();
-                }
+                SetKaldoreiFollow();
+                break;
             }
+        case 3:
+            {
+                m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                m_creature->SetFacingTo(5.69f);
+                m_uiKaldoreiTurnTimer = 5000;
+                return;
+            }
+        case 2:
+            {
+                DoScriptText(SAY_ANDOROV_READY, m_creature);
+                DoScriptText(SAY_ANDOROV_ATTACK, m_creature);
+                m_creature->HandleEmote(EMOTE_STATE_READY1H);
 
-            if (m_pInstance)
-                m_pInstance->SetData(TYPE_RAJAXX, IN_PROGRESS);
+                std::list<Creature*> m_lKaldorei;
+                GetCreatureListWithEntryInGrid(m_lKaldorei, m_creature, NPC_KALDOREI_ELITE, DEFAULT_VISIBILITY_DISTANCE);
+                if (!m_lKaldorei.empty())
+                    for(std::list<Creature*>::iterator itr = m_lKaldorei.begin(); itr != m_lKaldorei.end(); ++itr)
+                        if ((*itr) && (*itr)->isAlive())
+                            (*itr)->HandleEmote(EMOTE_STATE_READY1H);
+
+                CreatureCreatePos pos(m_creature->GetMap(), m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), m_creature->GetOrientation());
+                m_creature->SetSummonPoint(pos);
+                m_bWaypointEnd = true;
+
+                m_creature->RelocateCreature(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), m_creature->GetOrientation());
+                RelocateKaldorei(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), m_creature->GetOrientation());
+
+                Creature* pRajaxx = m_pInstance->GetSingleCreatureFromStorage(NPC_RAJAXX);
+                if (pRajaxx)
+                {
+                    boss_rajaxxAI* pAI = dynamic_cast<boss_rajaxxAI*>(pRajaxx->AI());
+                    if (pAI)
+                    {
+                        pAI->m_uiWaveCount = 1;
+                        pAI->AttackWave();
+                    }
+                }
+
+                if (m_pInstance)
+                    m_pInstance->SetData(TYPE_RAJAXX, IN_PROGRESS);
+            }
         }
 
         m_bCanMoveNext = true;
@@ -636,8 +677,27 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+        if(m_uiKaldoreiTurnTimer)
+        {
+            if(m_uiKaldoreiTurnTimer <= uiDiff)
+            {
+                m_uiKaldoreiTurnTimer = 0;
+
+                std::list<Creature*> m_lKaldorei;
+                GetCreatureListWithEntryInGrid(m_lKaldorei, m_creature, NPC_KALDOREI_ELITE, DEFAULT_VISIBILITY_DISTANCE);
+
+                if (!m_lKaldorei.empty())
+                    for(std::list<Creature*>::iterator itr = m_lKaldorei.begin(); itr != m_lKaldorei.end(); ++itr)
+                        if ((*itr) && (*itr)->isAlive())
+                            (*itr)->SetFacingTo(5.69f);
+
+            }
+            else
+                m_uiKaldoreiTurnTimer -= uiDiff;
+        }
+
         if (!m_bWaypointEnd)
-	{
+	    {
             if (m_bCanMoveNext && m_uiWaitForOthersTimer <= uiDiff)
             {
                 m_bCanMoveNext = false;
@@ -649,7 +709,7 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
             else
                 m_uiWaitForOthersTimer -= uiDiff;
 
-	}
+	    }
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;

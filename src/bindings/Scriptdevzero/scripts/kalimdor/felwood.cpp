@@ -670,6 +670,134 @@ bool GossipSelect_npcs_riverbreeze_and_silversky(Player* pPlayer, Creature* pCre
     return true;
 }
 
+/*####
+# npc_ooze_multi
+####*/
+
+enum eOoze
+{
+	NPC_GLUTINUS_OOZE		= 6559,
+	NPC_PRIMAL_OOZE			= 6557,
+	NPC_FOREST_OOZE			= 8766,
+	NPC_JADE_OOZE			= 2656,
+	NPC_CURSED_OOZE			= 7086,
+	NPC_TAINTED_OOZE		= 7092,
+
+	SPELL_ACID_SLIME		= 14147,
+	SPELL_CLONE				= 14146,
+	SPELL_DISEASE_SLIME		= 6907,
+
+	SPELL_DARK_SLUDGE		= 3335,
+};
+
+struct MANGOS_DLL_DECL npc_ooze_multiAI : public ScriptedAI
+{
+    npc_ooze_multiAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+
+	uint32 m_uiSpell1Entry;
+    uint32 m_uiSpell2Entry;
+
+    uint32 m_uiSpell1Timer;
+    uint32 m_uiSpell2Timer;
+
+	bool m_bCloned;
+
+    void Reset()
+	{
+		m_bCloned = false;
+		m_uiSpell1Timer = urand(4000,12000);
+		m_uiSpell1Timer = urand(12000,22000);
+
+		switch(m_creature->GetEntry())
+        {
+			case NPC_GLUTINUS_OOZE:
+				m_uiSpell1Entry = 0;
+                m_uiSpell2Entry = 0;
+				break;
+            case NPC_PRIMAL_OOZE:
+                m_uiSpell1Entry = 0;
+				m_uiSpell2Entry = SPELL_CLONE;
+                break;
+			case NPC_FOREST_OOZE:
+                m_uiSpell1Entry = SPELL_DISEASE_SLIME;
+                m_uiSpell2Entry = 0;
+                break;
+			case NPC_JADE_OOZE:
+                m_uiSpell1Entry = SPELL_DISEASE_SLIME;
+                m_uiSpell2Entry = 0;
+                break;
+			case NPC_CURSED_OOZE:
+                m_uiSpell1Entry = 0;
+                m_uiSpell2Entry = 0;
+                break;
+			case NPC_TAINTED_OOZE:
+                m_uiSpell1Entry = SPELL_DARK_SLUDGE;
+                m_uiSpell2Entry = 0;
+                break;
+		}
+	}
+
+	void JustDied(Unit* /*pKiller*/)
+    {
+		if(m_creature->GetEntry() == NPC_GLUTINUS_OOZE)
+			m_creature->CastSpell(m_creature, SPELL_ACID_SLIME, true);
+    }
+
+	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)
+    {
+        if (pSpell->Id == 15698 || pSpell->Id == 15699 || pSpell->Id == 15702)			// no need to separate the two kinds of Oozes since the spell has target req in DB
+			m_creature->ForcedDespawn();
+	}
+
+	void Execute(uint32 uiSpellEntry)
+    {
+        Unit* pTarget = NULL;
+        switch(uiSpellEntry)
+        {
+            case SPELL_ACID_SLIME:
+			case SPELL_CLONE:
+			case SPELL_DARK_SLUDGE:
+                pTarget = m_creature;
+                break;
+			case SPELL_DISEASE_SLIME:
+                pTarget = m_creature->getVictim();
+                break;
+        }
+        if (pTarget && uiSpellEntry != 0)
+            DoCastSpellIfCan(pTarget, uiSpellEntry, CAST_AURA_NOT_PRESENT);
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiSpell1Timer < uiDiff)
+        {
+            Execute(m_uiSpell1Entry);
+            m_uiSpell1Timer = urand(15000,30000);
+        }
+        else
+            m_uiSpell1Timer -= uiDiff;
+
+		if(HealthBelowPct(20) && !m_bCloned)
+		{
+			Execute(m_uiSpell2Entry);
+			m_bCloned = true;
+		}
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_ooze_multi(Creature* pCreature)
+{
+    return new npc_ooze_multiAI(pCreature);
+}
+
 void AddSC_felwood()
 {
     Script* pNewscript;
@@ -722,5 +850,10 @@ void AddSC_felwood()
     pNewscript->Name = "npcs_riverbreeze_and_silversky";
     pNewscript->pGossipHello = &GossipHello_npcs_riverbreeze_and_silversky;
     pNewscript->pGossipSelect = &GossipSelect_npcs_riverbreeze_and_silversky;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_ooze_multi";
+    pNewscript->GetAI = &GetAI_npc_ooze_multi;
     pNewscript->RegisterSelf();
 }

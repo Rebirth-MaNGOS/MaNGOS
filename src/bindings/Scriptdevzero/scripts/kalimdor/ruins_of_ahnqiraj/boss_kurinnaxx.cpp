@@ -82,10 +82,12 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
             m_pInstance->SetData(TYPE_KURINNAXX, DONE);
 
         // Summon Andorov
-        if (Creature* pAndorov = m_creature->SummonCreature(NPC_GENERAL_ANDOROV, -8873.42f, 1647.67f, 21.38f, 5.69f, TEMPSUMMON_CORPSE_DESPAWN, 0))
+        if (Creature* pAndorov = m_creature->SummonCreature(NPC_GENERAL_ANDOROV, -8719.97f, 1579.10f, 21.43f, 2.47f, TEMPSUMMON_CORPSE_DESPAWN, 0))
         {
             pAndorov->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR);
-            pAndorov->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+            pAndorov->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+            pAndorov->GetMotionMaster()->MovePoint(3, -8873.42f, 1647.67f, 21.38f);
+            //pAndorov->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         }
     }
 
