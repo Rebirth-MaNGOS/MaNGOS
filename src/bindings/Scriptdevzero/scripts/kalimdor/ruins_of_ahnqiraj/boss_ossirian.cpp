@@ -318,8 +318,6 @@ struct MANGOS_DLL_DECL npc_ossirian_dummyAI : public ScriptedAI
                         m_creature->CastSpell(pOssirian, SPELL_SHADOW_WEAKNESS, false);
                         break;
                 }
-
-                sLog.outBasic("Casted!");
             }
 
             m_bHasCasted = true;
