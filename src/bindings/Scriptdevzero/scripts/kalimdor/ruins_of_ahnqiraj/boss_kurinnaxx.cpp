@@ -86,7 +86,7 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
         {
             pAndorov->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR);
             pAndorov->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-            pAndorov->GetMotionMaster()->MovePoint(3, -8873.42f, 1647.67f, 21.38f);
+            pAndorov->GetMotionMaster()->MovePoint(5, -8873.42f, 1647.67f, 21.38f, false);
             //pAndorov->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         }
     }
