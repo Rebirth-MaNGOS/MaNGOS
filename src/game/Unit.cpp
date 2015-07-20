@@ -9869,12 +9869,12 @@ void Unit::RemovePetAura(PetAura const* petSpell)
         pet->RemoveAurasDueToSpell(petSpell->GetAura(pet->GetEntry()));
 }
 
-TemporaryGameObject* Unit::SummonGameObject(uint32 entry, uint32 duration, float x, float y, float z, float ang, GOState initialState)
+TemporaryGameObject* Unit::SummonGameObject(uint32 entry, uint32 duration, float x, float y, float z, float ang, GOState initialState, uint32 animprogress)
 {
     TemporaryGameObject* pGameObj = new TemporaryGameObject(duration);
 
     if(!pGameObj->Create(GetMap()->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), entry, GetMap(),
-                         x, y, z, ang, 0.0f, 0.0f, 0.0f, 0.0f, GO_ANIMPROGRESS_DEFAULT, GO_STATE_READY))
+                         x, y, z, ang, 0.0f, 0.0f, 0.0f, 0.0f, animprogress, GO_STATE_READY))
     {
         delete pGameObj;
         return nullptr;

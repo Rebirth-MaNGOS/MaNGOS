@@ -75,13 +75,6 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
     {
         m_pInstance = ((instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData());
 
-        /*for (short i = 0; i < 11; ++i)
-        {
-            GameObject* pGO = m_creature->SummonGameObject(180619, 0, Crystal[i].x, Crystal[i].y, Crystal[i].z, 0.f, GO_STATE_READY);
-            pGO->SetLootState(LootState::GO_READY);
-            pGO->SetOwnerGuid(ObjectGuid());
-        }*/
-
         Reset();
     }
 
@@ -91,12 +84,13 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
     uint32 m_uiCurseOfTonguesTimer;
     uint32 m_uiEnvelopingWingsTimer;
 
+    std::list<uint8> m_lCrystalPos;
+
     void Reset()
     {
         if (m_pInstance)
         {
             m_pInstance->SetData(TYPE_OSSIRIAN, NOT_STARTED);
-            DespawnLastSummonedCrystal();
 			TornadoesVisibility(1);
 			SpawnCrystal(0);
         }
@@ -163,22 +157,22 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
         if (m_pInstance)
         {
             m_pInstance->SetData(TYPE_OSSIRIAN, DONE);
-            DespawnLastSummonedCrystal();
 			TornadoesVisibility(1);
         }
     }
 
-    void DespawnLastSummonedCrystal()
-    {
-		if (GameObject* pLastCrystal = m_pInstance->GetSingleGameObjectFromStorage(GO_OSSIRIAN_CRYSTAL))
-            pLastCrystal->AddObjectToRemoveList();
-    }
-
 	void SpawnCrystal(int SpawnPoint = 0)
 	{
-		GameObject* pGO = m_creature->SummonGameObject(180619, 0, Crystal[SpawnPoint].x, Crystal[SpawnPoint].y, Crystal[SpawnPoint].z, 0.f, GO_STATE_READY);
-        pGO->SetLootState(LootState::GO_READY);
-        pGO->SetOwnerGuid(ObjectGuid());
+		GameObject* pGO = m_creature->SummonGameObject(180619, 0, Crystal[SpawnPoint].x, Crystal[SpawnPoint].y, Crystal[SpawnPoint].z, 0.f, GO_STATE_READY, 75);
+        if (pGO)
+        {
+            pGO->SetOwnerGuid(ObjectGuid());
+
+            // Reset the anim progress once the crystal has spawned.
+            pGO->SetGoAnimProgress(GO_ANIMPROGRESS_DEFAULT);
+        }
+        
+        m_lCrystalPos.push_back(SpawnPoint);
 	}
 
     void TeleportFarAwayPlayerBack(float /*range = 0.0f*/, bool alive = true)			// not working, should it?
@@ -344,23 +338,41 @@ bool GOUse_go_ossirian_crystal(Player* pPlayer, GameObject* pGo)
             0.f,
             TEMPSUMMON_TIMED_DESPAWN,
             50000, true);
-    
+
     // Spawn next Ossirian Crystal at random position
-    bool RollAgain = true;
-    while(RollAgain)
-    {
-        uint8 random = rand()%8;
-        // If positionX of new crystal != positionX current crystal, spawn new crystal and stop roll
-		if (GameObject* pCrystal = pGo->GetClosestGameObjectWithEntry(pGo, GO_OSSIRIAN_CRYSTAL, 200))
-			if(pGo->GetPositionX() != Crystal[random].x && pCrystal->GetPositionX() != Crystal[random].x)		// check for already spawned crystal
-			{
-				Creature* pOssirian = GetClosestCreatureWithEntry(pGo, NPC_OSSIRIAN, 100.0f);					// change this!
-				if (boss_ossirianAI* pOssirianAI = dynamic_cast<boss_ossirianAI*>(pOssirian->AI()))
-					pOssirianAI->SpawnCrystal(random);
-				RollAgain = false;
-			}
-    }
-    
+   instance_ruins_of_ahnqiraj* pInstance = dynamic_cast<instance_ruins_of_ahnqiraj*>(pPlayer->GetInstanceData()); 
+   if (pInstance)
+   {
+       Creature* pOssirian = pInstance->GetSingleCreatureFromStorage(NPC_OSSIRIAN);
+       if (pOssirian)
+       {
+           boss_ossirianAI* pAI = dynamic_cast<boss_ossirianAI*>(pOssirian->AI());
+           if (pAI)
+           {
+               // Get all free spots by removing any spots that are already in use.
+               std::vector<short> spotList;
+               for (short index = 0; index < 10; ++index)
+               {
+                   // Check if we're at the current crystal.
+                   if (pGo->GetPositionX() == Crystal[index].x && pGo->GetPositionY() == Crystal[index].y &&
+                       pGo->GetPositionZ() == Crystal[index].z)
+                   {
+                       pAI->m_lCrystalPos.remove(index);
+                       continue;
+                   } // Check if the spot is taken already.
+                   else if (std::find(pAI->m_lCrystalPos.begin(), pAI->m_lCrystalPos.end(), index) != pAI->m_lCrystalPos.end())
+                   {
+                       continue;
+                   }
+
+                   spotList.push_back(index);
+               }
+
+               pAI->SpawnCrystal(spotList[urand(0, spotList.size() - 1)]);
+           }
+       }
+   }
+
     //pGo->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE + GO_FLAG_INTERACT_COND); // clicked crystal become unclickable
     pGo->SetGoState(GO_STATE_ACTIVE);
     pGo->SetRespawnTime(5); // despawn after 5 secs
