@@ -55,18 +55,18 @@ enum Spells
 	SPELL_SAND_STORM			  = 25160,                // tornado spell
 };
 
-//static Loc Crystal[]=
-//{
-//	{-9429.f, 1971.f, 85.65f},
-//    {-9449.53f, 1988.67f, 85.91f}, // first
-//    {-9375.54f, 2061.64f, 85.91f},
-//    {-9254.70f, 1952.90f, 85.55f},
-//    {-9197.60f, 1849.50f, 85.55f},
-//    {-9301.75f, 1748.75f, 85.55f},
-//    {-9393.15f, 1835.80f, 85.55f},
-//    {-9509.55f, 1864.75f, 85.55f}
-//};
-//
+static Loc Crystal[]=
+{
+	{-9429.f, 1971.f, 85.65f},
+    {-9449.53f, 1988.67f, 85.91f}, // first
+    {-9375.54f, 2061.64f, 85.91f},
+    {-9254.70f, 1952.90f, 85.55f},
+    {-9197.60f, 1849.50f, 85.55f},
+    {-9301.75f, 1748.75f, 85.55f},
+    {-9393.15f, 1835.80f, 85.55f},
+    {-9509.55f, 1864.75f, 85.55f}
+};
+
 static Loc Tornado[]=
 {
     {-9444.0f,1857.0f,85.55f, 0, 0},
@@ -78,6 +78,14 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
     boss_ossirianAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = ((instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData());
+
+        for (short i = 0; i < 8; ++i)
+        {
+            GameObject* pGO = m_creature->SummonGameObject(180619, 0, Crystal[i].x, Crystal[i].y, Crystal[i].z, 0.f, GO_STATE_READY);
+            pGO->SetLootState(LootState::GO_READY);
+            pGO->SetOwnerGuid(ObjectGuid());
+        }
+
         Reset();
     }
 
@@ -273,32 +281,69 @@ CreatureAI* GetAI_boss_ossirian(Creature* pCreature)
     return new boss_ossirianAI(pCreature);
 }
 
+struct MANGOS_DLL_DECL npc_ossirian_dummyAI : public ScriptedAI
+{
+    npc_ossirian_dummyAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_bHasCasted = false;
+    }
+
+    bool m_bHasCasted;
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_bHasCasted)
+        {
+            if (Creature* pOssirian = GetClosestCreatureWithEntry(m_creature, NPC_OSSIRIAN, 20.0f))
+            {
+                switch (urand(0,4))
+                {
+                    case 0:
+                        m_creature->CastSpell(pOssirian, SPELL_FIRE_WEAKNESS, false);
+                        break;
+                    case 1:
+                        m_creature->CastSpell(pOssirian, SPELL_FROST_WEAKNESS, false);
+                        break;
+                    case 2:
+                        m_creature->CastSpell(pOssirian, SPELL_NATURE_WEAKNESS, false);
+                        break;
+                    case 3:
+                        m_creature->CastSpell(pOssirian, SPELL_ARCANE_WEAKNESS, false);
+                        break;
+                    case 4:
+                        m_creature->CastSpell(pOssirian, SPELL_SHADOW_WEAKNESS, false);
+                        break;
+                }
+
+                sLog.outBasic("Casted!");
+            }
+
+            m_bHasCasted = true;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_ossirian_dummy(Creature* pCreature)
+{
+    return new npc_ossirian_dummyAI(pCreature);
+}
+
 bool GOUse_go_ossirian_crystal(Player* pPlayer, GameObject* pGo)
 {
     if (!pPlayer)
         return false;
 
-    if (Creature* pOssirian = GetClosestCreatureWithEntry(pGo, NPC_OSSIRIAN, 20.0f))
-    {
-        switch(urand(0,4))
-        {
-            case 0:
-                pPlayer->CastSpell(pOssirian, SPELL_FIRE_WEAKNESS, false);
-                break;
-            case 1:
-                pPlayer->CastSpell(pOssirian, SPELL_FROST_WEAKNESS, false);
-                break;
-            case 2:
-                pPlayer->CastSpell(pOssirian, SPELL_NATURE_WEAKNESS, false);
-                break;
-            case 3:
-                pPlayer->CastSpell(pOssirian, SPELL_ARCANE_WEAKNESS, false);
-                break;
-            case 4:
-                pPlayer->CastSpell(pOssirian, SPELL_SHADOW_WEAKNESS, false);
-                break;
-        }
-    }
+    pGo->SummonCreature(7080, 
+            pGo->GetPositionX(),
+            pGo->GetPositionY(),
+            pGo->GetPositionZ(),
+            0.f,
+            TEMPSUMMON_TIMED_DESPAWN,
+            50000, true);
     
     // Spawn next Ossirian Crystal at random position
     //bool RollAgain = true;
@@ -373,4 +418,9 @@ void AddSC_boss_ossirian()
 	pNewscript->Name = "npc_sand_vortex";
 	pNewscript->GetAI = &GetAI_npc_sand_vortex;
 	pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_ossirian_dummy";
+    pNewscript->GetAI = &GetAI_npc_ossirian_dummy;
+    pNewscript->RegisterSelf();
 }
