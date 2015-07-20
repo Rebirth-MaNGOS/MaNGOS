@@ -57,20 +57,16 @@ enum Spells
 
 static Loc Crystal[]=
 {
-	{-9429.f, 1971.f, 85.65f},
-    {-9449.53f, 1988.67f, 85.91f}, // first
-    {-9375.54f, 2061.64f, 85.91f},
-    {-9254.70f, 1952.90f, 85.55f},
-    {-9197.60f, 1849.50f, 85.55f},
-    {-9301.75f, 1748.75f, 85.55f},
-    {-9393.15f, 1835.80f, 85.55f},
-    {-9509.55f, 1864.75f, 85.55f}
-};
-
-static Loc Tornado[]=
-{
-    {-9444.0f,1857.0f,85.55f, 0, 0},
-    {-9352.0f,2012.0f,85.55f, 0, 0}
+	{-9406.92f, 1955.86f, 85.55f},		// 1st confirmed
+	{-9357.88f, 1931.86f, 85.55f},		// 2nd confirmed
+	{-9401.97f, 1861.20f, 85.55f},		// 3rd confirmed
+	{-9224.90f, 1820.36f, 85.55f},		// 4th confirmed
+	{-9281.58f, 1887.36f, 85.55f},		// 5th confirmed
+	{-9299.33f, 1750.32f, 85.55f},		// 6th confirmed
+	{-9427.51f, 1789.18f, 85.55f},		// 7th confirmed
+	{-9511.07f, 1862.75f, 85.55f},		// 8th confirmed
+	{-9376.47f, 2008.02f, 85.55f},		// 9th confirmed
+	{-9245.51f, 1980.58f, 85.55f},		// 10th not confirmed
 };
 
 struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
@@ -79,12 +75,12 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
     {
         m_pInstance = ((instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData());
 
-        for (short i = 0; i < 8; ++i)
+        /*for (short i = 0; i < 11; ++i)
         {
             GameObject* pGO = m_creature->SummonGameObject(180619, 0, Crystal[i].x, Crystal[i].y, Crystal[i].z, 0.f, GO_STATE_READY);
             pGO->SetLootState(LootState::GO_READY);
             pGO->SetOwnerGuid(ObjectGuid());
-        }
+        }*/
 
         Reset();
     }
@@ -100,8 +96,9 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
         if (m_pInstance)
         {
             m_pInstance->SetData(TYPE_OSSIRIAN, NOT_STARTED);
-            //DespawnLastSummonedCrystal();
+            DespawnLastSummonedCrystal();
 			TornadoesVisibility(1);
+			SpawnCrystal(0);
         }
 
         m_uiWarStompTimer = urand(8000,12000);
@@ -145,14 +142,12 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
 
         DoScriptText(SAY_AGGRO, m_creature);
         DoCastSpellIfCan(m_creature, SPELL_STRENGTH_OF_OSSIRIAN);
-
+		int rand = urand(1,10);
+			SpawnCrystal(rand);
         /*uint32 zoneid = m_creature->GetZoneId();
         if (Weather* pWth = sWorld.FindWeather(zoneid))
             pWth->SetWeather(WeatherType(3), 2);*/
 		TornadoesVisibility(0);
-
-        // This spawn first Ossirian Crystal
-        //m_creature->SummonGameObject(GO_OSSIRIAN_CRYSTAL, Crystal[0].x, Crystal[0].x, Crystal[0].x, 0, 0);
     }
     
     void KilledUnit(Unit* pVictim)
@@ -168,16 +163,23 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
         if (m_pInstance)
         {
             m_pInstance->SetData(TYPE_OSSIRIAN, DONE);
-            //DespawnLastSummonedCrystal();
+            DespawnLastSummonedCrystal();
 			TornadoesVisibility(1);
         }
     }
 
-    /*void DespawnLastSummonedCrystal()
+    void DespawnLastSummonedCrystal()
     {
 		if (GameObject* pLastCrystal = m_pInstance->GetSingleGameObjectFromStorage(GO_OSSIRIAN_CRYSTAL))
             pLastCrystal->AddObjectToRemoveList();
-    }*/
+    }
+
+	void SpawnCrystal(int SpawnPoint = 0)
+	{
+		GameObject* pGO = m_creature->SummonGameObject(180619, 0, Crystal[SpawnPoint].x, Crystal[SpawnPoint].y, Crystal[SpawnPoint].z, 0.f, GO_STATE_READY);
+        pGO->SetLootState(LootState::GO_READY);
+        pGO->SetOwnerGuid(ObjectGuid());
+	}
 
     void TeleportFarAwayPlayerBack(float /*range = 0.0f*/, bool alive = true)			// not working, should it?
     {
@@ -270,7 +272,7 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
         else
             m_uiEnvelopingWingsTimer -= uiDiff;
 
-        TeleportFarAwayPlayerBack(40);
+        TeleportFarAwayPlayerBack(40);			// probably not working
 
         DoMeleeAttackIfReady();
     }
@@ -344,17 +346,20 @@ bool GOUse_go_ossirian_crystal(Player* pPlayer, GameObject* pGo)
             50000, true);
     
     // Spawn next Ossirian Crystal at random position
-    //bool RollAgain = true;
-    //while(RollAgain)
-    //{
-    //    uint8 random = rand()%8;
-    //    // If positionX of new crystal != positionX current crystal, spawn new crystal and stop roll
-    //    if(pGo->GetPositionX() != Crystal[random].x)
-    //    {
-    //        pPlayer->SummonGameObject(GO_OSSIRIAN_CRYSTAL, Crystal[random].x, Crystal[random].y, Crystal[random].z,0,0);
-    //        RollAgain = false;
-    //    }
-    //}
+    bool RollAgain = true;
+    while(RollAgain)
+    {
+        uint8 random = rand()%8;
+        // If positionX of new crystal != positionX current crystal, spawn new crystal and stop roll
+		if (GameObject* pCrystal = pGo->GetClosestGameObjectWithEntry(pGo, GO_OSSIRIAN_CRYSTAL, 200))
+			if(pGo->GetPositionX() != Crystal[random].x && pCrystal->GetPositionX() != Crystal[random].x)		// check for already spawned crystal
+			{
+				Creature* pOssirian = GetClosestCreatureWithEntry(pGo, NPC_OSSIRIAN, 100.0f);					// change this!
+				if (boss_ossirianAI* pOssirianAI = dynamic_cast<boss_ossirianAI*>(pOssirian->AI()))
+					pOssirianAI->SpawnCrystal(random);
+				RollAgain = false;
+			}
+    }
     
     //pGo->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE + GO_FLAG_INTERACT_COND); // clicked crystal become unclickable
     pGo->SetGoState(GO_STATE_ACTIVE);
