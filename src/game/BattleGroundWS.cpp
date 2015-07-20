@@ -543,7 +543,7 @@ void BattleGroundWS::Reset()
         m_TeamScores[i]      = 0;
     }
     bool isBGWeekend = BattleGroundMgr::IsBGWeekend(GetTypeID());
-    m_ReputationCapture = (isBGWeekend) ? 25 : 15;
+    m_ReputationCapture = (isBGWeekend) ? 45 : 35;		// 25 : 15 before
     m_HonorWinKills = (isBGWeekend) ? 3 : 1;
     m_HonorEndKills = (isBGWeekend) ? 4 : 2;
 }
