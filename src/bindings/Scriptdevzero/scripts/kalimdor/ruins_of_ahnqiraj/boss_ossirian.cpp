@@ -194,6 +194,28 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
         }
     }
 
+	void SetResistances(int School = 0, int Value = 0)
+	{
+		switch(School)
+		{
+			case 0:
+				m_creature->SetResistance(SPELL_SCHOOL_FIRE, Value);
+				break;
+			case 1:
+				m_creature->SetResistance(SPELL_SCHOOL_FROST, Value);
+				break;
+			case 2:
+				m_creature->SetResistance(SPELL_SCHOOL_SHADOW, Value);
+				break;
+			case 3:
+				m_creature->SetResistance(SPELL_SCHOOL_ARCANE, Value);
+				break;
+			case 4:
+				m_creature->SetResistance(SPELL_SCHOOL_NATURE, Value);
+				break;
+		}
+	}
+
     void TeleportFarAwayPlayerBack(float /*range = 0.0f*/, bool alive = true)			// not working, should it?
     {
         Map* map = m_creature->GetMap();
@@ -257,6 +279,31 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
                     break;
             }
         }
+
+		if (m_creature->HasAura(SPELL_FIRE_WEAKNESS))			// adjust resistance according to what debuff he has
+			SetResistances(0,0);
+		else
+			SetResistances(0,1000);
+
+		if (m_creature->HasAura(SPELL_FROST_WEAKNESS))
+			SetResistances(1,0);
+		else
+			SetResistances(1,1000);
+
+		if (m_creature->HasAura(SPELL_SHADOW_WEAKNESS))
+			SetResistances(2,0);
+		else
+			SetResistances(2,1000);
+
+		if (m_creature->HasAura(SPELL_ARCANE_WEAKNESS))
+			SetResistances(3,0);
+		else
+			SetResistances(3,1000);
+
+		if (m_creature->HasAura(SPELL_NATURE_WEAKNESS))
+			SetResistances(4,0);
+		else
+			SetResistances(4,1000);
 
         // War Stom
         if (m_uiWarStompTimer <= uiDiff)
