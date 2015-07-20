@@ -22,8 +22,8 @@ SDCategory: Ruins of Ahn'Qiraj
 EndScriptData */
 
 #include "precompiled.h"
-//#include "World.h"
-//#include "Weather.h"
+#include "World.h"
+#include "Weather.h"
 #include "ruins_of_ahnqiraj.h"
 
 enum Yells
@@ -57,16 +57,16 @@ enum Spells
 
 static Loc Crystal[]=
 {
-	{-9406.92f, 1955.86f, 85.55f},		// 1st confirmed
-	{-9357.88f, 1931.86f, 85.55f},		// 2nd confirmed
-	{-9401.97f, 1861.20f, 85.55f},		// 3rd confirmed
-	{-9224.90f, 1820.36f, 85.55f},		// 4th confirmed
-	{-9281.58f, 1887.36f, 85.55f},		// 5th confirmed
-	{-9299.33f, 1750.32f, 85.55f},		// 6th confirmed
-	{-9427.51f, 1789.18f, 85.55f},		// 7th confirmed
-	{-9511.07f, 1862.75f, 85.55f},		// 8th confirmed
-	{-9376.47f, 2008.02f, 85.55f},		// 9th confirmed
-	{-9245.51f, 1980.58f, 85.55f},		// 10th not confirmed
+	{-9406.92f, 1955.86f, 85.55f, 0, 0},		// 1st confirmed
+	{-9357.88f, 1931.86f, 85.55f, 0, 0},		// 2nd confirmed
+	{-9401.97f, 1861.20f, 85.55f, 0, 0},		// 3rd confirmed
+	{-9224.90f, 1820.36f, 85.55f, 0, 0},		// 4th confirmed
+	{-9281.58f, 1887.36f, 85.55f, 0, 0},		// 5th confirmed
+	{-9299.33f, 1750.32f, 85.55f, 0, 0},		// 6th confirmed
+	{-9427.51f, 1789.18f, 85.55f, 0, 0},		// 7th confirmed
+	{-9511.07f, 1862.75f, 85.55f, 0, 0},		// 8th confirmed
+	{-9376.47f, 2008.02f, 85.55f, 0, 0},		// 9th confirmed
+	{-9245.51f, 1980.58f, 85.55f, 0, 0},		// 10th not confirmed
 };
 
 struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
@@ -139,11 +139,13 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
 
         DoScriptText(SAY_AGGRO, m_creature);
         DoCastSpellIfCan(m_creature, SPELL_STRENGTH_OF_OSSIRIAN);
+
 		int rand = urand(1,9);
-			SpawnCrystal(rand);
-        /*uint32 zoneid = m_creature->GetZoneId();
-        if (Weather* pWth = sWorld.FindWeather(zoneid))
-            pWth->SetWeather(WeatherType(3), 2);*/
+        SpawnCrystal(rand);
+
+        uint32 zoneid = m_creature->GetZoneId();
+        SetWeather(zoneid, WeatherType(3), 2);
+        
 		TornadoesVisibility(0);
     }
     
@@ -307,7 +309,7 @@ struct MANGOS_DLL_DECL npc_ossirian_dummyAI : public ScriptedAI
     {
     }
 
-    void UpdateAI(const uint32 uiDiff)
+    void UpdateAI(const uint32 /*uiDiff*/)
     {
         if (!m_bHasCasted)
         {
@@ -420,7 +422,7 @@ struct MANGOS_DLL_DECL npc_sand_vortexAI : public ScriptedAI
         // Must to be empty to ignore aggro
     }
 
-	void UpdateAI(const uint32 uiDiff)
+	void UpdateAI(const uint32 /*uiDiff*/)
     {
 		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;

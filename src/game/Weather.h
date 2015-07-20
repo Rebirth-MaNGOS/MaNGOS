@@ -70,4 +70,6 @@ class Weather
         ShortIntervalTimer m_timer;
         WeatherZoneChances const* m_weatherChances;
 };
+
+void MANGOS_DLL_SPEC SetWeather(uint32 zoneID, WeatherType type, float grade);
 #endif

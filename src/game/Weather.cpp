@@ -332,3 +332,9 @@ uint32 Weather::GetSound()
         case WEATHER_TYPE_THUNDERS:
             return WEATHER_STATE_THUNDERS; */
 }
+
+void MANGOS_DLL_SPEC SetWeather(uint32 zoneID, WeatherType type, float grade)
+{
+    if (Weather* pWth = sWorld.FindWeather(zoneID))
+        pWth->SetWeather(type, grade);
+}
