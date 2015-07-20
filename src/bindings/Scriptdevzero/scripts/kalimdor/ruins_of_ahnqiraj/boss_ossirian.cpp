@@ -85,15 +85,18 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
     uint32 m_uiEnvelopingWingsTimer;
 
     std::list<uint8> m_lCrystalPos;
+    std::list<ObjectGuid> m_lCrystalList;
 
     void Reset()
     {
         if (m_pInstance)
         {
             m_pInstance->SetData(TYPE_OSSIRIAN, NOT_STARTED);
-			TornadoesVisibility(1);
-			SpawnCrystal(0);
+            TornadoesVisibility(1);
         }
+
+        DeleteCrystals();
+        SpawnCrystal(0);
 
         m_uiWarStompTimer = urand(8000,12000);
         m_uiCurseOfTonguesTimer = urand(15000,20000);
@@ -136,7 +139,7 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
 
         DoScriptText(SAY_AGGRO, m_creature);
         DoCastSpellIfCan(m_creature, SPELL_STRENGTH_OF_OSSIRIAN);
-		int rand = urand(1,10);
+		int rand = urand(1,9);
 			SpawnCrystal(rand);
         /*uint32 zoneid = m_creature->GetZoneId();
         if (Weather* pWth = sWorld.FindWeather(zoneid))
@@ -159,21 +162,35 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
             m_pInstance->SetData(TYPE_OSSIRIAN, DONE);
 			TornadoesVisibility(1);
         }
+
+        DeleteCrystals();
     }
 
 	void SpawnCrystal(int SpawnPoint = 0)
 	{
-		GameObject* pGO = m_creature->SummonGameObject(180619, 0, Crystal[SpawnPoint].x, Crystal[SpawnPoint].y, Crystal[SpawnPoint].z, 0.f, GO_STATE_READY, 75);
+		GameObject* pGO = m_creature->SummonGameObject(180619, 0, Crystal[SpawnPoint].x, Crystal[SpawnPoint].y, Crystal[SpawnPoint].z, 0.f, GO_STATE_READY, 70);
         if (pGO)
         {
             pGO->SetOwnerGuid(ObjectGuid());
 
             // Reset the anim progress once the crystal has spawned.
             pGO->SetGoAnimProgress(GO_ANIMPROGRESS_DEFAULT);
+
+            m_lCrystalList.push_back(pGO->GetObjectGuid());
         }
         
         m_lCrystalPos.push_back(SpawnPoint);
 	}
+
+    void DeleteCrystals()
+    {
+        for (ObjectGuid guid : m_lCrystalList)
+        {
+            TemporaryGameObject* pGo = dynamic_cast<TemporaryGameObject*>(m_creature->GetMap()->GetGameObject(guid));
+            if (pGo)
+                pGo->Delete(true);
+        }
+    }
 
     void TeleportFarAwayPlayerBack(float /*range = 0.0f*/, bool alive = true)			// not working, should it?
     {

@@ -502,9 +502,10 @@ void GameObject::AddUniqueUse(Player* player)
 
 }
 
-void GameObject::Delete()
+void GameObject::Delete(bool withoutAnim)
 {
-    SendObjectDeSpawnAnim(GetObjectGuid());
+    if (!withoutAnim)
+        SendObjectDeSpawnAnim(GetObjectGuid());
 
     SetGoState(GO_STATE_READY);
     SetUInt32Value(GAMEOBJECT_FLAGS, GetGOInfo()->flags);

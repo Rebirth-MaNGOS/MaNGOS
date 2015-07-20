@@ -615,7 +615,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 			m_cooldownTime = time;
 		}
 		void Refresh();
-        void Delete();
+        void Delete(bool withoutAnim = false);
         void TimedDeletion(uint32 msTime, std::function<bool()> callback);
 
         // Functions spawn/remove gameobject with DB guid in all loaded map copies (if point grid loaded in map)
