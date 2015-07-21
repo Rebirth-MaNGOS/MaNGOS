@@ -79,8 +79,7 @@ struct MANGOS_DLL_DECL boss_huhuranAI : public ScriptedAI
         // Wyvern Timer
         if (Wyvern_Timer < diff)
         {
-            if (Unit *target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
-                DoCastSpellIfCan(target,SPELL_WYVERNSTING);
+            DoCast(m_creature, SPELL_WYVERNSTING, true);    
             Wyvern_Timer = urand(15000, 32000);
         }else Wyvern_Timer -= diff;
 
@@ -103,7 +102,7 @@ struct MANGOS_DLL_DECL boss_huhuranAI : public ScriptedAI
         {
             if (PoisonBolt_Timer < diff)
             {
-                DoCastSpellIfCan(m_creature->getVictim(),SPELL_POISONBOLT);
+                DoCast(m_creature,SPELL_POISONBOLT, true);
                 PoisonBolt_Timer = 3000;
             }else PoisonBolt_Timer -= diff;
         }
