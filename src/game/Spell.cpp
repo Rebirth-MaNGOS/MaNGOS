@@ -1764,8 +1764,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case 28796:                                 // Poison Bolt Volley
             unMaxTargets = 10;
             break;
-        case 25991:                                 // Poison Bolt Volley (Pincess Huhuran)
-            unMaxTargets = 15;
+        case 26052:                                 // Poison Bolt Volley (Pincess Huhuran)
+            unMaxTargets = 60;
+            break;
+        case 26180:
+            unMaxTargets = 60;
             break;
         }
         break;
@@ -2091,6 +2094,35 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                         itr = targetUnitMap.erase(itr);
                     else
                         ++itr;
+                }
+            }
+        }
+
+        // Princess Huhuran poison bolts should only target the 15 closest units.
+        // Princess Huhuran Vywern Sting should only target the 10 closest units.
+        if(m_spellInfo->Id == 26052 || m_spellInfo->Id == 26180)
+        {
+            Unit *pCaster = GetCaster();
+            if(pCaster)
+            {
+                targetUnitMap.sort(TargetDistanceOrderNear(pCaster));
+                auto itr = targetUnitMap.begin();
+                uint8 itrC;
+                
+                if(m_spellInfo->Id == 26052)
+                    itrC = 1;
+                else
+                    itrC = 6;
+
+                while (itr != targetUnitMap.end())
+                {
+                    if (itrC > 15)
+                        itr = targetUnitMap.erase(itr);
+                    else
+                    {
+                        ++itr;
+                        ++itrC;
+                    }
                 }
             }
         }

@@ -94,7 +94,7 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
             // While whirlwind, switch to random targets often
             if (m_uiWhirlWindRandomTimer < uiDiff)
             {
-                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
                 {
                     m_creature->AddThreat(pTarget);
                     m_creature->TauntApply(pTarget);
@@ -219,7 +219,7 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
             // While whirlwind, switch to random targets often
             if (m_uiWhirlWindRandomTimer < uiDiff)
             {
-                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
                 {
                     m_creature->AddThreat(pTarget);
                     m_creature->TauntApply(pTarget);
