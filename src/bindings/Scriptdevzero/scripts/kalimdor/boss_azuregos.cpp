@@ -86,11 +86,11 @@ struct MANGOS_DLL_DECL boss_azuregosAI : public ScriptedAI
     
     void JustDied(Unit* /*pKiller*/)
     {
-	uint32 respawn_time = urand(259200, 432000); // A random respawn time between 3 days and 5 days.
+		uint32 respawn_time = urand(86400, 604800); // A random respawn time between 1 day and 7 days.
 	
-	m_creature->SetRespawnDelay(respawn_time);
-	m_creature->SetRespawnTime(respawn_time);
-	m_creature->SaveRespawnTime();
+		m_creature->SetRespawnDelay(respawn_time);
+		m_creature->SetRespawnTime(respawn_time);
+		m_creature->SaveRespawnTime();
     }
     
     void JustRespawned()

@@ -121,6 +121,11 @@ struct MANGOS_DLL_DECL boss_lordkazzakAI : public ScriptedAI
     void JustDied(Unit* /*victim*/)
     {
         DoScriptText(SAY_DEATH, m_creature);
+		uint32 respawn_time = urand(86400, 604800); // A random respawn time between 1 day and 7 days.
+	
+		m_creature->SetRespawnDelay(respawn_time);
+		m_creature->SetRespawnTime(respawn_time);
+		m_creature->SaveRespawnTime();
     }
 
     void UpdateAI(const uint32 diff)
