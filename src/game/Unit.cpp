@@ -2284,13 +2284,13 @@ void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool ex
         {
             pVictim->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
         }
-    }
 
-    // Auto-attack should be sent to spell hit for mobs.
-    SpellEntry const* spell = sSpellStore.LookupEntry(6603);
-    Creature* pCreature = dynamic_cast<Creature*>(pVictim);
-    if (pCreature && pCreature->AI() && spell)
-        pCreature->AI()->SpellHit(this, spell);
+        // Auto-attack should be sent to spell hit for mobs.
+        SpellEntry const* spell = sSpellStore.LookupEntry(6603);
+        Creature* pCreature = dynamic_cast<Creature*>(pVictim);
+        if (pCreature && pCreature->AI() && spell)
+            pCreature->AI()->SpellHit(this, spell);
+    }
 }
 
 MeleeHitOutcome Unit::RollMeleeOutcomeAgainst(const Unit *pVictim, WeaponAttackType attType) const
