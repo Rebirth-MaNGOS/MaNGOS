@@ -2077,6 +2077,24 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             }
         }
 
+        // Periodic Shadow Storm in AQ40 should not target units
+        // that are closer than 5 yd.
+        if (m_spellInfo->Id == 26546)
+        {
+            Unit* pCaster = GetCaster();
+            if (pCaster)
+            {
+                auto itr = targetUnitMap.begin();
+                while (itr != targetUnitMap.end())
+                {
+                    if (pCaster->IsWithinDistInMap(*itr, 5.f, false))
+                        itr = targetUnitMap.erase(itr);
+                    else
+                        ++itr;
+                }
+            }
+        }
+
 
         break;
     }
