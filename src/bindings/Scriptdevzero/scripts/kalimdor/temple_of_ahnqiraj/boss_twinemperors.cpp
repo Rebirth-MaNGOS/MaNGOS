@@ -283,10 +283,11 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
             float other_z = pOtherBoss->GetPositionZ();
             float other_o = pOtherBoss->GetOrientation();
 
-            Map *thismap = m_creature->GetMap();
-            thismap->CreatureRelocation(pOtherBoss, m_creature->GetPositionX(),
+            pOtherBoss->RelocateCreature(m_creature->GetPositionX(),
                 m_creature->GetPositionY(),    m_creature->GetPositionZ(), m_creature->GetOrientation());
-            thismap->CreatureRelocation(m_creature, other_x, other_y, other_z, other_o);
+            pOtherBoss->GetMotionMaster()->MoveIdle();
+            m_creature->RelocateCreature(other_x, other_y, other_z, other_o);
+            m_creature->GetMotionMaster()->MoveIdle();
 
             SetAfterTeleport();
 
@@ -328,6 +329,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
                 //DoYell(nearu->GetName(), LANG_UNIVERSAL, 0);
                 AttackStart(nearu);
                 m_creature->getThreatManager().addThreat(nearu, 10000);
+                m_creature->GetMotionMaster()->MoveChase(nearu, 0.f, 0.f);
                 return true;
             }
             else
