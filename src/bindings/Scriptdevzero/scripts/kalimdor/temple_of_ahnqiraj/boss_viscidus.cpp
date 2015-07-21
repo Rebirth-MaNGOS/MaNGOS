@@ -64,6 +64,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 	bool m_bCracking1;
 	bool m_bCracking2;
 	bool m_bExploded;
+    bool m_bSummoned;
 
 	bool m_bCanDoDamage;
 
@@ -79,6 +80,9 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 	uint32 m_uiPoisonVolleyTimer;
 	uint32 m_uiToxicCloudTimer;
 
+    float globs;
+    uint32 globCounter;
+
     void Reset()
     {
 		m_uiGlobCount = 0;
@@ -88,6 +92,8 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 		m_uiPoisonShockTimer = 11000;
 		m_uiToxicCloudTimer = urand(30000,40000);
 		m_uiThawTimer = 20000;
+        m_bSummoned = false;
+        globCounter = 0;
 		
 		RemoveAuras();
 		ResetBool(0);
@@ -136,16 +142,15 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 			++m_uiFrostSpellCounter;
 			SpellCount();			// count incoming spells
 		}
+        else if(pSpell->School == SPELL_SCHOOL_NORMAL && m_bFrozen)
+		{
+			++m_uiMeleeCounter;
+			MeleeHitCount();
+		}
 	}
 
 	void DamageTaken(Unit* /*pDoneBy*/, uint32& uiDamage)			// Find a real way to distinguish the melee / phys from spells
 	{
-		if(uiDamage == SPELL_SCHOOL_MASK_NORMAL && m_bFrozen)
-		{
-			m_creature->GenericTextEmote("lol.", NULL, false);
-			++m_uiMeleeCounter;
-			MeleeHitCount();
-		}
 	}
 
 	void SpellCount()
@@ -168,7 +173,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 			m_bSlowed2 = true;
 		}
 
-		else if(m_uiFrostSpellCounter >= 10 && !m_bFrozen)					// does this emote multiple times?
+		else if(m_uiFrostSpellCounter >= 2 && !m_bFrozen)					// does this emote multiple times?
 		{
 			m_bCanDoDamage = false;
 			m_bFrozen = true;
@@ -182,7 +187,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
 	void MeleeHitCount()
 	{
-		if(m_uiMeleeCounter >= 1 && !m_bCracking1)
+/*		if(m_uiMeleeCounter >= 1 && !m_bCracking1)
 		{
 			m_creature->GenericTextEmote("Viscidus begins to crack.", NULL, false);
 			m_bCracking1 = true;
@@ -194,48 +199,55 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 			m_bCracking2 = true;
 		}
 
-		else if(m_uiMeleeCounter >= 10 && !m_bExploded)
-		{
+		else if(m_uiMeleeCounter >= 2 && !m_bExploded)
+		{*/
+        if (!m_bExploded)
+        {
 			if (HealthBelowPct(5))			// if Viscidus has less than 5% hp he should die since every glob is 5% hp
                 m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
 
 			m_bCanDoDamage = false;
 			m_bExploded = true;
 			RemoveAuras();					// remove auras if we're gonna explode
+            m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
 			m_creature->CastSpell(m_creature, SPELL_VISCIDUS_EXPLODE,true);
 			m_creature->CastSpell(m_creature, SPELL_ROOT, true);
 			m_creature->GenericTextEmote("Viscidus explodes.", NULL, false);
 			m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);			
 
 			m_uiSetInvisTimer = 4000;
-		}
+        }
+	//	}
 	}
 
 	void SetVisible(int Visible = 0)
 	{
 		if (Visible == 0)
 		{
-			m_creature->RemoveAllAuras();
-			m_creature->AttackStop();
-			m_creature->setFaction(35);
-			DoResetThreat();
 			m_creature->SetVisibility(VISIBILITY_OFF);	
-			if (m_creature->HasAura(SPELL_ROOT))
-				m_creature->RemoveAurasDueToSpell(SPELL_ROOT);
 		}
 		else if (Visible == 1)
 		{
-			m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-            m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);
-            m_creature->SetVisibility(VISIBILITY_ON);
 			ResetBool(1);			// reset all counters for melee here
 			ResetBool(0);			// reset all counters for spells here
+            
+            m_creature->SetVisibility(VISIBILITY_ON);
+			m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);			
 		}		
 	}
 
 	void SpawnGlobs()
 	{
 		//spawn all adds here
+        globs = floor(((float) m_creature->GetHealth() / (float) m_creature->GetMaxHealth()) / 0.05f);
+        for (float angle = 0; angle < 2 * 3.141592654; angle += 2 * 3.141592654 / globs)
+        {
+            Unit* pSummon = m_creature->SummonCreature(NPC_GLOB_OF_VISCIDUS, -7990.f + 30.f * cosf(angle),
+                                       925.f + 30.f * sinf(angle), -42.f, 0.f,
+                                       TEMPSUMMON_DEAD_DESPAWN, 0, true);
+
+            pSummon->SetObjectScale(0.1f);
+        }
 	}
 
 	void JustSummoned(Creature* pSummoned)
@@ -247,14 +259,24 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 	void SummonedMovementInform(Creature* pSummoned, uint32 uiMotionType, uint32 uiPointId)				// something like this?
     {
 		if(uiPointId == 1)
-			if(pSummoned->IsWithinDistInMap(m_creature, 5.0f))
-				pSummoned->CastSpell(m_creature, SPELL_REJOIN_VISCIDUS, true);
+        {
+            pSummoned->CastSpell(m_creature, SPELL_REJOIN_VISCIDUS, true);
+            pSummoned->ForcedDespawn(globCounter >= globs ? 50 : 2000);
+
+            ++globCounter;
+
+            if (globCounter >= globs)
+            {
+                SetVisible(1);
+                m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
+            }
+        }
 	}
 	
     void SummonedCreatureJustDied(Creature* pSummoned)
     {
         if (pSummoned->GetEntry() == NPC_GLOB_OF_VISCIDUS)
-            m_creature->SetHealth(m_creature->GetHealth()-m_creature->GetMaxHealth()*0.05f);			// remove 5% hp for each glob that dies
+            m_creature->DealDamage(m_creature, m_creature->GetMaxHealth() * 0.05f, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -284,12 +306,16 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 			else
 				m_uiSetInvisTimer -= uiDiff;
 
-			if (m_uiGlobSpawnTimer <= uiDiff)
-			{
-				SpawnGlobs();
-			}
-			else
-				m_uiGlobSpawnTimer -= uiDiff;
+            if (!m_bSummoned)
+            {
+                if (m_uiGlobSpawnTimer <= uiDiff)
+                {
+                    SpawnGlobs();
+                    m_bSummoned = true;
+                }
+                else
+                    m_uiGlobSpawnTimer -= uiDiff;
+            }
 		}
 
 		if (m_bCanDoDamage)
