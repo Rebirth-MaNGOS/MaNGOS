@@ -3285,6 +3285,17 @@ uint64 Spell::handle_delayed(uint64 t_offset)
     // now recheck units targeting correctness (need before any effects apply to prevent adding immunity at first effect not allow apply second spell effect and similar cases)
     for(TargetList::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
     {
+        // Recheck immunities on spell hit.
+        if (m_caster)
+        {
+            Unit* unit = m_caster->GetObjectGuid() == ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
+            if (unit && unit->IsImmuneToSpell(m_spellInfo))
+            {
+                ihit->processed = true;
+                continue;
+            }
+        }
+
         if (!ihit->processed)
         {
             if (ihit->timeDelay <= t_offset)
