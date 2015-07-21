@@ -1848,6 +1848,14 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
             return;
         }
+        case 25185:
+        {
+            if(target)
+            {
+                target->CastSpell(target, 25187, false);
+            }
+            return;
+        }
         case 28169:                                     // Mutating Injection
         {
             // Mutagen Explosion
