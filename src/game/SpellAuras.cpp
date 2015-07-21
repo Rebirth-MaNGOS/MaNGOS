@@ -1476,6 +1476,24 @@ void Aura::TriggerSpell()
                 caster->CastCustomSpell(caster, 19698, &dmg, NULL, NULL, true, NULL, this, caster->GetGUID());
             return;
         }
+        case 21737: // Periodic Knock Away - used in AQ40
+        {
+
+            Unit* caster = GetCaster();
+            if (!caster)
+                return;
+
+            std::list<Player*> targets;
+
+            MaNGOS::AnyHostileUnitInObjectRangeCheck u_check(caster, caster, 30.f);
+            MaNGOS::PlayerListSearcher<MaNGOS::AnyHostileUnitInObjectRangeCheck> checker(targets, u_check);
+            Cell::VisitWorldObjects(caster, checker, 30.0f);
+
+            for (Player* pPlayer : targets)
+                caster->CastSpell(pPlayer, 25778, true);
+
+            return;
+        }
         case 21926: // The Giantstalker's 5/8-bonus; Nature's Ally.
         {
             Pet* pet = target->GetPet();
