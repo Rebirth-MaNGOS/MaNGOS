@@ -2355,7 +2355,9 @@ void Spell::EffectHealthLeech(SpellEffectIndex eff_idx)
         modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_MULTIPLE_VALUE, multiplier);
 
     uint32 heal = uint32(damage*multiplier);
-    if (m_caster->isAlive())
+
+    // The consume spell in AQ should not heal the target.
+    if (m_caster->isAlive() && m_spellInfo->Id != 25373)
     {
         heal = m_caster->SpellHealingBonusTaken(m_caster, m_spellInfo, heal, HEAL);
 
