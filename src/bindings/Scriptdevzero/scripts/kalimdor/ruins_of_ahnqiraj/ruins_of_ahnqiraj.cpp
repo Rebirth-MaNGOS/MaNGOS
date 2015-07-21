@@ -454,6 +454,189 @@ CreatureAI* GetAI_mob_qiraji_swarmguard(Creature* pCreature)
     return new mob_qiraji_swarmguardAI(pCreature);
 }
 
+/*######
+## mob_qiraji_gladiator
+######*/
+
+enum eQirajiGladiator
+{
+    SPELL_VENGEANCE         = 25164,
+    SPELL_GLADIATOR_TRASH   = 5568,
+    SPELL_UPPERCUT          = 10966,
+
+    MOB_QIRAJI_GLADIATOR    = 15324,
+};
+
+struct MANGOS_DLL_DECL mob_qiraji_gladiator : public ScriptedAI
+{
+    mob_qiraji_gladiator(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiTrashTimer;
+    uint32 m_uiUpperCutTimer;
+    uint32 m_uiVengeanceTimer;
+    ObjectGuid m_GladiatorFriend;
+
+    void Reset() 
+    {		
+        m_uiVengeanceTimer = urand(30000, 40000);
+		m_uiTrashTimer = urand(8000,12000);
+        m_uiUpperCutTimer = urand(7000, 11000);
+    }
+
+    void Aggro(Unit* pAggro)
+    {
+        std::list<Creature*> lAssistList;
+        GetCreatureListWithEntryInGrid(lAssistList, m_creature, m_creature->GetEntry(), 30.0f);
+
+        if (lAssistList.empty())
+            return;
+
+        for(std::list<Creature*>::iterator iter = lAssistList.begin(); iter != lAssistList.end(); ++iter)
+        {
+
+            if ((*iter)->GetObjectGuid() == m_creature->GetObjectGuid())
+                continue;
+
+            m_GladiatorFriend = (*iter)->GetObjectGuid();
+
+            (*iter)->AI()->AttackStart(pAggro);
+        }
+    }
+
+    void JustDied(Unit* /*pKiller*/)
+    {
+        Creature *pBuddy = m_creature->GetMap()->GetCreature(m_GladiatorFriend);
+
+        if(pBuddy && pBuddy->isAlive())
+        {
+            pBuddy->AI()->DoCastSpellIfCan(pBuddy, SPELL_VENGEANCE, CastFlags::CAST_TRIGGERED);
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiTrashTimer <= uiDiff)
+        {
+			if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                DoCast(pTarget, SPELL_TRASH, true);
+			m_uiTrashTimer = urand(8000, 12000);
+        } 
+		else
+			m_uiTrashTimer -= uiDiff;
+
+		if (m_uiUpperCutTimer <= uiDiff)
+        {
+			if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                DoCast(pTarget, SPELL_UPPERCUT, true);
+			m_uiUpperCutTimer = urand(7000, 11000);
+        } 
+		else
+			m_uiUpperCutTimer -= uiDiff;
+
+		if (m_uiVengeanceTimer <= uiDiff)
+        {
+            DoCast(m_creature, SPELL_VENGEANCE, true);
+			m_uiVengeanceTimer = urand(30000, 40000);
+        } 
+		else
+			m_uiVengeanceTimer -= uiDiff;
+
+
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_qiraji_gladiator(Creature* pCreature)
+{
+    return new mob_qiraji_gladiator(pCreature);
+}
+
+/*######
+## mob_hivezara_stinger
+######*/
+
+enum eHiveZaraStinger
+{
+    SPELL_STINGER_CHARGE             = 25190,
+    SPELL_STINGER_EMPOWERED_CHARGE   = 25191,
+    SPELL_HIVEZARA_CATALYST          = 25187,
+};
+
+struct MANGOS_DLL_DECL mob_hivezara_stinger : public ScriptedAI
+{
+    mob_hivezara_stinger(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiChargeTimer;
+
+    void Reset() 
+    {		
+		m_uiChargeTimer = 5000;
+    }
+
+    void ChargeRandomTarget()
+    {
+        const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+        std::vector<Unit*> pEligibleTargets;
+
+        pEligibleTargets.clear();
+
+        if(!threatList.empty())
+        {
+            for (HostileReference *currentReference : threatList)
+            {
+                Unit *target = currentReference->getTarget();
+                if (target && target->isAlive() && target->GetDistance(m_creature) <= 25.0f && target->GetDistance(m_creature) >= 5.0f)
+                    pEligibleTargets.push_back(target);
+            }
+
+            if(!pEligibleTargets.empty())
+            {
+                std::random_shuffle(pEligibleTargets.begin(), pEligibleTargets.end());
+                Unit *target = pEligibleTargets.front();
+                if (target && target->isAlive())
+                {
+                    if(target->HasAura(SPELL_HIVEZARA_CATALYST))
+                        DoCast(target, SPELL_STINGER_EMPOWERED_CHARGE, true);
+                    else
+                        DoCast(target, SPELL_STINGER_CHARGE, true);
+                }
+            }
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiChargeTimer <= uiDiff)
+        {
+			ChargeRandomTarget();
+			m_uiChargeTimer = 5000;
+        } 
+		else
+			m_uiChargeTimer -= uiDiff;
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_hivezara_stinger(Creature* pCreature)
+{
+    return new mob_hivezara_stinger(pCreature);
+}
+
+
 void AddSC_ruins_of_ahnqiraj()
 {
     Script* pNewscript;
@@ -476,5 +659,15 @@ void AddSC_ruins_of_ahnqiraj()
 	pNewscript = new Script;
     pNewscript->Name = "mob_qiraji_swarmguard";
     pNewscript->GetAI = &GetAI_mob_qiraji_swarmguard;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_qiraji_gladiator";
+    pNewscript->GetAI = &GetAI_mob_qiraji_gladiator;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_hivezara_stinger";
+    pNewscript->GetAI = &GetAI_mob_hivezara_stinger;
     pNewscript->RegisterSelf();
 }
