@@ -75,6 +75,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 	uint8 m_uiGlobCount;
 
 	uint32 m_uiSetInvisTimer;
+	uint32 m_uiSetVisibleTimer;
 	uint32 m_uiGlobSpawnTimer;
 	uint32 m_uiPoisonShockTimer;
 	uint32 m_uiPoisonVolleyTimer;
@@ -87,7 +88,8 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     {
 		m_uiGlobCount = 0;
 		m_uiGlobSpawnTimer = 0;
-		m_uiSetInvisTimer = 5000;
+		m_uiSetInvisTimer = 4000;
+		m_uiSetVisibleTimer = 0;
 		m_uiPoisonVolleyTimer = 10000;									// timer confirmed
 		m_uiPoisonShockTimer = 11000;
 		m_uiToxicCloudTimer = urand(30000,40000);
@@ -145,79 +147,75 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         else if(pSpell->School == SPELL_SCHOOL_NORMAL && m_bFrozen)
 		{
 			++m_uiMeleeCounter;
-			MeleeHitCount();
+			MeleeHitCount();		// count incoming melee
 		}
-	}
-
-	void DamageTaken(Unit* /*pDoneBy*/, uint32& uiDamage)			// Find a real way to distinguish the melee / phys from spells
-	{
 	}
 
 	void SpellCount()
 	{		
-		if(m_uiFrostSpellCounter >= 1 && !m_bSlowed1)
+		if(m_uiFrostSpellCounter >= 1 && !m_bSlowed1)		// 100, 150, 200
 		{
 			m_creature->CastSpell(m_creature, SPELL_VISCIDUS_SLOWED_MORE, true);
 			m_creature->GenericTextEmote("Viscidus begins to slow.", NULL, false);
-			//m_creature->SetSpeedRate(MOVE_RUN, m_creature->GetSpeedRate(MOVE_RUN)*.85f);
-			m_creature->SetAttackTime(BASE_ATTACK, m_creature->GetAttackTime(BASE_ATTACK)*.85f);
+			m_creature->SetAttackTime(BASE_ATTACK, 2012);			// fix the attack speed, if attack speed is changed these need to be changed aswell
 			m_bSlowed1 = true;
 		}
 
-		else if(m_uiFrostSpellCounter >= 5 && !m_bSlowed2)
+		else if(m_uiFrostSpellCounter >= 2 && !m_bSlowed2)
 		{
 			m_creature->CastSpell(m_creature, SPELL_VISCIDUS_SLOWED_MORE, true);
 			m_creature->GenericTextEmote("Viscidus is freezing up.", NULL, false);
-			//m_creature->SetSpeedRate(MOVE_RUN, m_creature->GetSpeedRate(MOVE_RUN)*.7f);
-			m_creature->SetAttackTime(BASE_ATTACK, m_creature->GetAttackTime(BASE_ATTACK)*.7f);
+			m_creature->SetAttackTime(BASE_ATTACK, 2275);			// fix the attack speed
 			m_bSlowed2 = true;
 		}
 
-		else if(m_uiFrostSpellCounter >= 2 && !m_bFrozen)					// does this emote multiple times?
+		else if(m_uiFrostSpellCounter >= 3 && !m_bFrozen)					// does this emote multiple times?
 		{
 			m_bCanDoDamage = false;
 			m_bFrozen = true;
 			m_creature->CastSpell(m_creature, SPELL_VISCIDUS_FREEZE, true);
-			m_creature->GenericTextEmote("Viscidus is frozen solid.", NULL, false);
-			//m_creature->SetSpeedRate(MOVE_RUN, m_creature->GetSpeedRate(MOVE_RUN));
-			m_creature->SetAttackTime(BASE_ATTACK, m_creature->GetAttackTime(BASE_ATTACK));					// FIX DIS: update to normal attack speed
+			m_creature->GenericTextEmote("Viscidus is frozen solid.", NULL, false);					
+			m_creature->SetAttackTime(BASE_ATTACK, 1750);			// set the attack speed back to normal
 			m_uiThawTimer = 15000;			
 		}
 	}
 
 	void MeleeHitCount()
 	{
-/*		if(m_uiMeleeCounter >= 1 && !m_bCracking1)
+		if(m_uiMeleeCounter >= 1 && !m_bCracking1)		// 100, 150, 200
 		{
 			m_creature->GenericTextEmote("Viscidus begins to crack.", NULL, false);
 			m_bCracking1 = true;
 		}
 
-		else if(m_uiMeleeCounter >= 5 && !m_bCracking2)
+		else if(m_uiMeleeCounter >= 2 && !m_bCracking2)
 		{
 			m_creature->GenericTextEmote("Viscidus looks ready to shatter.", NULL, false);
 			m_bCracking2 = true;
+			m_bSummoned = false;
 		}
 
-		else if(m_uiMeleeCounter >= 2 && !m_bExploded)
-		{*/
-        if (!m_bExploded)
-        {
-			if (HealthBelowPct(5))			// if Viscidus has less than 5% hp he should die since every glob is 5% hp
-                m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+		else if(m_uiMeleeCounter >= 3 && !m_bExploded)
+		{
+			if (!m_bExploded)
+			{
+				if (HealthBelowPct(5))			// if Viscidus has less than 5% hp he should die since every glob is 5% hp
+					m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
 
-			m_bCanDoDamage = false;
-			m_bExploded = true;
-			RemoveAuras();					// remove auras if we're gonna explode
-            m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
-			m_creature->CastSpell(m_creature, SPELL_VISCIDUS_EXPLODE,true);
-			m_creature->CastSpell(m_creature, SPELL_ROOT, true);
-			m_creature->GenericTextEmote("Viscidus explodes.", NULL, false);
-			m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);			
+				m_bCanDoDamage = false;
+				m_bExploded = true;
+				//RemoveAuras();					// remove auras if we're gonna explode, not needed?
+				m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
+				m_creature->CastSpell(m_creature, SPELL_VISCIDUS_EXPLODE,true);
+				m_creature->CastSpell(m_creature, SPELL_ROOT, true);
+				m_creature->GenericTextEmote("Viscidus explodes.", NULL, false);			// missing death animation
+				m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);		// not really working	
 
-			m_uiSetInvisTimer = 4000;
-        }
-	//	}
+				m_uiSetInvisTimer = 4000;
+				m_uiGlobSpawnTimer = 5000;			// slight delay before we spawn the adds
+				m_uiSetVisibleTimer = 18000;			// adjust this when adds are spawning/moving correctly
+			}
+		}
 	}
 
 	void SetVisible(int Visible = 0)
@@ -230,7 +228,6 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 		{
 			ResetBool(1);			// reset all counters for melee here
 			ResetBool(0);			// reset all counters for spells here
-            
             m_creature->SetVisibility(VISIBILITY_ON);
 			m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);			
 		}		
@@ -242,17 +239,15 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         globs = floor(((float) m_creature->GetHealth() / (float) m_creature->GetMaxHealth()) / 0.05f);
         for (float angle = 0; angle < 2 * 3.141592654; angle += 2 * 3.141592654 / globs)
         {
-            Unit* pSummon = m_creature->SummonCreature(NPC_GLOB_OF_VISCIDUS, -7990.f + 30.f * cosf(angle),
-                                       925.f + 30.f * sinf(angle), -42.f, 0.f,
+            Unit* pSummon = m_creature->SummonCreature(NPC_GLOB_OF_VISCIDUS, -7990.f + 50.f * cosf(angle),
+                                       925.f + 50.f * sinf(angle),-42.f, 0.f,
                                        TEMPSUMMON_DEAD_DESPAWN, 0, true);
-
-            pSummon->SetObjectScale(0.1f);
         }
 	}
 
 	void JustSummoned(Creature* pSummoned)
     {
-		pSummoned->GetMotionMaster()->MovePoint(1,-7992.36f,908.19,-52.62);		// a point in the middle of the room
+		pSummoned->GetMotionMaster()->MovePoint(1,-7991.48f,920.19f,-52.91f);		// a point in the middle of the room
 		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
     }
 
@@ -262,14 +257,14 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         {
             pSummoned->CastSpell(m_creature, SPELL_REJOIN_VISCIDUS, true);
             pSummoned->ForcedDespawn(globCounter >= globs ? 50 : 2000);
-
             ++globCounter;
 
-            if (globCounter >= globs)
-            {
-                SetVisible(1);
-                m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
-            }
+    //        if (globCounter >= globs)
+    //        {
+				//m_creature->SetObjectScale(Scale-(3.f/globCounter));
+    //            SetVisible(1);
+    //            m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
+    //        }
         }
 	}
 	
@@ -299,12 +294,18 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 		if(m_bExploded)
 		{
 			if (m_uiSetInvisTimer <= uiDiff)
-			{
-				m_uiGlobSpawnTimer = 4000;			// slight delay before we spawn the adds
 				SetVisible(0);
-			}
 			else
 				m_uiSetInvisTimer -= uiDiff;
+
+			if (m_uiSetVisibleTimer <= uiDiff)
+			{
+				m_creature->SetObjectScale(2-(3.f/globCounter));			// set Viscidus' size depending on the blobs that are alive 1/ too small?                
+                m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
+				SetVisible(1);
+			}
+			else
+				m_uiSetVisibleTimer -= uiDiff;
 
             if (!m_bSummoned)
             {
@@ -361,9 +362,11 @@ struct MANGOS_DLL_DECL boss_glob_of_viscidusAI : public ScriptedAI
 		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
 		Reset();
 	}
+	uint32 m_uiSpeedUpTimer;
 
 	void Reset()
 	{
+		m_uiSpeedUpTimer = 500;
 	}
 
 	void MoveInLineOfSight(Unit* /*pWho*/)
@@ -376,7 +379,15 @@ struct MANGOS_DLL_DECL boss_glob_of_viscidusAI : public ScriptedAI
         //Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-		//m_creature->SetTargetGuid(ObjectGuid());				// target self even when someone does dmg, - needs testing if this is needed
+
+		if (m_uiSpeedUpTimer <= uiDiff)				// increase the speed every half a sec
+		{
+			m_creature->SetSpeedRate(MOVE_RUN, m_creature->GetSpeedRate(MOVE_RUN)+0.05f);
+			m_uiSpeedUpTimer = 500;
+		}
+		else
+			m_uiSpeedUpTimer -= uiDiff;
+		m_creature->SetTargetGuid(ObjectGuid());				// target self even when someone does dmg, - needs testing if this is needed
 	}
 };
 
