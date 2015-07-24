@@ -29,7 +29,8 @@ enum Spells
     SPELL_ACID_BREATH               = 12891,
     SPELL_DEEP_SLUMBER              = 12890,
     SPELL_TRASH                     = 3391,
-    SPELL_WAR_STOMP                 = 11876
+    SPELL_WAR_STOMP                 = 11876,
+	YELL_AGGRO						= -1720184
 };
 
 struct MANGOS_DLL_DECL boss_shade_of_eranikusAI : public ScriptedAI
@@ -66,6 +67,7 @@ struct MANGOS_DLL_DECL boss_shade_of_eranikusAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_SHADE_OF_ERANIKUS, IN_PROGRESS);
+		DoScriptText(YELL_AGGRO, m_creature, NULL);
 		m_creature->SetStandState(UNIT_STAND_STATE_STAND);
     }
 
