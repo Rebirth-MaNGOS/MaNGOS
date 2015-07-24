@@ -82,6 +82,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
     void TwinReset()
     {
         m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+        m_creature->SetSheath(SHEATH_STATE_UNARMED);
         Heal_Timer = 0;                                     // first heal immediately when they get close together
         Teleport_Timer = TELEPORTTIME;
         AfterTeleport = false;
@@ -150,6 +151,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
     void Aggro(Unit* pWho)
     {
         m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+        m_creature->SetSheath(SHEATH_STATE_MELEE);
         m_creature->SetInCombatWithZone();
 
         Creature *pOtherBoss = GetOtherBoss();
@@ -689,7 +691,7 @@ struct MANGOS_DLL_DECL npc_the_masters_eye : public ScriptedAI
             m_creature->GenericTextEmote("The massive floating eyeball in the center of the chamber turns its gaze upon you. You stand before a god.",
                 nullptr, true);
 
-            m_uiEventTimer = 1000;
+            m_uiEventTimer = 2000;
         
             Creature *pVeklor = m_creature->GetClosestCreatureWithEntry(m_creature, 15276, 100.0f);
             Creature *pVeknilash = m_creature->GetClosestCreatureWithEntry(m_creature, 15275, 100.0f);
@@ -717,7 +719,7 @@ struct MANGOS_DLL_DECL npc_the_masters_eye : public ScriptedAI
                 {
                 case 0:
                     m_creature->SetFacingTo(1.77f);
-                    m_uiEventTimer = 5000;
+                    m_uiEventTimer = 8000;
                     break;
                 case 1:
                     m_creature->SetVisibility(VISIBILITY_OFF);
@@ -727,6 +729,7 @@ struct MANGOS_DLL_DECL npc_the_masters_eye : public ScriptedAI
                         pVeklor->SetStandState(UNIT_STAND_STATE_STAND);
                         pVeknilash->SetStandState(UNIT_STAND_STATE_STAND);
                     }
+                    m_uiEventTimer = 4000;
                     break;
                 case 2:
                     if(pVeklor)
@@ -748,37 +751,58 @@ struct MANGOS_DLL_DECL npc_the_masters_eye : public ScriptedAI
                     if(pVeklor)
                     {
                         pVeklor->MonsterYell("There will be pain...", LANG_UNIVERSAL);
-                        pVeklor->HandleEmote(EMOTE_ONESHOT_ROAR);
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_TALK);
                     }
                     m_uiEventTimer = 3000;
                     break;
                 case 5:
-                    if(pVeknilash)
+                    if(pVeknilash) //skrik
                     {
                         pVeknilash->MonsterYell("Oh so much pain...", LANG_UNIVERSAL);
-                        pVeknilash->HandleEmote(EMOTE_ONESHOT_ROAR);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_SHOUT);
                     }
-                    m_uiEventTimer = 3000;
+                    m_uiEventTimer = 2000;
                     break;
                 case 6:
                     if(pVeklor && pVeknilash)
                     {
-                        pVeklor->MonsterYell("Come, little ones.", LANG_UNIVERSAL);
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_ROAR);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_ROAR);
+                    }
+                    m_uiEventTimer = 1500;
+                    break;
+                case 7:
+                    if(pVeklor && pVeknilash)
+                    {
                         pVeklor->SetFacingTo(2.21f);
                         pVeknilash->SetFacingTo(1.20f);
-                        pVeklor->HandleEmote(EMOTE_ONESHOT_POINT);
+                    }
+                    m_uiEventTimer = 1000;
+                    break;
+                case 8:
+                    if(pVeklor)
+                    {
+                        pVeklor->MonsterYell("Come, little ones.", LANG_UNIVERSAL);
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_TALK);
                     }
                     m_uiEventTimer = 2000;
                     break;
-                case 7:
+                case 9:
                     if(pVeknilash)
                     {
                         pVeknilash->MonsterYell("The feast of souls begin now...", LANG_UNIVERSAL);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_TALK);
+                    }
+                    m_uiEventTimer = 2000;
+                    break;
+                case 10:
+                    if(pVeklor && pVeknilash)
+                    {
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_POINT);
                         pVeknilash->HandleEmote(EMOTE_ONESHOT_POINT);
                     }
-                    m_uiEventTimer = 5000;
                     break;
-                case 8:
+                    m_uiEventTimer = 0;
                 default:
                     m_uiEventTimer = 0;
                     m_uiEventPhase = 0;
