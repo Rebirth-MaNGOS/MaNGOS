@@ -89,6 +89,30 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
         && owner.hasUnitState(UNIT_STAT_FOLLOW))
         forceDest = true;
 
+    // Make sure that creatures that cannot fly don't follow their target
+    // up into the air. This can generally happen when a player gets 
+    // knocked back.
+    Creature* pCOwner = dynamic_cast<Creature*>(&owner);
+    if (pCOwner)
+    {
+        CreatureInfo const* pInfo = pCOwner->GetCreatureInfo();
+        if (pInfo)
+        {
+            if (!(pInfo->InhabitType & INHABIT_AIR))
+            {
+                TerrainInfo const* terrain = pCOwner->GetMap()->GetTerrain();
+                if (terrain)
+                {
+                    float ground = 0;
+                    ground = terrain->GetWaterOrGroundLevel(x, y, z, nullptr, false);
+
+                    if (ground != INVALID_HEIGHT_VALUE)
+                        z = ground;
+                }
+            }
+        }
+    }
+
     bool newPathCalculated = true;
     if(!i_path)
         i_path = new PathInfo(&owner, x, y, z, false, forceDest);
