@@ -31,6 +31,7 @@ EndScriptData */
 #define SPELL_HEAL_BROTHER          7393
 #define SPELL_TWIN_TELEPORT         800                     // CTRA watches for this spell to start its teleport timer
 #define SPELL_TWIN_TELEPORT_VISUAL  26638                   // visual
+#define SPELL_ROOT_SELF             23973
 
 #define SPELL_EXPLODEBUG            804
 #define SPELL_MUTATE_BUG            802
@@ -147,6 +148,8 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
 
     void Aggro(Unit* pWho)
     {
+        m_creature->SetInCombatWithZone();
+
         Creature *pOtherBoss = GetOtherBoss();
         if (pOtherBoss)
         {
@@ -157,6 +160,8 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
                 DoPlaySoundToSet(m_creature, IAmVeklor() ? SOUND_VL_AGGRO : SOUND_VN_AGGRO);
                 pOtherBoss->AI()->AttackStart(pWho);
             }
+
+            pOtherBoss->SetInCombatWithZone();
         }
 
         if (m_pInstance)
@@ -304,7 +309,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         DoCastSpellIfCan(m_creature, SPELL_TWIN_TELEPORT_VISUAL);
         m_creature->addUnitState(UNIT_STAT_STUNNED);
         AfterTeleport = true;
-        AfterTeleportTimer = 2000;
+        AfterTeleportTimer = 500;
         tspellcasted = false;
     }
 
@@ -329,7 +334,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
                 //DoYell(nearu->GetName(), LANG_UNIVERSAL, 0);
                 AttackStart(nearu);
                 m_creature->getThreatManager().addThreat(nearu, 10000);
-                m_creature->GetMotionMaster()->MoveChase(nearu, 0.f, 0.f);
+                m_creature->GetMotionMaster()->MoveChase(nearu);
                 return true;
             }
             else
@@ -410,7 +415,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
             {
                 if (c)
                 {
-                    CastSpellOnBug(c);
+                   // CastSpellOnBug(c);
                     Abuse_Bug_Timer = urand(10000, 17000);
                 }
                 else
@@ -529,6 +534,8 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
     }
 
     uint32 ShadowBolt_Timer;
+    uint32 ShadowBolt_Cooldown;
+    uint32 ShadowBolt_Counter;
     uint32 Blizzard_Timer;
     uint32 ArcaneBurst_Timer;
     uint32 Scorpions_Timer;
@@ -542,14 +549,14 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
     {
         TwinReset();
         ShadowBolt_Timer = 0;
+        ShadowBolt_Cooldown = 0;
+        ShadowBolt_Counter = urand(1, 3);
         Blizzard_Timer = urand(15000, 20000);
         ArcaneBurst_Timer = 1000;
         Scorpions_Timer = urand(7000, 14000);
 
         //Added. Can be removed if its included in DB.
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, true);
-        m_creature->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, 0);
-        m_creature->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, 0);
     }
 
     void CastSpellOnBug(Creature *target)
@@ -573,15 +580,29 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
         if (!TryActivateAfterTTelep(diff))
             return;
 
-        //ShadowBolt_Timer
-        if (ShadowBolt_Timer < diff)
+        if (ShadowBolt_Cooldown <= diff)
         {
-            if (!m_creature->IsWithinDist(m_creature->getVictim(), 45.0f))
-                m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim(), VEKLOR_DIST, 0);
+            if (ShadowBolt_Counter > 0)
+            {
+                //ShadowBolt_Timer
+                if (ShadowBolt_Timer < diff)
+                {
+                    DoCastSpellIfCan(m_creature->getVictim(),SPELL_SHADOWBOLT);
+                    ShadowBolt_Timer = 2000;
+                }
+                else 
+                    ShadowBolt_Timer -= diff;
+
+                --ShadowBolt_Counter;
+            }
             else
-                DoCastSpellIfCan(m_creature->getVictim(),SPELL_SHADOWBOLT);
-            ShadowBolt_Timer = 2000;
-        }else ShadowBolt_Timer -= diff;
+            {
+                ShadowBolt_Counter = urand(1, 3);
+                ShadowBolt_Cooldown = 5000;
+            }
+        }
+        else
+            ShadowBolt_Cooldown -= diff;
 
         //Blizzard_Timer
         if (Blizzard_Timer < diff)
@@ -591,7 +612,9 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
             if (target)
                 DoCastSpellIfCan(target,SPELL_BLIZZARD);
             Blizzard_Timer = urand(15000, 30000);
-        }else Blizzard_Timer -= diff;
+        }
+        else 
+            Blizzard_Timer -= diff;
 
         if (ArcaneBurst_Timer < diff)
         {
@@ -601,7 +624,9 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
                 DoCastSpellIfCan(mvic,SPELL_ARCANEBURST);
                 ArcaneBurst_Timer = 5000;
             }
-        }else ArcaneBurst_Timer -= diff;
+        }
+        else 
+            ArcaneBurst_Timer -= diff;
 
         HandleBugs(diff);
 
@@ -616,24 +641,7 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
 
         CheckEnrage(diff);
 
-        //VL doesn't melee
-        //DoMeleeAttackIfReady();
-    }
-
-    void AttackStart(Unit* who)
-    {
-        if (!who)
-            return;
-
-        // VL doesn't melee
-        if (m_creature->Attack(who, false))
-        {
-            m_creature->AddThreat(who);
-            m_creature->SetInCombatWith(who);
-            who->SetInCombatWith(m_creature);
-
-            m_creature->GetMotionMaster()->MoveChase(who, VEKLOR_DIST, 0);
-        }
+        DoMeleeAttackIfReady();
     }
 };
 

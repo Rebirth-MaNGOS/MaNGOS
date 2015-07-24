@@ -36,6 +36,8 @@ enum
     SPELL_SHADOW_FROST_REFLECT      = 19595,
     SPELL_PERIODIC_KNOCK_AWAY       = 21737,
     SPELL_THORNS                    = 25777,
+    SPELL_SHARE                     = 1905,
+    SPELL_HEAL_BRETHREN             = 26565,
 
     SPELL_ENRAGE                    = 8599,
 
@@ -99,6 +101,7 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
 
     void JustDied(Unit* /*pKiller*/)
     {
+        DoCast(m_creature, SPELL_SHARE, true);
         if(!m_lAssistList.empty())
         {
             for(ObjectGuid pAnubGuid : m_lAssistList)
@@ -115,10 +118,12 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
                     if(pAnubAi)
                         pAnubAi->DoTransferAbility(m_uiMyAbility);
 
-                    pAnub->SetHealth(pAnub->GetHealth() + (pAnub->GetMaxHealth()/2));
+                    pAnub->AI()->DoCastSpellIfCan(pAnub, SPELL_HEAL_BRETHREN, CastFlags::CAST_TRIGGERED);
                 }
             }
         }
+
+        m_creature->GenericTextEmote("Anubisath Sentinel shares his powersr with his brethren.", nullptr, false);
     }
 
     // this way will make it quite possible that sentinels get the same buff as others, need to fix that, it should be one unique each

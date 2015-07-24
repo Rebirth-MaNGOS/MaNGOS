@@ -260,6 +260,7 @@ extern void AddSC_boss_sartura();
 extern void AddSC_boss_skeram();
 extern void AddSC_boss_twinemperors();
 extern void AddSC_mob_anubisath_sentinel();
+extern void AddSC_temple_of_ahnqiraj();
 extern void AddSC_instance_temple_of_ahnqiraj();
 extern void AddSC_boss_mutanus_the_devourer();              //Wailing caverns
 extern void AddSC_wailing_caverns();
@@ -550,6 +551,7 @@ void AddScripts()
     AddSC_boss_skeram();
     AddSC_boss_twinemperors();
     AddSC_mob_anubisath_sentinel();
+    AddSC_temple_of_ahnqiraj();
     AddSC_instance_temple_of_ahnqiraj();
     AddSC_boss_mutanus_the_devourer();                      //Wailing caverns
     AddSC_wailing_caverns();

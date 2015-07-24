@@ -240,6 +240,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
             if(pAndorov->isAlive())
             {
                 pAndorov->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR);
+                pAndorov->HandleEmoteState(EMOTE_STATE_NONE);
             }
         }
         // Reward raid with 150 rep if Andorov lives (temp, will move to Andorov script later)
@@ -595,8 +596,11 @@ struct MANGOS_DLL_DECL npc_kaldorei_elite : public ScriptedAI
     npc_kaldorei_elite(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_bIsRunning = false;
+        m_pInstance = (instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData();
         Reset();
     }
+
+    instance_ruins_of_ahnqiraj* m_pInstance;
 
     bool m_bCanMoveNext;
     uint32 m_uiWaitForOthersTimer;
@@ -622,6 +626,12 @@ struct MANGOS_DLL_DECL npc_kaldorei_elite : public ScriptedAI
 
         m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
         m_uiWaitForOthersTimer = 500;
+
+        if(m_pInstance)
+        {
+            if(m_pInstance->GetData(TYPE_RAJAXX) == DONE)
+                m_creature->HandleEmoteState(EMOTE_STATE_NONE);
+        }
     }
 
     void MovementInform(uint32 uiType, uint32 uiPointId)
@@ -832,8 +842,6 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
         }
     }
 
-    
-
     void MovementInform(uint32 uiType, uint32 uiPointId)
     {
         if (uiType != POINT_MOTION_TYPE)
@@ -863,7 +871,10 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
                 m_creature->GetMotionMaster()->Clear();
                 m_bCanMoveNext = false;
                 m_uiWaitForOthersTimer = 0;
-                m_uiStartTimer = 3000;
+
+                if(m_pInstance)
+                    if(m_pInstance->GetData(TYPE_RAJAXX) != IN_PROGRESS)
+                        m_uiStartTimer = 3000;
 
                 break;
             }

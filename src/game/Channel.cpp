@@ -436,13 +436,13 @@ void Channel::List(Player* player)
     }
     else
     {
-        WorldPacket data(SMSG_CHANNEL_LIST, 1+(GetName().size()+1)+1+4+m_players.size()*(8+1));
-        data << uint8(1);                                   // channel type?
+        WorldPacket data(SMSG_CHANNEL_LIST, (GetName().size()+1)+4+4+m_players.size()*(8+1));
         data << GetName();                                  // channel name
-        data << uint8(GetFlags());                          // channel flags?
-
+        data << uint8(GetFlags());                          // Not sure about this flag.
         size_t pos = data.wpos();
-        data << uint32(0);                                  // size of list, placeholder
+        data << uint16(0);                                  // Lower count byte.
+        size_t pos1 = data.wpos();
+        data << uint16(0);                                  // Upper count byte.
 
         AccountTypes gmLevelInWhoList = (AccountTypes)sWorld.getConfig(CONFIG_UINT32_GM_LEVEL_IN_WHO_LIST);
 
@@ -462,7 +462,9 @@ void Channel::List(Player* player)
             }
         }
 
-        data.put<uint32>(pos,count);
+        // Reverse the byte order for the client.
+        data.put<uint16>(pos, count & 0xFFFF);
+        data.put<uint16>(pos1, (count & 0xFFFF0000) >> 16);
 
         SendToOne(&data, p);
     }
