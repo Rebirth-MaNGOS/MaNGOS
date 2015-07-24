@@ -589,13 +589,15 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
                 //ShadowBolt_Timer
                 if (ShadowBolt_Timer < diff)
                 {
-                    DoCastSpellIfCan(m_creature->getVictim(),SPELL_SHADOWBOLT);
-                    ShadowBolt_Timer = 2000;
+                    if (DoCastSpellIfCan(m_creature->getVictim(),SPELL_SHADOWBOLT) == CAST_OK)
+                    {
+                        ShadowBolt_Timer = 2000;
+                        --ShadowBolt_Counter;
+                    }
                 }
                 else 
                     ShadowBolt_Timer -= diff;
 
-                --ShadowBolt_Counter;
             }
             else
             {
