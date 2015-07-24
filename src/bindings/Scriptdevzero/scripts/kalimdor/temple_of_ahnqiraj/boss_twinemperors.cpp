@@ -417,7 +417,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
             {
                 if (c)
                 {
-                   // CastSpellOnBug(c);
+                    CastSpellOnBug(c);
                     Abuse_Bug_Timer = urand(10000, 17000);
                 }
                 else
@@ -565,7 +565,7 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
     {
         target->setFaction(14);
 
-        DoCastSpellIfCan(target, SPELL_EXPLODEBUG, CAST_TRIGGERED);
+        DoCastSpellIfCan(m_creature, SPELL_EXPLODEBUG, CAST_TRIGGERED);
     }
 
     void UpdateAI(const uint32 diff)
