@@ -59,12 +59,14 @@ struct MANGOS_DLL_DECL boss_shade_of_eranikusAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_SHADE_OF_ERANIKUS, NOT_STARTED);
+		m_creature->SetStandState(UNIT_STAND_STATE_SLEEP);
     }
 
     void Aggro(Unit* /*pWho*/)
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_SHADE_OF_ERANIKUS, IN_PROGRESS);
+		m_creature->SetStandState(UNIT_STAND_STATE_STAND);
     }
 
     void JustDied(Unit* /*pKiller*/)

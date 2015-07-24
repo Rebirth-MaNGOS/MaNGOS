@@ -192,8 +192,10 @@ bool GOUse_go_eternal_flame(Player* pPlayer, GameObject* pGo)
 
     if (m_pInstance && m_pInstance->GetData(TYPE_AVATAR_OF_HAKKAR) == IN_PROGRESS &&
         pPlayer->HasItemCount(ITEM_HAKKARI_BLOOD, 1))
+	{
         m_pInstance->HandleAvatarEventWave();
-
+		m_pInstance->InteractWithGo(pGo->GetGUID(),false);
+	}
     return false;
 }
 

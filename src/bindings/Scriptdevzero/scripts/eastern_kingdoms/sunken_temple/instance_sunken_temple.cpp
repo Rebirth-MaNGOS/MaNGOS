@@ -157,7 +157,6 @@ void instance_sunken_temple::OnCreatureCreate(Creature* pCreature)
         case NPC_ZOLO:
         case NPC_ZULLOR:
 			pCreature->CastSpell(pCreature, GREEN_VISUAL, false);
-          //  pCreature->SetStandState(UNIT_STAND_STATE_KNEEL);		//removed
             return;
         case NPC_ATALAI_DEATHWALKER:
         case NPC_ATALAI_HIGH_PRIEST:
@@ -172,7 +171,6 @@ void instance_sunken_temple::OnCreatureCreate(Creature* pCreature)
             break;
         case NPC_JAMMALAN_THE_PROPHET:
 			pCreature->CastSpell(pCreature, GREEN_VISUAL, false);
-       //     pCreature->SetStandState(UNIT_STAND_STATE_KNEEL);		//removed
             break;
         case NPC_DREAMSCYTHE:
         case NPC_WEAVER:
@@ -189,7 +187,7 @@ void instance_sunken_temple::OnCreatureCreate(Creature* pCreature)
             if (m_auiEncounter[2] == DONE)
             {
                 pCreature->setFaction(FACTION_DRAGONKIN);
-                pCreature->SetStandState(UNIT_STAND_STATE_STAND);
+                //pCreature->SetStandState(UNIT_STAND_STATE_STAND);
                 pCreature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             }
             else
