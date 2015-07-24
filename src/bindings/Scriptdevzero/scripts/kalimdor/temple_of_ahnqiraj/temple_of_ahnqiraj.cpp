@@ -31,6 +31,11 @@ enum
     SPELL_VISUAL_EFFECT_FIERY_HANDS = 6297,
     SPELL_ROOT_SELF                 = 23973,
 
+    SPELL_SUMMON_WARRIOR            = 17431,
+    SPELL_SUMMON_SWARMER            = 17430,
+
+    LARGE_OBSIDIAN_CHUNK            = 181069,
+
     SPELL_ENRAGE                    = 8599,
 };
 
@@ -43,8 +48,10 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
 
     uint32 m_uiCastAbility;
     uint32 m_uiEnrageAbility;
+    uint32 m_uiSummonAbility;
     uint32 m_uiExplodeTimer;
     uint32 m_uiCastTimer;
+    uint32 m_uiSummonTimer;
     bool m_bEnraged;
     bool m_bExploding;
     bool m_hasSpell;
@@ -57,6 +64,7 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
         m_bExploding = false;
         m_uiExplodeTimer = 0;
         m_uiCastTimer = urand(5000, 10000);
+        m_uiSummonTimer = 10000;
     }
 
     void JustReachedHome()
@@ -70,12 +78,15 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
 
     void JustDied(Unit* /*pKiller*/)
     {
+        float x, y, z;
+        m_creature->GetClosePoint(x, y, z, 3.0f, 5.0f);
+        m_creature->SummonGameObject(LARGE_OBSIDIAN_CHUNK, 0, x, y, z, 0);
     }
 
     // this way will make it quite possible that sentinels get the same buff as others, need to fix that, it should be one unique each
     void SetAbilites()
     {
-        for(int i = 0; i < 4; ++i)
+        for(int i = 0; i < 5; ++i)
         {
             switch(urand(0,1))
             {
@@ -98,6 +109,9 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
                     m_uiEnrageAbility = SPELL_ENRAGE;
                     m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_ENRAGE) + "!").c_str(), LANG_UNIVERSAL);
                     break;
+                case 4:
+                    m_uiSummonAbility = SPELL_SUMMON_SWARMER;
+                    break;
                 }
                 
                 break;
@@ -119,6 +133,9 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
                 case 3:
                     m_uiEnrageAbility = SPELL_EXPLODE;
                     m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_EXPLODE) + "!").c_str(), LANG_UNIVERSAL);
+                    break;
+                case 4:
+                    m_uiSummonAbility = SPELL_SUMMON_WARRIOR;
                     break;
                 }
                 
@@ -201,6 +218,19 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim() || m_bExploding)
             return;
+
+        if(m_uiSummonTimer)
+        {
+            if(m_uiSummonTimer <= uiDiff)
+            {
+                m_uiSummonTimer = 10000;
+                float x, y, z;
+                m_creature->GetClosePoint(x, y, z, 3.0f, 10.0f);
+                m_creature->CastSpell(x, y, z, m_uiSummonAbility, true);
+            }
+            else
+                m_uiSummonTimer -= uiDiff;
+        }
 
         if(m_uiCastTimer)
         {
