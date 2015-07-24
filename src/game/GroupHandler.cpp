@@ -571,6 +571,13 @@ void WorldSession::HandlePartyAssignmentOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleRaidReadyCheckOpcode( WorldPacket & recv_data )
 {
+    /* The MSG_RAID_READY_CHECK message seems to be both trigger and response.
+     * If it is received by the player starting the ready check it seems to be
+     * treated as a response. The MSG_RAID_READY_CHECK_CONFIRM message seems
+     * to go directly to a null handler in the client, causing that player
+     * to be marked as AFK. The confirmation opcode seems unnecessary since
+     * the AFK timeout seems to be in the ready check initiators client. */
+
     if(recv_data.empty())                                   // request
     {
         Group *group = GetPlayer()->GetGroup();
@@ -584,14 +591,20 @@ void WorldSession::HandleRaidReadyCheckOpcode( WorldPacket & recv_data )
         /********************/
 
         // everything is fine, do it
-        WorldPacket data(MSG_RAID_READY_CHECK, 8);
+        WorldPacket data(MSG_RAID_READY_CHECK, 9);
         data << ObjectGuid(GetPlayer()->GetObjectGuid());
+        data << uint8(0x01); // So the initiator doesn't appear as not ready.
         group->BroadcastPacket(&data, false, -1);
 
         group->OfflineReadyCheck();
+
+        // Save who started the ready-check to make sure the responses are
+        // only sent to that person.
+        group->SetReadyCheckInitiator(GetPlayer()->GetObjectGuid());
     }
     else                                                    // answer
     {
+        // The answer uses the same opcode as the query.
         uint8 state;
         recv_data >> state;
 
@@ -600,7 +613,7 @@ void WorldSession::HandleRaidReadyCheckOpcode( WorldPacket & recv_data )
             return;
 
         // everything is fine, do it
-        WorldPacket data(MSG_RAID_READY_CHECK_CONFIRM, 9);
+        WorldPacket data(MSG_RAID_READY_CHECK, 9);
         data << GetPlayer()->GetObjectGuid();
         data << uint8(state);
         group->BroadcastReadyCheck(&data);
@@ -609,14 +622,14 @@ void WorldSession::HandleRaidReadyCheckOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleRaidReadyCheckFinishedOpcode( WorldPacket & /*recv_data*/ )
 {
-    //Group* group = GetPlayer()->GetGroup();
-    //if(!group)
-    //    return;
+    Group* group = GetPlayer()->GetGroup();
+    if(!group)
+        return;
 
-    //if(!group->IsLeader(GetPlayer()->GetGUID()) && !group->IsAssistant(GetPlayer()->GetGUID()))
-    //    return;
+    if(!group->IsLeader(GetPlayer()->GetGUID()) && !group->IsAssistant(GetPlayer()->GetGUID()))
+        return;
 
-    // Is any reaction need?
+    group->SetReadyCheckInitiator(ObjectGuid());
 }
 
 void WorldSession::BuildPartyMemberStatsChangedPacket(Player *player, WorldPacket *data)

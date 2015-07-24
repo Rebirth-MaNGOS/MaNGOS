@@ -1011,8 +1011,13 @@ void Group::BroadcastReadyCheck(WorldPacket *packet)
     {
         Player *pl = itr->getSource();
         if (pl && pl->GetSession())
-            if (IsLeader(pl->GetObjectGuid()) || IsAssistant(pl->GetObjectGuid()))
+        {
+            if (pl->GetObjectGuid() == GetReadyCheckInitiator())
+            {
                 pl->GetSession()->SendPacket(packet);
+                break;
+            }
+        }
     }
 }
 

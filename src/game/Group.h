@@ -284,6 +284,8 @@ class MANGOS_DLL_SPEC Group
         void BroadcastPacket(WorldPacket *packet, bool ignorePlayersInBGRaid, int group=-1, ObjectGuid ignore = ObjectGuid());
         void BroadcastReadyCheck(WorldPacket *packet);
         void OfflineReadyCheck();
+        ObjectGuid GetReadyCheckInitiator() { return m_readyCheckInitiator; };
+        void SetReadyCheckInitiator(ObjectGuid guid) { m_readyCheckInitiator = guid; }
 
         void RewardGroupAtKill(Unit* pVictim, Player* player_tap);
 
@@ -388,5 +390,6 @@ class MANGOS_DLL_SPEC Group
         Rolls               RollId;
         BoundInstancesMap   m_boundInstances;
         uint8*              m_subGroupsCounts;
+        ObjectGuid       m_readyCheckInitiator;
 };
 #endif
