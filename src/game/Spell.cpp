@@ -2133,6 +2133,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
     case TARGET_AREAEFFECT_INSTANT:
     {
         SpellTargets targetB = SPELL_TARGETS_AOE_DAMAGE;
+        
+        // The Explode bug spell in AQ should get all close
+        // targets. They are filtered further down.
+        if (m_spellInfo->Id == 804)
+            targetB = SPELL_TARGETS_ALL;
 
         // Select friendly targets for positive effect
         if (IsPositiveEffect(m_spellInfo, effIndex))
@@ -2172,6 +2177,43 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                         break;
                     }
                 }
+            }
+        }
+
+        // Loop though the target list for the spell Explode Bug in AQ40
+        // and remove any creature that isn't a bug.
+        if (!targetUnitMap.empty() && m_spellInfo->Id == 804)
+        {
+            auto itr = targetUnitMap.begin();
+            do
+            {
+                Creature* pCreature = dynamic_cast<Creature*>(*itr);
+                if (!pCreature || pCreature->isDead() || 
+                    (pCreature->GetEntry() != 15316 && pCreature->GetEntry() != 15317))
+                {
+                    itr = tempTargetUnitMap.erase(itr);
+                }
+                else
+                    ++itr;
+            } while (itr != targetUnitMap.end());
+
+
+            if (m_caster)
+            {
+                Unit* pTarget = targetUnitMap.front();
+                float dist = m_caster->GetDistance(pTarget);
+
+                for (Unit* currTarget : targetUnitMap)
+                {
+                    if (m_caster->GetDistance(currTarget) < dist)
+                    {
+                        dist = m_caster->GetDistance(currTarget);
+                        pTarget = currTarget;
+                    }
+                }
+
+                targetUnitMap.clear();
+                targetUnitMap.push_back(pTarget);
             }
         }
 
@@ -2842,7 +2884,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             {
                 targetUnitMap.erase(itr);
                 removed_utarget = 1;
-                //        break;
             }
         }
         // remove random units from the map
