@@ -81,6 +81,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
 
     void TwinReset()
     {
+        m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
         Heal_Timer = 0;                                     // first heal immediately when they get close together
         Teleport_Timer = TELEPORTTIME;
         AfterTeleport = false;
@@ -148,6 +149,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
 
     void Aggro(Unit* pWho)
     {
+        m_creature->SetStandState(UNIT_STAND_STATE_STAND);
         m_creature->SetInCombatWithZone();
 
         Creature *pOtherBoss = GetOtherBoss();
@@ -655,6 +657,163 @@ CreatureAI* GetAI_boss_veklor(Creature* pCreature)
     return new boss_veklorAI(pCreature);
 }
 
+struct MANGOS_DLL_DECL npc_the_masters_eye : public ScriptedAI
+{
+    npc_the_masters_eye(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiEventTimer;
+    uint32 m_uiEventPhase;
+    ObjectGuid m_oVeklor;
+    ObjectGuid m_oVeknilash;
+    bool m_bEventStarted;
+
+    void Reset()
+    {
+        m_creature->SetHover(true);
+        m_creature->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
+        m_creature->SetSplineFlags(SPLINEFLAG_FLYING);
+        m_uiEventTimer = 0;
+        m_uiEventPhase = 0;
+        m_bEventStarted = false;
+    }
+
+    void StartRpIntro()
+    {
+        if(!m_bEventStarted)
+        {
+            m_creature->GenericTextEmote("The massive floating eyeball in the center of the chamber turns its gaze upon you. You stand before a god.",
+                nullptr, true);
+
+            m_uiEventTimer = 1000;
+        
+            Creature *pVeklor = m_creature->GetClosestCreatureWithEntry(m_creature, 15276, 100.0f);
+            Creature *pVeknilash = m_creature->GetClosestCreatureWithEntry(m_creature, 15275, 100.0f);
+
+            if(pVeklor)
+                m_oVeklor = pVeklor->GetObjectGuid();
+
+            if(pVeknilash)
+                m_oVeknilash = pVeknilash->GetObjectGuid();
+
+            m_bEventStarted = true;
+        }
+    }
+
+    void UpdateAI(const uint32 diff)
+    {
+        if(m_uiEventTimer)
+        {
+            if(m_uiEventTimer <= diff)
+            {
+                Creature *pVeklor = m_creature->GetMap()->GetCreature(m_oVeklor);
+                Creature *pVeknilash = m_creature->GetMap()->GetCreature(m_oVeknilash);
+
+                switch(m_uiEventPhase)
+                {
+                case 0:
+                    m_creature->SetFacingTo(1.77f);
+                    m_uiEventTimer = 5000;
+                    break;
+                case 1:
+                    m_creature->SetVisibility(VISIBILITY_OFF);
+                    m_creature->UpdateVisibilityAndView();
+                    if(pVeklor && pVeknilash)
+                    {
+                        pVeklor->SetStandState(UNIT_STAND_STATE_STAND);
+                        pVeknilash->SetStandState(UNIT_STAND_STATE_STAND);
+                    }
+                    break;
+                case 2:
+                    if(pVeklor)
+                    {
+                        pVeklor->MonsterYell("Only flesh and bone. Mortals are such easy prey...", LANG_UNIVERSAL);
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_TALK);
+                    }
+                    m_uiEventTimer = 5000;
+                    break;
+                case 3:
+                    if(pVeknilash)
+                    {
+                        pVeknilash->MonsterYell("Where are your manners, brother. Let us properly welcome our guests.", LANG_UNIVERSAL);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_TALK);
+                    }
+                    m_uiEventTimer = 5000;
+                    break;
+                case 4:
+                    if(pVeklor)
+                    {
+                        pVeklor->MonsterYell("There will be pain...", LANG_UNIVERSAL);
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_ROAR);
+                    }
+                    m_uiEventTimer = 3000;
+                    break;
+                case 5:
+                    if(pVeknilash)
+                    {
+                        pVeknilash->MonsterYell("Oh so much pain...", LANG_UNIVERSAL);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_ROAR);
+                    }
+                    m_uiEventTimer = 3000;
+                    break;
+                case 6:
+                    if(pVeklor && pVeknilash)
+                    {
+                        pVeklor->MonsterYell("Come, little ones.", LANG_UNIVERSAL);
+                        pVeklor->SetFacingTo(2.21f);
+                        pVeknilash->SetFacingTo(1.20f);
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_POINT);
+                    }
+                    m_uiEventTimer = 2000;
+                    break;
+                case 7:
+                    if(pVeknilash)
+                    {
+                        pVeknilash->MonsterYell("The feast of souls begin now...", LANG_UNIVERSAL);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_POINT);
+                    }
+                    m_uiEventTimer = 5000;
+                    break;
+                case 8:
+                default:
+                    m_uiEventTimer = 0;
+                    m_uiEventPhase = 0;
+                    break;
+                }
+                ++m_uiEventPhase;
+            }
+            else
+                m_uiEventTimer -= diff;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_the_masters_eye(Creature* pCreature)
+{
+    return new npc_the_masters_eye(pCreature);
+}
+
+bool AreaTrigger_at_twin_emperor_room(Player* pPlayer, AreaTriggerEntry const* pAt)
+{
+    if(pPlayer)
+    {
+        Creature *pMasterEye = GetClosestCreatureWithEntry(pPlayer, 15963, 100.0f);
+
+        if(pMasterEye)
+        {
+            npc_the_masters_eye *pMasterEyeAI = dynamic_cast<npc_the_masters_eye*>(pMasterEye->AI());
+
+            if(pMasterEyeAI)
+            {
+                pMasterEyeAI->StartRpIntro();
+            }
+        }
+    }
+	return false;
+}
+
 void AddSC_boss_twinemperors()
 {
     Script *newscript;
@@ -667,5 +826,15 @@ void AddSC_boss_twinemperors()
     newscript = new Script;
     newscript->Name = "boss_veklor";
     newscript->GetAI = &GetAI_boss_veklor;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "npc_the_masters_eye";
+    newscript->GetAI = &GetAI_npc_the_masters_eye;
+    newscript->RegisterSelf();
+
+	newscript = new Script;
+    newscript->Name = "at_twin_emperor_room";
+    newscript->pAreaTrigger = &AreaTrigger_at_twin_emperor_room;
     newscript->RegisterSelf();
 }

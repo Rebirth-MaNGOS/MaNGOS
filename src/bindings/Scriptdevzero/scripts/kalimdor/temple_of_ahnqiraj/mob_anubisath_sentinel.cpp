@@ -180,6 +180,8 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
                 return "SPELL_PERIODIC_KNOCK_AWAY";
             case SPELL_THORNS: 
                 return "SPELL_THORNS";
+            default:
+                return "NO SPELL WTF";
         }
     }
 
