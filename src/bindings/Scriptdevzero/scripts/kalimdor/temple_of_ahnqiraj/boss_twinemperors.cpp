@@ -389,24 +389,29 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         if (lUnitList.empty())
             return NULL;
 
-        Creature *nearb = NULL;
 
+        float dist = 9999999999999.f;
+        Creature* pClosest = nullptr;
         for(std::list<Creature*>::iterator iter = lUnitList.begin(); iter != lUnitList.end(); ++iter)
         {
             Creature *c = (Creature *)(*iter);
+
+            if (c->HasAura(SPELL_EXPLODEBUG) || c->HasAura(SPELL_MUTATE_BUG))
+                continue;
+
             if (c->isDead())
             {
                 c->Respawn();
                 c->setFaction(7);
                 c->RemoveAllAuras();
             }
-            if (c->IsWithinDistInMap(m_creature, ABUSE_BUG_RANGE))
+            if (c->GetDistance(m_creature) < dist)
             {
-                if (!nearb || !urand(0, 3))
-                    nearb = c;
+                pClosest = c;
+                dist = c->GetDistance(m_creature);
             }
         }
-        return nearb;
+        return pClosest;
     }
 
     void HandleBugs(uint32 diff)
@@ -572,7 +577,7 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
     void CastSpellOnBug(Creature *target)
     {
         target->setFaction(14);
-
+        target->SetPassiveToSpells(true);
         DoCastSpellIfCan(target, SPELL_EXPLODEBUG, CAST_TRIGGERED);
     }
 
