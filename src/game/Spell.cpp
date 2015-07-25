@@ -2134,14 +2134,14 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
     {
         SpellTargets targetB = SPELL_TARGETS_AOE_DAMAGE;
         
-        // The Explode bug spell in AQ should get all close
-        // targets. They are filtered further down.
-        if (m_spellInfo->Id == 804)
-            targetB = SPELL_TARGETS_ALL;
-
         // Select friendly targets for positive effect
         if (IsPositiveEffect(m_spellInfo, effIndex))
             targetB = SPELL_TARGETS_FRIENDLY;
+
+        // The Explode/Mumate Bug spell in AQ should get all close
+        // targets. They are filtered further down.
+        if (m_spellInfo->Id == 804 || m_spellInfo->Id == 802)
+            targetB = SPELL_TARGETS_ALL;
 
         UnitList tempTargetUnitMap;
         SpellScriptTargetBounds bounds = sSpellMgr.GetSpellScriptTargetBounds(m_spellInfo->Id);
@@ -2180,16 +2180,18 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             }
         }
 
-        // Loop though the target list for the spell Explode Bug in AQ40
+        // Loop though the target list for the spell Explode/Mutate Bug in AQ40
         // and remove any creature that isn't a bug.
-        if (!targetUnitMap.empty() && m_spellInfo->Id == 804)
+        if (!targetUnitMap.empty() && (m_spellInfo->Id == 804 || m_spellInfo->Id == 802))
         {
+            // Mutate Bug should target the scorpions and Explode Bug the scarabs.
+            uint32 filterCreature = m_spellInfo->Id == 804 ? 15316 : 15317;
             auto itr = targetUnitMap.begin();
             do
             {
                 Creature* pCreature = dynamic_cast<Creature*>(*itr);
                 if (!pCreature || pCreature->isDead() || 
-                    (pCreature->GetEntry() != 15316 && pCreature->GetEntry() != 15317))
+                    pCreature->GetEntry() != filterCreature)
                 {
                     itr = tempTargetUnitMap.erase(itr);
                 }
@@ -2198,7 +2200,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             } while (itr != targetUnitMap.end());
 
 
-            if (m_caster)
+            if (m_caster && !targetUnitMap.empty())
             {
                 Unit* pTarget = targetUnitMap.front();
                 float dist = m_caster->GetDistance(pTarget);
