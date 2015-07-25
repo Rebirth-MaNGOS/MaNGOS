@@ -92,7 +92,11 @@ enum Misc
 
 	GREEN_VISUAL					= 13540,
     ITEM_HAKKARI_BLOOD              = 10460,
-    SAY_ZONE_JAMMAL                 = -1109006
+    SAY_ZONE_JAMMAL                 = -1109006,
+	YELL_SHADE_OF_HAKKAR_1			= -1720194,
+	YELL_SHADE_OF_HAKKAR_2			= -1720195,
+	YELL_SHADE_OF_HAKKAR_3			= -1720196,
+	YELL_SHADE_OF_HAKKAR_4			= -1720197
 };
 
 struct Loc

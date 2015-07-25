@@ -34,7 +34,11 @@ enum Spells
     // Suppressor
     SPELL_SUPPRESSION                   = 12623,
 
-    EVENT_SPELL_AWAKEN_THE_SOULFLAYER   = 8502
+    EVENT_SPELL_AWAKEN_THE_SOULFLAYER   = 8502,
+	YELL_SUPPRESSOR_1					= -1720200,
+	YELL_SUPPRESSOR_2					= -1720201,
+	YELL_AVATAR_SPAWN					= -1720198,
+	YELL_AVATAR_AGGRO					= -1720199 
 };
 
 struct MANGOS_DLL_DECL boss_avatar_of_hakkarAI : public ScriptedAI
@@ -42,6 +46,7 @@ struct MANGOS_DLL_DECL boss_avatar_of_hakkarAI : public ScriptedAI
     boss_avatar_of_hakkarAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (instance_sunken_temple*)pCreature->GetInstanceData();
+		DoScriptText(YELL_AVATAR_SPAWN, m_creature, NULL);
         Reset();
     }
 
@@ -68,6 +73,7 @@ struct MANGOS_DLL_DECL boss_avatar_of_hakkarAI : public ScriptedAI
 
     void Aggro(Unit* /*pWho*/)
     {
+		DoScriptText(YELL_AVATAR_AGGRO, m_creature, NULL);
     }
 
     void JustDied(Unit* /*pKiller*/)
@@ -124,6 +130,11 @@ struct MANGOS_DLL_DECL mob_nightmare_suppressorAI : public ScriptedAI
     mob_nightmare_suppressorAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (instance_sunken_temple*)pCreature->GetInstanceData();
+		randomYell = urand(0,1);
+		if(randomYell == 0)
+			DoScriptText(YELL_SUPPRESSOR_1, m_creature, NULL);
+		else
+			DoScriptText(YELL_SUPPRESSOR_2, m_creature, NULL);
         Reset();
     }
 
@@ -131,6 +142,7 @@ struct MANGOS_DLL_DECL mob_nightmare_suppressorAI : public ScriptedAI
 
     bool m_bIsCasting;
     uint32 m_uiSuppressionTimer;
+	int randomYell;
 
     void Reset()
     {
