@@ -3675,7 +3675,7 @@ void Spell::EffectEnchantItemTmp(SpellEffectIndex eff_idx)
         duration = 1800;                                    // 30 mins
     // other rogue family enchantments always 1 hour (some have spell damage=0, but some have wrong data in EffBasePoints)
     else if(m_spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE)
-        duration = 3600;                                    // 1 hour
+        duration = 1800;                                    // 1 hour
     // shaman family enchantments - only works for windfury
     else if(m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN)
         duration = 300;                                     // 30 mins
@@ -3713,9 +3713,25 @@ void Spell::EffectEnchantItemTmp(SpellEffectIndex eff_idx)
              m_spellInfo->Id == 16355 ||
              m_spellInfo->Id == 16356)						// Frostbrand weapon
         duration = 300;
-
-    // default case
-    else
+    else if(m_spellInfo->Id == 25123 ||
+            m_spellInfo->Id == 25120 ||
+            m_spellInfo->Id == 25118 ||
+            m_spellInfo->Id == 25122 ||
+            m_spellInfo->Id == 25119 ||
+            m_spellInfo->Id == 25117 ||
+            m_spellInfo->Id == 16138 ||
+            m_spellInfo->Id == 9900 ||
+            m_spellInfo->Id == 2830 ||
+            m_spellInfo->Id == 2829 ||
+            m_spellInfo->Id == 2828 ||
+            m_spellInfo->Id == 16622 ||
+            m_spellInfo->Id == 9903 ||
+            m_spellInfo->Id == 3114 ||
+            m_spellInfo->Id == 3113 ||
+            m_spellInfo->Id == 3112 ||
+            m_spellInfo->Id == 22756)
+        duration = 1800;
+    else     // default case
         duration = 3600;                                    // 1 hour
 
     // item can be in trade slot and have owner diff. from caster
