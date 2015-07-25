@@ -265,23 +265,43 @@ enum eMelizzaBrimbuzzle
     NPC_MARAUDINE_WRANGLER          = 4655,     // Ambusher
     NPC_MARAUDINE_MAULER            = 4656,     // Ambusher
     NPC_BONEPAW_HYENA               = 4688,     // Ambusher
+	NPC_HORNIZZ						= 6019,
     GO_MELIZZAS_CAGES               = 177706,
+
+	SAY_MELIZZA_1					= -1720202,
+	SAY_MELIZZA_2					= -1720203,
+	SAY_MELIZZA_3					= -1720204,		// cheer emote?
+	SAY_MELIZZA_4					= -1720205,
+	SAY_MELIZZA_5					= -1720206,		// bye
+	SAY_HORNIZZ_1					= -1720207,		// bye
 };
 
 struct MANGOS_DLL_DECL npc_melizza_brimbuzzleAI : public npc_escortAI
 {
     npc_melizza_brimbuzzleAI(Creature* pCreature) : npc_escortAI(pCreature) {Reset();}
 
-    bool m_bCanWalk;
-    uint32 m_uiByeWaveTimer;
+	bool m_bOutro;
+	uint32 m_uiSpeechTimer;
+	uint8 m_uiSpeechStep;
 
     void Reset()
     {
         if (!HasEscortState(STATE_ESCORT_ESCORTING))
             m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);
+    }
 
-        m_uiByeWaveTimer = 0;
-        m_bCanWalk = true;
+	/*void MoveInLineOfSight(Unit* pWho)		// only attack if the player is in combat, can't get it to work propperly
+    {
+        Player* pPlayer = GetPlayerForEscort();
+        if (!pPlayer)
+            return;
+		if(pPlayer->isInCombat() && !m_creature->isInCombat() && pWho->isAttackingPlayer())
+			m_creature->AI()->AttackStart(pWho);
+    }*/
+
+	void JustSummoned(Creature* pSummoned)
+    {
+		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
     }
 
     void WaypointReached(uint32 uiPointId)
@@ -292,84 +312,91 @@ struct MANGOS_DLL_DECL npc_melizza_brimbuzzleAI : public npc_escortAI
 
         switch(uiPointId)
         {
+			case 1:
+				DoScriptText(SAY_MELIZZA_1,m_creature,pPlayer);
+				break;
             case 6:
                 // 4x Maulers at Y
-                m_creature->SummonCreature(NPC_MARAUDINE_MAULER, -1305.36f, 2625.21f, 111.61f, 1.01f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
-                m_creature->SummonCreature(NPC_MARAUDINE_MAULER, -1318.45f, 2672.05f, 111.86f, 6.17f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
-                m_creature->SummonCreature(NPC_MARAUDINE_MAULER, -1323.01f, 2677.04f, 112.66f, 6.17f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
-                m_creature->SummonCreature(NPC_MARAUDINE_MAULER, -1207.36f, 2679.65f, 111.36f, 3.31f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+                m_creature->SummonCreature(NPC_MARAUDINE_MAULER, -1305.36f, 2625.21f, 111.61f, 1.01f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_MARAUDINE_MAULER, -1318.45f, 2672.05f, 111.86f, 6.17f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_MARAUDINE_MAULER, -1323.01f, 2677.04f, 112.66f, 6.17f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_MARAUDINE_MAULER, -1299.36f, 2640.15f, 111.36f, 0.86f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
                 break;
-            case 11:
+            case 24:
                 // 3x Wranglers + Hyenas at Mountain exit
-                m_creature->SummonCreature(NPC_MARAUDINE_WRANGLER, -1371.50f, 2456.63f, 90.06f, 1.63f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
-                m_creature->SummonCreature(NPC_MARAUDINE_WRANGLER, -1397.81f, 2415.76f, 88.51f, 1.22f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
-                m_creature->SummonCreature(NPC_MARAUDINE_WRANGLER, -1421.87f, 2423.94f, 89.69f, 1.03f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
-                m_creature->SummonCreature(NPC_BONEPAW_HYENA, -1419.94f, 2422.80f, 89.72f, 1.03f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+                m_creature->SummonCreature(NPC_MARAUDINE_WRANGLER, -1379.76f, 2409.82f, 88.90f, 2.01f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_MARAUDINE_WRANGLER, -1394.71f, 2410.82f, 88.72f, 1.39f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_MARAUDINE_WRANGLER, -1409.36f, 2413.23f, 88.49f, 1.06f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+				m_creature->SummonCreature(NPC_BONEPAW_HYENA, -1380.76f, 2408.82f, 88.90f, 2.01f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+                m_creature->SummonCreature(NPC_BONEPAW_HYENA, -1398.98f, 2408.82f, 88.72f, 1.13f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
+				m_creature->SummonCreature(NPC_BONEPAW_HYENA, -1410.36f, 2412.73f, 88.49f, 1.06f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
                 break;
-            case 14:
+            case 29:
                 m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);
                 m_creature->SetFacingToObject(pPlayer);
-                m_creature->MonsterSay("Thanks alot for your help, $N. Thanks!", LANG_UNIVERSAL, pPlayer);
-                m_creature->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
-                m_uiByeWaveTimer = 6000;
+				DoScriptText(SAY_MELIZZA_2,m_creature,NULL);
                 pPlayer->GroupEventHappens(QUEST_GET_ME_OUT_OF_HERE, m_creature);
-                SetRun(false);
+                SetRun(true);
                 break;
+			case 43:
+				m_bOutro = true;
+				m_uiSpeechStep = 1;
+				m_uiSpeechTimer = 500;
+				break;
         }
-    }
-
-    void JustSummoned(Creature* pSummoned)
-    {
-        switch(pSummoned->GetEntry())
-        {
-            case NPC_MARAUDINE_WRANGLER:
-            case NPC_BONEPAW_HYENA:
-                Player* pPlayer = GetPlayerForEscort();
-                if (pPlayer && rand() % 2 == 0)
-                    pSummoned->AI()->AttackStart(pPlayer);
-                else
-                    pSummoned->AI()->AttackStart(m_creature);
-                break;
-        }
-    }
-
-    void Aggro(Unit* /*pAttacker*/)
-    {
-        m_creature->MonsterSay("Help!", LANG_UNIVERSAL, NULL);
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
-        Player* pPlayer = GetPlayerForEscort();
-        if (!pPlayer)
+		npc_escortAI::UpdateAI(uiDiff);
+		//Return since we have no target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
-        if (m_uiByeWaveTimer)
-	{
-            if (m_uiByeWaveTimer <= uiDiff)
-            {
-                m_creature->HandleEmoteCommand(EMOTE_ONESHOT_WAVE);
-                m_uiByeWaveTimer = 0;
-            }
-            else
-                m_uiByeWaveTimer -= uiDiff;
+		DoMeleeAttackIfReady();
 	}
 
-        if (m_bCanWalk && !pPlayer->IsWithinDist(m_creature, 30.0f) && !m_creature->getVictim())
-        {
-            m_bCanWalk = false;
-            m_creature->StopMoving();
-            m_creature->SetFacingToObject(pPlayer);
-            m_creature->MonsterTextEmote("Melizza is waiting for you.", pPlayer);
-        }
-        else if (!m_bCanWalk && pPlayer->IsWithinDist(m_creature, 30.0f))
-        {
-            m_bCanWalk = true;
-        }
-
-        if (m_bCanWalk)
-            npc_escortAI::UpdateAI(uiDiff);
-    }
+	void UpdateEscortAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro)							// handle RP at quest end
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {			
+				Creature* pHornizz = GetClosestCreatureWithEntry(m_creature, NPC_HORNIZZ, 10.0f);
+                switch(m_uiSpeechStep)
+                {
+					case 1:
+						DoScriptText(SAY_MELIZZA_3,m_creature,NULL);
+						m_creature->SetFacingTo(5.16f);
+						m_uiSpeechTimer = 5000;
+						break;
+					case 2:
+						DoScriptText(SAY_MELIZZA_4,m_creature,NULL);
+                        m_uiSpeechTimer = 10000;
+						break;
+					case 3:
+						DoScriptText(SAY_MELIZZA_5,m_creature,NULL);
+						m_uiSpeechTimer = 3000;
+						break;
+					case 4:
+						DoScriptText(SAY_HORNIZZ_1,pHornizz,NULL);
+						m_uiSpeechTimer = 6000;
+						break;
+					case 5:
+						m_bOutro = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+	}
 };
 
 CreatureAI* GetAI_npc_melizza_brimbuzzle(Creature* pCreature)
@@ -383,7 +410,7 @@ bool QuestAccept_npc_melizza_brimbuzzle(Player* pPlayer, Creature* pCreature, co
     {
         if (npc_melizza_brimbuzzleAI* pEscortAI = dynamic_cast<npc_melizza_brimbuzzleAI*>(pCreature->AI()))
         {
-            pEscortAI->Start(true, pPlayer, pQuest);
+            pEscortAI->Start(false, pPlayer, pQuest);
             pCreature->setFaction(250);
             if (GameObject* GoCage = GetClosestGameObjectWithEntry(pCreature, GO_MELIZZAS_CAGES, 10.0f))
                 GoCage->UseDoorOrButton();
