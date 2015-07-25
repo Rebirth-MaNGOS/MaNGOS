@@ -381,11 +381,10 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         }
     }
 
-    Creature *RespawnNearbyBugsAndGetOne()
+    Creature* RespawnNearbyBugsAndGetOne(uint32 bugEntry)
     {
         std::list<Creature*> lUnitList;
-        GetCreatureListWithEntryInGrid(lUnitList,m_creature,15316,150.0f);
-        GetCreatureListWithEntryInGrid(lUnitList,m_creature,15317,150.0f);
+        GetCreatureListWithEntryInGrid(lUnitList, m_creature, bugEntry, 150.0f);
 
         if (lUnitList.empty())
             return NULL;
@@ -414,12 +413,16 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
     {
         if (BugsTimer < diff || Abuse_Bug_Timer < diff)
         {
-            Creature *c = RespawnNearbyBugsAndGetOne();
+            Creature *c = RespawnNearbyBugsAndGetOne(IAmVeklor() ? 15316 : 15317);
             if (Abuse_Bug_Timer < diff)
             {
                 if (c)
                 {
                     CastSpellOnBug(c);
+
+                    if (m_creature->getVictim())
+                        c->Attack(m_creature->getVictim(), false);
+
                     Abuse_Bug_Timer = urand(10000, 17000);
                 }
                 else
@@ -567,7 +570,7 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
     {
         target->setFaction(14);
 
-        DoCastSpellIfCan(m_creature, SPELL_EXPLODEBUG, CAST_TRIGGERED);
+        DoCastSpellIfCan(target, SPELL_EXPLODEBUG, CAST_TRIGGERED);
     }
 
     void UpdateAI(const uint32 diff)
@@ -643,7 +646,9 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
         if (Teleport_Timer < diff)
         {
             TeleportToMyBrother();
-        }else Teleport_Timer -= diff;
+        }
+        else 
+            Teleport_Timer -= diff;
 
         CheckEnrage(diff);
 
