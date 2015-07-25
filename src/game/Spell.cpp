@@ -2190,7 +2190,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             do
             {
                 Creature* pCreature = dynamic_cast<Creature*>(*itr);
-                if (!pCreature || pCreature->isDead() || 
+                if (!pCreature || pCreature->isDead() || pCreature->HasAura(m_spellInfo->Id) ||
                     pCreature->GetEntry() != filterCreature)
                 {
                     itr = tempTargetUnitMap.erase(itr);

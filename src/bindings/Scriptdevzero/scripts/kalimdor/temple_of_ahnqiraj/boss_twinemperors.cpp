@@ -421,7 +421,10 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
                     CastSpellOnBug(c);
 
                     if (m_creature->getVictim())
+                    {
                         c->Attack(m_creature->getVictim(), false);
+                        c->GetMotionMaster()->MoveChase(m_creature->getVictim());
+                    }
 
                     Abuse_Bug_Timer = urand(10000, 17000);
                 }
