@@ -34,6 +34,7 @@ EndContentData */
 
 #include "precompiled.h"
 #include "follower_ai.h"
+#include "escort_ai.h"
 #include "ObjectMgr.h"
 
 /*######
@@ -798,6 +799,222 @@ CreatureAI* GetAI_npc_ooze_multi(Creature* pCreature)
     return new npc_ooze_multiAI(pCreature);
 }
 
+enum anaorkin
+{
+    QUEST_RESCUE_FROM_JAEDENAR     = 5203,
+    MOB_LEGIONAIRE                 = 9862,
+    MOB_SPIRIT_OF_TREY             = 11141,
+    SPELL_STRENGHT_OF_ARKO         = 18163,
+};
+
+struct DemonLoc
+{
+    float m_fX, m_fY, m_fZ;
+};
+
+static const DemonLoc aDemonSpawns[7] =
+{
+    {5085.63f, -508.54f, 296.86f},                       // Shade spawn location 1
+    {5093.48f, -503.63f, 296.67f},                       // Shade spawn location 2
+    {5101.33f, -500.30f, 296.67f},                    // Shade spawn location 3
+    {5036.02f, -537.74f, 297.80f},                      // Shade spawn location 4
+    {5042.32f, -544.05f, 297.80f},                     // Shade spawn location 5
+    {5054.05f, -536.73f, 297.80f},                     // Hover spot
+    {4853.24f, -390.89f, 350.75f},                      // Eranikus landing spot                  
+};
+
+struct MANGOS_DLL_DECL npc_captured_anoarkin : public npc_escortAI
+{
+    npc_captured_anoarkin(Creature* pCreature) : npc_escortAI(pCreature)
+    { 
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        Reset(); 
+    }
+
+	uint32 m_uiEventPhase;
+    uint32 m_uiEventTimer;
+
+    void Reset() 
+    {
+        if(HasEscortState(STATE_ESCORT_ESCORTING) || HasEscortState(STATE_ESCORT_PAUSED))
+            return;
+
+        m_uiEventPhase = 0;
+        m_uiEventTimer = 0;
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+    }
+
+    void WaypointReached(uint32 i)
+    {
+      switch(i)
+      {
+      case 1:
+          m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+          break;
+      case 59:
+          m_creature->MonsterSay("There it is!", LANG_UNIVERSAL);
+          m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+          break;
+      case 62:
+          {
+          SetEscortPaused(true);
+          m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);
+          GameObject *pChest = GetClosestGameObjectWithEntry(m_creature, 176225, 50.0f);
+          
+          if(pChest)
+              m_creature->SetFacingToObject(pChest);
+
+          m_uiEventPhase = 0;
+          m_uiEventTimer = 3000;
+          m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+          break;
+          }
+      case 63:
+          for(int i = 0; i < 3; ++i)
+          {
+              Creature *pDemon = m_creature->SummonCreature(MOB_LEGIONAIRE, aDemonSpawns[i].m_fX, aDemonSpawns[i].m_fY, aDemonSpawns[i].m_fZ, 0.0f, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 60000);
+
+              if(pDemon)
+              {
+                  pDemon->SetFacingToObject(m_creature);
+                  pDemon->AI()->AttackStart(m_creature);
+              }
+          }
+          break;
+      case 77:
+          for(int i = 3; i < 6; ++i)
+          {
+              Creature *pDemon = m_creature->SummonCreature(MOB_LEGIONAIRE, aDemonSpawns[i].m_fX, aDemonSpawns[i].m_fY, aDemonSpawns[i].m_fZ, 0.0f, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 60000);
+
+              if(pDemon)
+              {
+                  pDemon->SetFacingToObject(m_creature);
+                  pDemon->AI()->AttackStart(m_creature);
+              }
+          }
+          break;
+      case 155:
+          SetEscortPaused(true);
+          m_uiEventTimer = 2000;
+          break;
+      }
+    }
+
+    void SummonedCreatureJustDied(Creature *pSummoned)
+    {
+        if(pSummoned && pSummoned->GetEntry() == MOB_SPIRIT_OF_TREY)
+        {
+            Player *pPlayer = GetPlayerForEscort();
+
+            if(pPlayer)
+                pPlayer->GroupEventHappens(QUEST_RESCUE_FROM_JAEDENAR, m_creature);
+
+            SetEscortPaused(false);
+        }
+    }
+
+    void UpdateEscortAI(uint32 uiDiff)
+    {
+        if(m_uiEventTimer)
+        {
+            if(m_uiEventTimer <= uiDiff)
+            {
+                switch(m_uiEventPhase)
+                {
+                case 0:
+                    m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+                    DoCast(m_creature, SPELL_STRENGHT_OF_ARKO);
+                    m_uiEventTimer = 6000;
+                    break;
+                case 1:
+                    {
+                    m_creature->SetDisplayId(10402);
+                    m_creature->SetEntry(11018);
+                    m_creature->UpdateVisibilityAndView();
+                    m_creature->LoadEquipment(20504);
+
+                    Unit *pPlayer = GetPlayerForEscort();
+
+                    if(pPlayer)
+                        m_creature->SetFacingToObject(pPlayer);
+
+                    m_creature->MonsterSay("All I need now is a golden lasso!", LANG_UNIVERSAL);
+                    m_uiEventTimer = 3000;
+                    break;
+                    }
+                case 2:
+                    SetEscortPaused(false);
+                    m_uiEventTimer = 0;
+                    break;
+                case 3:
+                    {
+                        Creature *pDemon = m_creature->SummonCreature(MOB_SPIRIT_OF_TREY, aDemonSpawns[7].m_fX, aDemonSpawns[7].m_fX, aDemonSpawns[7].m_fX, 6.05f, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 60000);
+
+                    if(pDemon)
+                    {
+                        pDemon->MonsterYell("BETRAYER!", LANG_UNIVERSAL);
+                        pDemon->SetFacingToObject(m_creature);
+                        pDemon->AI()->AttackStart(m_creature);
+                    }
+                    SetEscortPaused(true);
+                    m_uiEventTimer = 0;
+                    break;
+                    }
+                case 4:
+                case 5:
+                    break;
+                }
+                ++m_uiEventPhase;
+            }
+            else
+                m_uiEventTimer -= uiDiff;
+        }
+
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+
+
+
+};
+
+CreatureAI* GetAI_npc_captured_anoarkin(Creature* pCreature)
+{
+    return new npc_captured_anoarkin(pCreature);
+}
+
+bool QuestAccept_npc_captured_anoarkin(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+{
+    if (pPlayer && pCreature && pQuest && pQuest->GetQuestId() == QUEST_RESCUE_FROM_JAEDENAR)
+    {
+        npc_captured_anoarkin *pAnarkinAI = dynamic_cast<npc_captured_anoarkin*>(pCreature->AI());
+
+        if(pAnarkinAI)
+            pAnarkinAI->Start(true, pPlayer, pQuest, true);
+    }
+    return true;
+}
+
+bool GossipHello_npc_captured_anoarkin(Player* pPlayer, Creature* pCreature)
+{
+    if(pPlayer && pCreature)
+    {
+        if (pCreature->isQuestGiver())
+            pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
+
+        if (pPlayer->GetQuestStatus(QUEST_RESCUE_FROM_JAEDENAR) == QUEST_STATUS_COMPLETE && pPlayer->HasQuest(QUEST_RESCUE_FROM_JAEDENAR))
+            pPlayer->SEND_GOSSIP_MENU(100, pCreature->GetObjectGuid());
+        else if(pPlayer->GetQuestStatus(QUEST_RESCUE_FROM_JAEDENAR) == QUEST_STATUS_COMPLETE)
+            pPlayer->SEND_GOSSIP_MENU(99, pCreature->GetObjectGuid());
+        else
+            pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetObjectGuid());
+    }
+
+    return true;
+}
+
 void AddSC_felwood()
 {
     Script* pNewscript;
@@ -855,5 +1072,12 @@ void AddSC_felwood()
 	pNewscript = new Script;
     pNewscript->Name = "npc_ooze_multi";
     pNewscript->GetAI = &GetAI_npc_ooze_multi;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_captured_anoarkin";
+    pNewscript->GetAI = &GetAI_npc_captured_anoarkin;
+    pNewscript->pGossipHello = &GossipHello_npc_captured_anoarkin;
+    pNewscript->pQuestAcceptNPC = &QuestAccept_npc_captured_anoarkin;
     pNewscript->RegisterSelf();
 }
