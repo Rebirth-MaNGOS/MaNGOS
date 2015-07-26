@@ -304,13 +304,18 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 		if(m_bExploded)
 		{
 			if (m_uiSetInvisTimer <= uiDiff)
+            {
 				SetVisible(0);
+                m_creature->SetObjectScale(0.1f);
+                m_creature->UpdateModelData();
+            }
 			else
 				m_uiSetInvisTimer -= uiDiff;
 
 			if (m_uiSetVisibleTimer <= uiDiff)
 			{
-				m_creature->SetObjectScale(2-(3.f/globCounter));			// set Viscidus' size depending on the blobs that are alive 1/ too small?                
+                m_creature->SetObjectScale(2*(m_creature->GetHealthPercent()/100));			// set Viscidus' size depending on the blobs that are alive 1/ too small?   
+                m_creature->UpdateModelData();
                 m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
 				SetVisible(1);
 			}
@@ -386,6 +391,16 @@ struct MANGOS_DLL_DECL boss_glob_of_viscidusAI : public ScriptedAI
 	void MoveInLineOfSight(Unit* /*pWho*/)
     {
         // Must to be empty to ignore aggro
+    }
+
+    void Aggro(Unit* /*pVictim*/)
+    {
+        return;
+    }
+
+    void AttackStart(Unit* /*pVictim*/)
+    {
+        return;
     }
 
 	void UpdateAI(const uint32 uiDiff)
