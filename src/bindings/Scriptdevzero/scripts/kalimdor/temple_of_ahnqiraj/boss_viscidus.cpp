@@ -29,7 +29,8 @@ enum
     SPELL_POISON_SHOCK          = 25993,
     SPELL_POISONBOLT_VOLLEY     = 25991,					// doesn't ignore los like it should?
     SPELL_TOXIN                 = 26575,                    // Triggers toxin cloud every 10~~ sec
-    SPELL_TOXIN_CLOUD           = 25989,					
+    SPELL_TOXIN_CLOUD           = 25989,		
+	SPELL_POISON_BOLT			= 21067,					// should only do this as visual, should be possible to target totems and such. REDO THIS! Should not do dmg this is just to get the cast animation + projectile
 
 	// Root
 	SPELL_ROOT					= 20548,
@@ -46,7 +47,8 @@ enum
 
 	SPELL_MEMBRANE_VISCIDUS     = 25994,                    // damage reduction spell
 
-    NPC_GLOB_OF_VISCIDUS        = 15667
+    NPC_GLOB_OF_VISCIDUS        = 15667,
+	NPC_TOXIN_CLOUD				= 152990
 };
 
 struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
@@ -85,6 +87,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     uint32 globCounter;
 
     uint32 m_health;
+	GUIDList m_lToxinClouds;
 
     void Reset()
     {
@@ -98,11 +101,15 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 		m_uiThawTimer = 20000;
         m_bSummoned = false;
         globCounter = 0;
-
+		
+		RemoveToxinClouds();
 		RemoveAuras();
 		ResetBool(0);
 		ResetBool(1);
 		SetVisible(1);
+		m_lToxinClouds.clear();
+		m_creature->SetObjectScale(1.2f);		// has to reset scale here
+		m_creature->UpdateModelData();
     }
 
 	void RemoveAuras()
@@ -135,9 +142,31 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 		}
 	}
 	
-	void Aggro(Unit* /*pWho*/)
+	void JustDied(Unit* /*pKiller*/)							// Remove all clouds when he dies
     {
-    }
+		RemoveToxinClouds();
+	}
+
+	void RemoveToxinClouds()
+	{
+		for (GUIDList::iterator itr = m_lToxinClouds.begin(); itr != m_lToxinClouds.end(); itr++)
+		{
+			if (Creature* pToxinCloud = m_creature->GetMap()->GetCreature(*itr))
+				if (pToxinCloud->isAlive())
+					pToxinCloud->ForcedDespawn(urand(10000,20000));		// make them appear a bit more randomly despawning
+		}
+	}
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)		// summon the poison cloud under the player but we don't want the player to take any dmg
+    {
+        if (pSpell->Id == SPELL_POISON_BOLT)
+		{
+			if(pTarget->HasAura(SPELL_POISON_BOLT))
+				pTarget->RemoveAurasDueToSpell(SPELL_POISON_BOLT);
+			if(Creature* pToxin = m_creature->SummonCreature(NPC_TOXIN_CLOUD,pTarget->GetPositionX(),pTarget->GetPositionY(),pTarget->GetPositionZ(),0,TEMPSUMMON_TIMED_DESPAWN,1800000,false))
+				m_lToxinClouds.push_back(pToxin->GetObjectGuid());		// max 30 min alive, else removed when boss dies/reset
+		}
+	}
 
 	void SpellHit(Unit* /*pCaster*/, const SpellEntry* pSpell)			// Count every frost spell
     {
@@ -184,7 +213,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
 	void MeleeHitCount()
 	{
-		if(m_uiMeleeCounter >= 1 && !m_bCracking1)		// 100, 150, 200
+		if(m_uiMeleeCounter >= 1 && !m_bCracking1)		// 25, 50, 75?
 		{
 			m_creature->GenericTextEmote("Viscidus begins to crack.", NULL, false);
 			m_bCracking1 = true;
@@ -260,7 +289,8 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
 	void JustSummoned(Creature* pSummoned)
     {
-		pSummoned->GetMotionMaster()->MovePoint(1,-7991.48f,920.19f,-52.91f);		// a point in the middle of the room
+		if(pSummoned->GetEntry() == NPC_GLOB_OF_VISCIDUS)
+			pSummoned->GetMotionMaster()->MovePoint(1,-7991.48f,920.19f,-52.91f);		// a point in the middle of the room
 		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
     }
 
@@ -284,12 +314,12 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     void SummonedCreatureJustDied(Creature* pSummoned)
     {
         if (pSummoned->GetEntry() == NPC_GLOB_OF_VISCIDUS)
-            m_creature->DealDamage(m_creature, m_creature->GetMaxHealth() * 0.05f, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+            //m_creature->DealDamage(m_creature, m_creature->GetMaxHealth() * 0.05f, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+			m_creature->SetHealth(m_creature->GetHealth()*0.95f);
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
-		
 		if (m_bFrozen && !m_bExploded)
 		{
 			if (m_uiThawTimer <= uiDiff)			// remove all slows and reset counters
@@ -356,10 +386,13 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 			else
 				m_uiPoisonVolleyTimer -= uiDiff;
 
-			if (m_uiToxicCloudTimer <= uiDiff)				// redo this, spawn the npcs instead, or don't summon the cloud under the boss
+			if (m_uiToxicCloudTimer <= uiDiff)				// redo this, should probably not cast a spell, just visually cast it. Missing that the boss should turn towards the victim during cast.
 			{
-				m_creature->CastSpell(m_creature, SPELL_TOXIN_CLOUD, false);   
-				m_uiToxicCloudTimer = urand(10000,15000);
+				if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+				{
+					m_creature->CastSpell(pTarget, SPELL_POISON_BOLT, true); 
+				}
+				m_uiToxicCloudTimer = urand(30000,40000);
 			}
 			else
 				m_uiToxicCloudTimer -= uiDiff;
@@ -416,13 +449,67 @@ struct MANGOS_DLL_DECL boss_glob_of_viscidusAI : public ScriptedAI
 		}
 		else
 			m_uiSpeedUpTimer -= uiDiff;
-		m_creature->SetTargetGuid(ObjectGuid());				// target self even when someone does dmg, - needs testing if this is needed
+		m_creature->SetTargetGuid(ObjectGuid());				// target self even when someone does dmg
 	}
 };
 
 CreatureAI* GetAI_boss_glob_of_viscidus(Creature* pCreature)
 {
     return new boss_glob_of_viscidusAI(pCreature);
+}
+
+/*######
+## mob_toxin_cloud
+######*/
+
+struct MANGOS_DLL_DECL mob_toxin_cloudAI : public ScriptedAI
+{
+    mob_toxin_cloudAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        SetCombatMovement(false);
+		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+		m_uiFirstTick = 3000;
+        Reset();
+    }
+	uint32 m_uiFirstTick;
+	bool m_bFirstTick;
+    void Reset()
+    {
+    }
+
+	void MoveInLineOfSight(Unit* pWho)
+    {
+    }
+
+    void Aggro(Unit* /*pVictim*/)
+    {
+        return;
+    }
+
+    void AttackStart(Unit* /*pVictim*/)
+    {
+        return;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+		if(!m_bFirstTick)
+			if (m_uiFirstTick <= uiDiff)
+			{
+				m_creature->CastSpell(m_creature, SPELL_TOXIN, true);
+				m_creature->CastSpell(m_creature, SPELL_TOXIN_CLOUD, true);			// do the first tick here, else we have to wait 10 sec before we notice the cloud
+				m_bFirstTick = true;
+			}
+			else
+				m_uiFirstTick -= uiDiff;
+
+        // no meele
+    }
+};
+
+CreatureAI* GetAI_mob_toxin_cloud(Creature* pCreature)
+{
+    return new mob_toxin_cloudAI(pCreature);
 }
 
 void AddSC_boss_viscidus()
@@ -437,5 +524,10 @@ void AddSC_boss_viscidus()
 	pNewscript = new Script;
     pNewscript->Name = "boss_glob_of_viscidus";
     pNewscript->GetAI = &GetAI_boss_glob_of_viscidus;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_toxin_cloud";
+    pNewscript->GetAI = &GetAI_mob_toxin_cloud;
     pNewscript->RegisterSelf();
 }
