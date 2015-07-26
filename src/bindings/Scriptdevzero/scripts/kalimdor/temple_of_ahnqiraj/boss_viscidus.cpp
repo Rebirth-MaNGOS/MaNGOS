@@ -84,6 +84,8 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     float globs;
     uint32 globCounter;
 
+    uint32 m_health;
+
     void Reset()
     {
 		m_uiGlobCount = 0;
@@ -96,7 +98,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 		m_uiThawTimer = 20000;
         m_bSummoned = false;
         globCounter = 0;
-		
+
 		RemoveAuras();
 		ResetBool(0);
 		ResetBool(1);
@@ -207,12 +209,18 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 				//RemoveAuras();					// remove auras if we're gonna explode, not needed?
 				m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
 				m_creature->CastSpell(m_creature, SPELL_VISCIDUS_EXPLODE,true);
-				m_creature->CastSpell(m_creature, SPELL_ROOT, true);
 				m_creature->GenericTextEmote("Viscidus explodes.", NULL, false);			// missing death animation
 				m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);		// not really working	
 
-				m_uiSetInvisTimer = 4000;
-				m_uiGlobSpawnTimer = 5000;			// slight delay before we spawn the adds
+                // Clear the target to prevent him from rotating.
+                m_creature->SetTargetGuid(ObjectGuid());
+
+                // Set his health to zero to trigger the death animation.
+                m_health = m_creature->GetHealth();
+                m_creature->SetHealth(0);
+
+				m_uiSetInvisTimer = 1700;
+				m_uiGlobSpawnTimer = 3000;			// slight delay before we spawn the adds
 				m_uiSetVisibleTimer = 18000;			// adjust this when adds are spawning/moving correctly
 			}
 		}
@@ -223,6 +231,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 		if (Visible == 0)
 		{
 			m_creature->SetVisibility(VISIBILITY_OFF);	
+            m_creature->SetHealth(m_health);
 		}
 		else if (Visible == 1)
 		{
@@ -230,6 +239,10 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 			ResetBool(0);			// reset all counters for spells here
             m_creature->SetVisibility(VISIBILITY_ON);
 			m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);			
+            m_creature->RelocateCreature(-7991.48f, 920.19f, -52.91f, 0.f);
+
+            if (m_creature->getVictim())
+                m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim());
 		}		
 	}
 
@@ -276,9 +289,6 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        //Return since we have no target
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
 		
 		if (m_bFrozen && !m_bExploded)
 		{
@@ -321,6 +331,10 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
 		if (m_bCanDoDamage)
 		{
+            //Return since we have no target
+            if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+                return;
+
 			if (m_uiPoisonShockTimer <= uiDiff)
 			{
 				m_creature->CastSpell(m_creature, SPELL_POISON_SHOCK, false);
