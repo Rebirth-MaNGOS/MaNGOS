@@ -231,8 +231,12 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 			if (!m_bExploded)
 			{
 				if (HealthBelowPct(5))			// if Viscidus has less than 5% hp he should die since every glob is 5% hp
-					m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
-
+				{
+					if(Unit* pTarget = GetRandomPlayerInCurrentMap(100))
+						pTarget->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+					else
+						m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);		// just in case we won't find a player
+				}
 				m_bCanDoDamage = false;
 				m_bExploded = true;
 				//RemoveAuras();					// remove auras if we're gonna explode, not needed?
@@ -299,6 +303,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 		if(uiPointId == 1)
         {
             pSummoned->CastSpell(m_creature, SPELL_REJOIN_VISCIDUS, true);
+			pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
             pSummoned->ForcedDespawn(globCounter >= globs ? 50 : 2000);
             ++globCounter;
 
