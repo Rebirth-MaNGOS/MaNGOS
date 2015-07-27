@@ -70,11 +70,11 @@ struct MANGOS_DLL_DECL boss_jindoAI : public ScriptedAI
         m_uiCurseCounter = 0;
         m_uiBrainWashTotemTimer = 20000;
         m_uiHealingWardTimer = 16000;
-        m_uiHexTimer = 8000;
+        /*m_uiHexTimer = 8000;
         m_uiDelusionsTimer = 10000;
         m_uiTeleportTimer = 5000;
         m_hexedTarget = NULL;
-        m_uiHexSaveTimer = 1000;
+        m_uiHexSaveTimer = 1000;*/
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -227,7 +227,7 @@ struct MANGOS_DLL_DECL mob_healing_wardAI : public Scripted_NoMovementAI
     void Reset()
     {
         m_uiHealTimer = 2000;
-        m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
+        //m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -246,6 +246,7 @@ struct MANGOS_DLL_DECL mob_healing_wardAI : public Scripted_NoMovementAI
         }
         else
             m_uiHealTimer -= uiDiff;
+		m_creature->SetTargetGuid(ObjectGuid());
     }
 };
 
@@ -259,7 +260,7 @@ struct MANGOS_DLL_DECL mob_brain_wash_totemAI : public Scripted_NoMovementAI
     mob_brain_wash_totemAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature)
     {
         m_pInstance = (instance_zulgurub*)pCreature->GetInstanceData();
-        SetCombatMovement(false);
+        //SetCombatMovement(false);
         bSpellCasted = false;
         Reset();
     }
@@ -270,7 +271,7 @@ struct MANGOS_DLL_DECL mob_brain_wash_totemAI : public Scripted_NoMovementAI
 
     void Reset()
     {
-        m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
+        //m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
     }
 
     void DamageTaken(Unit *, uint32&)
