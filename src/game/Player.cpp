@@ -19322,7 +19322,7 @@ bool Player::CanUseBattleGroundObject()
              //player cannot use object when he is invulnerable (immune)
              !isTotalImmune() &&                            // not totally immune
              //i'm not sure if these two are correct, because invisible players should get visible when they click on flag
-             !HasStealthAura() &&                           // not stealthed
+             //!HasStealthAura() &&                           // should be able to pick it up as stealthed
              !HasInvisibilityAura() &&                      // not invisible
              isAlive()                                      // live player
            );
