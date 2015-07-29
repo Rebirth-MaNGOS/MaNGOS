@@ -1633,6 +1633,8 @@ void GameObject::Use(Unit* user)
                     return;
 				if (player->HasAuraType(SPELL_AURA_MOD_STEALTH))			// remove stealth, needed for WSG flag
 					player->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+				else if(player->HasAuraType(SPELL_AURA_MOD_INVISIBILITY))			// remove invisibility, needed for WSG flag
+					player->RemoveSpellsCausingAura(SPELL_AURA_MOD_INVISIBILITY);
                 // BG flag click
                 // AB:
                 // 15001
@@ -1670,6 +1672,8 @@ void GameObject::Use(Unit* user)
                     return;
 				if (player->HasAuraType(SPELL_AURA_MOD_STEALTH))			// remove stealth
 					player->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+				else if(player->HasAuraType(SPELL_AURA_MOD_INVISIBILITY))			// remove invisibility
+					player->RemoveSpellsCausingAura(SPELL_AURA_MOD_INVISIBILITY);
                 // BG flag dropped
                 // WS:
                 // 179785 - Silverwing Flag
