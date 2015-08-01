@@ -39,8 +39,12 @@ enum
     MOB_SMALL_PORTAL                = 15904,
 
     SPELL_GREEN_BEAM                = 26134,
-    SPELL_DARK_GLARE                = 26029,
+    //SPELL_DARK_GLARE                = 26029,
     SPELL_RED_COLORATION            = 22518,                // Probably not the right spell but looks similar
+
+    SPELL_ROTATE_TRIGGER            = 26137,                // phase switch spell - triggers 26009 or 26136. These trigger the Dark Glare spell - 26029
+    SPELL_ROTATE_360_LEFT           = 26009,
+    SPELL_ROTATE_360_RIGHT          = 26136,
 
     // Eye Tentacles Spells
     SPELL_MIND_FLAY                 = 26143,
@@ -279,19 +283,28 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
                     m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_DARK_GLARE);
 
                     m_creature->InterruptNonMeleeSpells(false);
-
-                    // Select random target for dark beam to start on
-                    if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+					Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+					// Cast the rotation spell
+                    if (DoCastSpellIfCan(m_creature, SPELL_ROTATE_TRIGGER) == CAST_OK)
                     {
-                        // Correctly update our target
-                        m_creature->SetTargetGuid(pTarget->GetObjectGuid());
+                        // Remove the target focus but allow the boss to face the current victim
+                        m_creature->SetTargetGuid(ObjectGuid());
+						if(pTarget)
+							m_creature->SetFacingToObject(pTarget);
 
-                        // Face our target
-                        m_fDarkGlareAngle = m_creature->GetAngle(pTarget);
-                        m_uiDarkGlareTickTimer = 1000;
-                        m_uiDarkGlareTick = 0;
-                        m_bClockWise = urand(0, 1);
-                    }
+					}
+                    //// Select random target for dark beam to start on
+                    //if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    //{
+                    //    // Correctly update our target
+                    //    m_creature->SetTargetGuid(pTarget->GetObjectGuid());
+
+                    //    // Face our target
+                    //    m_fDarkGlareAngle = m_creature->GetAngle(pTarget);
+                    //    m_uiDarkGlareTickTimer = 1000;
+                    //    m_uiDarkGlareTick = 0;
+                    //    m_bClockWise = urand(0, 1);
+                    //}
 
                     // Add red coloration to C'thun
                     DoCastSpellIfCan(m_creature, SPELL_RED_COLORATION);
@@ -308,31 +321,31 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
             }
             case PHASE_EYE_DARK_GLARE:
             {
-                // Dark Glare
-                if (m_uiDarkGlareTick < 35)
-                {
-                    if (m_uiDarkGlareTickTimer < uiDiff)
-                    {
-                        // Remove any target
-                        m_creature->SetTargetGuid(ObjectGuid());
+                //// Dark Glare
+                //if (m_uiDarkGlareTick < 35)
+                //{
+                //    if (m_uiDarkGlareTickTimer < uiDiff)
+                //    {
+                //        // Remove any target
+                //        m_creature->SetTargetGuid(ObjectGuid());
 
-                        // Set angle and cast
-                        m_creature->SetOrientation(m_fDarkGlareAngle + (m_bClockWise ? 1 : -1) * ((float)m_uiDarkGlareTick*M_PI_F/35));
+                //        // Set angle and cast
+                //        m_creature->SetOrientation(m_fDarkGlareAngle + (m_bClockWise ? 1 : -1) * ((float)m_uiDarkGlareTick*M_PI_F/35));
 
-                        m_creature->StopMoving();
+                //        m_creature->StopMoving();
 
-                        // Actual dark glare cast, maybe something missing here?
-                        DoCastSpellIfCan(m_creature, SPELL_DARK_GLARE);
+                //        // Actual dark glare cast, maybe something missing here?
+                //        DoCastSpellIfCan(m_creature, SPELL_DARK_GLARE);
 
-                        // Increase tick
-                        ++m_uiDarkGlareTick;
+                //        // Increase tick
+                //        ++m_uiDarkGlareTick;
 
-                        // 1 second per tick
-                        m_uiDarkGlareTickTimer = 1000;
-                    }
-                    else
-                        m_uiDarkGlareTickTimer -= uiDiff;
-                }
+                //        // 1 second per tick
+                //        m_uiDarkGlareTickTimer = 1000;
+                //    }
+                //    else
+                //        m_uiDarkGlareTickTimer -= uiDiff;
+                //}
 
                 // m_uiPhaseTimer
                 if (m_uiPhaseTimer < uiDiff)
@@ -348,6 +361,9 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
 
                     // Remove Red coloration from C'thun
                     m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
+					// Remove rotation auras
+                    m_creature->RemoveAurasDueToSpell(SPELL_ROTATE_360_LEFT);
+                    m_creature->RemoveAurasDueToSpell(SPELL_ROTATE_360_RIGHT);
 
                     // Freeze animation
                     m_creature->SetUInt32Value(UNIT_FIELD_FLAGS, 0);
@@ -996,10 +1012,11 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
     claw_tentacleAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
+		DoCastSpellIfCan(m_creature->getVictim(),SPELL_GROUND_RUPTURE);
         Reset();
 
         if (Unit* pPortal = m_creature->SummonCreature(MOB_SMALL_PORTAL, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
-            m_portalGuid = pPortal->GetObjectGuid();
+			m_portalGuid = pPortal->GetObjectGuid();
     }
 
     uint32 m_uiGroundRuptureTimer;
@@ -1015,8 +1032,8 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
 
     void Reset()
     {
-        // First rupture should happen half a second after we spawn
-        m_uiGroundRuptureTimer = 500;
+        // First rupture should happen half a second after we spawn, should be instant!
+        m_uiGroundRuptureTimer = 30000;
         m_uiHamstringTimer = 2000;
         m_uiEvadeTimer = 5000;
     }
