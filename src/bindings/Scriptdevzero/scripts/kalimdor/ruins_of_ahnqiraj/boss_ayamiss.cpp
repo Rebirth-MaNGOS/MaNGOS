@@ -51,6 +51,8 @@ static Loc Swarmers[]=
     {-9769.0f, 1455.0f, 60.0f, 0, 0}
 };
 
+static const uint32 aSwarmType[] = {NPC_HIVEZARA_SWARMER,NPC_HIVEZARA_SWARMER,NPC_HIVEZARA_SWARMER_1};
+
 struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
 {
     boss_ayamissAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -161,6 +163,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
                     pSummoned->AI()->AttackStart(pLarvaTarget);
                 break;
             case NPC_HIVEZARA_SWARMER:
+			case NPC_HIVEZARA_SWARMER_1:
 				m_uiSwarmerGUID.push_back(pSummoned->GetObjectGuid());
                 break;
         }
@@ -185,7 +188,8 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
 		// Summon Swarmers
         if (m_uiSwarmerTimer <= uiDiff)		// ever 3.5 sec spawn a swarmer
         {
-            m_creature->SummonCreature(NPC_HIVEZARA_SWARMER, Swarmers[0].x+irand(-10,10), Swarmers[0].y+irand(-10,10), Swarmers[0].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 600000);//let them be up for 10min or when boss dies/evade
+			uint32 i = urand(0,2);
+            m_creature->SummonCreature(aSwarmType[i], Swarmers[0].x+irand(-10,10), Swarmers[0].y+irand(-10,10), Swarmers[0].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 600000);//let them be up for 10min or when boss dies/evade
             m_uiSwarmerTimer = 3500;
         }
         else
@@ -227,7 +231,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
             // Poison Stinger
             if (m_uiPoisonStingerTimer <= uiDiff)
             {
-                DoCastSpellIfCan(m_creature->getVictim(), SPELL_POISON_STINGER);
+                m_creature->CastSpell(m_creature->getVictim(), SPELL_POISON_STINGER, false);
                 m_uiPoisonStingerTimer = 4000;
             }
             else
@@ -296,7 +300,7 @@ struct MANGOS_DLL_DECL mob_hivezara_larvaAI : public ScriptedAI
         if (Unit* pTarget = m_creature->GetMap()->GetUnit(m_uiTargetGUID))
             if (m_creature->IsWithinDistInMap(pTarget, ATTACK_DISTANCE))
                 if (m_creature->getVictim()->HasAura(SPELL_PARALYZE))
-                    DoCastSpellIfCan(pTarget, SPELL_FEED);
+                    m_creature->CastSpell(pTarget, SPELL_FEED, true);
 
         DoMeleeAttackIfReady();
     }

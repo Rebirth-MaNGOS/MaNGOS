@@ -40,6 +40,7 @@ enum Creatures
     NPC_MANA_FIEND                = 15527,
     NPC_HIVEZARA_WASP             = 15325,
     NPC_HIVEZARA_SWARMER          = 15546,
+	NPC_HIVEZARA_SWARMER_1		  = 155460,
     NPC_HIVEZARA_LARVA            = 15555,
     NPC_ANUB_WARRIOR              = 15537,
     NPC_ANUB_SWARM                = 15538,
