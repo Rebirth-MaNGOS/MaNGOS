@@ -1537,6 +1537,7 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
         damageInfo->damage = damage;
         damageInfo->cleanDamage += damage;
     }
+	
 
     damageInfo->hitOutCome = RollMeleeOutcomeAgainst(damageInfo->target, damageInfo->attackType);
 
@@ -5807,9 +5808,17 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, Spell* spell, SpellEffectIndex /*ef
     switch(spell->m_spellInfo->Id) // Spells that should not be redirected.
     {
     case 100:   // Charge rank 1.
-    case 6178:  // Charge rank 2.
+    case 6178:  // Charge rank 2.	
     case 11578: // Charge rank 3.
-    case 16979: // Feral charge.
+	case 7922:	// Charge stun.
+	case 19675:	// Feral charge effect.
+    case 16979: // Feral charge.	
+	case 20252:	// Intercept rank 1.
+	case 20616:	// Intercept rank 2.
+	case 20617:	// Intercept rank 3.
+	case 20253:	// Intercept stun rank 1.
+	case 20614:	// Intercept stun rank 2.
+	case 20615:	// Intercept stun rank 3.
     case 23620: // Burning Adrenaline - Vaelastrasz in BWL.
     case 23170: // Brood Affliction: Bronze - Chromaggus in BWL.
     case 23154: //  ---  ||  ---   : Black

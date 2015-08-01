@@ -1594,8 +1594,11 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendResetInstanceFailed(uint32 reason, uint32 MapId);
         void SendResetFailedNotify(uint32 mapid);
 
+        bool CanMove() const { return m_bCanMove; }
+
 private:
 	std::map<uint32, std::list<time_t> > m_InstanceResetLists;
+    bool m_bCanMove;                                            // Set to false if ClientControl is disabled.
 public:
 	bool IsBelowResetQuotaForInstance(uint32 instanceMapId);
 	void AddToResetQuotaList(uint32 instanceMapId) { m_InstanceResetLists[instanceMapId].push_back(time(0)); }

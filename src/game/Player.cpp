@@ -540,6 +540,8 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 	m_warlockPetBeforeDeath = PET_NO_PET;
 
     m_ChatTeam = ALLIANCE;
+
+    m_bCanMove = true;
 }
 
 Player::~Player ()
@@ -19061,6 +19063,11 @@ void Player::SetClientControl(Unit* target, uint8 allowMove)
     data << target->GetPackGUID();
     data << uint8(allowMove);
     GetSession()->SendPacket(&data);
+
+    // Disable the handling of movement updates from the target player.
+    Player* plTarget = dynamic_cast<Player*>(target);
+    if (plTarget)
+        plTarget->m_bCanMove = allowMove == 1 ? true : false;
 }
 
 void Player::UpdateZoneDependentAuras()
@@ -19332,8 +19339,8 @@ bool Player::CanUseBattleGroundObject()
              //player cannot use object when he is invulnerable (immune)
              !isTotalImmune() &&                            // not totally immune
              //i'm not sure if these two are correct, because invisible players should get visible when they click on flag
-             !HasStealthAura() &&                           // not stealthed
-             !HasInvisibilityAura() &&                      // not invisible
+             //!HasStealthAura() &&                           // should be able to pick it up as stealthed
+             //!HasInvisibilityAura() &&                      // should be able to pick it up as invisible
              isAlive()                                      // live player
            );
 }

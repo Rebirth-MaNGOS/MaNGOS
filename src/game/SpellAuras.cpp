@@ -1174,6 +1174,23 @@ void Aura::TriggerSpell()
                 triggerTarget->CastCustomSpell(triggerTarget, 25373, &bpDamage, NULL, NULL, true, NULL, this, casterGUID);
                 return;
             }
+			case 26009:                             // Rotate 360
+            case 26136:                             // Rotate -360
+            {
+                float newAngle = target->GetOrientation();
+
+                if (auraId == 26009)
+                    { newAngle += M_PI_F / 40; }
+                else
+                    { newAngle -= M_PI_F / 40; }
+
+                newAngle = MapManager::NormalizeOrientation(newAngle);
+
+                target->SetFacingTo(newAngle);
+
+                target->CastSpell(target, 26029, true);
+                return;
+            }
 //                    // Pain Spike
 //                    case 25572: break;
 //                    // Rotate 360

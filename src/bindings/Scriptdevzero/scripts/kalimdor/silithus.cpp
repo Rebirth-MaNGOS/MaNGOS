@@ -3408,6 +3408,88 @@ bool OnQuestRewarded_npc_noggle_ficklespragg(Player* pPlayer, Creature* pCreatur
 	return true;
 }
 
+/*####
+# boss_prince_thunderaan
+####*/
+
+enum eThunderaan
+{
+	SPELL_TEARS_OF_THE_WIND_SEEKER			= 23011,
+	SPELL_TENDRILS_OF_AIR					= 23009,
+	YELL_THUNDERAAN							= -1720208
+};
+
+struct MANGOS_DLL_DECL boss_prince_thunderaanAI : public ScriptedAI
+{
+    boss_prince_thunderaanAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
+		m_creature->setFaction(35);
+		m_bDidFaction = false;
+		Reset(); 
+	}
+
+	uint32 m_uiTearsoftheWindSeekerTimer;
+	uint32 m_uiTendrilsofAirTimer;
+	uint32 m_uiFactionTimer;
+	bool m_bDidFaction;
+
+    void Reset()
+	{
+		m_uiTearsoftheWindSeekerTimer = urand(15000,25000);
+		m_uiTendrilsofAirTimer = 5000;
+		m_uiFactionTimer = 10000;
+	}
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_TENDRILS_OF_AIR && pTarget)
+			m_creature->getThreatManager().modifyThreatPercent(pTarget, -90);			// there's no clear evidence for how much of an threat wipe it should be
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiFactionTimer <= uiDiff)
+		{
+			if(!m_bDidFaction)
+			{
+				m_creature->setFaction(91);
+				DoScriptText(YELL_THUNDERAAN,m_creature,NULL);
+				m_bDidFaction = true;	
+			}
+		}
+		else
+			m_uiFactionTimer -= uiDiff;
+
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiTearsoftheWindSeekerTimer <= uiDiff)
+		{
+            m_creature->CastSpell(m_creature->getVictim(), SPELL_TEARS_OF_THE_WIND_SEEKER, false);
+			m_uiTearsoftheWindSeekerTimer = urand(10000,20000);
+		}	
+		else
+			m_uiTearsoftheWindSeekerTimer -= uiDiff;
+
+		if (m_uiTendrilsofAirTimer <= uiDiff)
+		{
+
+			m_creature->CastSpell(m_creature, SPELL_TENDRILS_OF_AIR, true);
+			m_uiTendrilsofAirTimer = 10000;
+		}	
+		else
+			m_uiTendrilsofAirTimer -= uiDiff;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_boss_prince_thunderaan(Creature* pCreature)
+{
+    return new boss_prince_thunderaanAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -3526,5 +3608,10 @@ void AddSC_silithus()
     pNewscript->Name = "npc_noggle_ficklespragg";
     pNewscript->GetAI = &GetAI_npc_noggle_ficklespragg;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_noggle_ficklespragg;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "boss_prince_thunderaan";
+    pNewscript->GetAI = &GetAI_boss_prince_thunderaan;
     pNewscript->RegisterSelf();
 }

@@ -438,8 +438,7 @@ struct MANGOS_DLL_DECL mob_qiraji_swarmguardAI : public ScriptedAI
 
 		if (m_uiCleaveTimer <= uiDiff)
         {
-			if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                DoCastSpellIfCan(pTarget, SPELL_SUNDERING_CLEAVE);
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_SUNDERING_CLEAVE);
 			m_uiCleaveTimer = urand(8000, 12000);
          } 
 		else
