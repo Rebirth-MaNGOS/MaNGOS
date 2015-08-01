@@ -912,6 +912,8 @@ uint32 Player::EnvironmentalDamage(EnvironmentalDamageType type, uint32 damage)
 	{
 		PartialResistInfo resistInfo = this->MagicSpellPartialResistResult(this,NULL,SPELL_SCHOOL_MASK_FIRE);
         CalculateDamageAbsorbAndResist(this, SPELL_SCHOOL_MASK_FIRE, DIRECT_DAMAGE, damage, &absorb, &resist,false,resistInfo);
+
+
 	}
     else if (type == DAMAGE_SLIME)
 	{
@@ -1078,7 +1080,15 @@ void Player::HandleDrowning(uint32 time_diff)
                 m_MirrorTimer[FIRE_TIMER]+= 1*IN_MILLISECONDS;
                 // Calculate and deal damage
                 // TODO: Check this formula
-                uint32 damage = urand(600, 700);
+                uint32 damage;
+                
+                if(isTotalImmune())
+                {
+                    damage = 0;
+                }
+                else
+                    damage = urand(600, 700);
+
                 if (m_MirrorTimerFlags&UNDERWATER_INLAVA)
                     EnvironmentalDamage(DAMAGE_LAVA, damage);
                 else

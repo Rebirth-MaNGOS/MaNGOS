@@ -414,6 +414,10 @@ void Aura::Update(uint32 diff)
         m_pulseResistTimer = m_pulseResistFrequency;
     }
 
+    // Blind should not have heartbeat resist.
+    if(GetSpellProto()->Id == 2094)
+        return;
+
     // Risk of failure for the Goblin Rocket Boots. (This is put here since movement modifying auras do not have proc-handlers.)
     Player* target = dynamic_cast<Player*>(m_spellAuraHolder->GetTarget());
 

@@ -1313,7 +1313,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
                     m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
 
-                if (!unit->IsStandState() && !unit->hasUnitState(UNIT_STAT_STUNNED))
+                if (!unit->IsStandState() && !unit->hasUnitState(UNIT_STAT_STUNNED) && m_spellInfo->DmgClass != SPELL_DAMAGE_CLASS_MELEE)
                     unit->SetStandState(UNIT_STAND_STATE_STAND);
 
                 if (!unit->IsPassiveToSpells())
@@ -3796,7 +3796,7 @@ void Spell::finish(bool ok)
     }
 
     // Stop Attack for some spells
-    if( m_spellInfo->Attributes & SPELL_ATTR_STOP_ATTACK_TARGET )
+    if( m_spellInfo->Attributes & SPELL_ATTR_STOP_ATTACK_TARGET)
         m_caster->AttackStop();
 }
 
@@ -5452,6 +5452,12 @@ SpellCastResult Spell::CheckCast(bool strict)
             {
                 if (!m_targets.getGOTarget())
                     return SPELL_FAILED_BAD_TARGETS;
+
+                if(GameObject *pGo = m_targets.getGOTarget())
+                {
+                    if(pGo && pGo->IsFriendlyTo(m_caster))
+                        return SPELL_FAILED_BAD_TARGETS;
+                }
             }
 
             // get the lock entry
@@ -5521,6 +5527,8 @@ SpellCastResult Spell::CheckCast(bool strict)
         // These won't show up in m_caster->GetPetGUID()
         case SPELL_EFFECT_SUMMON:
         case SPELL_EFFECT_SUMMON_POSSESSED:
+            if(m_spellInfo->Id == 126)
+                break;
         case SPELL_EFFECT_SUMMON_PHANTASM:
         case SPELL_EFFECT_SUMMON_DEMON:
         {

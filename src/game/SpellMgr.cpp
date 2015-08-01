@@ -2107,6 +2107,24 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     if ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x2)) && spellInfo_1->Id == 23694)
                         return false;
 
+                    
+                    //Thunderfury and Thunderclap
+                    if(spellInfo_1->Id == 27648)
+                    {
+                        switch(spellInfo_2->Id)
+                        {
+                        case 6343:
+                        case 8198:
+                        case 8204:
+                        case 8205:
+                        case 11580:
+                        case 11581:
+                            return true;
+                        default:
+                            break;
+                        }
+                    }
+
                     break;
                 }
                 case SPELLFAMILY_DRUID:
@@ -2118,8 +2136,20 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     // Dragonmaw Illusion (multi-family check)
                     if (spellId_1 == 40216 && spellId_2 == 42016)
                         return false;
-                    
-                    
+
+                    if(spellInfo_1->Id == 27648)
+                    {
+                        switch(spellInfo_2->Id)  
+                        {
+                        case 16914:
+                        case 17401:
+                        case 17402:
+                            return true;
+                        default:
+                            break;
+                        }
+                    }
+
 
                     break;
                 }
@@ -2261,6 +2291,21 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 				if (IsPositiveSpell(spellInfo_1) != IsPositiveSpell(spellInfo_2))
 					return false;
 
+                // Thunderfury and Thunderclap
+                switch(spellInfo_1->Id)
+                {
+                case 6343:
+                case 8198:
+                case 8204:
+                case 8205:
+                case 11580:
+                case 11581:
+                    if(spellInfo_2->Id == 27648)
+                        return true;
+                default:
+                    break;
+                }
+
 
 				break;
 			}
@@ -2317,6 +2362,18 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     return true;
             }
 
+            // Hurricane and Thunderfury
+            switch(spellInfo_1->Id)
+            {
+            case 16914:
+            case 17401:
+            case 17402:
+                if(spellInfo_2->Id == 27648)
+                    return  true;
+            default:
+                break;
+            }
+
             // Leader of the Pack and Scroll of Stamina (multi-family check)
             if (spellInfo_1->Id == 24932 && spellInfo_2->SpellIconID == 312 && spellInfo_2->SpellVisual == 216)
                 return false;
@@ -2364,6 +2421,18 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Bestial Wrath
                 if (spellInfo_1->SpellIconID == 1680 && spellInfo_2->SpellIconID == 1680)
                     return false;
+
+                // Viper sting shouldn't stack with itself.
+                switch(spellInfo_1->Id)
+                {
+                case 3034:
+                case 14279:
+                case 14280:
+                    if(spellInfo_2->Id == spellInfo_1->Id)
+                        return true;
+                default:
+                    break;
+                }
             }
 
             // Wing Clip -> Improved Wing Clip (multi-family check)
