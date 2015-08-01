@@ -1313,7 +1313,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
                     m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
 
-                if (!unit->IsStandState() && !unit->hasUnitState(UNIT_STAT_STUNNED) && m_spellInfo->DmgClass != SPELL_DAMAGE_CLASS_MELEE)
+                if (!unit->IsStandState() && !unit->hasUnitState(UNIT_STAT_STUNNED))
                     unit->SetStandState(UNIT_STAND_STATE_STAND);
 
                 if (!unit->IsPassiveToSpells())
