@@ -48,6 +48,8 @@ EndScriptData */
 #define SPELL_TWISTEDREFLECTION         21063
 #define SPELL_EXPLODE                   21058
 
+#define ZONE_BLASTED_LANDS              4
+
 /* 
 Melee
 Shadowbolt Volley
@@ -133,6 +135,12 @@ struct MANGOS_DLL_DECL boss_lordkazzakAI : public ScriptedAI
         //Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim() )
             return;
+
+        if(m_creature->GetZoneId() != ZONE_BLASTED_LANDS)
+        {
+            ResetToHome();
+            return;
+        }
 
         //ShadowVolley_Timer
         if (ShadowVolley_Timer < diff)

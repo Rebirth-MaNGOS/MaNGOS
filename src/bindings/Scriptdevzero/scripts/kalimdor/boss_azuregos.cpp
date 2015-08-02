@@ -22,6 +22,7 @@ SDCategory: Azshara
 EndScriptData */
 
 #include "precompiled.h"
+#include "math.h"
 
 enum eAzuregos
 {
@@ -36,6 +37,8 @@ enum eAzuregos
     SPELL_MARK_OF_FROST_PLAYER  = 23182,
     SPELL_REFLECTION            = 22067,
     SPELL_ENRAGE                = 23537,
+
+    ZONE_ASZHARA                = 16,
 };
 
 struct MANGOS_DLL_DECL boss_azuregosAI : public ScriptedAI
@@ -102,6 +105,12 @@ struct MANGOS_DLL_DECL boss_azuregosAI : public ScriptedAI
         // Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+
+        if(m_creature->GetZoneId() != ZONE_ASZHARA)
+        {
+            ResetToHome();
+            return;
+        }
 
         // Enrage
         if (!m_bEnraged && HealthBelowPct(25))
