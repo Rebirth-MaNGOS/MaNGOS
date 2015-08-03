@@ -340,7 +340,8 @@ bool IsNoStackAuraDueToAura(uint32 spellId_1, uint32 spellId_2)
 
     // Mongoose and agility elixir should stack with Grilled Squid.
     if((spellInfo_1->Id == 18192 && spellInfo_2->Id == 17538) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 17538) || 
-        (spellInfo_2->Id == 11328 && spellInfo_1->Id == 18192) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 11328))
+        (spellInfo_2->Id == 11328 && spellInfo_1->Id == 18192) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 11328)  || 
+        (spellInfo_2->Id == 11334 && spellInfo_1->Id == 18192) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 11334))
         return false;
 
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
@@ -2038,7 +2039,8 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
     // Mongoose and agility elixir should stack with Grilled Squid.
     if((spellInfo_1->Id == 18192 && spellInfo_2->Id == 17538) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 17538) || 
-        (spellInfo_2->Id == 11328 && spellInfo_1->Id == 18192) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 11328))
+        (spellInfo_2->Id == 11328 && spellInfo_1->Id == 18192) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 11328) || 
+        (spellInfo_2->Id == 11334 && spellInfo_1->Id == 18192) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 11334))
         return false;
 
     // Specific spell family spells
