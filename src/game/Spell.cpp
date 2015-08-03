@@ -3254,7 +3254,8 @@ void Spell::cast(bool skipCheck)
         return;
     }
 
-
+    // TODO: Filter out equipment spells from the check.
+    /*
     if (!CheckBuffOverwrite(spellProto))
     {
         SendCastResult(SPELL_FAILED_MORE_POWERFUL_SPELL_ACTIVE);
@@ -3264,6 +3265,7 @@ void Spell::cast(bool skipCheck)
         SetExecutedCurrently(false);
         return;
     }
+    */
 
     // CAST SPELL
     SendSpellCooldown();
