@@ -165,26 +165,29 @@ struct MANGOS_DLL_DECL boss_guardAI : public ScriptedAI
 		{
 			if (m_uiUpdateTimer <= uiDiff)
 			{ 
-				m_uiUpdateTimer = 500;
-				GameObject* trap = m_pInstance->GetSingleGameObjectFromStorage(GO_BROKEN_TRAP);
-				if (trap && trap->HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_INTERACT_COND) && m_creature->GetDistance(trap) < 6.0f)
-				{
-					m_bFrozen = true;
+                if (m_pInstance)
+                {
+                    m_uiUpdateTimer = 500;
+                    GameObject* trap = m_pInstance->GetSingleGameObjectFromStorage(GO_BROKEN_TRAP);
+                    if (trap && trap->HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_INTERACT_COND) && m_creature->GetDistance(trap) < 6.0f)
+                    {
+                        m_bFrozen = true;
 
-					m_creature->RemoveAllAuras();
-					m_creature->DeleteThreatList();
-					m_creature->CombatStop(true);
-					m_creature->LoadCreatureAddon();
+                        m_creature->RemoveAllAuras();
+                        m_creature->DeleteThreatList();
+                        m_creature->CombatStop(true);
+                        m_creature->LoadCreatureAddon();
 
-					m_creature->GetMotionMaster()->Clear(false, true);
-                    m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                    m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
-                    m_creature->addUnitState(UNIT_STAT_ROOT);
-                    m_creature->GetMotionMaster()->MoveIdle();
-				}
-			}
-			else
-				m_uiUpdateTimer -= uiDiff;
+                        m_creature->GetMotionMaster()->Clear(false, true);
+                        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
+                        m_creature->addUnitState(UNIT_STAT_ROOT);
+                        m_creature->GetMotionMaster()->MoveIdle();
+                    }
+                }
+                else
+                    m_uiUpdateTimer -= uiDiff;
+            }
 		}
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
