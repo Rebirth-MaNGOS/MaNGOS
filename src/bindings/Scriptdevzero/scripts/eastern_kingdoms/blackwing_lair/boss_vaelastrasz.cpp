@@ -258,7 +258,6 @@ struct MANGOS_DLL_DECL boss_vaelastraszAI : public ScriptedAI
                 m_creature->SetHealth((uint32)(m_creature->GetMaxHealth() * (0.00004375f * m_uiIntroTimer + 0.3f)));
         }
 
-
         // Speech
         if (m_uiSpeechTimer)
         {
@@ -476,6 +475,28 @@ bool AreaTrigger_at_vaelastrasz(Player* pPlayer, AreaTriggerEntry const* pAt)
     return false;
 }
 
+bool QuestAccept_boss_vaelastrasz(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+{
+    if (pPlayer && pCreature && pQuest && pQuest->GetQuestId() == 8730)
+    {
+        instance_blackwing_lair *bwlInstance = dynamic_cast<instance_blackwing_lair*>(pCreature->GetInstanceData());
+
+        if(bwlInstance)
+        {
+            bwlInstance->m_uiNefariusScepterSpeechTimer = urand(3600000, 5400000);
+            bwlInstance->m_FiveHourEvent = true;
+
+            Creature *pNef = bwlInstance->GetSingleCreatureFromStorage(10162);
+
+            if(pNef)
+            {
+                pNef->MonsterYellToZone(-1720177, LANG_UNIVERSAL, pPlayer);
+            }
+        }
+    }
+    return true;
+}
+
 
 void AddSC_boss_vaelastrasz()
 {
@@ -486,6 +507,7 @@ void AddSC_boss_vaelastrasz()
     pNewScript->GetAI = &GetAI_boss_vaelastrasz;
     pNewScript->pGossipHello = &GossipHello_boss_vaelastrasz;
     pNewScript->pGossipSelect = &GossipSelect_boss_vaelastrasz;
+    pNewScript->pQuestAcceptNPC = &QuestAccept_boss_vaelastrasz;
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;

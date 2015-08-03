@@ -31,6 +31,7 @@ EndScriptData */
 #define SPELL_HEAL_BROTHER          7393
 #define SPELL_TWIN_TELEPORT         800                     // CTRA watches for this spell to start its teleport timer
 #define SPELL_TWIN_TELEPORT_VISUAL  26638                   // visual
+#define SPELL_ROOT_SELF             23973
 
 #define SPELL_EXPLODEBUG            804
 #define SPELL_MUTATE_BUG            802
@@ -80,6 +81,8 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
 
     void TwinReset()
     {
+        m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+        m_creature->SetSheath(SHEATH_STATE_UNARMED);
         Heal_Timer = 0;                                     // first heal immediately when they get close together
         Teleport_Timer = TELEPORTTIME;
         AfterTeleport = false;
@@ -147,6 +150,10 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
 
     void Aggro(Unit* pWho)
     {
+        m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+        m_creature->SetSheath(SHEATH_STATE_MELEE);
+        m_creature->SetInCombatWithZone();
+
         Creature *pOtherBoss = GetOtherBoss();
         if (pOtherBoss)
         {
@@ -157,6 +164,8 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
                 DoPlaySoundToSet(m_creature, IAmVeklor() ? SOUND_VL_AGGRO : SOUND_VN_AGGRO);
                 pOtherBoss->AI()->AttackStart(pWho);
             }
+
+            pOtherBoss->SetInCombatWithZone();
         }
 
         if (m_pInstance)
@@ -283,10 +292,11 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
             float other_z = pOtherBoss->GetPositionZ();
             float other_o = pOtherBoss->GetOrientation();
 
-            Map *thismap = m_creature->GetMap();
-            thismap->CreatureRelocation(pOtherBoss, m_creature->GetPositionX(),
+            pOtherBoss->RelocateCreature(m_creature->GetPositionX(),
                 m_creature->GetPositionY(),    m_creature->GetPositionZ(), m_creature->GetOrientation());
-            thismap->CreatureRelocation(m_creature, other_x, other_y, other_z, other_o);
+            pOtherBoss->GetMotionMaster()->MoveIdle();
+            m_creature->RelocateCreature(other_x, other_y, other_z, other_o);
+            m_creature->GetMotionMaster()->MoveIdle();
 
             SetAfterTeleport();
 
@@ -303,7 +313,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         DoCastSpellIfCan(m_creature, SPELL_TWIN_TELEPORT_VISUAL);
         m_creature->addUnitState(UNIT_STAT_STUNNED);
         AfterTeleport = true;
-        AfterTeleportTimer = 2000;
+        AfterTeleportTimer = 500;
         tspellcasted = false;
     }
 
@@ -328,6 +338,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
                 //DoYell(nearu->GetName(), LANG_UNIVERSAL, 0);
                 AttackStart(nearu);
                 m_creature->getThreatManager().addThreat(nearu, 10000);
+                m_creature->GetMotionMaster()->MoveChase(nearu);
                 return true;
             }
             else
@@ -370,45 +381,56 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         }
     }
 
-    Creature *RespawnNearbyBugsAndGetOne()
+    Creature* RespawnNearbyBugsAndGetOne(uint32 bugEntry)
     {
         std::list<Creature*> lUnitList;
-        GetCreatureListWithEntryInGrid(lUnitList,m_creature,15316,150.0f);
-        GetCreatureListWithEntryInGrid(lUnitList,m_creature,15317,150.0f);
+        GetCreatureListWithEntryInGrid(lUnitList, m_creature, bugEntry, 150.0f);
 
         if (lUnitList.empty())
             return NULL;
 
-        Creature *nearb = NULL;
 
+        float dist = 9999999999999.f;
+        Creature* pClosest = nullptr;
         for(std::list<Creature*>::iterator iter = lUnitList.begin(); iter != lUnitList.end(); ++iter)
         {
             Creature *c = (Creature *)(*iter);
+
+            if (c->HasAura(SPELL_EXPLODEBUG) || c->HasAura(SPELL_MUTATE_BUG))
+                continue;
+
             if (c->isDead())
             {
                 c->Respawn();
                 c->setFaction(7);
                 c->RemoveAllAuras();
             }
-            if (c->IsWithinDistInMap(m_creature, ABUSE_BUG_RANGE))
+            if (c->GetDistance(m_creature) < dist)
             {
-                if (!nearb || !urand(0, 3))
-                    nearb = c;
+                pClosest = c;
+                dist = c->GetDistance(m_creature);
             }
         }
-        return nearb;
+        return pClosest;
     }
 
     void HandleBugs(uint32 diff)
     {
         if (BugsTimer < diff || Abuse_Bug_Timer < diff)
         {
-            Creature *c = RespawnNearbyBugsAndGetOne();
+            Creature *c = RespawnNearbyBugsAndGetOne(IAmVeklor() ? 15316 : 15317);
             if (Abuse_Bug_Timer < diff)
             {
                 if (c)
                 {
                     CastSpellOnBug(c);
+
+                    if (m_creature->getVictim())
+                    {
+                        c->Attack(m_creature->getVictim(), false);
+                        c->GetMotionMaster()->MoveChase(m_creature->getVictim());
+                    }
+
                     Abuse_Bug_Timer = urand(10000, 17000);
                 }
                 else
@@ -527,6 +549,8 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
     }
 
     uint32 ShadowBolt_Timer;
+    uint32 ShadowBolt_Cooldown;
+    uint32 ShadowBolt_Counter;
     uint32 Blizzard_Timer;
     uint32 ArcaneBurst_Timer;
     uint32 Scorpions_Timer;
@@ -540,20 +564,20 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
     {
         TwinReset();
         ShadowBolt_Timer = 0;
+        ShadowBolt_Cooldown = 0;
+        ShadowBolt_Counter = urand(1, 3);
         Blizzard_Timer = urand(15000, 20000);
         ArcaneBurst_Timer = 1000;
         Scorpions_Timer = urand(7000, 14000);
 
         //Added. Can be removed if its included in DB.
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, true);
-        m_creature->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, 0);
-        m_creature->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, 0);
     }
 
     void CastSpellOnBug(Creature *target)
     {
         target->setFaction(14);
-
+        target->SetPassiveToSpells(true);
         DoCastSpellIfCan(target, SPELL_EXPLODEBUG, CAST_TRIGGERED);
     }
 
@@ -571,15 +595,31 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
         if (!TryActivateAfterTTelep(diff))
             return;
 
-        //ShadowBolt_Timer
-        if (ShadowBolt_Timer < diff)
+        if (ShadowBolt_Cooldown <= diff)
         {
-            if (!m_creature->IsWithinDist(m_creature->getVictim(), 45.0f))
-                m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim(), VEKLOR_DIST, 0);
+            if (ShadowBolt_Counter > 0)
+            {
+                //ShadowBolt_Timer
+                if (ShadowBolt_Timer < diff)
+                {
+                    if (DoCastSpellIfCan(m_creature->getVictim(),SPELL_SHADOWBOLT) == CAST_OK)
+                    {
+                        ShadowBolt_Timer = 2000;
+                        --ShadowBolt_Counter;
+                    }
+                }
+                else 
+                    ShadowBolt_Timer -= diff;
+
+            }
             else
-                DoCastSpellIfCan(m_creature->getVictim(),SPELL_SHADOWBOLT);
-            ShadowBolt_Timer = 2000;
-        }else ShadowBolt_Timer -= diff;
+            {
+                ShadowBolt_Counter = urand(1, 3);
+                ShadowBolt_Cooldown = 5000;
+            }
+        }
+        else
+            ShadowBolt_Cooldown -= diff;
 
         //Blizzard_Timer
         if (Blizzard_Timer < diff)
@@ -589,7 +629,9 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
             if (target)
                 DoCastSpellIfCan(target,SPELL_BLIZZARD);
             Blizzard_Timer = urand(15000, 30000);
-        }else Blizzard_Timer -= diff;
+        }
+        else 
+            Blizzard_Timer -= diff;
 
         if (ArcaneBurst_Timer < diff)
         {
@@ -599,7 +641,9 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
                 DoCastSpellIfCan(mvic,SPELL_ARCANEBURST);
                 ArcaneBurst_Timer = 5000;
             }
-        }else ArcaneBurst_Timer -= diff;
+        }
+        else 
+            ArcaneBurst_Timer -= diff;
 
         HandleBugs(diff);
 
@@ -610,28 +654,13 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
         if (Teleport_Timer < diff)
         {
             TeleportToMyBrother();
-        }else Teleport_Timer -= diff;
+        }
+        else 
+            Teleport_Timer -= diff;
 
         CheckEnrage(diff);
 
-        //VL doesn't melee
-        //DoMeleeAttackIfReady();
-    }
-
-    void AttackStart(Unit* who)
-    {
-        if (!who)
-            return;
-
-        // VL doesn't melee
-        if (m_creature->Attack(who, false))
-        {
-            m_creature->AddThreat(who);
-            m_creature->SetInCombatWith(who);
-            who->SetInCombatWith(m_creature);
-
-            m_creature->GetMotionMaster()->MoveChase(who, VEKLOR_DIST, 0);
-        }
+        DoMeleeAttackIfReady();
     }
 };
 
@@ -643,6 +672,185 @@ CreatureAI* GetAI_boss_veknilash(Creature* pCreature)
 CreatureAI* GetAI_boss_veklor(Creature* pCreature)
 {
     return new boss_veklorAI(pCreature);
+}
+
+struct MANGOS_DLL_DECL npc_the_masters_eye : public ScriptedAI
+{
+    npc_the_masters_eye(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiEventTimer;
+    uint32 m_uiEventPhase;
+    ObjectGuid m_oVeklor;
+    ObjectGuid m_oVeknilash;
+    bool m_bEventStarted;
+
+    void Reset()
+    {
+        m_creature->SetHover(true);
+        m_creature->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND/* | UNIT_BYTE1_FLAG_UNK_2*/);
+        m_creature->SetSplineFlags(SPLINEFLAG_FLYING);
+        m_uiEventTimer = 0;
+        m_uiEventPhase = 0;
+        m_bEventStarted = false;
+    }
+
+    void StartRpIntro()
+    {
+        if(!m_bEventStarted)
+        {
+            m_creature->GenericTextEmote("The massive floating eyeball in the center of the chamber turns its gaze upon you. You stand before a god.",
+                nullptr, true);
+
+            m_uiEventTimer = 2000;
+        
+            Creature *pVeklor = m_creature->GetClosestCreatureWithEntry(m_creature, 15276, 100.0f);
+            Creature *pVeknilash = m_creature->GetClosestCreatureWithEntry(m_creature, 15275, 100.0f);
+
+            if(pVeklor)
+                m_oVeklor = pVeklor->GetObjectGuid();
+
+            if(pVeknilash)
+                m_oVeknilash = pVeknilash->GetObjectGuid();
+
+            m_bEventStarted = true;
+        }
+    }
+
+    void UpdateAI(const uint32 diff)
+    {
+        if(m_uiEventTimer)
+        {
+            if(m_uiEventTimer <= diff)
+            {
+                Creature *pVeklor = m_creature->GetMap()->GetCreature(m_oVeklor);
+                Creature *pVeknilash = m_creature->GetMap()->GetCreature(m_oVeknilash);
+
+                switch(m_uiEventPhase)
+                {
+                case 0:
+                    m_creature->SetFacingTo(1.77f);
+                    m_uiEventTimer = 8000;
+                    break;
+                case 1:
+                    m_creature->SetVisibility(VISIBILITY_OFF);
+                    m_creature->UpdateVisibilityAndView();
+                    if(pVeklor && pVeknilash)
+                    {
+                        pVeklor->SetStandState(UNIT_STAND_STATE_STAND);
+                        pVeknilash->SetStandState(UNIT_STAND_STATE_STAND);
+                    }
+                    m_uiEventTimer = 4000;
+                    break;
+                case 2:
+                    if(pVeklor)
+                    {
+                        pVeklor->MonsterYell("Only flesh and bone. Mortals are such easy prey...", LANG_UNIVERSAL);
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_TALK);
+                    }
+                    m_uiEventTimer = 5000;
+                    break;
+                case 3:
+                    if(pVeknilash)
+                    {
+                        pVeknilash->MonsterYell("Where are your manners, brother. Let us properly welcome our guests.", LANG_UNIVERSAL);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_TALK);
+                    }
+                    m_uiEventTimer = 5000;
+                    break;
+                case 4:
+                    if(pVeklor)
+                    {
+                        pVeklor->MonsterYell("There will be pain...", LANG_UNIVERSAL);
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_TALK);
+                    }
+                    m_uiEventTimer = 3000;
+                    break;
+                case 5:
+                    if(pVeknilash) //skrik
+                    {
+                        pVeknilash->MonsterYell("Oh so much pain...", LANG_UNIVERSAL);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_SHOUT);
+                    }
+                    m_uiEventTimer = 2000;
+                    break;
+                case 6:
+                    if(pVeklor && pVeknilash)
+                    {
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_ROAR);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_ROAR);
+                    }
+                    m_uiEventTimer = 1500;
+                    break;
+                case 7:
+                    if(pVeklor && pVeknilash)
+                    {
+                        pVeklor->SetFacingTo(2.21f);
+                        pVeknilash->SetFacingTo(1.20f);
+                    }
+                    m_uiEventTimer = 1000;
+                    break;
+                case 8:
+                    if(pVeklor)
+                    {
+                        pVeklor->MonsterYell("Come, little ones.", LANG_UNIVERSAL);
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_TALK);
+                    }
+                    m_uiEventTimer = 2000;
+                    break;
+                case 9:
+                    if(pVeknilash)
+                    {
+                        pVeknilash->MonsterYell("The feast of souls begin now...", LANG_UNIVERSAL);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_TALK);
+                    }
+                    m_uiEventTimer = 2000;
+                    break;
+                case 10:
+                    if(pVeklor && pVeknilash)
+                    {
+                        pVeklor->HandleEmote(EMOTE_ONESHOT_POINT);
+                        pVeknilash->HandleEmote(EMOTE_ONESHOT_POINT);
+                    }
+                    break;
+                    m_uiEventTimer = 0;
+                default:
+                    m_uiEventTimer = 0;
+                    m_uiEventPhase = 0;
+                    break;
+                }
+                ++m_uiEventPhase;
+            }
+            else
+                m_uiEventTimer -= diff;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_the_masters_eye(Creature* pCreature)
+{
+    return new npc_the_masters_eye(pCreature);
+}
+
+bool AreaTrigger_at_twin_emperor_room(Player* pPlayer, AreaTriggerEntry const* pAt)
+{
+    if(pPlayer)
+    {
+        Creature *pMasterEye = GetClosestCreatureWithEntry(pPlayer, 15963, 100.0f);
+
+        if(pMasterEye)
+        {
+            npc_the_masters_eye *pMasterEyeAI = dynamic_cast<npc_the_masters_eye*>(pMasterEye->AI());
+
+            if(pMasterEyeAI)
+            {
+                pMasterEyeAI->StartRpIntro();
+            }
+        }
+    }
+	return false;
 }
 
 void AddSC_boss_twinemperors()
@@ -657,5 +865,15 @@ void AddSC_boss_twinemperors()
     newscript = new Script;
     newscript->Name = "boss_veklor";
     newscript->GetAI = &GetAI_boss_veklor;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "npc_the_masters_eye";
+    newscript->GetAI = &GetAI_npc_the_masters_eye;
+    newscript->RegisterSelf();
+
+	newscript = new Script;
+    newscript->Name = "at_twin_emperor_room";
+    newscript->pAreaTrigger = &AreaTrigger_at_twin_emperor_room;
     newscript->RegisterSelf();
 }

@@ -15,6 +15,7 @@
  */
 
 #include "precompiled.h"
+#include <list>
 
 enum Spells
 {
@@ -40,9 +41,30 @@ enum Yells
     YELL_RANDOM5            = -1030007,
 };
 
+enum Wolfs
+{
+    DRAKAN = 12121,
+    DUROS = 12122
+};
+
 struct MANGOS_DLL_DECL boss_drektharAI : public ScriptedAI
 {
-    boss_drektharAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    boss_drektharAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    {
+        std::list<Creature*> wolfList;
+
+        GetCreatureListWithEntryInGrid(wolfList, m_creature, Wolfs::DRAKAN, 10.f);
+        if (!wolfList.empty())
+            m_wolfGUID[0] = wolfList.front()->GetObjectGuid();
+
+        wolfList.clear();
+
+        GetCreatureListWithEntryInGrid(wolfList, m_creature, Wolfs::DUROS, 10.f);
+        if (!wolfList.empty())
+            m_wolfGUID[1] = wolfList.front()->GetObjectGuid();
+
+        Reset();
+    }
 
     uint32 m_uiFrenzyTimer;
     uint32 m_uiKnockdownTimer;
@@ -50,6 +72,8 @@ struct MANGOS_DLL_DECL boss_drektharAI : public ScriptedAI
     uint32 m_uiWhirlwind2Timer;
     uint32 m_uiYellTimer;
     uint32 m_uiEvadeTimer;
+
+    ObjectGuid m_wolfGUID[2];
 
     void Reset()
     {
@@ -59,6 +83,18 @@ struct MANGOS_DLL_DECL boss_drektharAI : public ScriptedAI
         m_uiFrenzyTimer = 6*IN_MILLISECONDS;
         m_uiYellTimer = urand(20*IN_MILLISECONDS,30*IN_MILLISECONDS);
         m_uiEvadeTimer = 5*IN_MILLISECONDS;
+
+        for (short i = 0; i < 2; i++)
+        {
+            Creature* pWolf = m_creature->GetMap()->GetCreature(m_wolfGUID[i]);
+
+            if (pWolf)
+            {
+                pWolf->getThreatManager().clearReferences();
+                pWolf->CombatStop(true);
+                pWolf->SetEvadeMode(true);
+            }
+        }
     }
 
     void Aggro(Unit* /*pWho*/)

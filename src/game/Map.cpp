@@ -37,6 +37,7 @@
 #include "VMapFactory.h"
 #include "MoveMap.h"
 #include "BattleGroundMgr.h"
+#include "Database/DatabaseEnv.h"
 
 #include <thread>
 
@@ -398,6 +399,23 @@ Map::Add(T *obj)
         obj->GetViewPoint().Event_AddedToWorld(&(*grid)(cell.CellX(), cell.CellY()));
         UpdateObjectVisibility(obj,cell,p);
     }
+
+    // We want all creatures on the continents to be active.
+    // This should prevent players from getting stuck in combat.
+    // It should also make sure patrolling mobs eventually show up.
+    Creature* pCreature = dynamic_cast<Creature*>(obj);
+    if (pCreature && !pCreature->isActiveObject())
+    {
+        if (GetId() == 1 || GetId() == 0)
+        {
+            AddToContinent(pCreature);
+        }
+        else
+        {
+            if (!pCreature->isActiveObject())
+                pCreature->SetActiveObjectState(true);
+        }
+    }
 }
 
 void Map::MessageBroadcast(Player *player, WorldPacket *msg, bool to_self)
@@ -558,10 +576,57 @@ void Map::Update(const uint32 &t_diff)
         }
     }
 
-    for (WorldObject* obj : m_activeNonPlayers)
+    for (ObjectGuid guid : m_activeNonPlayers)
     {
+        Creature* obj = GetCreature(guid);
+        if (!obj)
+            continue;
+
         if (!obj->IsInWorld() || !obj->IsPositionValid())
-            return;
+            continue;
+
+        //lets update mobs/objects in ALL visible cells around player!
+        CellArea area = Cell::CalculateCellArea(obj->GetPositionX(), obj->GetPositionY(), GetVisibilityDistance());
+
+        for(uint32 x = area.low_bound.x_coord; x <= area.high_bound.x_coord; ++x)
+        {
+            for(uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
+            {
+                // marked cells are those that have been visited
+                // don't visit the same cell twice
+                uint32 cell_id =(y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
+
+                if(!isCellMarked(cell_id))
+                {
+                    markCell(cell_id);
+                    CellPair pair(x,y);
+                    Cell cell(pair);
+                    cell.SetNoCreate();
+                    Visit(cell, grid_object_update);
+                    Visit(cell, world_object_update);
+                }
+            }
+        }
+    }
+
+    for (ObjectGuid guid : m_continentMobs)
+    {
+        Creature* obj = GetCreature(guid);
+        if (!obj)
+            continue;
+
+        if (!obj->IsInWorld() || !obj->IsPositionValid())
+            continue;
+
+        // For Creatures on the continent we only update the 
+        // patrolling ones or the ones in/after combat.
+        Creature* pCreature = dynamic_cast<Creature*>(obj);
+        if (pCreature)
+        {
+            if (!pCreature->isInCombat() && !pCreature->IsInEvadeMode() &&
+                pCreature->GetDefaultMovementType() != WAYPOINT_MOTION_TYPE)
+                continue;
+        }
 
         //lets update mobs/objects in ALL visible cells around player!
         CellArea area = Cell::CalculateCellArea(obj->GetPositionX(), obj->GetPositionY(), GetVisibilityDistance());
@@ -685,6 +750,8 @@ Map::Remove(T *obj, bool remove)
 
     if(obj->isActiveObject())
         RemoveFromActive(obj);
+    else if (GetId() == 1 || GetId() == 0)
+        RemoveFromContinent(obj);
 
     if(remove)
         obj->CleanupsBeforeDelete();
@@ -1072,7 +1139,7 @@ void Map::SendToPlayers(WorldPacket const* data) const
         itr->getSource()->GetSession()->SendPacket(data);
 }
 
-bool Map::ActiveObjectsNearGrid(uint32 x, uint32 y) const
+bool Map::ActiveObjectsNearGrid(uint32 x, uint32 y)
 {
     MANGOS_ASSERT(x < MAX_NUMBER_OF_GRIDS);
     MANGOS_ASSERT(y < MAX_NUMBER_OF_GRIDS);
@@ -1089,7 +1156,7 @@ bool Map::ActiveObjectsNearGrid(uint32 x, uint32 y) const
     cell_max >> cell_range;
     cell_max += cell_range;
 
-    for(MapRefManager::const_iterator iter = m_mapRefManager.begin(); iter != m_mapRefManager.end(); ++iter)
+    for(MapRefManager::iterator iter = m_mapRefManager.begin(); iter != m_mapRefManager.end(); ++iter)
     {
         Player* plr = iter->getSource();
 
@@ -1101,7 +1168,10 @@ bool Map::ActiveObjectsNearGrid(uint32 x, uint32 y) const
 
     for(ActiveNonPlayers::const_iterator iter = m_activeNonPlayers.begin(); iter != m_activeNonPlayers.end(); ++iter)
     {
-        WorldObject* obj = *iter;
+        Creature* obj = GetCreature(*iter);
+        if (!obj)
+            continue;
+
 
         CellPair p = MaNGOS::ComputeCellPair(obj->GetPositionX(), obj->GetPositionY());
         if( (cell_min.x_coord <= p.x_coord && p.x_coord <= cell_max.x_coord) &&
@@ -1115,10 +1185,10 @@ bool Map::ActiveObjectsNearGrid(uint32 x, uint32 y) const
 void Map::AddToActive( WorldObject* obj )
 {
     // If the active object is already in the list we shouldn't mark it as active again.
-    if (std::find(m_activeNonPlayers.begin(), m_activeNonPlayers.end(), obj) != m_activeNonPlayers.end())
+    if (std::find(m_activeNonPlayers.begin(), m_activeNonPlayers.end(), obj->GetObjectGuid()) != m_activeNonPlayers.end())
         return;
     
-    m_activeNonPlayers.push_back(obj);
+    m_activeNonPlayers.push_back(obj->GetObjectGuid());
     
     // also not allow unloading spawn grid to prevent creating creature clone at load
     if (obj->GetTypeId()==TYPEID_UNIT)
@@ -1144,7 +1214,63 @@ void Map::AddToActive( WorldObject* obj )
 
 void Map::RemoveFromActive( WorldObject* obj )
 {
-    m_activeNonPlayers.remove(obj);
+    m_activeNonPlayers.remove(obj->GetObjectGuid());
+
+    // also allow unloading spawn grid
+    if (obj->GetTypeId()==TYPEID_UNIT)
+    {
+        Creature* c= (Creature*)obj;
+
+        if(!c->IsPet() && c->HasStaticDBSpawnData())
+        {
+            float x,y,z;
+            c->GetRespawnCoord(x,y,z);
+            GridPair p = MaNGOS::ComputeGridPair(x, y);
+            if(getNGrid(p.x_coord, p.y_coord))
+                getNGrid(p.x_coord, p.y_coord)->decUnloadActiveLock();
+            else
+            {
+                GridPair p2 = MaNGOS::ComputeGridPair(c->GetPositionX(), c->GetPositionY());
+                sLog.outError("Active creature (GUID: %u Entry: %u) removed from grid[%u,%u] but spawn grid[%u,%u] not loaded.",
+                              c->GetGUIDLow(), c->GetEntry(), p.x_coord, p.y_coord, p2.x_coord, p2.y_coord);
+            }
+        }
+    }
+}
+
+void Map::AddToContinent( WorldObject* obj )
+{
+    // If the active object is already in the list we shouldn't mark it as active again.
+    if (std::find(m_continentMobs.begin(), m_continentMobs.end(), obj->GetObjectGuid()) != m_continentMobs.end())
+        return;
+    
+    m_continentMobs.push_back(obj->GetObjectGuid());
+    
+    // also not allow unloading spawn grid to prevent creating creature clone at load
+    if (obj->GetTypeId()==TYPEID_UNIT)
+    {
+        Creature* c= (Creature*)obj;
+
+        if (!c->IsPet() && c->HasStaticDBSpawnData())
+        {
+            float x,y,z;
+            c->GetRespawnCoord(x,y,z);
+            GridPair p = MaNGOS::ComputeGridPair(x, y);
+            if(getNGrid(p.x_coord, p.y_coord))
+                getNGrid(p.x_coord, p.y_coord)->incUnloadActiveLock();
+            else
+            {
+                GridPair p2 = MaNGOS::ComputeGridPair(c->GetPositionX(), c->GetPositionY());
+                sLog.outError("Active creature (GUID: %u Entry: %u) added to grid[%u,%u] but spawn grid[%u,%u] not loaded.",
+                              c->GetGUIDLow(), c->GetEntry(), p.x_coord, p.y_coord, p2.x_coord, p2.y_coord);
+            }
+        }
+    }
+}
+
+void Map::RemoveFromContinent( WorldObject* obj )
+{
+    m_continentMobs.remove(obj->GetObjectGuid());
 
     // also allow unloading spawn grid
     if (obj->GetTypeId()==TYPEID_UNIT)
@@ -1257,6 +1383,25 @@ DungeonMap::DungeonMap(uint32 id, time_t expiry, uint32 InstanceId)
     // the timer is started by default, and stopped when the first player joins
     // this make sure it gets unloaded if for some reason no player joins
     m_unloadTimer = std::max(sWorld.getConfig(CONFIG_UINT32_INSTANCE_UNLOAD_DELAY), (uint32)MIN_UNLOAD_DELAY);
+
+    // Load all grids in the instance. Using parallel_for to speed it up.
+    QueryResult* result = WorldDatabase.PQuery("SELECT position_x, position_y FROM creature WHERE map = %u", id);
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        float x = fields[0].GetFloat();
+        float y = fields[1].GetFloat();
+
+        CellPair pair(x, y);
+        Cell cell(pair);
+        LoadGrid(cell);
+    } while (result->NextRow());
+
+    delete result;
 }
 
 DungeonMap::~DungeonMap()

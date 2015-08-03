@@ -180,7 +180,7 @@ Creature::Creature(CreatureSubtype subtype) :
     m_AlreadyCallAssistance(false), m_AlreadySearchedAssistance(false),
     m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false),
     m_temporaryFactionFlags(TEMPFACTION_NONE), m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL), m_originalEntry(0),
-    m_aggroRangeOverride(0), m_creatureInfo(NULL), m_splineFlags(SPLINEFLAG_WALKMODE), m_formation(NULL), m_inEvadeMode(false), m_evadeResetTimer(0)
+    m_aggroRangeOverride(0), m_creatureInfo(NULL), m_splineFlags(SPLINEFLAG_WALKMODE), m_formation(NULL), m_inEvadeMode(false), m_evadeResetTimer(0), m_ignoreNonCombatFlags(false)
 {
     m_regenTimer = 200;
     m_valuesCount = UNIT_END;
@@ -630,6 +630,21 @@ void Creature::Update(uint32 update_diff, uint32 diff)
             } else
                 m_evadeResetTimer -= diff;
         }
+
+        // Count down the evade timer for when a creature can't reach its target.
+        if (m_unreachableTimeout)
+        {
+            if (m_unreachableTimeout <= diff)
+            {
+                if (!m_inEvadeMode)
+                    SetEvadeMode(true);
+
+                m_unreachableTimeout = 0;
+            }
+            else
+                m_unreachableTimeout -= diff;
+        }
+
         if(!GetMotionMaster() || GetMotionMaster()->GetCurrentMovementGeneratorType() != HOME_MOTION_TYPE)
         {
             if (AI())
@@ -2023,7 +2038,7 @@ bool Creature::CanAssistTo(const Unit* u, const Unit* enemy, bool checkfaction /
     if (GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_NO_AGGRO)
         return false;
 
-    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_PASSIVE))
+    if (!m_ignoreNonCombatFlags && HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_PASSIVE))
         return false;
 
     // skip fighting creature
@@ -2061,7 +2076,7 @@ bool Creature::CanInitiateAttack()
     if (HasFlag(UNIT_FIELD_FLAGS, UNIT_STAT_CAN_NOT_REACT_OR_LOST_CONTROL))
         return false;
 
-    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE))
+    if (!m_ignoreNonCombatFlags && HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE))
         return false;
 
     if (isPassiveToHostile())
@@ -2098,7 +2113,7 @@ bool Creature::IsOutOfThreatArea(Unit* pVictim) const
     if (!pVictim->isInAccessablePlaceFor(this))
         return true;
 
-    if (!pVictim->isVisibleForOrDetect(this,this,false))
+    if (!pVictim->isVisibleForOrDetect(this,this,false, false, true, true))
         return true;
 
     if(sMapStore.LookupEntry(GetMapId())->IsDungeon())

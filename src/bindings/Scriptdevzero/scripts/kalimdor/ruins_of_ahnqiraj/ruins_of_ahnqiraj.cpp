@@ -24,6 +24,8 @@ EndScriptData */
 /* ContentData
 mob_anubisath_guardian
 mob_flesh_hunter
+mob_obsidian_destroyer
+mob_qiraji_swarmguard
 EndContentData */
 
 #include "precompiled.h"
@@ -172,10 +174,12 @@ CreatureAI* GetAI_mob_anubisath_guardian(Creature* pCreature)
 enum eFleshHunter
 {
     SPELL_CONSUME       = 25371,
-    SPELL_CONSUME_DMG   = 25373,
+    //SPELL_CONSUME_DMG   = 25373,
     SPELL_CONSUME_HEAL  = 25378,
+	SPELL_CONSUME_ROOT	= 25374,
     SPELL_POISON_BOLT   = 25424,
     SPELL_TRASH         = 3391,
+	SPELL_KNOCKBACK		= 24199,			// used if a player survives consume, wrong spell for now
 };
 
 struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
@@ -186,7 +190,10 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
     }
 
     bool m_bPlayerConsumed;
+	bool m_bCanTurn;
 
+	uint32 m_uiConsumeRemoveTimer;
+	uint32 m_uiTurnTimer;
     uint32 m_uiPoisonBoltTimer;
     uint32 m_uiTrashTimer;
     uint32 m_uiConsumeTimer;
@@ -197,20 +204,31 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
     void Reset() 
     {
         m_bPlayerConsumed = false;
+		m_bCanTurn = true;
 
+		m_uiConsumeRemoveTimer = 0;
+		m_uiTurnTimer = 0;
         m_uiPoisonBoltTimer = 10000;
         m_uiTrashTimer = 15000;
-        m_uiConsumeTimer = 30000;
+        m_uiConsumeTimer = urand(10000,30000);
         m_uiConsumeDamageTimer = 1000;
-
+		if (m_creature->HasAura(SPELL_CONSUME_ROOT))
+			m_creature->RemoveAurasDueToSpell(SPELL_CONSUME_ROOT);
 		m_uiConsumeVictim.Clear();
     }
 
     void KilledUnit(Unit* pWho)
     {
         if (pWho->GetObjectGuid() == m_uiConsumeVictim)
-            DoCastSpellIfCan(m_creature, SPELL_CONSUME_HEAL);
+            m_creature->CastSpell(m_creature, SPELL_CONSUME_HEAL, true);
     }
+
+	void JustDied(Unit* /*pKiller*/)
+    {
+		if (Unit* pConsumeTarget = m_creature->GetMap()->GetUnit(m_uiConsumeVictim))
+            if (pConsumeTarget->HasAura(SPELL_CONSUME))
+				pConsumeTarget->RemoveAurasDueToSpell(SPELL_CONSUME);
+	}
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -219,48 +237,85 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
 
         if (m_uiPoisonBoltTimer <= uiDiff)
         {
-            Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-            DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_POISON_BOLT);
-            m_uiPoisonBoltTimer = urand(5000,10000);
+                         
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0); 
+			DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_POISON_BOLT);
+			m_uiPoisonBoltTimer = urand(5000,10000);			 
         }
         else
             m_uiPoisonBoltTimer -= uiDiff;
 
         if (m_uiConsumeTimer <= uiDiff)
         {
-            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+            if (Unit* pTarget = m_creature->getVictim())
             {
-                DoCastSpellIfCan(pTarget, SPELL_CONSUME);
+                m_creature->CastSpell(pTarget, SPELL_CONSUME, true);
+				m_creature->CastSpell(pTarget, SPELL_CONSUME_ROOT, true);
 				m_uiConsumeVictim = pTarget->GetObjectGuid();
-                DoTeleportPlayer(m_creature->getVictim(), m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0);
+                DoTeleportPlayer(m_creature->getVictim(), m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ()+.5f, 0);
+				if (m_creature->getThreatManager().getThreat(pTarget))
+					m_creature->getThreatManager().modifyThreatPercent(pTarget, -100);			// never attack the player that is consumed
                 m_bPlayerConsumed = true;
+				m_bCanTurn = true;
+				m_uiTurnTimer = 3000;
+				m_uiConsumeRemoveTimer = 15010;			// slightly longer so we're sure the aura is removed
             }
-            m_uiConsumeTimer = 30000;
+            m_uiConsumeTimer = urand(25000,35000);
         }
         else
             m_uiConsumeTimer -= uiDiff;
 
         if (Unit* pConsumeTarget = m_creature->GetMap()->GetUnit(m_uiConsumeVictim))
-            if (pConsumeTarget->HasAura(SPELL_CONSUME, EFFECT_INDEX_0))
+            if (pConsumeTarget->HasAura(SPELL_CONSUME))
             {
                 if (m_uiConsumeDamageTimer <= uiDiff)
                 {
-                    DoCastSpellIfCan(pConsumeTarget, SPELL_CONSUME_DMG);
+					//m_creature->DealDamage(pConsumeTarget, pConsumeTarget->GetMaxHealth()/10, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
                     m_uiConsumeDamageTimer = 1000;
                 }
                 else
                     m_uiConsumeDamageTimer -= uiDiff;
+
+				if (m_uiTurnTimer <= uiDiff)
+				{
+					if (m_bCanTurn)
+					{
+						uint32 Direction = urand(0,6);
+						m_creature->SetFacingTo(Direction);
+						m_uiTurnTimer = 30000;
+						m_bCanTurn = false;
+					}
+				}
+				else
+					m_uiTurnTimer -= uiDiff;				
             }
+			else
+				if (m_creature->HasAura(SPELL_CONSUME_ROOT))
+					m_creature->RemoveAurasDueToSpell(SPELL_CONSUME_ROOT);
+
+		if(m_bPlayerConsumed)
+		{
+			if (m_uiConsumeRemoveTimer <= uiDiff)
+			{
+				if(Unit* pConsumeTarget = m_creature->GetMap()->GetUnit(m_uiConsumeVictim))
+					if(pConsumeTarget->isAlive())
+						m_creature->CastSpell(pConsumeTarget, SPELL_KNOCKBACK, true);
+
+				m_bPlayerConsumed = false;
+			}
+			else
+				m_uiConsumeRemoveTimer -= uiDiff;  
+		}
+		else
+			DoMeleeAttackIfReady();			// no melee while we have a player inside
 
         if (m_uiTrashTimer <= uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(), SPELL_TRASH);
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_TRASH);				// this right?
             m_uiTrashTimer = urand(5000,8000);
         }
         else
-            m_uiTrashTimer -= uiDiff;
-
-        DoMeleeAttackIfReady(); 
+            m_uiTrashTimer -= uiDiff;	 
     }
 };
 
@@ -268,6 +323,318 @@ CreatureAI* GetAI_mob_flesh_hunter(Creature* pCreature)
 {
     return new mob_flesh_hunterAI(pCreature);
 }
+
+/*######
+## mob_obsidian_destroyer
+######*/
+
+enum eObsidianDestroyer
+{
+    SPELL_PURGE       = 25756,
+	SPELL_DRAIN_MANA  = 25755,
+
+	SMALL_OBSIDIAN_CHUNK = 181068,
+	LARGE_OBSIDIAN_CHUNK = 181069,
+};
+
+struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
+{
+    mob_obsidian_destroyerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiManaDrainTimer;
+
+    void Reset() 
+    {
+		m_uiManaDrainTimer = 10000;
+		m_creature->SetPower(POWER_MANA, 0);
+        m_creature->SetMaxPower(POWER_MANA, 0);
+    }
+
+	void Aggro(Unit* /*pWho*/)
+    {
+        m_creature->SetMaxPower(POWER_MANA, m_creature->GetCreatureInfo()->maxmana);
+    }
+
+	void JustDied(Unit* /*pKiller*/)
+    {
+		// spawn a random obsidian
+		int Size = urand(0,1);
+		if (Size == 0)
+			m_creature->SummonGameObject(SMALL_OBSIDIAN_CHUNK,0, m_creature->GetPositionX()+urand(-3,3),m_creature->GetPositionY()+urand(-3,3), m_creature->GetPositionZ(), 0);
+		else if (Size == 1)
+			m_creature->SummonGameObject(LARGE_OBSIDIAN_CHUNK,0, m_creature->GetPositionX()+urand(-3,3),m_creature->GetPositionY()+urand(-3,3), m_creature->GetPositionZ(), 0);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiManaDrainTimer <= uiDiff)
+        {
+			const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+
+			if(!threatList.empty())
+			{
+				for (HostileReference *currentReference : threatList)
+				{
+					Unit *target = currentReference->getTarget();
+					if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 30.0f)
+						m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
+				}
+			}
+			m_uiManaDrainTimer = urand(8000, 12000);
+         } 
+		else
+			m_uiManaDrainTimer -= uiDiff;
+
+		if (m_creature->GetPower(POWER_MANA) == m_creature->GetMaxPower(POWER_MANA))
+			DoCastSpellIfCan(m_creature, SPELL_PURGE);
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_obsidian_destroyer(Creature* pCreature)
+{
+    return new mob_obsidian_destroyerAI(pCreature);
+}
+
+/*######
+## mob_qiraji_swarmguard
+######*/
+
+enum eQirajiSwarmguard
+{
+    SPELL_SUNDERING_CLEAVE       = 25174,
+};
+
+struct MANGOS_DLL_DECL mob_qiraji_swarmguardAI : public ScriptedAI
+{
+    mob_qiraji_swarmguardAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiCleaveTimer;
+
+    void Reset() 
+    {		
+		m_uiCleaveTimer = urand(8000,12000);
+    }
+	void MovementInform(uint32 /*uiMotiontype*/, uint32 uiPointId)
+	{
+		if(uiPointId)
+			m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiCleaveTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_SUNDERING_CLEAVE);
+			m_uiCleaveTimer = urand(8000, 12000);
+         } 
+		else
+			m_uiCleaveTimer -= uiDiff;
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_qiraji_swarmguard(Creature* pCreature)
+{
+    return new mob_qiraji_swarmguardAI(pCreature);
+}
+
+/*######
+## mob_qiraji_gladiator
+######*/
+
+enum eQirajiGladiator
+{
+    SPELL_VENGEANCE         = 25164,
+    SPELL_GLADIATOR_TRASH   = 5568,
+    SPELL_UPPERCUT          = 10966,
+
+    MOB_QIRAJI_GLADIATOR    = 15324,
+};
+
+struct MANGOS_DLL_DECL mob_qiraji_gladiator : public ScriptedAI
+{
+    mob_qiraji_gladiator(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiTrashTimer;
+    uint32 m_uiUpperCutTimer;
+    uint32 m_uiVengeanceTimer;
+    ObjectGuid m_GladiatorFriend;
+
+    void Reset() 
+    {		
+        m_uiVengeanceTimer = urand(30000, 40000);
+		m_uiTrashTimer = urand(8000,12000);
+        m_uiUpperCutTimer = urand(7000, 11000);
+    }
+
+    void Aggro(Unit* pAggro)
+    {
+        std::list<Creature*> lAssistList;
+        GetCreatureListWithEntryInGrid(lAssistList, m_creature, m_creature->GetEntry(), 30.0f);
+
+        if (lAssistList.empty())
+            return;
+
+        for(std::list<Creature*>::iterator iter = lAssistList.begin(); iter != lAssistList.end(); ++iter)
+        {
+
+            if ((*iter)->GetObjectGuid() == m_creature->GetObjectGuid())
+                continue;
+
+            m_GladiatorFriend = (*iter)->GetObjectGuid();
+
+            (*iter)->AI()->AttackStart(pAggro);
+        }
+    }
+
+    void JustDied(Unit* /*pKiller*/)
+    {
+        Creature *pBuddy = m_creature->GetMap()->GetCreature(m_GladiatorFriend);
+
+        if(pBuddy && pBuddy->isAlive())
+        {
+            pBuddy->AI()->DoCastSpellIfCan(pBuddy, SPELL_VENGEANCE, CastFlags::CAST_TRIGGERED);
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiTrashTimer <= uiDiff)
+        {
+			if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                DoCast(pTarget, SPELL_TRASH, true);
+			m_uiTrashTimer = urand(8000, 12000);
+        } 
+		else
+			m_uiTrashTimer -= uiDiff;
+
+		if (m_uiUpperCutTimer <= uiDiff)
+        {
+			if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                DoCast(pTarget, SPELL_UPPERCUT, true);
+			m_uiUpperCutTimer = urand(7000, 11000);
+        } 
+		else
+			m_uiUpperCutTimer -= uiDiff;
+
+		if (m_uiVengeanceTimer <= uiDiff)
+        {
+            DoCast(m_creature, SPELL_VENGEANCE, true);
+			m_uiVengeanceTimer = urand(30000, 40000);
+        } 
+		else
+			m_uiVengeanceTimer -= uiDiff;
+
+
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_qiraji_gladiator(Creature* pCreature)
+{
+    return new mob_qiraji_gladiator(pCreature);
+}
+
+/*######
+## mob_hivezara_stinger
+######*/
+
+enum eHiveZaraStinger
+{
+    SPELL_STINGER_CHARGE             = 25190,
+    SPELL_STINGER_EMPOWERED_CHARGE   = 25191,
+    SPELL_HIVEZARA_CATALYST          = 25187,
+};
+
+struct MANGOS_DLL_DECL mob_hivezara_stinger : public ScriptedAI
+{
+    mob_hivezara_stinger(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiChargeTimer;
+
+    void Reset() 
+    {		
+		m_uiChargeTimer = 5000;
+    }
+
+    void ChargeRandomTarget()
+    {
+        const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+        std::vector<Unit*> pEligibleTargets;
+
+        pEligibleTargets.clear();
+
+        if(!threatList.empty())
+        {
+            for (HostileReference *currentReference : threatList)
+            {
+                Unit *target = currentReference->getTarget();
+                if (target && target->isAlive() && target->GetDistance(m_creature) <= 25.0f && target->GetDistance(m_creature) >= 5.0f)
+                    pEligibleTargets.push_back(target);
+            }
+
+            if(!pEligibleTargets.empty())
+            {
+                std::random_shuffle(pEligibleTargets.begin(), pEligibleTargets.end());
+                Unit *target = pEligibleTargets.front();
+                if (target && target->isAlive())
+                {
+                    if(target->HasAura(SPELL_HIVEZARA_CATALYST))
+                        DoCast(target, SPELL_STINGER_EMPOWERED_CHARGE, true);
+                    else
+                        DoCast(target, SPELL_STINGER_CHARGE, true);
+                }
+            }
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiChargeTimer <= uiDiff)
+        {
+			ChargeRandomTarget();
+			m_uiChargeTimer = 5000;
+        } 
+		else
+			m_uiChargeTimer -= uiDiff;
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_hivezara_stinger(Creature* pCreature)
+{
+    return new mob_hivezara_stinger(pCreature);
+}
+
 
 void AddSC_ruins_of_ahnqiraj()
 {
@@ -281,5 +648,25 @@ void AddSC_ruins_of_ahnqiraj()
     pNewscript = new Script;
     pNewscript->Name = "mob_flesh_hunter";
     pNewscript->GetAI = &GetAI_mob_flesh_hunter;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_obsidian_destroyer";
+    pNewscript->GetAI = &GetAI_mob_obsidian_destroyer;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_qiraji_swarmguard";
+    pNewscript->GetAI = &GetAI_mob_qiraji_swarmguard;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_qiraji_gladiator";
+    pNewscript->GetAI = &GetAI_mob_qiraji_gladiator;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_hivezara_stinger";
+    pNewscript->GetAI = &GetAI_mob_hivezara_stinger;
     pNewscript->RegisterSelf();
 }

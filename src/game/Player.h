@@ -1594,8 +1594,11 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendResetInstanceFailed(uint32 reason, uint32 MapId);
         void SendResetFailedNotify(uint32 mapid);
 
+        bool CanMove() const { return m_bCanMove; }
+
 private:
 	std::map<uint32, std::list<time_t> > m_InstanceResetLists;
+    bool m_bCanMove;                                            // Set to false if ClientControl is disabled.
 public:
 	bool IsBelowResetQuotaForInstance(uint32 instanceMapId);
 	void AddToResetQuotaList(uint32 instanceMapId) { m_InstanceResetLists[instanceMapId].push_back(time(0)); }
@@ -2294,12 +2297,16 @@ public:
         float  m_summon_x;
         float  m_summon_y;
         float  m_summon_z;
+    public:
+
+        // Ritual of summoning
+        ObjectGuid m_summonMasterGuid;
+        ObjectGuid m_summonParticipantGuid;
 
 		 /*********************************************************/
         /***                  Anti-Cheat System                ***/
         /*********************************************************/
 
-    public:
 		Sentinel* m_sentinel;
 		Sentinel* GetSentinel() { return m_sentinel; };
 

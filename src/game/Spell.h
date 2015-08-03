@@ -338,6 +338,8 @@ class Spell
 	 * and overwrites any lesser HOTs.
 	 * Returns false otherwise. */
 	bool CheckHOTStacking(SpellEntry const* spellProto);
+
+    bool CheckBuffOverwrite(SpellEntry const* spellProto);
 	
 	/* Checks if the paladin is allowed to cast the blessing.
 	 * Returns true if the blessing is allowed to be casted

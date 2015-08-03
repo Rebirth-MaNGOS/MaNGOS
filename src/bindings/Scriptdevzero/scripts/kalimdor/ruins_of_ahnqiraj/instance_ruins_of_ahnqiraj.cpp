@@ -80,6 +80,14 @@ void instance_ruins_of_ahnqiraj::OnCreatureCreate(Creature* pCreature)
         case NPC_OSSIRIAN:
             m_mNpcEntryGuidStore[pCreature->GetEntry()] = pCreature->GetObjectGuid();
             break;
+		case NPC_BURU_EGG:
+			m_lBuruEggs.push_back(pCreature->GetObjectGuid());	
+			break;
+		case NPC_TORNADO:
+			m_lTornadoes.push_back(pCreature->GetObjectGuid());		
+			pCreature->setFaction(35);
+			pCreature->SetVisibility(VISIBILITY_OFF);
+			break;
     }
 }
 
@@ -91,13 +99,6 @@ void instance_ruins_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
             m_auiEncounter[0] = uiData;
             if (uiData == DONE)
             {
-				if (Creature* pRajaxx = this->GetSingleCreatureFromStorage(NPC_RAJAXX))
-                    if (Creature* pAndorov = pRajaxx->SummonCreature(NPC_GENERAL_ANDOROV, -8873.42f, 1647.67f, 21.38f, 5.69f, TEMPSUMMON_CORPSE_DESPAWN, 0))
-                    {
-                        pAndorov->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR);
-                        pAndorov->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-                    }
-
                 DoOrSimulateScriptTextForThisInstance(YELL_OSSIRIAN_BREACHED, NPC_OSSIRIAN);
             }
             break;
@@ -109,6 +110,23 @@ void instance_ruins_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
             break;
         case TYPE_BURU:
             m_auiEncounter[3] = uiData;
+			if (uiData == DONE)					// If Buru is dead despawn the eggs that are alive and set the respawn of all eggs to 1 week
+			{
+				if (!m_lBuruEggs.empty())
+				{
+					for(GUIDList::iterator itr = m_lBuruEggs.begin(); itr != m_lBuruEggs.end(); ++itr)
+					{
+						if (Creature* pTarget = instance->GetCreature(*itr))
+						{
+							if (pTarget->isAlive())
+								pTarget->ForcedDespawn();
+
+							pTarget->SetRespawnTime(604800);
+							pTarget->SaveRespawnTime();
+						}
+					}
+				}
+			}
             break;
         case TYPE_AYAMISS:
             m_auiEncounter[4] = uiData;

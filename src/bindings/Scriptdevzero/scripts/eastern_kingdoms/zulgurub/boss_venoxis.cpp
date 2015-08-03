@@ -377,7 +377,7 @@ struct MANGOS_DLL_DECL mob_parasitic_serpentAI : public ScriptedAI
 {
 
     uint32 m_DotTimer;
-    Player *m_OldVictim, *m_CurrentVictim;
+    ObjectGuid m_OldVictim, m_CurrentVictim;
     bool m_IsDotApplied;
 
     mob_parasitic_serpentAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -392,8 +392,6 @@ struct MANGOS_DLL_DECL mob_parasitic_serpentAI : public ScriptedAI
 
         m_DotTimer = 10000;
         m_IsDotApplied = false;
-        m_OldVictim = NULL;
-        m_CurrentVictim = NULL;
 
     }
 
@@ -403,14 +401,15 @@ struct MANGOS_DLL_DECL mob_parasitic_serpentAI : public ScriptedAI
         if (!m_IsDotApplied) // Has the parasite already infected someone?
         {
 
-            if (m_CurrentVictim && !m_CurrentVictim->HasAura(23865)) // Have we got a valid target? If not, select one or if we do infect it.
+            Player* currentVictim = m_creature->GetMap()->GetPlayer(m_CurrentVictim);
+            if (currentVictim && !currentVictim->HasAura(23865)) // Have we got a valid target? If not, select one or if we do infect it.
             {
                 if (m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
-                    m_creature->GetMotionMaster()->MoveFollow(m_CurrentVictim, 0.5f, 3.14f / 6.0f);
+                    m_creature->GetMotionMaster()->MoveFollow(currentVictim, 0.5f, 3.14f / 6.0f);
 
-                if (m_creature->GetDistance2d(m_CurrentVictim) < 5.f)
+                if (m_creature->GetDistance2d(currentVictim) < 5.f)
                 {
-                    m_creature->CastSpell(m_CurrentVictim, 23865, true);
+                    m_creature->CastSpell(currentVictim, 23865, true);
 
                     m_creature->SetVisibility(VISIBILITY_OFF);  // Make the snake invisible after infecting someone.
                     m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE); // Make the snake unattackable.
@@ -425,10 +424,10 @@ struct MANGOS_DLL_DECL mob_parasitic_serpentAI : public ScriptedAI
             {
                  Player* newVictim = GetRandomPlayerInCurrentMap();
                 
-                 if (newVictim && newVictim != m_OldVictim && !newVictim->isDead())
+                 if (newVictim && newVictim->GetObjectGuid() != m_OldVictim && !newVictim->isDead())
                  {
                      m_creature->SetTargetGuid(newVictim->GetGUID());
-                     m_CurrentVictim = newVictim;
+                     m_CurrentVictim = newVictim->GetObjectGuid();
                  }
 
                  if (!m_CurrentVictim && m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() != RANDOM_MOTION_TYPE)
@@ -453,14 +452,14 @@ struct MANGOS_DLL_DECL mob_parasitic_serpentAI : public ScriptedAI
 
                  Player* newVictim = GetRandomPlayerInCurrentMap();
                 
-                 if (newVictim && newVictim != m_OldVictim && !newVictim->isDead())
+                 if (newVictim && newVictim->GetObjectGuid() != m_OldVictim && !newVictim->isDead())
                  {
                      m_creature->SetTargetGuid(newVictim->GetGUID());
-                     m_CurrentVictim = newVictim;
+                     m_CurrentVictim = newVictim->GetObjectGuid();
                  }
                  else
                  {
-                     m_CurrentVictim = NULL;
+                     m_CurrentVictim = ObjectGuid();
                  }
 
             }

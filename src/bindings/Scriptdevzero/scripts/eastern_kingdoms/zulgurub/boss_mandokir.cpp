@@ -102,6 +102,8 @@ struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
     uint32 m_uiCheckTimer;
     uint32 m_uiWriteThreatTimer;
 
+	uint32 m_uiSuspendTimer; // Timer used to allow the charge animation to occur correctly. Works most of the time but not always
+
     uint32 m_uiDefaultLevel;
 
     uint8 m_uiKillCount;
@@ -121,6 +123,7 @@ struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
         m_uiOverpowerTimer = 9000;
         m_uiCheckTimer = 1000;
         m_uiWriteThreatTimer = 1000;
+		m_uiSuspendTimer = 0;
 
         m_uiKillCount = 0;
 
@@ -152,7 +155,7 @@ struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
     void KilledUnit(Unit* pVictim)
     {
         if (pVictim->GetTypeId() == TYPEID_PLAYER)
-        {
+        {					
             ++m_uiKillCount;
 
             if (m_uiKillCount == 3)
@@ -171,9 +174,11 @@ struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
                 m_uiKillCount = 0;
             }
 
-            if (m_creature->isInCombat())
-                if (Creature* pSpirit = GetClosestCreatureWithEntry(pVictim, NPC_CHAINED_SPIRIT, 50.0f))
-                    pSpirit->CastSpell(pVictim, SPELL_REVIVE, false);
+			if (m_creature->isInCombat())
+			{				          
+				if (Creature* pSpirit = GetClosestCreatureWithEntry(pVictim, NPC_CHAINED_SPIRIT, 50.0f))
+					pSpirit->CastSpell(pVictim, SPELL_REVIVE, false);
+			}
         }
     }
 
@@ -327,7 +332,7 @@ struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
         std::list<Player*> lPlayers;
 
         ObjectGuid m_uiMaxAlonePlayerGUID;
-        float  m_fMaxAlonePlayerDist  = 0;
+        float  m_fMaxAlonePlayerDist  = 8;			// 0 before, now spreading within 8yrds is ok, else he charges the player that is alone
 
         GUIDVector vGuids;
         m_creature->FillGuidsListFromThreatList(vGuids);
@@ -388,6 +393,12 @@ struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+		if (m_uiSuspendTimer > uiDiff)
+        {
+            m_uiSuspendTimer -= uiDiff;
+            return;
+        }
+
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
@@ -425,18 +436,23 @@ struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
             if (m_uiChargeTimer <= uiDiff)
             {
                 if (Player* pPlayer = GetMaxAlonePlayer())
-                {
-                    if (DoCastSpellIfCan(pPlayer, SPELL_CHARGE2) == CAST_OK)
+                {			
+		            if (DoCastSpellIfCan(pPlayer, SPELL_CHARGE2) == CAST_OK)
                     {
-                        uint32 m_uiMainTargetThreat = m_creature->getThreatManager().getThreat(m_creature->getVictim());
-                        uint32 m_uiSecondTargetTrheat = 0;
-
                         if (Unit* pSecondThreatUnit = m_creature->SelectAttackingTarget(ATTACKING_TARGET_TOPAGGRO, 1))
                         {
+							uint32 m_uiMainTargetThreat = m_creature->getThreatManager().getThreat(m_creature->getVictim());
+							uint32 m_uiSecondTargetTrheat = 0;
+
+							if(Unit* pTank = m_creature->getVictim())
+								m_creature->getThreatManager().modifyThreatPercent(pTank, -30);			// reduce the threat of the tank and add more to the 2nd highest dps
+
                             m_uiSecondTargetTrheat = m_creature->getThreatManager().getThreat(pSecondThreatUnit);
                             uint32 m_uiDeficitThreat = m_uiMainTargetThreat - m_uiSecondTargetTrheat;
-                            m_creature->getThreatManager().addThreat(pSecondThreatUnit, (m_uiDeficitThreat + 1000.0f));
+                            m_creature->getThreatManager().addThreat(pSecondThreatUnit, (m_uiDeficitThreat + 100.0f));
+							
                         }
+						m_uiSuspendTimer = 2000;
                     }
                 }
                 m_uiChargeTimer = urand(20000, 30000);

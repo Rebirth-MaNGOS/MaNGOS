@@ -35,6 +35,8 @@ EndContentData */
 #include "../../../../game/MotionMaster.h"
 #include "../../../../game/TargetedMovementGenerator.h"
 #include "escort_ai.h"
+#include "patrol_ai.h"
+#include "TemporarySummon.h"
 
 /*###
 ## boss_abyssal_council
@@ -1188,7 +1190,7 @@ struct MANGOS_DLL_DECL npc_geologist_larksbaneAI : public npc_escortAI
 		m_uiSpeechTimer = 0;
 	}
 
-	void WaypointReached(uint32 uiPointId)
+	void WaypointReached(uint32 /*uiPointId*/)
     {
 	}
 
@@ -1419,7 +1421,7 @@ CreatureAI* GetAI_npc_geologist_larksbane(Creature* pCreature)
     return new npc_geologist_larksbaneAI(pCreature);
 }
 
-bool OnQuestRewarded_npc_geologist_larksbane(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+bool OnQuestRewarded_npc_geologist_larksbane(Player* /*pPlayer*/, Creature* pCreature, Quest const* pQuest)
 {
 	if (pQuest->GetQuestId() == QUEST_ID_THE_CALLING)
     {
@@ -1547,6 +1549,1947 @@ CreatureAI* GetAI_boss_roman_khan(Creature* pCreature)
     return new boss_roman_khanAI(pCreature);
 }
 
+/*####
+# npc_mistress_natalia_maralith
+####*/
+
+enum eNatalia
+{
+	SPELL_BLACKOUT			= 15269,
+	SPELL_PSYCHIC_SCREAM	= 13704,
+	SPELL_SHADOW_WORD_PAIN	= 11639,
+	SPELL_MIND_FLAY			= 16568,
+	SPELL_DOMINATE_MIND		= 20740,
+	SPELL_HEALING_TOUCH		= 27527,
+
+	NATALIA_SAY_AGGRO		= -1720119,
+	NATALIA_SAY_DEATH		= -1720120,
+};
+
+struct MANGOS_DLL_DECL npc_mistress_natalia_maralithAI : public ScriptedAI
+{
+    npc_mistress_natalia_maralithAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiPsychicScreamTimer;
+    uint32 m_uiShadowWordPainTimer;
+	uint32 m_uiMindFlayTimer;
+	uint32 m_uiDominateMindTimer;
+	uint32 m_uiHealingTouchTimer;
+
+    void Reset()
+    {
+        m_uiPsychicScreamTimer = urand(6000,15000);
+        m_uiShadowWordPainTimer = urand(5000,10000);
+		m_uiMindFlayTimer = urand(12000,15000);
+		m_uiDominateMindTimer = urand(14000,22000);
+		m_uiHealingTouchTimer = 1000;
+    }
+
+	void Aggro(Unit* /*pWho*/)
+    {
+        int say = urand(0,2);
+		if (say == 1)
+			DoScriptText(NATALIA_SAY_AGGRO, m_creature);
+    }
+
+	  void JustDied(Unit* /*pKiller*/)
+    {
+		int say2 = urand(0,2);
+		if (say2 == 1)
+			DoScriptText(NATALIA_SAY_DEATH, m_creature);    
+    } 
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if ((pSpell->Id == SPELL_SHADOW_WORD_PAIN || pSpell->Id == SPELL_MIND_FLAY) && pTarget->GetTypeId() == TYPEID_PLAYER)
+		{
+			int blackoutProcc = urand(1,10);
+			if (blackoutProcc == 1)
+				m_creature->CastSpell(pTarget,SPELL_BLACKOUT, true);				//has to manually procc blackout
+		}
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // Psychic Scream
+        if (m_uiPsychicScreamTimer <= uiDiff)
+        {			
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_PSYCHIC_SCREAM);
+            m_uiPsychicScreamTimer = urand(10000,20000);
+        }
+        else
+            m_uiPsychicScreamTimer -= uiDiff;
+
+        // Shadow Word Pain
+        if (m_uiShadowWordPainTimer <= uiDiff)
+        {
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            
+			m_creature->CastSpell(pTarget, SPELL_SHADOW_WORD_PAIN, false);
+			m_uiShadowWordPainTimer = urand(15000,19000);          
+        }
+        else
+            m_uiShadowWordPainTimer -= uiDiff;
+
+		// Mind flay
+        if (m_uiMindFlayTimer <= uiDiff)
+        {			
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_MIND_FLAY);
+            m_uiMindFlayTimer = urand(8000,17000);
+        }
+        else
+            m_uiMindFlayTimer -= uiDiff;
+
+		// Dominate mind
+        if (m_uiDominateMindTimer <= uiDiff)
+        {
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            
+			m_creature->CastSpell(pTarget, SPELL_DOMINATE_MIND, false);
+			m_uiDominateMindTimer = urand(20000,30000);          
+        }
+        else
+            m_uiDominateMindTimer -= uiDiff;
+
+		if(HealthBelowPct(50))
+		{
+			// Healing touch
+			if (m_uiHealingTouchTimer <= uiDiff)
+			{			
+				DoCastSpellIfCan(m_creature, SPELL_HEALING_TOUCH);
+				m_uiHealingTouchTimer = urand(10000,15000);
+			}
+			else
+				m_uiHealingTouchTimer -= uiDiff;
+		}
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_mistress_natalia_maralith(Creature* pCreature)
+{
+    return new npc_mistress_natalia_maralithAI(pCreature);
+}
+
+/********************************************************
+ * Scripting for the quest "A Pawn on the Eternal Board *
+********************************************************/
+
+enum PawnValues
+{
+    MUSIC = 8493,
+    Q_A_PAWN_ON_THE_ETERNAL_BOARD = 8519,
+    MERITHRAS_WAKE_NPC = 15427,
+    ANACHRONOS_TRIGGER = 15454,
+    ANUBI_CONQUEROR = 15424,
+    QIRAJI_TANK = 15422,
+    QIRAJI_DRONE = 15421,
+    QIRAJI_WASP = 15414,
+    KALDOREI_INFANTRY = 15423,
+    ANACHRONOS_THE_ANCIENT = 15381,
+    FANDRAL_STAGHELM = 15382,
+    MERITHRA = 15378,
+    CAELESTRASZ = 15379,
+    ARYGOS = 15380,
+    SPELL_ARYGOS = 25149,
+    SPELL_MERITHRA = 25145,
+    SPELL_MERITHRA_VISUAL = 25172,
+    SPELL_CAELESTRASZ = 25150,
+    SPELL_TIME_STOP = 25158,
+    SPELL_TIME_STOP_VISUAL = 25171,
+    SPELL_GREEN_DRAGON = 25105, 
+    SPELL_RED_DRAGON = 25106,
+    SPELL_BLUE_DRAGON = 25107,
+    SPELL_BRONZE_DRAGON = 25108,
+    SPELL_STAGHELM_BREAK = 25182,
+    SPELL_CALL_ANCIENTS = 25167,
+    SPELL_CALL_GLYPS_OF_WARDING = 25166,
+    SPELL_CALL_PRISMATIC_BARRIER = 25159,
+    AQ_RUNE = 180898,
+    AQ_ROOT = 180899,
+    AQ_ANCIENT_DOOR = 180904
+};
+
+enum PawnTalks
+{
+    TALK = -1720152,
+    TALK1 = -1720153,
+    TALK2 = -1720154,
+    TALK3 = -1720155,
+    TALK4 = -1720156,
+    TALK5 = -1720157,
+    TALK6 = -1720158,
+    TALK7 = -1720159,
+    TALK8 = -1720160,
+    TALK9 = -1720161,
+    TALK10 = -1720163,
+    TALK11 = -1720162,
+    TALK12 = -1720164,
+    TALK13 = -1720165,
+    TALK14 = -1720166,
+    TALK15 = -1720167,
+    TALK16 = -1720168,
+    TALK17 = -1720169,
+    TALK18 = -1720170,
+    TALK19 = -1720171,
+    TALK20 = -1720172,
+    TALK21 = -1720173,
+    TALK22 = -1720174,
+    TALK23 = -1720175
+};
+
+enum Emotes
+{
+    NOD = 67,
+};
+
+static const float m_BreathSpot[3] = { -8060.f, 1534.f, 2.62f };
+
+struct MANGOS_DLL_DECL npc_anachronos_triggerAI : public ScriptedAI
+{
+    npc_anachronos_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiEventTimer;
+    uint32 m_uiEventStage;
+
+    std::vector<ObjectGuid> m_elfs;
+    std::vector<ObjectGuid> m_bugs;
+
+    ObjectGuid m_Anachronos;
+    ObjectGuid m_Fandral;
+    ObjectGuid m_Merithra;
+    ObjectGuid m_Caelestrasz;
+    ObjectGuid m_Arygos;
+    ObjectGuid m_Door;
+    ObjectGuid m_Roots;
+    ObjectGuid m_Runes;
+    ObjectGuid m_Player;
+
+    void Reset()
+    {
+        m_uiEventTimer = 4000;
+        m_uiEventStage = 0;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiEventTimer > uiDiff)
+        {
+            m_uiEventTimer -= uiDiff;
+            return;
+        }
+
+        switch (m_uiEventStage)
+        {
+            case 0:
+                {
+
+                    // Stage 0 - Spawn the three NPCs, the Guards and the door objects.
+                    // Start playing the event music.
+
+                    GameObject* pOSummon = m_creature->SummonGameObject(AQ_ANCIENT_DOOR, 0, -8124.28f, 1524.88f, 17.19f, -0.023624f, GO_STATE_ACTIVE);
+                    m_Door = pOSummon->GetObjectGuid();
+
+                    pOSummon = m_creature->SummonGameObject(AQ_RUNE, 0, -8124.28f, 1524.88f, 17.19f, -0.023624f, GO_STATE_ACTIVE);
+                    m_Runes = pOSummon->GetObjectGuid();
+
+                    // Play the background music.
+                    m_creature->PlayDirectSound(MUSIC, nullptr);
+
+                    Creature* pSummon = m_creature->SummonCreature(ANACHRONOS_THE_ANCIENT, -8028.55f, 1539.27f, 2.61f, 4.1091f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pSummon->setFaction(1601);
+                        m_Anachronos = pSummon->GetObjectGuid();
+                    }
+
+                    pSummon = m_creature->SummonCreature(FANDRAL_STAGHELM, -8028.79f, 1536.57f, 2.61f, 2.662f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pSummon->setFaction(1601);
+                        m_Fandral = pSummon->GetObjectGuid();
+                    }
+
+                    pSummon = m_creature->SummonCreature(MERITHRA, -8032.65f, 1538.06f, 2.61f, 5.923f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pSummon->setFaction(1601);
+                        m_Merithra = pSummon->GetObjectGuid();
+                    }
+
+                    pSummon = m_creature->SummonCreature(CAELESTRASZ, -8031.27f, 1535.84f, 2.61f, 0.629f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pSummon->setFaction(1601);
+                        m_Caelestrasz = pSummon->GetObjectGuid();
+                    }
+
+                    pSummon = m_creature->SummonCreature(ARYGOS, -8031.26f, 1539.59f, 2.61f, 5.427f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pSummon->setFaction(1601);
+                        m_Arygos = pSummon->GetObjectGuid();
+                    }
+
+                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.91f, 1503.81f, 2.63f, 1.414f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->GetMotionMaster()->MoveRandom();
+                        pSummon->setFaction(310);
+                        m_bugs.push_back(pSummon->GetObjectGuid());
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    }
+
+                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8105.31f, 1547.41f, 3.88f, 4.79f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->GetMotionMaster()->MoveRandom();
+                        pSummon->setFaction(310);
+                        m_bugs.push_back(pSummon->GetObjectGuid());
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    }
+
+                    pSummon = m_creature->SummonCreature(ANUBI_CONQUEROR, -8091.35f, 1544.08f, 2.61f, 4.50f, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                    if (pSummon)
+                    {
+                        pSummon->GetMotionMaster()->MoveRandom();
+                        pSummon->setFaction(310);
+                        m_bugs.push_back(pSummon->GetObjectGuid());
+                        pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    }
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 100: // Anachronus first talk
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        DoScriptText(TALK, pAnachronos);
+                    }
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 200:
+                {
+                    for (ObjectGuid guid : m_bugs)
+                    {
+                        Creature* pCreature = m_creature->GetMap()->GetCreature(guid);
+                        if (pCreature)
+                            pCreature->SetIgnoreNonCombatFlags(true);
+                    }
+
+                    SpawnBugs();
+
+                    for (short i = 0; i < 12; i++)
+                    {
+                        float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
+                        float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
+
+                        Creature* pSummon = m_creature->SummonCreature(KALDOREI_INFANTRY, x, y, 5.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+                        if (pSummon)
+                        {
+                            //pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                            pSummon->setFaction(35);
+                            m_elfs.push_back(pSummon->GetObjectGuid());
+                            pSummon->SetIgnoreNonCombatFlags(true);
+                        }
+                    }
+
+                    AddThreat();
+
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pFandral && pAnachronos)
+                    {
+                        pFandral->SetFacingToObject(pAnachronos);
+                    }
+
+                    m_uiEventTimer = 2000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 300: // Fandral - start talking
+                {
+
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                        DoScriptText(TALK1, pFandral);
+
+                    m_uiEventTimer = 2000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 301:
+                {
+                    Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                    if (pMerithra)
+                        pMerithra->GenericTextEmote("Mirithra of the Dream glances at her compatriots.", nullptr, true);
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage = 400;
+                    break;
+                }
+                case 400: // Fandral - turn towards Merithra
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                    if (pFandral && pMerithra)
+                    {
+                        pFandral->SetFacingToObject(pMerithra);
+                    }
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 500: // Merithra - first talk
+                {
+                    Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                    if (pMerithra)
+                        DoScriptText(TALK2, pMerithra);
+
+                    m_uiEventTimer = 4000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 501:
+                {
+                    Creature* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
+                    if (pArygos)
+                    {
+                        pArygos->HandleEmote(EMOTE_ONESHOT_YES);
+                        pArygos->GenericTextEmote("Arygos nods knowingly.", nullptr, true);
+                    }
+
+                    m_uiEventTimer = 2000;
+                    m_uiEventStage = 600;
+                    break;
+                }
+                case 600: // Caelestrasz - first talk
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
+                    if (pFandral && pCaelestrasz)
+                    {
+                        pCaelestrasz->SetFacingToObject(pFandral);
+                        DoScriptText(TALK3, pCaelestrasz);
+                    }
+
+                    m_uiEventTimer = 10000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 700: // Merithra - second talk
+                {
+                    Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                    if (pMerithra)
+                        DoScriptText(TALK4, pMerithra);
+
+                    m_uiEventTimer = 6000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 800: // Merithra - runs away
+                {
+                    Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                    if (pMerithra)
+                    {
+                        pMerithra->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                        pMerithra->GetMotionMaster()->MovePoint(0, m_BreathSpot[0], m_BreathSpot[1], m_BreathSpot[2], true);
+                    }
+
+                    m_uiEventTimer = 11000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 900: // Merithra - turns into a dragon
+                {
+                    Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                    if (pMerithra)
+                    {
+                        DoScriptText(TALK5, pMerithra);
+                        pMerithra->CastSpell(pMerithra, SPELL_GREEN_DRAGON, false);
+                    }
+
+                    m_uiEventTimer = 9000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 1000: // Merithra - breathes on monsters, Arygos - first talk
+                {
+                    Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                    if (pMerithra)
+                    {
+                        pMerithra->CastSpell(m_creature, SPELL_MERITHRA, true);
+                    }
+
+                    Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
+                    if (pArygos)
+                        DoScriptText(TALK6, pArygos);
+
+                    m_uiEventTimer = 2300;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 1100: // Cast the Merithra aura on all of the mobs.
+                {
+                    Creature* pTarget = m_creature->GetMap()->GetCreature(m_bugs[m_bugs.size() - 1]);
+                    if (pTarget)
+                    {
+                        for (ObjectGuid guid : m_bugs)
+                        {
+                            Creature* pTarget = m_creature->GetMap()->GetCreature(guid);
+                            if (pTarget)
+                                pTarget->CastSpell(pTarget, SPELL_MERITHRA_VISUAL, true);
+                        }
+                    }
+
+
+                    Creature* pMerithra = m_creature->GetMap()->GetCreature(m_Merithra);
+                    if (pMerithra)
+                    {
+                        pMerithra->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pMerithra->SetSplineFlags(SPLINEFLAG_FLYING);
+                        pMerithra->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
+                    }
+
+                    m_uiEventTimer = 2500;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 1200: // Arygos - runs over
+                {
+                    Creature* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
+                    if (pArygos)
+                    {
+                        pArygos->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                        pArygos->GetMotionMaster()->MovePoint(0, m_BreathSpot[0], m_BreathSpot[1], m_BreathSpot[2], true);
+                    }
+
+                    m_uiEventTimer = 6000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 1300: // Arygos - screams
+                {
+                    Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
+                    if (pArygos)
+                        DoScriptText(TALK7, pArygos);
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 100;
+                }
+                case 1400: // Arygos - turns into a dragon
+                {
+                    Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
+                    if (pArygos)
+                        pArygos->CastSpell(pArygos, SPELL_BLUE_DRAGON, false);
+
+                    m_uiEventTimer = 7000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 1500: // Arygos -- breathes on the monsters
+                {
+                    Unit* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
+                    if (pArygos)
+                    {
+                        pArygos->CastSpell(m_creature, SPELL_ARYGOS, true);
+                    }
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 1600: // Arygos flies away
+                {
+                    Creature* pArygos = m_creature->GetMap()->GetCreature(m_Arygos);
+                    if (pArygos)
+                    {
+                        pArygos->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pArygos->SetSplineFlags(SPLINEFLAG_FLYING);
+                        pArygos->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
+                    }
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 1700: // Caelestrasz - talks
+                {
+                    Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
+                    if (pCaelestrasz)
+                        DoScriptText(TALK8, pCaelestrasz);
+
+                    SpawnBugs();
+                    AddThreat();
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 1800: // Caelestrasz - runs off
+                {
+                    Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
+                    if (pCaelestrasz)
+                    {
+                        pCaelestrasz->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                        pCaelestrasz->GetMotionMaster()->MovePoint(0, m_BreathSpot[0], m_BreathSpot[1], m_BreathSpot[2], true);
+                    }
+
+                    m_uiEventTimer = 6000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 1900: // Caelestrasz - screams
+                {
+                    Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
+                    if (pCaelestrasz)
+                        DoScriptText(TALK9, pCaelestrasz);
+
+                    m_uiEventTimer = 2000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 2000: // Caelestrasz turns into a dragon
+                {
+                    Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
+                    if (pCaelestrasz)
+                        pCaelestrasz->CastSpell(pCaelestrasz, SPELL_RED_DRAGON, false);
+
+                    m_uiEventTimer = 6000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 2100: // Caelestrasz - breathes
+                {
+                    Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
+                    if (pCaelestrasz)
+                    {
+                        pCaelestrasz->CastSpell(m_creature, SPELL_CAELESTRASZ, true);
+                    }
+
+                    m_uiEventTimer = 4000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 2200: // Caelestrasz - flies away, Anachronos - speaks
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        DoScriptText(TALK10, pAnachronos);
+
+                    Creature* pCaelestrasz = m_creature->GetMap()->GetCreature(m_Caelestrasz);
+                    if (pCaelestrasz)
+                    {
+                        pCaelestrasz->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pCaelestrasz->SetSplineFlags(SPLINEFLAG_FLYING);
+                        pCaelestrasz->GetMotionMaster()->MovePoint(1, -8130.f, 1525.f, 47.f, false);
+                    }
+
+                    m_uiEventTimer = 5000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 2300: // Straghelm - talk
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                        DoScriptText(TALK11, pFandral);
+
+                    auto itr = m_bugs.begin();
+                    while (itr != m_bugs.end())
+                    {
+                        TemporarySummon* pBug = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(*itr));
+                        if (pBug && pBug->isDead())
+                        {
+                            pBug->UnSummon();
+
+                            itr = m_bugs.erase(itr);
+                            continue;
+                        }
+                        ++itr;
+                    }
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 2400: // Anachronos - talk
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        DoScriptText(TALK12, pAnachronos);
+
+                    m_uiEventTimer = 500;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 2500: // Anachronos - run
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                        pAnachronos->GetMotionMaster()->MovePoint(0, -8105.f, 1523.f, 2.61f, true);
+                    }
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 2600: // Staghelm - run
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                        pFandral->GetMotionMaster()->MovePoint(0, -8102.f, 1523.f, 2.61f, true);
+                    }
+
+                    m_uiEventTimer = 10000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 2700:
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->CastSpell(pAnachronos, SPELL_TIME_STOP, false);
+
+                    for (ObjectGuid guid : m_bugs)
+                    {
+                        Creature* pBug = m_creature->GetMap()->GetCreature(guid);
+                        if (pBug)
+                           pBug->CastSpell(pBug, SPELL_TIME_STOP_VISUAL, true); 
+                    }
+
+                    for (ObjectGuid guid : m_elfs)
+                    {
+                        Creature* pElf = m_creature->GetMap()->GetCreature(guid);
+                        if (pElf)
+                           pElf->CastSpell(pElf, SPELL_TIME_STOP_VISUAL, true); 
+                    }
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 2701:
+                {
+                    for (ObjectGuid guid : m_bugs)
+                    {
+                        Creature* pBug = m_creature->GetMap()->GetCreature(guid);
+                        if (pBug)
+                        {
+                           pBug->getThreatManager().clearReferences();
+                           pBug->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                           pBug->CombatStop(true);
+                           pBug->GetMotionMaster()->MoveIdle();
+                           pBug->GetMotionMaster()->MovePoint(0, pBug->GetPositionX(), pBug->GetPositionY(), pBug->GetPositionZ(), false);
+                           pBug->SetIgnoreNonCombatFlags(false);
+                        }
+                    }
+
+                    for (ObjectGuid guid : m_elfs)
+                    {
+                        Creature* pElf = m_creature->GetMap()->GetCreature(guid);
+                        if (pElf)
+                        {
+                           pElf->getThreatManager().clearReferences();
+                           pElf->CombatStop(true);
+                           pElf->GetMotionMaster()->MovePoint(0, pElf->GetPositionX(), pElf->GetPositionY(), pElf->GetPositionZ(), false);
+                        }
+                    }
+
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        DoScriptText(TALK13, pAnachronos);
+                        pAnachronos->CastSpell(pAnachronos, SPELL_CALL_PRISMATIC_BARRIER, false);
+                    }
+                    
+                    m_uiEventTimer = 10000;
+                    m_uiEventStage += 1;
+                    break;
+
+                }
+                case 2702: // Make door spawn.
+                {
+
+                    GameObject* pDoor = m_creature->GetMap()->GetGameObject(m_Door);
+                    if (pDoor)
+                    {
+                        pDoor->SetGoState(GO_STATE_READY);
+                        pDoor->UpdateVisibilityAndView();
+                    }
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage = 2800;
+                    break;
+                }
+                case 2800: // Anachronos - use magic
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->CastSpell(pAnachronos, SPELL_CALL_GLYPS_OF_WARDING, false);
+                    }
+
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 2801:
+                {
+                    GameObject* pGlyphs = m_creature->GetMap()->GetGameObject(m_Runes);
+                    if (pGlyphs)
+                    {
+                        pGlyphs->SetGoState(GO_STATE_READY);
+                        pGlyphs->UpdateVisibilityAndView();
+                    }
+
+                    m_uiEventTimer = 4000;
+                    m_uiEventStage = 2900;
+                    break;
+                }
+                case 2900: // Anachronos - talk
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        DoScriptText(TALK14, pAnachronos);
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 3000: // Straghelm - talk, magic
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->CastSpell(pFandral, SPELL_CALL_ANCIENTS, false);
+                        DoScriptText(TALK15, pFandral);
+                    }
+                    
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 3001:
+                {
+                    // Restart the background music.
+                    m_creature->PlayDirectSound(MUSIC, nullptr);
+
+                    m_uiEventTimer = 4000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 3002: // Staghelm - kneel
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->GenericTextEmote("Fandral Staghelm falls to one knee - exhausted.", nullptr, false);
+                        pFandral->SetStandState(UNIT_STAND_STATE_KNEEL);
+                    }
+
+                    GameObject* pOSummon = m_creature->SummonGameObject(AQ_ROOT, 0, -8124.28f, 1524.88f, 17.19f, -0.023624f, GO_STATE_ACTIVE);
+                    if (pOSummon)
+                    {
+                        m_Roots = pOSummon->GetObjectGuid();
+                        pOSummon->UpdateVisibilityAndView();
+                        pOSummon->SetGoState(GO_STATE_READY);
+                    }
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage = 3100;
+                    break;
+                }
+                case 3100:
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pFandral && pAnachronos)
+                        pAnachronos->SetFacingToObject(pFandral);
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage = 3200;
+                    break;
+
+                }
+                case 3200: // Anachronos - talk
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        DoScriptText(TALK16, pAnachronos);
+
+                    m_uiEventTimer = 6000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 3300: // Anachronos - talk
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        DoScriptText(TALK17, pAnachronos);
+
+                    m_uiEventTimer = 4000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 3400: // Anachronos - talk
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        DoScriptText(TALK18, pAnachronos);
+
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                        pFandral->SetStandState(UNIT_STAND_STATE_STAND);
+
+                    m_uiEventTimer = 9000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 3401:
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->GenericTextEmote("Anachronos the Ancient hands the Scepter of the Shifting Sands to Fandral Staghelm.", nullptr, false);
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage = 3402;
+                    break;
+                }
+                case 3402:
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->HandleEmote(EMOTE_ONESHOT_BEG);
+
+                    m_uiEventTimer = 7000;
+                    m_uiEventStage = 3500;
+                    break;
+                }
+                case 3500: // Staghelm - talk
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                        DoScriptText(TALK19, pFandral);
+
+                    m_uiEventTimer = 8000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 3600: // Staghelm - talk
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                        DoScriptText(TALK20, pFandral);
+
+                    m_uiEventTimer = 10000;
+                    m_uiEventStage += 100;
+                }
+                case 3700: // Staghelm - throws thing on ground, glass breaking sound
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->GenericTextEmote("Fandral Staghelm hurls the Scepter of the Shifting Sands into the barrier, shattering it.", nullptr, false);
+                        pFandral->CastSpell(-8114.f, 1517.f, 3.8f, SPELL_STAGHELM_BREAK, false);
+                    }
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 3701:
+                {
+                    m_creature->PlayDirectSound(8392, nullptr);
+                    m_uiEventTimer = 500;
+                    m_uiEventStage = 3800;
+                    break;
+
+                }
+                case 3800: // Staghelm - walks, Anachronos - speaks
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        DoScriptText(TALK21, pAnachronos);
+
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                        pFandral->GetMotionMaster()->MovePoint(0, -8105.5f, 1521.4f, 2.61f, true);
+                    }
+                    
+
+                    m_uiEventTimer = 2000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 3900: // Fandral Walk back
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                        pFandral->GetMotionMaster()->MovePoint(0, -8100.f, 1522.f, 2.64f, true);
+                    }
+
+                    m_uiEventTimer = 2800;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4000:
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pFandral && pAnachronos)
+                        pFandral->SetFacingToObject(pAnachronos);
+
+                    m_uiEventTimer = 1200;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4100: // Staghelm - talk, Monsters - despawn
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                        DoScriptText(TALK22, pFandral);
+
+                    for (ObjectGuid guid : m_bugs)
+                    {
+                        TemporarySummon* pBug = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(guid));
+                        if (pBug)
+                            pBug->UnSummon();
+                    }
+
+                    for (ObjectGuid guid : m_elfs)
+                    {
+                        TemporarySummon* pElf = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(guid));
+                        if (pElf)
+                            pElf->UnSummon();
+                    }
+
+                    m_uiEventTimer = 7000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4200: // Staghelm - walks off
+                {
+                    Creature* pFandral = m_creature->GetMap()->GetCreature(m_Fandral);
+                    if (pFandral)
+                    {
+                        pFandral->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                        pFandral->GetMotionMaster()->MovePoint(1, -8071.f, 1524.f, 2.61f, true);
+                    }
+
+                    m_uiEventTimer = 6000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 4201: // Anachronos - Shakes his head
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->GenericTextEmote("Anachronos the Ancient shakes his head in disappointment.", nullptr, false);
+                        pAnachronos->HandleEmote(EMOTE_ONESHOT_NO);
+                    }
+
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage = 4202;
+                    break;
+                }
+                case 4202: // Anachronos - walks to pick up the thingie.
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->SetSplineFlags(SPLINEFLAG_WALKMODE);
+                        pAnachronos->GetMotionMaster()->MovePoint(0, -8114.f, 1517.f, 3.1f, true);
+                    }
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage = 4300;
+                    break;
+                }
+                case 4300: // Anachronos - picks up thingie, Staghelm - despawn
+                {
+                    TemporarySummon* pFandral = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(m_Fandral));
+                    if (pFandral)
+                        pFandral->UnSummon();
+
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->GenericTextEmote("Anachronos the Ancient kneels down to pick up the fragments of the shattered scepter.", nullptr, false);
+                        pAnachronos->SetStandState(UNIT_STAND_STATE_KNEEL);
+                    }
+                    
+                    m_uiEventTimer = 3000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 4301: // Anachronos - walks in front of port
+                {
+
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->SetStandState(UNIT_STAND_STATE_STAND);
+                        pAnachronos->GetMotionMaster()->MovePoint(0, -8113.f, 1525.f, 3.03f, true);
+                    }
+
+                    m_uiEventTimer = 4000;
+                    m_uiEventStage += 1;
+                    break;
+                }
+                case 4302: // Anachronos - walks more in front of port
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->GetMotionMaster()->MovePoint(0, -8114.f, 1533.f, 3.26f, true);
+
+                    m_uiEventTimer = 5000;
+                    m_uiEventStage = 4400;
+                    break;
+                }
+                case 4400: // Anachronos - talks, Complete the quest for the player.
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        DoScriptText(TALK23, pAnachronos);
+
+                        Player* pPlayer = m_creature->GetMap()->GetPlayer(m_Player);
+                        if (pPlayer)
+                        {
+                            pAnachronos->SetFacingToObject(pPlayer);
+                            if (pPlayer->isAlive() && pPlayer->IsWithinDistInMap(pAnachronos, 100.f, false))
+                                pPlayer->CompleteQuest(Q_A_PAWN_ON_THE_ETERNAL_BOARD);
+                        }
+                    }
+
+                    m_uiEventTimer = 7000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4500: // Anachronos - says "well done" in audio
+                {
+                    GameObject* pDoor = dynamic_cast<TemporaryGameObject*>(m_creature->GetMap()->GetGameObject(m_Door));
+                    if (pDoor)
+                        pDoor->Delete();
+
+                    GameObject* pRoots = dynamic_cast<TemporaryGameObject*>(m_creature->GetMap()->GetGameObject(m_Roots));
+                    if (pRoots)
+                        pRoots->Delete();
+
+                    GameObject* pRunes = dynamic_cast<TemporaryGameObject*>(m_creature->GetMap()->GetGameObject(m_Runes));
+                    if (pRunes)
+                        pRunes->Delete();
+
+                    m_uiEventTimer = 1000;
+                    m_uiEventStage += 100;
+                }
+                case 4600: // Anachronos - runs off
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                        pAnachronos->GetMotionMaster()->MovePoint(0, -8059.f, 1483.f, 2.62f, true);
+                    }
+
+                    m_uiEventTimer = 9000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4700: // Anachronos - turns into a dragon
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                        pAnachronos->CastSpell(pAnachronos, SPELL_BRONZE_DRAGON, false);
+
+                    m_uiEventTimer = 6000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4800: // Anachronos - flies off
+                {
+                    Creature* pAnachronos = m_creature->GetMap()->GetCreature(m_Anachronos);
+                    if (pAnachronos)
+                    {
+                        pAnachronos->SetSplineFlags(SPLINEFLAG_FLYING);
+                        pAnachronos->GetMotionMaster()->MovePoint(1, -7961.f, 1466.f, 42.f, false);
+                    }
+
+                    m_uiEventTimer = 12000;
+                    m_uiEventStage += 100;
+                    break;
+                }
+                case 4900: // Anachronos - despawn
+                {
+                    TemporarySummon* pAnachronos = dynamic_cast<TemporarySummon*>(m_creature->GetMap()->GetCreature(m_Anachronos));
+                    if (pAnachronos)
+                        pAnachronos->UnSummon();
+                }
+        }
+    }
+
+    void SpawnBugs()
+    {
+        for (short i = 0; i < 5; i++)
+        {
+            float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
+            float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
+
+            Creature* pSummon = m_creature->SummonCreature(QIRAJI_TANK, x, y, 3.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+            if (pSummon)
+            {
+                pSummon->GetMotionMaster()->MoveRandom();
+                pSummon->setFaction(310);
+                m_bugs.push_back(pSummon->GetObjectGuid());
+                pSummon->SetIgnoreNonCombatFlags(true);
+                pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+            }
+        }
+
+        for (short i = 0; i < 8; i++)
+        {
+            float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
+            float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
+
+            Creature* pSummon = m_creature->SummonCreature(QIRAJI_DRONE, x, y, 3.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+            if (pSummon)
+            {
+                pSummon->GetMotionMaster()->MoveRandom();
+                pSummon->setFaction(310);
+                m_bugs.push_back(pSummon->GetObjectGuid());
+                pSummon->SetIgnoreNonCombatFlags(true);
+                pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+            }
+        }
+
+        for (short i = 0; i < 11; i++)
+        {
+            float x = m_creature->GetPositionX() + frand(0, 8) * cosf(frand(0, 6));
+            float y = m_creature->GetPositionY() + frand(0, 8) * sinf(frand(0, 6));
+
+            Creature* pSummon = m_creature->SummonCreature(QIRAJI_WASP, x, y, 3.f, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+            if (pSummon)
+            {
+                pSummon->GetMotionMaster()->MoveRandom();
+                pSummon->setFaction(310);
+                m_bugs.push_back(pSummon->GetObjectGuid());
+                pSummon->SetIgnoreNonCombatFlags(true);
+                pSummon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+            }
+        }
+    }
+
+    void AddThreat()
+    {
+        for (ObjectGuid guid : m_elfs)
+        {
+            Unit* pElf = m_creature->GetMap()->GetCreature(guid);
+            if (pElf)
+            {
+                // Shuffle the target list so they don't all attack the same creature.
+                std::random_shuffle(m_bugs.begin(), m_bugs.end());
+                for (ObjectGuid guid : m_bugs)
+                {
+                    Unit* pBug = m_creature->GetMap()->GetCreature(guid);
+                    if (pBug)
+                    {
+                        pElf->Attack(pBug, true);
+                        pElf->getThreatManager().addThreatDirectly(pBug, 10000000.f);
+                    }
+                }
+            }
+        }
+
+        for (ObjectGuid guid : m_bugs)
+        {
+            Unit* pBug = m_creature->GetMap()->GetCreature(guid);
+            if (pBug)
+            {
+                // Shuffle the target list so they don't all attack the same creature.
+                std::random_shuffle(m_elfs.begin(), m_elfs.end());
+                for (ObjectGuid guid : m_elfs)
+                {
+                    Unit* pElf = m_creature->GetMap()->GetCreature(guid);
+                    if (pElf)
+                    {
+                        pBug->Attack(pElf, true);
+                        pBug->getThreatManager().addThreatDirectly(pElf, 10000000.f);
+                    }
+                }
+            }
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_anachronos_trigger(Creature* pCreature)
+{
+    return new npc_anachronos_triggerAI(pCreature);
+}
+
+bool QuestAccept_crystalline_tear(Player* pPlayer, GameObject* pGO, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == Q_A_PAWN_ON_THE_ETERNAL_BOARD)
+    {
+        // Don't allow two RPs to run at the same time.
+        Creature* pCreature = GetClosestCreatureWithEntry(pGO, ANACHRONOS_TRIGGER, 100.f);
+        if (pCreature)
+            return true;
+
+        Creature* pSummon = pGO->SummonCreature(ANACHRONOS_TRIGGER, -8087.f, 1522.f, 3.f, 0.f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 300000, true);
+        if (pSummon)
+        {
+            npc_anachronos_triggerAI* pAI = dynamic_cast<npc_anachronos_triggerAI*>(pSummon->AI());
+            if (pAI)
+                pAI->m_Player = pPlayer->GetObjectGuid();
+        }
+    }
+
+    return false;
+}
+
+
+struct MANGOS_DLL_DECL npc_dragon_flightAI : public ScriptedAI
+{
+    npc_dragon_flightAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+    }
+
+    void MovementInform(uint32 /*uiMovementType*/, uint32 uiPointId)
+    {
+        if (uiPointId == 1)
+        {
+            // Make the dragon fly to the despawn point.
+            m_creature->GetMotionMaster()->MovePoint(2, -8201.f, 1511.f, 34.f, false);
+        }
+        else if (uiPointId == 2)
+        {
+            TemporarySummon* pCreature = dynamic_cast<TemporarySummon*>(m_creature);
+            if (pCreature)
+                pCreature->UnSummon();
+        }
+    }
+};
+
+struct MANGOS_DLL_DECL npc_merithraAI : public npc_dragon_flightAI 
+{
+    npc_merithraAI(Creature* pCreature) : npc_dragon_flightAI(pCreature) {}
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 /*uiDiff*/)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_merithra(Creature* pCreature)
+{
+    return new npc_merithraAI(pCreature);
+}
+
+struct MANGOS_DLL_DECL npc_arygosAI: public npc_dragon_flightAI 
+{
+    npc_arygosAI(Creature* pCreature) : npc_dragon_flightAI(pCreature) {}
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 /*uiDiff*/) override final
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_arygos(Creature* pCreature)
+{
+    return new npc_arygosAI(pCreature);
+}
+
+struct MANGOS_DLL_DECL npc_caelestraszAI: public npc_dragon_flightAI 
+{
+    npc_caelestraszAI(Creature* pCreature) : npc_dragon_flightAI(pCreature) {}
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 /*uiDiff*/)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_caelestrasz(Creature* pCreature)
+{
+    return new npc_caelestraszAI(pCreature);
+}
+
+/*****************************************************
+ * npc_ahnqiraj_gate_trigger for opening the AQ gate *
+*****************************************************/
+
+enum GateSpawns
+{
+    COLOSSAL_ANUBISATH = 15743
+};
+
+enum AhnQirajDoor
+{
+    GATE = 176146,
+    RUNES = 176148,
+    ROOTS = 176147
+};
+
+struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI 
+{
+    npc_ahnqiraj_gate_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_creature->SetActiveObjectState(true);
+        Reset();
+    }
+
+    uint32 m_uiWaveSpawnTimer;
+    uint32 m_uiGateOpenTimer;
+    uint32 m_uiGateOpenStage;
+
+    void Reset()
+    {
+        m_uiWaveSpawnTimer = 0;
+        m_uiGateOpenStage = 0;
+        m_uiGateOpenTimer = 10000;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiWaveSpawnTimer <= uiDiff)
+        {
+            for (short i = 0; i < 8; i++)
+            {
+                Creature* pSummon = m_creature->SummonCreature(COLOSSAL_ANUBISATH, 
+                        m_creature->GetPositionX() + 10.f * cosf(i * PI / 8.f),
+                        m_creature->GetPositionY() + 10.f * sinf(i * PI / 8.f),
+                        m_creature->GetPositionZ(),
+                        0.f,
+                        TEMPSUMMON_DEAD_DESPAWN,
+                        0,
+                        false);
+            }
+
+            m_uiWaveSpawnTimer = 1800000;
+        }
+        else
+            m_uiWaveSpawnTimer -= uiDiff;
+
+        if (m_uiGateOpenStage)
+        {
+            if (m_uiGateOpenTimer <= uiDiff)
+            {
+                switch (m_uiGateOpenStage)
+                {
+                case 1:
+                    {
+                        GameObject* pGo = m_creature->GetClosestGameObjectWithEntry(m_creature, RUNES, 40.f);
+                        if (pGo)
+                            pGo->SetGoState(GO_STATE_ACTIVE);
+
+                        m_uiGateOpenTimer = 1000;
+                        break;
+                    }
+                case 2:
+                    {
+                        GameObject* pGo = m_creature->GetClosestGameObjectWithEntry(m_creature, ROOTS, 40.f);
+                        if (pGo)
+                            pGo->SetGoState(GO_STATE_ACTIVE);
+
+                        m_uiGateOpenTimer = 4000;
+                        break;
+                    }
+                case 3:
+                    {
+                        GameObject* pGo = m_creature->GetClosestGameObjectWithEntry(m_creature, GATE, 40.f);
+                        if (pGo)
+                            pGo->SetGoState(GO_STATE_ACTIVE);
+
+                        break;
+                    }
+                }
+
+                ++m_uiGateOpenStage;
+            }
+            else
+                m_uiGateOpenTimer -= uiDiff;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_ahnqiraj_gate_trigger(Creature* pCreature)
+{
+    return new npc_ahnqiraj_gate_triggerAI(pCreature);
+}
+
+struct npc_colossal_anubisathAI : public npc_patrolAI
+{
+    npc_colossal_anubisathAI(Creature* pCreature) : npc_patrolAI(pCreature, 0, true)
+    {
+        Reset();
+
+        StartPatrol(0, false);
+    }
+
+    void Reset()
+    {
+        npc_patrolAI::Reset();
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        npc_patrolAI::UpdateAI(uiDiff);
+        
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+
+};
+
+CreatureAI* GetAI_npc_colossal_anubisath(Creature* pCreature)
+{
+    return new npc_colossal_anubisathAI(pCreature);
+}
+
+bool GORewarded_scarab_gong(Player* pPlayer, GameObject* pGO, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == 8743)
+    {
+        Creature* pTrigger = pGO->GetClosestCreatureWithEntry(pGO, 17091, 150.f);
+        if (pTrigger)
+        {
+            // Trigger the gate opening.
+            npc_ahnqiraj_gate_triggerAI* pAI = dynamic_cast<npc_ahnqiraj_gate_triggerAI*>(pTrigger->AI());
+            if (pAI)
+                pAI->m_uiGateOpenStage = 1;
+        }
+
+    }
+    return false;
+}
+
+/*####
+# npc_beetix_ficklespragg
+####*/
+
+enum eBeetix
+{
+	NOGGLE_SAY1					 = -1720180,
+	NOGGLE_SAY2					 = -1720181,
+
+	QUEST_ID_DEADLY_DESERT_VENOM	 = 8277,
+    QUEST_ID_NOGGLES_LAST_HOPE		 = 8278,
+
+	NPC_NOGGLE_FRICKLESPRAGG = 15190
+};
+
+struct MANGOS_DLL_DECL npc_beetix_ficklespraggAI : public ScriptedAI
+{
+    npc_beetix_ficklespraggAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro8277;
+
+	uint8 m_uiSpeechStep2;
+	uint32 m_uiSpeechTimer2;
+	bool m_bOutro8278;
+
+    void Reset()
+	{
+		m_bOutro8277 = false;
+		m_bOutro8278 = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechStep2 = 1;
+		m_uiSpeechTimer = 0;
+		m_uiSpeechTimer2 = 0;
+	}
+
+	void StartOutro(uint32 uiQuestId = 0)
+	{		
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+		
+		if (uiQuestId == 8277)
+		{
+			m_bOutro8277 = true; 
+			m_uiSpeechTimer = 1000;
+			m_uiSpeechStep = 1;
+		}
+		if (uiQuestId == 8278)
+		{
+			Creature* pNoggle = GetClosestCreatureWithEntry(m_creature, NPC_NOGGLE_FRICKLESPRAGG, 10.0f);
+			if(pNoggle)
+				pNoggle->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+			m_bOutro8278 = true; 
+			m_uiSpeechTimer2 = 1000;
+			m_uiSpeechStep2 = 1;
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro8277)							// handle RP at quest end 8277
+		{
+			if (!m_uiSpeechStep)
+				return;
+		
+			if (m_uiSpeechTimer <= uiDiff)
+            {
+				Creature* pNoggle = GetClosestCreatureWithEntry(m_creature, NPC_NOGGLE_FRICKLESPRAGG, 10.0f);
+                switch(m_uiSpeechStep)
+                {						
+                    case 1:
+						if(pNoggle)
+						{
+							pNoggle->SetStandState(UNIT_STAND_STATE_STAND);
+							pNoggle->HandleEmoteState(EMOTE_STATE_STUN);
+							DoScriptText(NOGGLE_SAY1, pNoggle, NULL);
+						}
+						m_uiSpeechTimer = 5000;
+                        break;
+					case 2:
+						if(pNoggle)
+						{
+							pNoggle->HandleEmoteState(EMOTE_STATE_NONE);
+							pNoggle->SetStandState(UNIT_STAND_STATE_DEAD);	
+						}
+                        m_uiSpeechTimer = 4000;
+						break;
+					case 3:						
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						if(pNoggle)
+							pNoggle->Respawn();				// get him back to his original position
+						m_bOutro8277 = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+
+		if (m_uiSpeechTimer2 && m_bOutro8278)							// handle RP at quest end 8278
+		{
+			if (!m_uiSpeechStep2)
+				return;
+		
+			if (m_uiSpeechTimer2 <= uiDiff)
+            {
+				Creature* pNoggle = GetClosestCreatureWithEntry(m_creature, NPC_NOGGLE_FRICKLESPRAGG, 10.0f);
+                switch(m_uiSpeechStep2)
+                {			
+                    case 1:
+						if(pNoggle)
+							pNoggle->SetStandState(UNIT_STAND_STATE_STAND);
+						m_uiSpeechTimer2 = 2000;
+                        break;
+					case 2:
+						if(pNoggle)
+						{
+							DoScriptText(NOGGLE_SAY2, pNoggle, NULL);
+							pNoggle->HandleEmoteState(EMOTE_STATE_STUN);
+						}
+                        m_uiSpeechTimer2 = 4500;
+						break;
+					case 3:
+						if(pNoggle)
+						{
+							pNoggle->HandleEmoteState(EMOTE_STATE_NONE);
+							pNoggle->SetStandState(UNIT_STAND_STATE_DEAD);
+						}
+                        m_uiSpeechTimer2 = 4000;
+						break;
+					case 4:
+						if(pNoggle)
+						{
+							pNoggle->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+							pNoggle->Respawn();			// get him back to his original position
+						}
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro8278 = false;
+						break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep2;
+            }
+            else
+                m_uiSpeechTimer2 -= uiDiff;
+		}
+
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_beetix_ficklespragg(Creature* pCreature)
+{
+    return new npc_beetix_ficklespraggAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_beetix_ficklespragg(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_DEADLY_DESERT_VENOM)
+    {
+		if (npc_beetix_ficklespraggAI* pBeetixAI = dynamic_cast<npc_beetix_ficklespraggAI*>(pCreature->AI()))
+			pBeetixAI->StartOutro(8277);
+	}
+	if (pQuest->GetQuestId() == QUEST_ID_NOGGLES_LAST_HOPE)
+    {
+		if (npc_beetix_ficklespraggAI* pBeetixAI = dynamic_cast<npc_beetix_ficklespraggAI*>(pCreature->AI()))
+			pBeetixAI->StartOutro(8278);
+	}
+	return true;
+}
+
+/*####
+# npc_noggle_ficklespragg
+####*/
+
+enum eNoggle
+{
+	NOGGLE_SAY_1					 = -1720182,
+
+	QUEST_ID_NOGGLES_LOST_SATCHEL	 = 8282,
+};
+
+struct MANGOS_DLL_DECL npc_noggle_ficklespraggAI : public ScriptedAI
+{
+    npc_noggle_ficklespraggAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro8282;
+
+    void Reset()
+	{
+		m_bOutro8282 = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+	}
+
+	void StartOutro(uint32 uiQuestId = 0)
+	{		
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+		
+		if (uiQuestId == 8282)
+		{
+			m_bOutro8282 = true; 
+			m_uiSpeechTimer = 1000;
+			m_uiSpeechStep = 1;
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro8282)							// handle RP at quest end 8282
+		{
+			if(!m_uiSpeechStep)
+				return;
+		
+			if(m_uiSpeechTimer <= uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {					
+                    case 1:
+						m_creature->SetStandState(UNIT_STAND_STATE_SIT);
+						m_uiSpeechTimer = 1000;
+                        break;
+					case 2:
+						DoScriptText(NOGGLE_SAY_1, m_creature, NULL);
+                        m_uiSpeechTimer = 3000;
+                        break;
+					case 3:
+						m_creature->SetStandState(UNIT_STAND_STATE_DEAD);
+                        m_uiSpeechTimer = 4000;
+						break;
+					case 4:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro8282 = false;
+						m_creature->Respawn();			// get him back to his original position
+						break;
+					/*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_noggle_ficklespragg(Creature* pCreature)
+{
+    return new npc_noggle_ficklespraggAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_noggle_ficklespragg(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_NOGGLES_LOST_SATCHEL)
+    {
+		if (npc_noggle_ficklespraggAI* pNoggleAI = dynamic_cast<npc_noggle_ficklespraggAI*>(pCreature->AI()))
+			pNoggleAI->StartOutro(8282);
+	}
+	return true;
+}
+
+/*####
+# boss_prince_thunderaan
+####*/
+
+enum eThunderaan
+{
+	SPELL_TEARS_OF_THE_WIND_SEEKER			= 23011,
+	SPELL_TENDRILS_OF_AIR					= 23009,
+	YELL_THUNDERAAN							= -1720208
+};
+
+struct MANGOS_DLL_DECL boss_prince_thunderaanAI : public ScriptedAI
+{
+    boss_prince_thunderaanAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
+		m_creature->setFaction(35);
+		m_bDidFaction = false;
+		Reset(); 
+	}
+
+	uint32 m_uiTearsoftheWindSeekerTimer;
+	uint32 m_uiTendrilsofAirTimer;
+	uint32 m_uiFactionTimer;
+	bool m_bDidFaction;
+
+    void Reset()
+	{
+		m_uiTearsoftheWindSeekerTimer = urand(15000,25000);
+		m_uiTendrilsofAirTimer = 5000;
+		m_uiFactionTimer = 10000;
+	}
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_TENDRILS_OF_AIR && pTarget)
+			m_creature->getThreatManager().modifyThreatPercent(pTarget, -90);			// there's no clear evidence for how much of an threat wipe it should be
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiFactionTimer <= uiDiff)
+		{
+			if(!m_bDidFaction)
+			{
+				m_creature->setFaction(91);
+				DoScriptText(YELL_THUNDERAAN,m_creature,NULL);
+				m_bDidFaction = true;	
+			}
+		}
+		else
+			m_uiFactionTimer -= uiDiff;
+
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if (m_uiTearsoftheWindSeekerTimer <= uiDiff)
+		{
+            m_creature->CastSpell(m_creature->getVictim(), SPELL_TEARS_OF_THE_WIND_SEEKER, false);
+			m_uiTearsoftheWindSeekerTimer = urand(10000,20000);
+		}	
+		else
+			m_uiTearsoftheWindSeekerTimer -= uiDiff;
+
+		if (m_uiTendrilsofAirTimer <= uiDiff)
+		{
+
+			m_creature->CastSpell(m_creature, SPELL_TENDRILS_OF_AIR, true);
+			m_uiTendrilsofAirTimer = 10000;
+		}	
+		else
+			m_uiTendrilsofAirTimer -= uiDiff;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_boss_prince_thunderaan(Creature* pCreature)
+{
+    return new boss_prince_thunderaanAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -1608,5 +3551,67 @@ void AddSC_silithus()
 	pNewscript = new Script;
     pNewscript->Name = "boss_roman_khan";
     pNewscript->GetAI = &GetAI_boss_roman_khan;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_mistress_natalia_maralith";
+    pNewscript->GetAI = &GetAI_npc_mistress_natalia_maralith;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "go_crystalline_tear";
+    pNewscript->pQuestAcceptGO = &QuestAccept_crystalline_tear;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_anachronos_trigger";
+    pNewscript->GetAI = &GetAI_npc_anachronos_trigger;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_merithra";
+    pNewscript->GetAI = &GetAI_npc_merithra;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_arygos";
+    pNewscript->GetAI = &GetAI_npc_arygos;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_caelestrasz";
+    pNewscript->GetAI = &GetAI_npc_caelestrasz;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script();
+    pNewscript->Name = "npc_ahnqiraj_gate_trigger";
+    pNewscript->GetAI = &GetAI_npc_ahnqiraj_gate_trigger;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script();
+    pNewscript->Name = "npc_colossal_anubisath";
+    pNewscript->GetAI = &GetAI_npc_colossal_anubisath;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script();
+    pNewscript->Name = "go_scarab_gong";
+    pNewscript->pQuestRewardedGO = &GORewarded_scarab_gong;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_beetix_ficklespragg";
+    pNewscript->GetAI = &GetAI_npc_beetix_ficklespragg;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_beetix_ficklespragg;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_noggle_ficklespragg";
+    pNewscript->GetAI = &GetAI_npc_noggle_ficklespragg;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_noggle_ficklespragg;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "boss_prince_thunderaan";
+    pNewscript->GetAI = &GetAI_boss_prince_thunderaan;
     pNewscript->RegisterSelf();
 }

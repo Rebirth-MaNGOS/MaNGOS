@@ -432,6 +432,56 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
                     else
                         *data << (m_uint32Values[ index ] & ~UNIT_DYNFLAG_TAPPED);
                 }
+                // Hide mana/health absolute numbers for mobs and players of the other faction.
+                else if (index == UNIT_FIELD_HEALTH && 
+                         (GetTypeId() == TYPEID_UNIT || GetTypeId() == TYPEID_PLAYER) &&
+                         this != target)
+                {
+                    const Unit* pUnit = dynamic_cast<const Unit*>(this);
+                    const Player* pPlayer = dynamic_cast<const Player*>(this);
+                    if (pUnit && pUnit->GetOwner() != target && (!pPlayer || 
+                        pPlayer->GetTeam() != target->GetTeam()))
+                        *data << (uint32)(100.f * pUnit->GetHealth() / pUnit->GetMaxHealth());
+                    else
+                        *data << m_uint32Values[index];
+                }
+                else if (index == UNIT_FIELD_MAXHEALTH && 
+                         (GetTypeId() == TYPEID_UNIT || GetTypeId() == TYPEID_PLAYER) &&
+                         this != target)
+                {
+                    Unit const* pUnit = dynamic_cast<const Unit*>(this);
+                    const Player* pPlayer = dynamic_cast<const Player*>(this);
+                    if (pUnit && pUnit->GetOwner() != target && (!pPlayer || 
+                        pPlayer->GetTeam() != target->GetTeam()))
+                        *data << (uint32) 100;
+                    else
+                        *data << m_uint32Values[index];
+                }
+                else if ((index == UNIT_FIELD_POWER1 || index == UNIT_FIELD_POWER4) && 
+                         (GetTypeId() == TYPEID_UNIT || GetTypeId() == TYPEID_PLAYER) &&
+                         this != target)
+                {
+                    Unit const* pUnit = dynamic_cast<const Unit*>(this);
+                    const Player* pPlayer = dynamic_cast<const Player*>(this);
+                    if (pUnit && pUnit->GetOwner() != target && (!pPlayer || 
+                        pPlayer->GetTeam() != target->GetTeam()))
+                        *data << (uint32)(100.f * pUnit->GetPower(Powers(index - 0x11 - OBJECT_END)) / pUnit->GetMaxPower(Powers(index - 0x11 - OBJECT_END)));
+                    else
+                        *data << m_uint32Values[index];
+                }
+                else if ((index == UNIT_FIELD_MAXPOWER1 || index == UNIT_FIELD_MAXPOWER4) && 
+                         (GetTypeId() == TYPEID_UNIT || GetTypeId() == TYPEID_PLAYER) &&
+                         this != target)
+                {
+                    Unit const* pUnit = dynamic_cast<const Unit*>(this);
+                    const Player* pPlayer = dynamic_cast<const Player*>(this);
+                    if (pUnit && pUnit->GetOwner() != target && (!pPlayer || 
+                        pPlayer->GetTeam() != target->GetTeam()))        
+                        *data << (uint32) 100;
+                    else
+                        *data << m_uint32Values[index];
+
+                }
                 else
                 {
                     // send in current format (float as float, uint32 as uint32)
@@ -1305,7 +1355,23 @@ namespace MaNGOS
             {
                 char const* text = sObjectMgr.GetMangosString(i_textId,loc_idx);
 
-                WorldObject::BuildMonsterChat(&data, i_object.GetObjectGuid(), i_msgtype, text, i_language, i_object.GetNameForLocaleIdx(loc_idx), i_target ? i_target->GetObjectGuid() : ObjectGuid(), i_target ? i_target->GetNameForLocaleIdx(loc_idx) : "");
+                if (i_msgtype == CHAT_MSG_TEXT_EMOTE)
+                {
+                    std::string modified_text(text); 
+
+                    // Allow the usage of %s and %t in emotes.
+                    ReplaceStringInPlace(modified_text, "%s", i_object.GetName());
+
+                    if(i_target)
+                        ReplaceStringInPlace(modified_text, "%t", i_target->GetName());
+
+
+                    WorldObject::BuildMonsterChat(&data, i_object.GetObjectGuid(), i_msgtype, modified_text.c_str(), i_language, i_object.GetNameForLocaleIdx(loc_idx), i_target ? i_target->GetObjectGuid() : ObjectGuid(), i_target ? i_target->GetNameForLocaleIdx(loc_idx) : "");
+                }
+                else
+                {
+                    WorldObject::BuildMonsterChat(&data, i_object.GetObjectGuid(), i_msgtype, text, i_language, i_object.GetNameForLocaleIdx(loc_idx), i_target ? i_target->GetObjectGuid() : ObjectGuid(), i_target ? i_target->GetNameForLocaleIdx(loc_idx) : "");
+                }
             }
 
         private:
@@ -1352,7 +1418,7 @@ void WorldObject::MonsterTextEmote(int32 textId, Unit* target, bool IsBossEmote)
 {
     float range = sWorld.getConfig(IsBossEmote ? CONFIG_FLOAT_LISTEN_RANGE_YELL : CONFIG_FLOAT_LISTEN_RANGE_TEXTEMOTE);
 
-    MaNGOS::MonsterChatBuilder say_build(*this, IsBossEmote ? CHAT_MSG_RAID_BOSS_EMOTE : CHAT_MSG_MONSTER_EMOTE, textId, LANG_UNIVERSAL, target);
+    MaNGOS::MonsterChatBuilder say_build(*this, CHAT_MSG_TEXT_EMOTE, textId, LANG_UNIVERSAL, target);
     MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
     MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,range,say_do);
     Cell::VisitWorldObjects(this, say_worker, range);
@@ -1379,7 +1445,9 @@ void WorldObject::BuildMonsterChat(WorldPacket *data, ObjectGuid senderGuid, uin
 	*data << uint32(language);
 	if (msgtype != CHAT_MSG_TEXT_EMOTE)
 	{
-		*data << ObjectGuid(senderGuid);
+        if(msgtype != CHAT_MSG_RAID_BOSS_WHISPER && msgtype != CHAT_MSG_MONSTER_WHISPER)
+            *data << ObjectGuid(senderGuid);
+
 		*data << uint32(strlen(name)+1);
 		*data << name;
 	}
@@ -1590,6 +1658,12 @@ void WorldObject::GetNearPoint(WorldObject const* searcher, float &x, float &y, 
 {
     GetNearPoint2D(x, y, distance2d+searcher_bounding_radius, absAngle);
     z = GetPositionZ();
+
+    // A negative distance2d makes no sense and causes crashing.
+    // Set 1 yd as the default value if the calculations result in a 
+    // negative value for the distance.
+    if (distance2d < 0)
+        distance2d = 1.f;
 
     // if detection disabled, return first point
     if(!sWorld.getConfig(CONFIG_BOOL_DETECT_POS_COLLISION))

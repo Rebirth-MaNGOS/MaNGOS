@@ -646,6 +646,169 @@ bool GOUse_go_elune_fire(Player* /*pPlayer*/, GameObject* pGo)
     return false;
 }
 
+/*##################
+## NPC DOCTOR WEAVIL FLYING MACHINE
+#############*/
+
+enum flying_machine
+{
+    NPC_DOCTOR_WEAVIL = 15552,
+    MOB_NUMBER_TWO    = 15554,
+};
+
+struct MoveLocation
+{
+    float m_fX, m_fY, m_fZ;
+};
+
+static const MoveLocation aFlyingMachine[7] =
+{
+    {5086.93f, -5080.71f, 921.85f},                     // Flying machine landing spot.
+    {5096.01f, -5029.54f, 947.82f},                     // Flying machine fly away.
+    {5110.24f, -5070.93f, 937.76f},                     // Number Two spawn location
+    {5086.15f, -5111.68f, 930.23f},                      // Doctor Weavil run location                
+};
+
+struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
+{
+    npc_doctor_weavil_flying_machine(Creature* pCreature) : ScriptedAI(pCreature) {
+        Reset();
+        m_nextMoveTimer = 5000;
+    }
+
+    uint32 m_nextMoveTimer;
+    uint32 m_uiSpawnDoctorTimer;
+    uint32 m_uiDoctorSpeakTimer;
+    uint32 m_uiDoctorsSayCntr;
+    uint32 m_uiMoveStep;
+
+    ObjectGuid doctor;
+    ObjectGuid numberTwo;
+
+    void Reset()
+    {
+        m_nextMoveTimer = 0;
+        m_nextMoveTimer = 0;
+        m_uiSpawnDoctorTimer = 0;
+        m_uiMoveStep = 0;
+        m_uiDoctorSpeakTimer = 0;
+        m_uiDoctorsSayCntr = 1;
+        m_creature->SetRespawnEnabled(false);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(m_nextMoveTimer)
+        {
+            if(m_nextMoveTimer <= uiDiff)
+            {
+                if(m_uiMoveStep < 2)
+                    m_creature->MonsterMove(aFlyingMachine[m_uiMoveStep].m_fX, aFlyingMachine[m_uiMoveStep].m_fY, aFlyingMachine[m_uiMoveStep].m_fZ, 5000);
+
+                ++m_uiMoveStep;
+                m_nextMoveTimer = 0;
+
+                if(m_uiMoveStep == 1)
+                    m_uiSpawnDoctorTimer = 6000;
+                if(m_uiMoveStep == 2)
+                    m_nextMoveTimer = 5000;
+                if(m_uiMoveStep == 3)
+                {
+                    m_creature->ForcedDespawn();
+                }
+            }
+            else
+                m_nextMoveTimer -= uiDiff;
+        }
+
+        if(m_uiSpawnDoctorTimer)
+        {
+            if(m_uiSpawnDoctorTimer <= uiDiff)
+            {
+                m_uiSpawnDoctorTimer = 0;
+                Creature *doctorW = m_creature->SummonCreature(NPC_DOCTOR_WEAVIL, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 4.9f, TEMPSUMMON_TIMED_DESPAWN, 60000);
+            
+                if(doctorW)
+                {
+                    doctorW->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                    doctorW->setFaction(35);
+                    doctorW->CombatStop();
+                    doctorW->GetMotionMaster()->MovePoint(0, aFlyingMachine[3].m_fX, aFlyingMachine[3].m_fY, aFlyingMachine[3].m_fZ, true);
+                    doctorW->SetRespawnEnabled(false);
+                    doctor = doctorW->GetObjectGuid();
+                    m_uiDoctorSpeakTimer = 6000;
+                }
+            }
+            else
+                m_uiSpawnDoctorTimer -= uiDiff;
+        }
+
+        if(m_uiDoctorSpeakTimer)
+        {
+            if(m_uiDoctorSpeakTimer <= uiDiff)
+            {
+                m_uiDoctorSpeakTimer = 0;
+                
+                if(Creature *doctorW = m_creature->GetMap()->GetCreature(doctor))
+                {
+                    switch(m_uiDoctorsSayCntr)
+                    {
+                    case 1:
+                        if(Unit *pPlayer = m_creature->GetMap()->GetUnit(m_creature->GetOwnerGuid()))
+                            doctorW->SetFacingToObject(pPlayer);
+
+                        doctorW->MonsterSay("No hello for your old friend, Narain? Who were you expecting???", LANG_UNIVERSAL);
+                        m_uiDoctorSpeakTimer = 5000;
+                        break;
+                    case 2:
+                        doctorW->MonsterSay("So... You thought you could fool me, did you? The greatest criminal mastermind Azeroth has ever known???", LANG_UNIVERSAL); 
+                        m_uiDoctorSpeakTimer = 5000;
+                        break;
+                    case 3:
+                        if(Unit *pPlayer = m_creature->GetMap()->GetUnit(m_creature->GetOwnerGuid()))
+                            doctorW->MonsterSay(std::string("I see right through your disguise, " + std::string(pPlayer->GetName()) + ". Number Two! Number Two kill!").c_str(), LANG_UNIVERSAL); 
+
+                        m_uiDoctorSpeakTimer = 5000;
+                        break;
+                    case 4:
+                    {
+                        Creature *numberTwoApe = m_creature->SummonCreature(MOB_NUMBER_TWO, aFlyingMachine[2].m_fX, aFlyingMachine[2].m_fY, aFlyingMachine[2].m_fZ, 4.0f, TEMPSUMMON_CORPSE_DESPAWN, 60000);
+
+                        if(numberTwoApe)
+                        {
+                            numberTwoApe->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+
+                            if(Unit *pPlayer = m_creature->GetMap()->GetUnit(m_creature->GetOwnerGuid()))
+                                numberTwoApe->GetMotionMaster()->MoveChase(pPlayer);
+                            else
+                                numberTwoApe->GetMotionMaster()->MovePoint(0, aFlyingMachine[3].m_fX, aFlyingMachine[3].m_fY, aFlyingMachine[3].m_fZ, true);
+                            numberTwo = numberTwoApe->GetObjectGuid();
+                        }
+
+                        doctorW->GetMotionMaster()->MoveChase(m_creature, 0, 0);
+                        m_uiDoctorSpeakTimer = 5000;
+                        break;
+                    }                
+                    case 5:
+                        doctorW->ForcedDespawn();
+                        m_nextMoveTimer = 2000;
+                        m_uiDoctorSpeakTimer = 0;
+                        break;
+                    }
+                    ++m_uiDoctorsSayCntr;
+                }
+            }
+            else
+                m_uiDoctorSpeakTimer -= uiDiff;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_doctor_weavil_flying_machine(Creature* pCreature)
+{
+    return new npc_doctor_weavil_flying_machine(pCreature);
+}
+
 /*######
 ## AddSC
 ######*/
@@ -681,5 +844,10 @@ void AddSC_winterspring()
     pNewscript = new Script;
     pNewscript->Name = "go_elune_fire";
     pNewscript->pGOUse = &GOUse_go_elune_fire;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_doctor_weavil_flying_machine";
+    pNewscript->GetAI = &GetAI_npc_doctor_weavil_flying_machine;
     pNewscript->RegisterSelf();
 }

@@ -1273,7 +1273,8 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
 
         // Recheck  UNIT_FLAG_NON_ATTACKABLE for delayed spells
         if (m_spellInfo->speed > 0.0f &&
-                unit->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE) &&
+                unit->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE) && 
+                (unit->GetTypeId() != TYPEID_UNIT || !dynamic_cast<Creature*>(unit)->GetIgnoreNonCombatFlags()) &&
                 unit->GetCharmerOrOwnerGuid() != m_caster->GetObjectGuid())
         {
             realCaster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_EVADE);
@@ -1318,8 +1319,8 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
                 if (!unit->IsPassiveToSpells())
                 {
                     if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 &&
-                        m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641  &&
-                        m_spellInfo->Id != 25042))
+                        m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && 
+                        m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 && m_spellInfo->Id != 25042))
                     {
                         if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
                             ((Creature*)unit)->AI()->AttackedBy(realCaster);
@@ -1331,17 +1332,17 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
                     }
                     else
                     {
-                        if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 &&
-                            m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641  &&
-                            m_spellInfo->Id != 25042))
+                        if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && 
+                            m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 &&
+                            m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 && m_spellInfo->Id != 25042))
                         {
                             unit->AddThreat(realCaster);
                         }
                     }
 
-                    if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252 &&
-                        m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 && m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 &&
-                        m_spellInfo->Id != 25042))
+                    if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && 
+                        m_spellInfo->Id != 20252 && m_spellInfo->Id != 20616 && m_spellInfo->Id != 20617 &&
+                        m_spellInfo->Id != 16979 && m_spellInfo->Id != 22641 && m_spellInfo->Id != 25042))
                     {
                         unit->SetInCombatWith(realCaster);
                         realCaster->SetInCombatWith(unit);
@@ -1406,6 +1407,30 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
     }
     else
         m_spellAuraHolder = NULL;
+
+    if (unitTarget)
+    {
+        std::list<Aura*> const& vManaShield = unitTarget->GetAurasByType(SPELL_AURA_MANA_SHIELD);
+        std::list<Aura*> const& vSchoolAbsorb = unitTarget->GetAurasByType(SPELL_AURA_SCHOOL_ABSORB);
+
+        if (!vManaShield.empty() || !vSchoolAbsorb.empty())
+        {
+            // Make sure that CC and other things are interrupted through absorb auras.
+            for (int effectNumber = 0; effectNumber < MAX_EFFECT_INDEX; ++effectNumber)
+            {
+                if (m_spellInfo->Effect[effectNumber] == SPELL_EFFECT_SCHOOL_DAMAGE ||
+                     m_spellInfo->Effect[effectNumber] == SPELL_EFFECT_WEAPON_DAMAGE_NOSCHOOL ||
+                     m_spellInfo->Effect[effectNumber] == SPELL_EFFECT_WEAPON_PERCENT_DAMAGE ||
+                     m_spellInfo->Effect[effectNumber] == SPELL_EFFECT_WEAPON_DAMAGE ||
+                     m_spellInfo->Effect[effectNumber] == SPELL_EFFECT_NORMALIZED_WEAPON_DMG)
+                {
+                    unitTarget->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
+                    break;
+                }
+
+            }
+        }
+    }
 
     for(int effectNumber = 0; effectNumber < MAX_EFFECT_INDEX; ++effectNumber)
     {
@@ -1739,8 +1764,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case 28796:                                 // Poison Bolt Volley
             unMaxTargets = 10;
             break;
-        case 25991:                                 // Poison Bolt Volley (Pincess Huhuran)
-            unMaxTargets = 15;
+        case 26052:                                 // Poison Bolt Volley (Pincess Huhuran)
+            unMaxTargets = 60;
+            break;
+        case 26180:
+            unMaxTargets = 60;
             break;
         }
         break;
@@ -2052,16 +2080,68 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             }
         }
 
+        // Periodic Shadow Storm in AQ40 should not target units
+        // that are closer than 5 yd.
+        if (m_spellInfo->Id == 26546)
+        {
+            Unit* pCaster = GetCaster();
+            if (pCaster)
+            {
+                auto itr = targetUnitMap.begin();
+                while (itr != targetUnitMap.end())
+                {
+                    if (pCaster->IsWithinDistInMap(*itr, 5.f, false))
+                        itr = targetUnitMap.erase(itr);
+                    else
+                        ++itr;
+                }
+            }
+        }
+
+        // Princess Huhuran poison bolts should only target the 15 closest units.
+        // Princess Huhuran Vywern Sting should only target the 10 closest units.
+        if(m_spellInfo->Id == 26052 || m_spellInfo->Id == 26180)
+        {
+            Unit *pCaster = GetCaster();
+            if(pCaster)
+            {
+                targetUnitMap.sort(TargetDistanceOrderNear(pCaster));
+                auto itr = targetUnitMap.begin();
+                uint8 itrC;
+                
+                if(m_spellInfo->Id == 26052)
+                    itrC = 1;
+                else
+                    itrC = 6;
+
+                while (itr != targetUnitMap.end())
+                {
+                    if (itrC > 15)
+                        itr = targetUnitMap.erase(itr);
+                    else
+                    {
+                        ++itr;
+                        ++itrC;
+                    }
+                }
+            }
+        }
+
 
         break;
     }
     case TARGET_AREAEFFECT_INSTANT:
     {
         SpellTargets targetB = SPELL_TARGETS_AOE_DAMAGE;
-
+        
         // Select friendly targets for positive effect
         if (IsPositiveEffect(m_spellInfo, effIndex))
             targetB = SPELL_TARGETS_FRIENDLY;
+
+        // The Explode/Mumate Bug spell in AQ should get all close
+        // targets. They are filtered further down.
+        if (m_spellInfo->Id == 804 || m_spellInfo->Id == 802)
+            targetB = SPELL_TARGETS_ALL;
 
         UnitList tempTargetUnitMap;
         SpellScriptTargetBounds bounds = sSpellMgr.GetSpellScriptTargetBounds(m_spellInfo->Id);
@@ -2097,6 +2177,45 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                         break;
                     }
                 }
+            }
+        }
+
+        // Loop though the target list for the spell Explode/Mutate Bug in AQ40
+        // and remove any creature that isn't a bug.
+        if (!targetUnitMap.empty() && (m_spellInfo->Id == 804 || m_spellInfo->Id == 802))
+        {
+            // Mutate Bug should target the scorpions and Explode Bug the scarabs.
+            uint32 filterCreature = m_spellInfo->Id == 804 ? 15316 : 15317;
+            auto itr = targetUnitMap.begin();
+            do
+            {
+                Creature* pCreature = dynamic_cast<Creature*>(*itr);
+                if (!pCreature || pCreature->isDead() || pCreature->HasAura(m_spellInfo->Id) ||
+                    pCreature->GetEntry() != filterCreature)
+                {
+                    itr = tempTargetUnitMap.erase(itr);
+                }
+                else
+                    ++itr;
+            } while (itr != targetUnitMap.end());
+
+
+            if (m_caster && !targetUnitMap.empty())
+            {
+                Unit* pTarget = targetUnitMap.front();
+                float dist = m_caster->GetDistance(pTarget);
+
+                for (Unit* currTarget : targetUnitMap)
+                {
+                    if (m_caster->GetDistance(currTarget) < dist)
+                    {
+                        dist = m_caster->GetDistance(currTarget);
+                        pTarget = currTarget;
+                    }
+                }
+
+                targetUnitMap.clear();
+                targetUnitMap.push_back(pTarget);
             }
         }
 
@@ -2767,7 +2886,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             {
                 targetUnitMap.erase(itr);
                 removed_utarget = 1;
-                //        break;
             }
         }
         // remove random units from the map
@@ -3041,6 +3159,7 @@ void Spell::cast(bool skipCheck)
         return;
     }
 
+
     // different triggred (for caster) and precast (casted before apply effect to target) cases
     switch(m_spellInfo->SpellFamilyName)
     {
@@ -3126,6 +3245,17 @@ void Spell::cast(bool skipCheck)
     }
 
     if (!CheckPaladinBlessingStacking(spellProto))
+    {
+        SendCastResult(SPELL_FAILED_MORE_POWERFUL_SPELL_ACTIVE);
+        cancel();
+        finish(false);
+        m_caster->DecreaseCastCounter();
+        SetExecutedCurrently(false);
+        return;
+    }
+
+
+    if (!CheckBuffOverwrite(spellProto))
     {
         SendCastResult(SPELL_FAILED_MORE_POWERFUL_SPELL_ACTIVE);
         cancel();
@@ -3248,6 +3378,17 @@ uint64 Spell::handle_delayed(uint64 t_offset)
     // now recheck units targeting correctness (need before any effects apply to prevent adding immunity at first effect not allow apply second spell effect and similar cases)
     for(TargetList::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
     {
+        // Recheck immunities on spell hit.
+        if (m_caster)
+        {
+            Unit* unit = m_caster->GetObjectGuid() == ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
+            if (unit && unit->IsImmuneToSpell(m_spellInfo))
+            {
+                ihit->processed = true;
+                continue;
+            }
+        }
+
         if (!ihit->processed)
         {
             if (ihit->timeDelay <= t_offset)
@@ -3506,6 +3647,23 @@ void Spell::finish(bool ok)
 
     m_spellState = SPELL_STATE_FINISHED;
 
+    if (m_spellInfo->Id == 23017 && !ok)
+    {
+        Player* pPlayer = dynamic_cast<Player*>(m_caster);
+
+        if (pPlayer)
+        {
+            Player* owner = pPlayer->GetMap()->GetPlayer(pPlayer->m_summonMasterGuid);
+            if (owner)
+                owner->InterruptSpell(CURRENT_CHANNELED_SPELL);
+            
+            Player* participant = pPlayer->GetMap()->GetPlayer(pPlayer->m_summonParticipantGuid);
+            if (participant)
+                participant->InterruptSpell(CURRENT_CHANNELED_SPELL);
+        }
+
+    }
+
     // other code related only to successfully finished spells
     if(!ok)
         return;
@@ -3638,7 +3796,7 @@ void Spell::finish(bool ok)
     }
 
     // Stop Attack for some spells
-    if( m_spellInfo->Attributes & SPELL_ATTR_STOP_ATTACK_TARGET )
+    if( m_spellInfo->Attributes & SPELL_ATTR_STOP_ATTACK_TARGET)
         m_caster->AttackStop();
 }
 
@@ -5294,6 +5452,12 @@ SpellCastResult Spell::CheckCast(bool strict)
             {
                 if (!m_targets.getGOTarget())
                     return SPELL_FAILED_BAD_TARGETS;
+
+                if(GameObject *pGo = m_targets.getGOTarget())
+                {
+                    if(pGo && pGo->IsFriendlyTo(m_caster))
+                        return SPELL_FAILED_BAD_TARGETS;
+                }
             }
 
             // get the lock entry
@@ -5363,6 +5527,8 @@ SpellCastResult Spell::CheckCast(bool strict)
         // These won't show up in m_caster->GetPetGUID()
         case SPELL_EFFECT_SUMMON:
         case SPELL_EFFECT_SUMMON_POSSESSED:
+            if(m_spellInfo->Id == 126)
+                break;
         case SPELL_EFFECT_SUMMON_PHANTASM:
         case SPELL_EFFECT_SUMMON_DEMON:
         {
@@ -5891,6 +6057,72 @@ bool Spell::CheckHOTStacking(SpellEntry const* spellProto)
             {
                 unitTarget->RemoveAurasDueToSpell(healingAura->GetId());
                 return true;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool Spell::CheckBuffOverwrite(SpellEntry const* spellProto)
+{
+    if (!spellProto)
+        return true;
+
+    // Buffs are positive spells.
+    if (spellProto->AttributesEx & SPELL_ATTR_EX_NEGATIVE)
+        return true;
+
+    for (short i = 0; i < MAX_EFFECT_INDEX; i++)
+    {
+        const AuraType auraTypes[2] = { SPELL_AURA_MOD_STAT, SPELL_AURA_MOD_RESISTANCE_EXCLUSIVE };
+        for (short y = 0; y < 2; y++)
+        {
+            if (spellProto->EffectApplyAuraName[i] == auraTypes[y])
+            {
+                for(TargetList::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+                {
+                    Unit* pTarget = m_caster->GetMap()->GetUnit(ihit->targetGUID);
+
+                    if (!pTarget)
+                        continue;
+
+                    Unit::AuraList const& list = pTarget->GetAurasByType(auraTypes[y]);
+
+                    for (Aura* aura : list)
+                    {
+
+                        // If the buff is supposed to stack we ignore it.
+                        if (!sSpellMgr.IsNoStackSpellDueToSpell(aura->GetId(), spellProto->Id))
+                            continue;
+
+                        if (!IsNoStackAuraDueToAura(aura->GetId(), spellProto->Id))
+                            continue;
+
+                        Modifier* pMod = aura->GetModifier();
+
+                        // Make sure that the buffs affect the same stats.
+                        if (pMod->m_miscvalue == spellProto->EffectMiscValue[i])
+                        {
+                            // If the new buff has a shorter duration we don't allow overwriting.
+                            if (aura->GetAuraDuration() > CalculateSpellDuration(spellProto, m_caster))
+                                return false; 
+
+
+                            if (pTarget)
+                            {
+                                int32 m_currentBasePoints = spellProto->CalculateSimpleValue(SpellEffectIndex(i));
+
+                                int32 effect = m_caster->CalculateSpellDamage(pTarget, spellProto, SpellEffectIndex(i), &m_currentBasePoints);
+
+                                // If the already applied spell is more powerful we do
+                                // not allow it to be overwritten.
+                                if (abs(pMod->m_amount) > abs(effect))
+                                    return false;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -6652,7 +6884,8 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
     if (target != m_caster && target->GetCharmerOrOwnerGuid() != m_caster->GetObjectGuid())
     {
         // any unattackable target skipped
-        if (target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE))
+        if (target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE) &&
+            (target->GetTypeId() != TYPEID_UNIT || !dynamic_cast<Creature*>(target)->GetIgnoreNonCombatFlags()))
             return false;
 
         // unselectable targets skipped in all cases except TARGET_SCRIPT targeting

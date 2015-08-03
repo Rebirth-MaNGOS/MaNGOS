@@ -37,7 +37,7 @@ enum eAyamiss
     SPELL_TRASH                 = 3391,
 
     // Hive'Zara Larva
-    SPELL_FEED                  = 25721,
+    SPELL_FEED                  = 25721
 };
 
 static Loc Larva[]=
@@ -48,8 +48,10 @@ static Loc Larva[]=
 
 static Loc Swarmers[]=
 {
-    {-9650.0f, 1577.0f, 47.0f, 0, 0}
+    {-9769.0f, 1455.0f, 60.0f, 0, 0}
 };
+
+static const uint32 aSwarmType[] = {NPC_HIVEZARA_SWARMER,NPC_HIVEZARA_SWARMER,NPC_HIVEZARA_SWARMER_1};
 
 struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
 {
@@ -71,23 +73,27 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
     uint32 m_uiTrashTimer;
     uint32 m_uiFrenzyTimer;
     uint32 m_uiSwarmerTimer;
+	uint32 m_uiCallSwarmersTimer;
 
     ObjectGuid m_uiLarvaTargetGUID;
+	GUIDList m_uiSwarmerGUID;
 
     void Reset()
     {
         m_bPhaseTwo = false;
 		m_bEnrage = false;
 
-        m_uiPoisonStingerTimer = urand(5000,9000);
+        m_uiPoisonStingerTimer = 5000;
         m_uiStingerSprayTimer = urand(10000,20000);
         m_uiParalyzeTimer = urand(35000,45000);
         m_uiLashTimer = urand(7000,9000);
         m_uiTrashTimer = urand(6000,8000);
         m_uiFrenzyTimer = 0;
-        m_uiSwarmerTimer = urand(20000,30000);
-
+        m_uiSwarmerTimer = urand(2000,5000);
+		m_uiCallSwarmersTimer = urand(70000,76000);
+		DespawnSwarmers();			// despawn before we clear the guid
 		m_uiLarvaTargetGUID.Clear();
+		m_uiSwarmerGUID.clear();
 
         SetCombatMovement(false);
     }
@@ -95,7 +101,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
     void JustReachedHome()
     {
         if (m_pInstance)
-            m_pInstance->SetData(TYPE_AYAMISS, NOT_STARTED);
+            m_pInstance->SetData(TYPE_AYAMISS, NOT_STARTED);		
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -103,7 +109,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         if (m_pInstance)
             m_pInstance->SetData(TYPE_AYAMISS, IN_PROGRESS);
 
-        m_creature->SendMonsterMove(m_creature->GetPositionX(),m_creature->GetPositionY(),m_creature->GetPositionZ()+20.0f, SPLINETYPE_NORMAL, SPLINEFLAG_FLYING, 3000);//SPLINEFLAG_UNKNOWN7
+        m_creature->SendMonsterMove(-9698.37f,1535.55f,35.44f, SPLINETYPE_NORMAL, SPLINEFLAG_FLYING, 3000);
     }
 
 	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)		// only summon larva if a player got hit by paralyze
@@ -111,14 +117,41 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         if (pSpell->Id == SPELL_PARALYZE && pTarget->GetTypeId() == TYPEID_PLAYER)
 		{
 			uint32 i = urand(0,1);
-            m_creature->SummonCreature(NPC_HIVEZARA_LARVA, Larva[i].x, Larva[i].y, Larva[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
+            m_creature->SummonCreature(NPC_HIVEZARA_LARVA, Larva[i].x, Larva[i].y, Larva[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);			
 		}
+	}
+
+	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)							// Only do emotes when the spell actually hits in case something goes wrong
+    {
+        if (pSpell->Id == SPELL_FRENZY)
+			m_creature->GenericTextEmote("Ayamiss the Hunter becomes enraged!", NULL, false);
+	}
+
+	void DespawnSwarmers()
+	{
+		for (GUIDList::iterator itr = m_uiSwarmerGUID.begin(); itr != m_uiSwarmerGUID.end(); itr++)
+		{
+			if (Creature* pSwarmer = m_creature->GetMap()->GetCreature(*itr))
+				if (pSwarmer->isAlive())
+					pSwarmer->ForcedDespawn(2000);	
+		}
+	}
+
+	void CallSwarmers()
+	{
+		Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+		for (GUIDList::iterator itr = m_uiSwarmerGUID.begin(); itr != m_uiSwarmerGUID.end(); itr++)
+			if (Creature* pSwarmer = m_creature->GetMap()->GetCreature(*itr))
+				if (pSwarmer->isAlive() && pTarget)
+					pSwarmer->AI()->AttackStart(pTarget);
+				
 	}
 
     void JustDied(Unit* /*pKiller*/)
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_AYAMISS, DONE);
+		DespawnSwarmers();
     }
 
     void JustSummoned(Creature* pSummoned)
@@ -130,10 +163,11 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
                     pSummoned->AI()->AttackStart(pLarvaTarget);
                 break;
             case NPC_HIVEZARA_SWARMER:
-                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                    pSummoned->AI()->AttackStart(pTarget);
+			case NPC_HIVEZARA_SWARMER_1:
+				m_uiSwarmerGUID.push_back(pSummoned->GetObjectGuid());
                 break;
         }
+		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -141,7 +175,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        // If Ayamiss is 70% let's take him down :-) Phase 2 on the ground
+		// If Ayamiss is 70% let's take him down :-) Phase 2 on the ground
         if (!m_bPhaseTwo && HealthBelowPct(70))
         {
             SetCombatMovement(true);
@@ -151,36 +185,41 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
             m_bPhaseTwo = true;
         }
 
-        // Summon Swarmers
-        if (m_uiSwarmerTimer <= uiDiff)
+		// Summon Swarmers
+        if (m_uiSwarmerTimer <= uiDiff)		// ever 3.5 sec spawn a swarmer
         {
-            for (uint32 i = 0; i < 10; ++i)
-                m_creature->SummonCreature(NPC_HIVEZARA_SWARMER, Swarmers[0].x + irand(-10,10), Swarmers[0].y + irand(-10,10), Swarmers[0].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
-
-            m_uiSwarmerTimer = urand(20000,30000);
+			uint32 i = urand(0,2);
+            m_creature->SummonCreature(aSwarmType[i], Swarmers[0].x+irand(-10,10), Swarmers[0].y+irand(-10,10), Swarmers[0].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 600000);//let them be up for 10min or when boss dies/evade
+            m_uiSwarmerTimer = 3500;
         }
         else
             m_uiSwarmerTimer -= uiDiff;
 
+		// Make the swarmers attack
+        if (m_uiCallSwarmersTimer <= uiDiff)
+        {
+			CallSwarmers();
+            m_uiCallSwarmersTimer = urand(70000,76000);
+        }
+        else
+            m_uiCallSwarmersTimer -= uiDiff;
+
 		// Stinger Spray
-            if (m_uiStingerSprayTimer <= uiDiff)
-            {
-                DoCastSpellIfCan(m_creature->getVictim(), SPELL_STINGER_SPRAY);
-                m_uiStingerSprayTimer = urand(25000,30000);
-            }
-            else
-                m_uiStingerSprayTimer -= uiDiff;
+        if (m_uiStingerSprayTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_STINGER_SPRAY);
+            m_uiStingerSprayTimer = urand(25000,30000);
+        }
+        else
+            m_uiStingerSprayTimer -= uiDiff;
 
         // Paralyze and Summon Larva
         if (m_uiParalyzeTimer <= uiDiff)
         {
             if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
             {
-                DoCastSpellIfCan(pTarget, SPELL_PARALYZE);
-				m_uiLarvaTargetGUID = pTarget->GetObjectGuid();
-                /*uint32 i = urand(0,1);
-                m_creature->SummonCreature(NPC_HIVEZARA_LARVA, Larva[i].x, Larva[i].y, Larva[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);*/
-				
+                m_creature->CastSpell(pTarget, SPELL_PARALYZE, true);				
+				m_uiLarvaTargetGUID = pTarget->GetObjectGuid();				
             }
             m_uiParalyzeTimer = urand(15000,20000);
         }
@@ -192,8 +231,8 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
             // Poison Stinger
             if (m_uiPoisonStingerTimer <= uiDiff)
             {
-                DoCastSpellIfCan(m_creature->getVictim(), SPELL_POISON_STINGER);
-                m_uiPoisonStingerTimer = urand(7000,9000);
+                m_creature->CastSpell(m_creature->getVictim(), SPELL_POISON_STINGER, false);
+                m_uiPoisonStingerTimer = 4000;
             }
             else
                 m_uiPoisonStingerTimer -= uiDiff;
@@ -203,8 +242,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
             // Frenzy spell
             if (HealthBelowPct(20) && !m_bEnrage)
 			{
-                DoCastSpellIfCan(m_creature, SPELL_FRENZY, CAST_AURA_NOT_PRESENT);
-                m_creature->GenericTextEmote("Ayamiss the Hunter becomes enraged!", NULL, false);
+                DoCastSpellIfCan(m_creature, SPELL_FRENZY, CAST_AURA_NOT_PRESENT);                
 				m_bEnrage = true;
 			}
             // Lash
@@ -262,7 +300,7 @@ struct MANGOS_DLL_DECL mob_hivezara_larvaAI : public ScriptedAI
         if (Unit* pTarget = m_creature->GetMap()->GetUnit(m_uiTargetGUID))
             if (m_creature->IsWithinDistInMap(pTarget, ATTACK_DISTANCE))
                 if (m_creature->getVictim()->HasAura(SPELL_PARALYZE))
-                    DoCastSpellIfCan(pTarget, SPELL_FEED);
+                    m_creature->CastSpell(pTarget, SPELL_FEED, true);
 
         DoMeleeAttackIfReady();
     }
@@ -271,6 +309,39 @@ struct MANGOS_DLL_DECL mob_hivezara_larvaAI : public ScriptedAI
 CreatureAI* GetAI_mob_hivezara_larva(Creature* pCreature)
 {
     return new mob_hivezara_larvaAI(pCreature);
+}
+
+struct MANGOS_DLL_DECL mob_hivezara_swarmerAI : public ScriptedAI
+{
+    mob_hivezara_swarmerAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{
+		Reset();
+	}
+
+	void Reset()
+	{
+	}
+
+	//void MovementInform(uint32 /*uiMotiontype*/, uint32 uiPointId)		// maybe add so they sometimes go to wp 5 after wp 3 to create some variation
+
+	void MoveInLineOfSight(Unit* /*pWho*/)
+    {
+        // Must to be empty to ignore aggro
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+        //Return since we have no target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_mob_hivezara_swarmer(Creature* pCreature)
+{
+    return new mob_hivezara_swarmerAI(pCreature);
 }
 
 void AddSC_boss_ayamiss()
@@ -285,5 +356,10 @@ void AddSC_boss_ayamiss()
     pNewscript = new Script;
     pNewscript->Name = "mob_hivezara_larva";
     pNewscript->GetAI = &GetAI_mob_hivezara_larva;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "mob_hivezara_swarmer";
+    pNewscript->GetAI = &GetAI_mob_hivezara_swarmer;
     pNewscript->RegisterSelf();
 }

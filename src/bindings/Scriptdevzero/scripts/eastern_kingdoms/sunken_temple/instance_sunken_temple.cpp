@@ -59,6 +59,8 @@ static Loc Supp[]=
     {-483.92f,273.49f,-90.65f,6.276f}
 };
 
+static const uint32 aAvatarYell[] = {YELL_SHADE_OF_HAKKAR_1, 0,YELL_SHADE_OF_HAKKAR_2,0, YELL_SHADE_OF_HAKKAR_3, 0,YELL_SHADE_OF_HAKKAR_4};
+
 instance_sunken_temple::instance_sunken_temple(Map* pMap) : ScriptedInstance(pMap),
     m_bIsSerpentSummoning(false),
 
@@ -157,7 +159,6 @@ void instance_sunken_temple::OnCreatureCreate(Creature* pCreature)
         case NPC_ZOLO:
         case NPC_ZULLOR:
 			pCreature->CastSpell(pCreature, GREEN_VISUAL, false);
-          //  pCreature->SetStandState(UNIT_STAND_STATE_KNEEL);		//removed
             return;
         case NPC_ATALAI_DEATHWALKER:
         case NPC_ATALAI_HIGH_PRIEST:
@@ -172,7 +173,6 @@ void instance_sunken_temple::OnCreatureCreate(Creature* pCreature)
             break;
         case NPC_JAMMALAN_THE_PROPHET:
 			pCreature->CastSpell(pCreature, GREEN_VISUAL, false);
-       //     pCreature->SetStandState(UNIT_STAND_STATE_KNEEL);		//removed
             break;
         case NPC_DREAMSCYTHE:
         case NPC_WEAVER:
@@ -189,7 +189,7 @@ void instance_sunken_temple::OnCreatureCreate(Creature* pCreature)
             if (m_auiEncounter[2] == DONE)
             {
                 pCreature->setFaction(FACTION_DRAGONKIN);
-                pCreature->SetStandState(UNIT_STAND_STATE_STAND);
+                //pCreature->SetStandState(UNIT_STAND_STATE_STAND);
                 pCreature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             }
             else
@@ -441,7 +441,9 @@ void instance_sunken_temple::HandleAvatarEventWave()
     float fX, fY, fZ, fO;
     pSanctum->GetPosition(fX, fY, fZ);
     fO = pSanctum->GetOrientation();
-
+	Creature* pShade = GetSingleCreatureFromStorage(NPC_SHADE_OF_HAKKAR);
+	if(pShade)
+		DoScriptText(aAvatarYell[m_uiWaveCount-2], pShade,NULL);
     switch(m_uiWaveCount)
     {
         case 1:
@@ -471,7 +473,8 @@ void instance_sunken_temple::HandleAvatarEventWave()
         }
         case 8:
         {
-            if (Creature* pShade = GetSingleCreatureFromStorage(NPC_SHADE_OF_HAKKAR))
+            //if (Creature* pShade = GetSingleCreatureFromStorage(NPC_SHADE_OF_HAKKAR))
+			if(pShade)
                 pShade->RemoveFromWorld();
 
             pSanctum->SummonCreature(NPC_AVATAR_OF_HAKKAR, fX, fY, fZ, fO, TEMPSUMMON_DEAD_DESPAWN, 120000);

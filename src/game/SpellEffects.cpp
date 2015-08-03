@@ -1165,8 +1165,13 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 m_caster->CastSpell(m_caster, 23445, true);
             else                                    // Transporter Malfunction - 1/6 miss the target
 			{
-				m_caster->NearTeleportTo(-7402.10f,-3493.21f,512.15f,2.833f,false);			// teleport the player up in the sky and SW of Gadgetzan
-				m_caster->CastSpell(m_caster, 23447, true);
+				Player* pPlayer = dynamic_cast<Player*>(m_caster);
+				if (pPlayer)						// teleport the player up in the sky and SW of Gadgetzan
+				{
+					pPlayer->UnsummonPetTemporaryIfAny();
+					pPlayer->TeleportTo(1, -7402.10f, -3493.21f, 512.15f, 2.833f, 0);
+					m_caster->CastSpell(m_caster, 23447, true);
+				}				
 				//m_caster->CastSpell(m_caster, 36902, true);			// old spell, not working
 			}
 
@@ -2183,6 +2188,19 @@ void Spell::EffectSendEvent(SpellEffectIndex eff_idx)
     */
     DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell ScriptStart %u for spellid %u in EffectSendEvent ", m_spellInfo->EffectMiscValue[eff_idx], m_spellInfo->Id);
 
+    if(m_spellInfo->Id == 25783 && m_caster)
+    {
+        Creature *pMaws = m_caster->SummonCreature(15571, 3507.87f, -6554.89f, -3.93f, 2.80f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+
+        if(pMaws)
+        {
+            pMaws->AI()->AttackStart(m_caster);
+            pMaws->SetSplineFlags(SPLINEFLAG_FLYING);
+        }
+
+        return;
+    }
+
     if (!sScriptMgr.OnProcessEvent(m_spellInfo->EffectMiscValue[eff_idx], m_caster, focusObject, true))
         m_caster->GetMap()->ScriptsStart(sEventScripts, m_spellInfo->EffectMiscValue[eff_idx], m_caster, focusObject);
 }
@@ -2337,7 +2355,9 @@ void Spell::EffectHealthLeech(SpellEffectIndex eff_idx)
         modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_MULTIPLE_VALUE, multiplier);
 
     uint32 heal = uint32(damage*multiplier);
-    if (m_caster->isAlive())
+
+    // The consume spell in AQ should not heal the target.
+    if (m_caster->isAlive() && m_spellInfo->Id != 25373)
     {
         heal = m_caster->SpellHealingBonusTaken(m_caster, m_spellInfo, heal, HEAL);
 
@@ -3655,7 +3675,7 @@ void Spell::EffectEnchantItemTmp(SpellEffectIndex eff_idx)
         duration = 1800;                                    // 30 mins
     // other rogue family enchantments always 1 hour (some have spell damage=0, but some have wrong data in EffBasePoints)
     else if(m_spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE)
-        duration = 3600;                                    // 1 hour
+        duration = 1800;                                    // 1 hour
     // shaman family enchantments - only works for windfury
     else if(m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN)
         duration = 300;                                     // 30 mins
@@ -3693,9 +3713,25 @@ void Spell::EffectEnchantItemTmp(SpellEffectIndex eff_idx)
              m_spellInfo->Id == 16355 ||
              m_spellInfo->Id == 16356)						// Frostbrand weapon
         duration = 300;
-
-    // default case
-    else
+    else if(m_spellInfo->Id == 25123 ||
+            m_spellInfo->Id == 25120 ||
+            m_spellInfo->Id == 25118 ||
+            m_spellInfo->Id == 25122 ||
+            m_spellInfo->Id == 25119 ||
+            m_spellInfo->Id == 25117 ||
+            m_spellInfo->Id == 16138 ||
+            m_spellInfo->Id == 9900 ||
+            m_spellInfo->Id == 2830 ||
+            m_spellInfo->Id == 2829 ||
+            m_spellInfo->Id == 2828 ||
+            m_spellInfo->Id == 16622 ||
+            m_spellInfo->Id == 9903 ||
+            m_spellInfo->Id == 3114 ||
+            m_spellInfo->Id == 3113 ||
+            m_spellInfo->Id == 3112 ||
+            m_spellInfo->Id == 22756)
+        duration = 1800;
+    else     // default case
         duration = 3600;                                    // 1 hour
 
     // item can be in trade slot and have owner diff. from caster
@@ -3816,25 +3852,28 @@ void Spell::EffectSummonPet(SpellEffectIndex eff_idx)
     // if pet requested type already exist
     if( OldSummon )
     {
-        if(petentry == 0 || OldSummon->GetEntry() == petentry)
+        if(m_caster->getClass() != CLASS_WARLOCK)
         {
-            // pet in corpse state can't be summoned
-            if( OldSummon->isDead() )
-                return;
-
-            OldSummon->GetMap()->Remove((Creature*)OldSummon,false);
-
-            float px, py, pz;
-            m_caster->GetClosePoint(px, py, pz, OldSummon->GetObjectBoundingRadius());
-
-            OldSummon->Relocate(px, py, pz, OldSummon->GetOrientation());
-            m_caster->GetMap()->Add((Creature*)OldSummon);
-
-            if(m_caster->GetTypeId() == TYPEID_PLAYER && OldSummon->isControlled() )
+            if(petentry == 0 || OldSummon->GetEntry() == petentry)
             {
-                ((Player*)m_caster)->PetSpellInitialize();
+                // pet in corpse state can't be summoned
+                if( OldSummon->isDead() )
+                    return;
+
+                OldSummon->GetMap()->Remove((Creature*)OldSummon,false);
+
+                float px, py, pz;
+                m_caster->GetClosePoint(px, py, pz, OldSummon->GetObjectBoundingRadius());
+
+                OldSummon->Relocate(px, py, pz, OldSummon->GetOrientation());
+                m_caster->GetMap()->Add((Creature*)OldSummon);
+
+                if(m_caster->GetTypeId() == TYPEID_PLAYER && OldSummon->isControlled() )
+                {
+                    ((Player*)m_caster)->PetSpellInitialize();
+                }
+                return;
             }
-            return;
         }
 
         if(m_caster->GetTypeId() == TYPEID_PLAYER)
@@ -4227,6 +4266,11 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
 {
     uint32 gameobject_id = m_spellInfo->EffectMiscValue[eff_idx];
 
+    if(gameobject_id == 180660) // Spell Place Loot - AQ quest chain.
+    {
+        gameobject_id = 500;
+    }
+
     GameObject* pGameObj = new GameObject;
 
     WorldObject* target = focusObject;
@@ -4282,6 +4326,7 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
         }
     }
 
+
     pGameObj->SummonLinkedTrapIfAny();
 
     if (m_caster->GetTypeId() == TYPEID_UNIT && ((Creature*)m_caster)->AI())
@@ -4293,6 +4338,19 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
     {
         m_caster->SummonGameObject(177749, duration, pGameObj->GetPositionX(), pGameObj->GetPositionY(), pGameObj->GetPositionZ(), pGameObj->GetOrientation());
         m_caster->SummonCreature(800010,  pGameObj->GetPositionX(), pGameObj->GetPositionY(), pGameObj->GetPositionZ(), pGameObj->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN, duration);
+    }
+    else if(m_spellInfo->Id == 25720 && m_caster)
+    {
+       Creature *weavilFLyingMachine = m_caster->SummonCreature(15553, 5096.95f, -5171.80f, 940.66f, 1.75f, TEMPSUMMON_TIMED_DESPAWN, 120000);
+       
+       if(weavilFLyingMachine)
+       {
+           weavilFLyingMachine->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+           weavilFLyingMachine->SetOwnerGuid(m_caster->GetObjectGuid());
+           weavilFLyingMachine->SetHover(true);
+           weavilFLyingMachine->SetSplineFlags(SPLINEFLAG_FLYING);
+           weavilFLyingMachine->MonsterMove(5086.29f, -5114.77f, 935.78f, 5000);
+       }
     }
 }
 
@@ -4553,6 +4611,14 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 return;
 
             unitTarget->HandleEmote(EMOTE_ONESHOT_CHEER);
+            return;
+        }
+		case 26137:                                 // Rotate Trigger
+        {
+            if (!unitTarget)
+				return;
+
+            unitTarget->CastSpell(unitTarget, urand(0, 1) ? 26009 : 26136, true);
             return;
         }
         case 26218:                                 // Mistletoe

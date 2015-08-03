@@ -48,6 +48,8 @@ EndScriptData */
 #define SPELL_TWISTEDREFLECTION         21063
 #define SPELL_EXPLODE                   21058
 
+#define ZONE_BLASTED_LANDS              4
+
 /* 
 Melee
 Shadowbolt Volley
@@ -121,6 +123,11 @@ struct MANGOS_DLL_DECL boss_lordkazzakAI : public ScriptedAI
     void JustDied(Unit* /*victim*/)
     {
         DoScriptText(SAY_DEATH, m_creature);
+		uint32 respawn_time = urand(86400, 604800); // A random respawn time between 1 day and 7 days.
+	
+		m_creature->SetRespawnDelay(respawn_time);
+		m_creature->SetRespawnTime(respawn_time);
+		m_creature->SaveRespawnTime();
     }
 
     void UpdateAI(const uint32 diff)
@@ -128,6 +135,12 @@ struct MANGOS_DLL_DECL boss_lordkazzakAI : public ScriptedAI
         //Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim() )
             return;
+
+        if(m_creature->GetZoneId() != ZONE_BLASTED_LANDS)
+        {
+            ResetToHome();
+            return;
+        }
 
         //ShadowVolley_Timer
         if (ShadowVolley_Timer < diff)

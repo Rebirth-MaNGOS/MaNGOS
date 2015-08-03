@@ -22,6 +22,7 @@ SDCategory: Azshara
 EndScriptData */
 
 #include "precompiled.h"
+#include "math.h"
 
 enum eAzuregos
 {
@@ -36,6 +37,8 @@ enum eAzuregos
     SPELL_MARK_OF_FROST_PLAYER  = 23182,
     SPELL_REFLECTION            = 22067,
     SPELL_ENRAGE                = 23537,
+
+    ZONE_ASZHARA                = 16,
 };
 
 struct MANGOS_DLL_DECL boss_azuregosAI : public ScriptedAI
@@ -86,11 +89,11 @@ struct MANGOS_DLL_DECL boss_azuregosAI : public ScriptedAI
     
     void JustDied(Unit* /*pKiller*/)
     {
-	uint32 respawn_time = urand(259200, 432000); // A random respawn time between 3 days and 5 days.
+		uint32 respawn_time = urand(86400, 604800); // A random respawn time between 1 day and 7 days.
 	
-	m_creature->SetRespawnDelay(respawn_time);
-	m_creature->SetRespawnTime(respawn_time);
-	m_creature->SaveRespawnTime();
+		m_creature->SetRespawnDelay(respawn_time);
+		m_creature->SetRespawnTime(respawn_time);
+		m_creature->SaveRespawnTime();
     }
     
     void JustRespawned()
@@ -102,6 +105,12 @@ struct MANGOS_DLL_DECL boss_azuregosAI : public ScriptedAI
         // Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+
+        if(m_creature->GetZoneId() != ZONE_ASZHARA)
+        {
+            ResetToHome();
+            return;
+        }
 
         // Enrage
         if (!m_bEnraged && HealthBelowPct(25))

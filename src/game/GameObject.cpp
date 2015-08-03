@@ -502,9 +502,10 @@ void GameObject::AddUniqueUse(Player* player)
 
 }
 
-void GameObject::Delete()
+void GameObject::Delete(bool withoutAnim)
 {
-    SendObjectDeSpawnAnim(GetObjectGuid());
+    if (!withoutAnim)
+        SendObjectDeSpawnAnim(GetObjectGuid());
 
     SetGoState(GO_STATE_READY);
     SetUInt32Value(GAMEOBJECT_FLAGS, GetGOInfo()->flags);
@@ -1390,7 +1391,22 @@ void GameObject::Use(Unit* user)
                 spellCaster = player;
             }
 
+            // If there are enough participants no more should be allowed.
+            if (GetUniqueUseCount() >= info->summoningRitual.reqParticipants)
+                return;
+
             AddUniqueUse(player);
+
+            // Store the summon ritual's owner's guid.
+            // It is used to cancel the ritual if the player stops channeling.
+            player->m_summonMasterGuid = owner->GetObjectGuid();
+            player->m_summonParticipantGuid = [=]() -> ObjectGuid { 
+                for (ObjectGuid guid : m_UniqueUsers) 
+                    if (guid != owner->GetObjectGuid()) 
+                        return owner->GetObjectGuid(); 
+
+                return ObjectGuid();
+            }();
 
             if (info->summoningRitual.animSpell)
             {
@@ -1615,6 +1631,10 @@ void GameObject::Use(Unit* user)
                 BattleGround *bg = player->GetBattleGround();
                 if (!bg)
                     return;
+				if (player->HasAuraType(SPELL_AURA_MOD_STEALTH))			// remove stealth, needed for WSG flag
+					player->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+				else if(player->HasAuraType(SPELL_AURA_MOD_INVISIBILITY))			// remove invisibility, needed for WSG flag
+					player->RemoveSpellsCausingAura(SPELL_AURA_MOD_INVISIBILITY);
                 // BG flag click
                 // AB:
                 // 15001
@@ -1650,6 +1670,10 @@ void GameObject::Use(Unit* user)
                 BattleGround *bg = player->GetBattleGround();
                 if (!bg)
                     return;
+				if (player->HasAuraType(SPELL_AURA_MOD_STEALTH))			// remove stealth
+					player->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+				else if(player->HasAuraType(SPELL_AURA_MOD_INVISIBILITY))			// remove invisibility
+					player->RemoveSpellsCausingAura(SPELL_AURA_MOD_INVISIBILITY);
                 // BG flag dropped
                 // WS:
                 // 179785 - Silverwing Flag

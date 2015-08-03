@@ -85,7 +85,7 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
 	bool m_bCanSay;
 	bool m_bCleanerSay;
 	bool m_bDoneSpecial;
-	//bool hasStart;
+	bool hasStart;
 
     void Reset()					// only do these once
     {
@@ -98,7 +98,7 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
 		m_uiSummonCount = 0;
 		m_bCanSay = true;
 		m_bCleanerSay = true;
-		//hasStart = false;
+		hasStart = false;
     }
 
     void JustReachedHome()
@@ -113,12 +113,11 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
 
     void Aggro(Unit* pAttacker)
     {
-		//if (!hasStart)				// do spell + despawn if demon challenge didn't start
-		//{
-		//	DoCastSpellIfCan(pAttacker, SPELL_FOOLS_PLIGHT, CAST_TRIGGERED);			// not needed for now since they're friendly
-		//	if (!m_bDoneSpecial)
-		//		DoSpecialDemonAbility();
-		//}
+		if (!hasStart)				// do spell + despawn if demon challenge didn't start
+		{
+			m_creature->CastSpell(pAttacker, SPELL_FOOLS_PLIGHT, true);
+			DoSpecialDemonAbility();
+		}
         // The pAttacker has to be a player and must be a hunter
         // The hunter's pet is not allowed
         if ((!pAttacker->IsCharmerOrOwnerPlayerOrPlayerItself()) || (pAttacker->getClass() != CLASS_HUNTER))

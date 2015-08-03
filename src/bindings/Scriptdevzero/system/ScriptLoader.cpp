@@ -27,6 +27,9 @@ extern void AddSC_dungeon_set2();
 extern void AddSC_engineering();
 extern void AddSC_hallows_end();
 
+// Ahn'Qiraj gate event
+extern void AddSC_gate_turnin_scripts();
+
 //eastern kingdoms
 extern void AddSC_alterac_valley();                         // alterac valley
 extern void AddSC_boss_balinda_stonehearth();
@@ -252,10 +255,12 @@ extern void AddSC_boss_cthun();                             //temple_of_ahnqiraj
 extern void AddSC_boss_fankriss();
 extern void AddSC_boss_huhuran();
 extern void AddSC_bug_trio();
+extern void AddSC_boss_viscidus();
 extern void AddSC_boss_sartura();
 extern void AddSC_boss_skeram();
 extern void AddSC_boss_twinemperors();
 extern void AddSC_mob_anubisath_sentinel();
+extern void AddSC_temple_of_ahnqiraj();
 extern void AddSC_instance_temple_of_ahnqiraj();
 extern void AddSC_boss_mutanus_the_devourer();              //Wailing caverns
 extern void AddSC_wailing_caverns();
@@ -313,6 +318,9 @@ void AddScripts()
 	AddSC_dungeon_set2();
 	AddSC_engineering();
 	AddSC_hallows_end();
+
+    // Ahn'Qiraj gate event
+    AddSC_gate_turnin_scripts();
 
     //eastern kingdoms
     AddSC_alterac_valley();                                 //alterac valley
@@ -538,10 +546,12 @@ void AddScripts()
     AddSC_boss_fankriss();
     AddSC_boss_huhuran();
     AddSC_bug_trio();
+	AddSC_boss_viscidus();
     AddSC_boss_sartura();
     AddSC_boss_skeram();
     AddSC_boss_twinemperors();
     AddSC_mob_anubisath_sentinel();
+    AddSC_temple_of_ahnqiraj();
     AddSC_instance_temple_of_ahnqiraj();
     AddSC_boss_mutanus_the_devourer();                      //Wailing caverns
     AddSC_wailing_caverns();

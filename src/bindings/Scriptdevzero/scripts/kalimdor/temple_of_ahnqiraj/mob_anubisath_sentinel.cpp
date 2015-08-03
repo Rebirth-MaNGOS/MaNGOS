@@ -36,6 +36,8 @@ enum
     SPELL_SHADOW_FROST_REFLECT      = 19595,
     SPELL_PERIODIC_KNOCK_AWAY       = 21737,
     SPELL_THORNS                    = 25777,
+    SPELL_SHARE                     = 1905,
+    SPELL_HEAL_BRETHREN             = 26565,
 
     SPELL_ENRAGE                    = 8599,
 
@@ -47,13 +49,25 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
     npc_anubisath_sentinelAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_lAssistList.clear();
+        m_spellList.clear();
+        m_spellList.push_back(SPELL_PERIODIC_MANA_BURN);
+        m_spellList.push_back(SPELL_MENDING);
+        m_spellList.push_back(SPELL_PERIODIC_SHADOW_STORM);
+        m_spellList.push_back(SPELL_PERIODIC_THUNDERCLAP);
+        m_spellList.push_back(SPELL_MORTAL_STRIKE);
+        m_spellList.push_back(SPELL_FIRE_ARCANE_REFLECT);
+        m_spellList.push_back(SPELL_SHADOW_FROST_REFLECT);
+        m_spellList.push_back(SPELL_PERIODIC_KNOCK_AWAY);
+        m_spellList.push_back(SPELL_THORNS);
         Reset();
     }
 
     uint32 m_uiMyAbility;
     bool m_bEnraged;
+    bool m_hasSpell;
 
-    GUIDList m_lAssistList;
+    std::vector<uint32> m_spellList;
+    std::vector<ObjectGuid> m_lAssistList;
 
     void Reset()
     {
@@ -63,77 +77,136 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
 
     void JustReachedHome()
     {
-        for(GUIDList::const_iterator itr = m_lAssistList.begin(); itr != m_lAssistList.end(); ++itr)
+        if(!m_lAssistList.empty())
         {
-            if (*itr == m_creature->GetObjectGuid())
-                continue;
-
-            if (Creature* pBuddy = m_creature->GetMap()->GetCreature(*itr))
+            for(ObjectGuid pAnubGuid : m_lAssistList)
             {
-                if (pBuddy->isDead())
-                    pBuddy->Respawn();
+                if (pAnubGuid == m_creature->GetObjectGuid())
+                    continue;
+
+                if (Creature* pBuddy = m_creature->GetMap()->GetCreature(pAnubGuid))
+                {
+                    if (pBuddy->isDead())
+                        pBuddy->Respawn();
+                }
             }
         }
     }
 
     void Aggro(Unit* pWho)
     {
-        SetAbility();
         InitSentinelsNear(pWho);
+        SetAbility();   
     }
 
     void JustDied(Unit* /*pKiller*/)
     {
-        DoTransferAbility();
+        DoCast(m_creature, SPELL_SHARE, true);
+        if(!m_lAssistList.empty())
+        {
+            for(ObjectGuid pAnubGuid : m_lAssistList)
+            {
+                if(pAnubGuid == m_creature->GetObjectGuid())
+                    continue;
+
+                Creature *pAnub = m_creature->GetMap()->GetCreature(pAnubGuid);
+
+                if(pAnub && pAnub->isAlive())
+                {
+                    npc_anubisath_sentinelAI *pAnubAi = dynamic_cast<npc_anubisath_sentinelAI*>(pAnub->AI());
+
+                    if(pAnubAi)
+                        pAnubAi->DoTransferAbility(m_uiMyAbility);
+
+                    pAnub->AI()->DoCastSpellIfCan(pAnub, SPELL_HEAL_BRETHREN, CastFlags::CAST_TRIGGERED);
+                }
+            }
+        }
+
+        m_creature->GenericTextEmote("Anubisath Sentinel shares his powersr with his brethren.", nullptr, false);
     }
 
     // this way will make it quite possible that sentinels get the same buff as others, need to fix that, it should be one unique each
     void SetAbility()
     {
-        switch(urand(0, 8))
+        if(!m_lAssistList.empty())
         {
-            case 0: m_uiMyAbility = SPELL_MENDING; break;
-            case 1: m_uiMyAbility = SPELL_PERIODIC_KNOCK_AWAY; break;
-            case 2: m_uiMyAbility = SPELL_PERIODIC_MANA_BURN; break;
-            case 3: m_uiMyAbility = SPELL_FIRE_ARCANE_REFLECT; break;
-            case 4: m_uiMyAbility = SPELL_SHADOW_FROST_REFLECT; break;
-            case 5: m_uiMyAbility = SPELL_THORNS; break;
-            case 6: m_uiMyAbility = SPELL_PERIODIC_THUNDERCLAP; break;
-            case 7: m_uiMyAbility = SPELL_MORTAL_STRIKE; break;
-            case 8: m_uiMyAbility = SPELL_PERIODIC_SHADOW_STORM; break;
-        }
+            std::sort(m_lAssistList.begin(), m_lAssistList.end());
 
-        DoCastSpellIfCan(m_creature, m_uiMyAbility, CAST_TRIGGERED);
-    }
-
-    void DoTransferAbility()
-    {
-        for(GUIDList::const_iterator itr = m_lAssistList.begin(); itr != m_lAssistList.end(); ++itr)
-        {
-            if (Creature* pBuddy = m_creature->GetMap()->GetCreature(*itr))
+            if(m_creature->GetObjectGuid() == m_lAssistList.front())
             {
-                if (*itr == m_creature->GetObjectGuid())
-                    continue;
+                for(ObjectGuid pAnubGuid : m_lAssistList)
+                {
+                    Creature *pAnub = m_creature->GetMap()->GetCreature(pAnubGuid);
 
-                if (!pBuddy->isAlive())
-                    continue;
+                    if(pAnub && pAnub->isAlive())
+                    {
+                        npc_anubisath_sentinelAI *pAnubAi = dynamic_cast<npc_anubisath_sentinelAI*>(pAnub->AI());
 
-                pBuddy->SetHealth(pBuddy->GetMaxHealth());
-                DoCastSpellIfCan(pBuddy, m_uiMyAbility, CAST_TRIGGERED);
+                        if(pAnubAi)
+                        {
+                            std::random_shuffle(m_spellList.begin(), m_spellList.end());
+                            uint32 m_spell = m_spellList.front();
+                            pAnubAi->DoTransferAbility(m_spell);
+                            m_spellList.erase(std::remove(m_spellList.begin(), m_spellList.end(), m_spell), m_spellList.end());
+                        }
+                    }
+                }
             }
         }
+    }
+
+    /**** DEBUG FUNCTION ****/
+
+    std::string TranslateSpell(uint32 spell)
+    {
+        switch(spell)
+        {
+            case SPELL_PERIODIC_MANA_BURN:
+                return "SPELL_PERIODIC_MANA_BURN";
+            case SPELL_MENDING: 
+                return "SPELL_MENDING";
+            case SPELL_PERIODIC_SHADOW_STORM: 
+                return "SPELL_PERIODIC_SHADOW_STORM";
+            case SPELL_PERIODIC_THUNDERCLAP: 
+                return "SPELL_PERIODIC_THUNDERCLAP";
+            case SPELL_MORTAL_STRIKE: 
+                return "SPELL_MORTAL_STRIKE";
+            case SPELL_FIRE_ARCANE_REFLECT: 
+                return "SPELL_FIRE_ARCANE_REFLECT";
+            case SPELL_SHADOW_FROST_REFLECT: 
+                return "SPELL_SHADOW_FROST_REFLECT";
+            case SPELL_PERIODIC_KNOCK_AWAY: 
+                return "SPELL_PERIODIC_KNOCK_AWAY";
+            case SPELL_THORNS: 
+                return "SPELL_THORNS";
+            default:
+                return "NO SPELL WTF";
+        }
+    }
+
+     /**** DEBUG FUNCTION ****/
+
+    void DoTransferAbility(uint32 ability)
+    {
+        DoCast(m_creature, ability, true);
+
+        m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(ability) + "!").c_str(), LANG_UNIVERSAL);
+
+        if(m_uiMyAbility == 0)
+            m_uiMyAbility = ability;
     }
 
     void InitSentinelsNear(Unit* pTarget)
     {
         if (!m_lAssistList.empty())
         {
-            for(GUIDList::const_iterator itr = m_lAssistList.begin(); itr != m_lAssistList.end(); ++itr)
+            for(ObjectGuid pAnubGuid : m_lAssistList)
             {
-                if (*itr == m_creature->GetObjectGuid())
+                if (pAnubGuid == m_creature->GetObjectGuid())
                     continue;
 
-                if (Creature* pBuddy = m_creature->GetMap()->GetCreature(*itr))
+                if (Creature* pBuddy = m_creature->GetMap()->GetCreature(pAnubGuid))
                 {
                     if (pBuddy->isAlive())
                         pBuddy->AI()->AttackStart(pTarget);
@@ -163,12 +236,12 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
             error_log("SD2: npc_anubisath_sentinel found too few/too many buddies, expected %u.", MAX_BUDDY);
     }
 
-    void UpdateAI(const uint32 /*uiDiff*/)
+    void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        if (!m_bEnraged && m_creature->GetHealthPercent() < 30.0f)
+        if (m_creature->isAlive() && !m_bEnraged && m_creature->GetHealthPercent() < 30.0f)
         {
             if (DoCastSpellIfCan(m_creature, SPELL_ENRAGE) == CAST_OK)
             {

@@ -1590,7 +1590,7 @@ public:
         void UpdateVisibilityAndView();                     // overwrite WorldObject::UpdateVisibilityAndView()
 
         // common function for visibility checks for player/creatures with detection code
-        bool isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, bool detect, bool inVisibleList = false, bool is3dDistance = true) const;
+        bool isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, bool detect, bool inVisibleList = false, bool is3dDistance = true, bool skipDistanceCheck = false) const;
         bool canDetectInvisibilityOf(Unit const* u) const;
 
         // virtual functions for all world objects types
@@ -1801,7 +1801,7 @@ public:
 
 		/* Summons a GameObject at x, y, z that is automatically deleted after duration milliseconds. 
 		If duration = 0 the object needs to be manually deleted by calling Delete() on it. */
-		TemporaryGameObject* SummonGameObject(uint32 entry, uint32 duration, float x, float y, float z, float ang);
+		TemporaryGameObject* SummonGameObject(uint32 entry, uint32 duration, float x, float y, float z, float ang, GOState initalState = GO_STATE_READY, uint32 animprogress = GO_ANIMPROGRESS_DEFAULT);
 
         // Movement info
         //MovementInfo m_movementInfo; -- BIG TODO backport

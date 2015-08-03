@@ -80,6 +80,15 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_KURINNAXX, DONE);
+
+        // Summon Andorov
+        if (Creature* pAndorov = m_creature->SummonCreature(NPC_GENERAL_ANDOROV, -8719.97f, 1579.10f, 21.43f, 2.47f, TEMPSUMMON_CORPSE_DESPAWN, 0))
+        {
+            pAndorov->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR);
+            pAndorov->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+            pAndorov->GetMotionMaster()->MovePoint(5, -8873.42f, 1647.67f, 21.38f, false);
+            //pAndorov->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+        }
     }
 
 	void SpellHit(Unit* pCaster, SpellEntry const* pSpell) // emote if he enrages
@@ -87,7 +96,6 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
         if (pSpell->Id == SPELL_ENRAGE)
 			m_creature->GenericTextEmote("Kurinnaxx goes into a frenzy!", NULL, false);
 	}
-
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -127,7 +135,7 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
                     pTrap->GetPosition(fX, fY, fZ);
 
                     if (Creature* pTrigger = m_creature->SummonCreature(NPC_AHNQIRAJ_TRIGGER, fX, fY, fZ, 0, TEMPSUMMON_TIMED_DESPAWN, 2000))
-                        pTrigger->CastSpell(pTrigger, SPELL_SAND_TRAP_EFFECT, false);
+                        pTrigger->CastSpell(pTrigger, SPELL_SAND_TRAP_EFFECT, false, 0, 0, m_creature->GetObjectGuid());
 
                     m_creature->SendObjectDeSpawnAnim(pTrap->GetObjectGuid());
                     pTrap->Delete();

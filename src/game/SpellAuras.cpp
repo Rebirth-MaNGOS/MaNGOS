@@ -414,6 +414,10 @@ void Aura::Update(uint32 diff)
         m_pulseResistTimer = m_pulseResistFrequency;
     }
 
+    // Blind should not have heartbeat resist.
+    if(GetSpellProto()->Id == 2094)
+        return;
+
     // Risk of failure for the Goblin Rocket Boots. (This is put here since movement modifying auras do not have proc-handlers.)
     Player* target = dynamic_cast<Player*>(m_spellAuraHolder->GetTarget());
 
@@ -1170,6 +1174,23 @@ void Aura::TriggerSpell()
                 triggerTarget->CastCustomSpell(triggerTarget, 25373, &bpDamage, NULL, NULL, true, NULL, this, casterGUID);
                 return;
             }
+			case 26009:                             // Rotate 360
+            case 26136:                             // Rotate -360
+            {
+                float newAngle = target->GetOrientation();
+
+                if (auraId == 26009)
+                    { newAngle += M_PI_F / 40; }
+                else
+                    { newAngle -= M_PI_F / 40; }
+
+                newAngle = MapManager::NormalizeOrientation(newAngle);
+
+                target->SetFacingTo(newAngle);
+
+                target->CastSpell(target, 26029, true);
+                return;
+            }
 //                    // Pain Spike
 //                    case 25572: break;
 //                    // Rotate 360
@@ -1474,6 +1495,24 @@ void Aura::TriggerSpell()
             int32 dmg = 1000 + 500*(GetAuraTicks()/3);
             if (Unit* caster = GetCaster())
                 caster->CastCustomSpell(caster, 19698, &dmg, NULL, NULL, true, NULL, this, caster->GetGUID());
+            return;
+        }
+        case 21737: // Periodic Knock Away - used in AQ40
+        {
+
+            Unit* caster = GetCaster();
+            if (!caster)
+                return;
+
+            std::list<Player*> targets;
+
+            MaNGOS::AnyHostileUnitInObjectRangeCheck u_check(caster, caster, 30.f);
+            MaNGOS::PlayerListSearcher<MaNGOS::AnyHostileUnitInObjectRangeCheck> checker(targets, u_check);
+            Cell::VisitWorldObjects(caster, checker, 30.0f);
+
+            for (Player* pPlayer : targets)
+                caster->CastSpell(pPlayer, 25778, true);
+
             return;
         }
         case 21926: // The Giantstalker's 5/8-bonus; Nature's Ally.
@@ -1846,6 +1885,14 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             if (Unit* caster = GetCaster())
                 caster->CastSpell(caster, 12816, true);
 
+            return;
+        }
+        case 25185:
+        {
+            if(target)
+            {
+                target->CastSpell(target, 25187, false);
+            }
             return;
         }
         case 28169:                                     // Mutating Injection
@@ -2894,7 +2941,6 @@ void Aura::HandleAuraTrackStealthed(bool apply, bool /*Real*/)
 void Aura::HandleAuraModScale(bool apply, bool /*Real*/)
 {
     GetTarget()->ApplyPercentModFloatValue(OBJECT_FIELD_SCALE_X, float(m_modifier.m_amount), apply);
-    GetTarget()->UpdateModelData();
 }
 
 void Aura::HandleModPossess(bool apply, bool Real)

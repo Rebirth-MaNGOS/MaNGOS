@@ -40,6 +40,7 @@ enum Creatures
     NPC_MANA_FIEND                = 15527,
     NPC_HIVEZARA_WASP             = 15325,
     NPC_HIVEZARA_SWARMER          = 15546,
+	NPC_HIVEZARA_SWARMER_1		  = 155460,
     NPC_HIVEZARA_LARVA            = 15555,
     NPC_ANUB_WARRIOR              = 15537,
     NPC_ANUB_SWARM                = 15538,
@@ -48,7 +49,7 @@ enum Creatures
     NPC_BURU_EGG_TRIGGER          = 15964,
     NPC_HIVEZARA_HATCHLING        = 15521,
     NPC_OSSIRIAN_CRYSTAL_TRIGGER  = 15590,
-    NPC_TORNADO                   = 19922,
+    NPC_TORNADO                   = 15428,
 };
 
 enum GameObjects
@@ -70,6 +71,16 @@ struct Loc
     uint32 id;
 };
 
+// For the NPCs at Kurinaxx.
+static Loc NPCs[]=
+{
+    {-8871.37f, 1650.34f, 21.38f, 5.49f, NPC_KALDOREI_ELITE},
+    {-8872.51f, 1648.88f, 21.38f, 5.62f, NPC_KALDOREI_ELITE},   
+    {-8874.36f, 1646.08f, 21.38f, 5.69f, NPC_KALDOREI_ELITE},
+    {-8875.29f, 1644.89f, 21.38f, 5.69f, NPC_KALDOREI_ELITE},
+    {-8873.42f, 1647.67f, 21.38f, 5.69f, NPC_GENERAL_ANDOROV},
+};
+
 class MANGOS_DLL_DECL instance_ruins_of_ahnqiraj : public ScriptedInstance
 {
     public:
@@ -88,9 +99,19 @@ class MANGOS_DLL_DECL instance_ruins_of_ahnqiraj : public ScriptedInstance
 
         const char* Save() { return strInstData.c_str(); }
         void Load(const char* chrIn);
+		GUIDList& GetBuruEggs()
+		{
+			return m_lBuruEggs;
+		}
+		GUIDList& GetTornadoes()
+		{
+			return m_lTornadoes;
+		}
+		GUIDList m_lBuruEggs;
+		GUIDList m_lTornadoes;
     protected:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
-        std::string strInstData;
+        std::string strInstData;		
 };
 
 #endif

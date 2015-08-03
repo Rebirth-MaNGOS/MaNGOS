@@ -47,9 +47,9 @@ void instance_maraudon::OnCreatureCreate(Creature* pCreature)
                 pCreature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             }
             break;
-        case NPC_MESHLOK_THE_HARVESTER:
+        /*case NPC_MESHLOK_THE_HARVESTER:	// handled in the pool instead
             SetRareBoss(pCreature, 50);
-            break;
+            break;*/
 		//case NPC_PATROL:
 		//	for (int i = 0; i < MAX_PATROL; i++)
 		//		if (pCreature->GetGUIDLow() == PATROL_GUID_START+i)

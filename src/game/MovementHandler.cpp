@@ -267,6 +267,12 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         return;
     }
 
+    // If the player is mind-controlled it shouldn't be able to control anything.
+    Player* sessionPlayer = GetPlayer();
+    Unit* charmer = sessionPlayer->GetCharmer();
+    if (sessionPlayer && charmer && charmer->GetObjectGuid() == mover->GetObjectGuid() && !sessionPlayer->CanMove())
+        return;
+
     /* extract packet */
     MovementInfo movementInfo;
     movementInfo.Read(recv_data);
@@ -332,7 +338,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         plMover = GetPlayer();
 
     if (mover->GetMap())
-        mover->SendMovementOpcodeMessagesToSetExcept(plMover, mover->GetPackGUID(), movementInfo, &recv_data);
+        mover->SendMovementOpcodeMessagesToSetExcept(GetPlayer(), mover->GetPackGUID(), movementInfo, &recv_data);
 }
 
 void WorldSession::HandleForceSpeedChangeAckOpcodes(WorldPacket &recv_data)

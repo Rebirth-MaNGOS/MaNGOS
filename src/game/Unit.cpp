@@ -1346,8 +1346,8 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, S
     // Check spell crit chance
     bool crit = IsSpellCrit(pVictim, spellInfo, damageSchoolMask, attackType);
 
-    // Judgement of Command should be counted as a spell. Speparate handling for it.
-    if (spellInfo->SpellVisual == 0 && spellInfo->SpellIconID == 561)
+    // Judgement of Command and Arcane Shot should be counted as a spell. Speparate handling for it.
+    if ((spellInfo->SpellVisual == 0 && spellInfo->SpellIconID == 561) || sSpellMgr.GetFirstSpellInChain(spellInfo->Id) == 3044)
     {
         // Calculate damage bonus
         damage = SpellDamageBonusDone(pVictim, spellInfo, damage, SPELL_DIRECT_DAMAGE);
@@ -1360,8 +1360,8 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, S
             damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
         }
 
-        // Double the damage for a stunned target.
-        if (!pVictim->hasUnitState(UNIT_STAT_STUNNED))
+        // Double the damage for a stunned target for Judgement of Command.
+        if (spellInfo->SpellVisual == 0 && spellInfo->SpellIconID == 561 && !pVictim->hasUnitState(UNIT_STAT_STUNNED))
                 damage /= 2;
     }
     else // Default calculations for damage class.
@@ -1537,6 +1537,7 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
         damageInfo->damage = damage;
         damageInfo->cleanDamage += damage;
     }
+	
 
     damageInfo->hitOutCome = RollMeleeOutcomeAgainst(damageInfo->target, damageInfo->attackType);
 
@@ -1767,9 +1768,9 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
     CleanDamage cleanDamage(damageInfo->cleanDamage,damageInfo->attackType,damageInfo->hitOutCome);
     DealDamage(pVictim, damageInfo->damage, &cleanDamage, DIRECT_DAMAGE, SpellSchoolMask(damageInfo->damageSchoolMask), NULL, durabilityLoss);
 
-    // If this is a creature and it attacks from behind it has a probability to daze it's victim
+    // If this is a creature, the attack isn't absorbed and it attacks from behind it has a probability to daze it's victim 
     if( (damageInfo->hitOutCome==MELEE_HIT_CRIT || damageInfo->hitOutCome==MELEE_HIT_CRUSHING || damageInfo->hitOutCome==MELEE_HIT_NORMAL || damageInfo->hitOutCome==MELEE_HIT_GLANCING) &&
-            !GetCharmerOrOwnerOrOwnGuid().IsPlayer() && pVictim->GetObjectGuid().IsPlayer() && !pVictim->HasInArc(M_PI_F, this) )
+            !GetCharmerOrOwnerOrOwnGuid().IsPlayer() && pVictim->GetObjectGuid().IsPlayer() && !pVictim->HasInArc(M_PI_F, this) && !damageInfo->absorb)
     {
         // -probability is between 0% and 40%
         // 20% base chance
@@ -1782,7 +1783,20 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
         uint32 VictimDefense=pVictim->GetDefenseSkillValue();
         uint32 AttackerMeleeSkill=GetUnitMeleeSkill();
 
-        Probability *= AttackerMeleeSkill/(float)VictimDefense;
+        if (VictimDefense <= 300)
+        {
+            Probability *= AttackerMeleeSkill/(float)VictimDefense;
+        }
+        else
+        {
+            // When the player has more defense than the attacking creature's melee skill
+            // we do a linear approximation that should make a player with 440 defense
+            // immune to dase from a level 63, i.e. boss, mob.
+            Probability = 20.f - 0.16f * (VictimDefense - AttackerMeleeSkill);
+
+            if (Probability < 0)
+                Probability = 0;
+        }
 
         if(Probability > 40.0f)
             Probability = 40.0f;
@@ -1961,7 +1975,7 @@ float Unit::GetTargetResistancePctVersusSpell(Unit *victim, SpellEntry const *sp
     return std::max(std::min(resistPct,75.0f),0.0f);
 }
 
-void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster,SpellSchoolMask schoolMask, DamageEffectType /*damagetype*/, const uint32 damage, uint32 *absorb, uint32 *resist, bool /*canReflect*/,PartialResistInfo partialResist)
+void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster,SpellSchoolMask schoolMask, DamageEffectType damagetype, const uint32 damage, uint32 *absorb, uint32 *resist, bool /*canReflect*/,PartialResistInfo partialResist)
 {
     if(!pCaster || !isAlive() || !damage)
         return;
@@ -2087,17 +2101,18 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster,SpellSchoolMask schoolMa
     // should still be interrupted.
     if (RemainingDamage == 0)
     {
-        for (uint8 i = 0; i < 4; i++)
+        if (damagetype != DOT)
         {
-            Spell* spell = GetCurrentSpell(CurrentSpellTypes(i));
-            if(spell && spell->getState() == SPELL_STATE_PREPARING)
+            for (uint8 i = 0; i < 4; i++)
             {
-                if(spell->m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_ABORT_ON_DMG)
-                    InterruptSpell(CurrentSpellTypes(i));
+                Spell* spell = GetCurrentSpell(CurrentSpellTypes(i));
+                if(spell && spell->getState() == SPELL_STATE_PREPARING)
+                {
+                    if(spell->m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_ABORT_ON_DMG)
+                        InterruptSpell(CurrentSpellTypes(i));
+                }
             }
         }
-
-        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
     }
 
     // only split damage if not damaging yourself
@@ -2258,6 +2273,24 @@ void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool ex
             if(m_extraAttacks > 0)
                 --m_extraAttacks;
         }
+    }
+
+    // If the auto-attack hits it should break CCs if the target is shielded.
+    if (damageInfo.hitOutCome >= 5 && damageInfo.hitOutCome <= 8)
+    {
+        std::list<Aura*> const& vManaShield = pVictim->GetAurasByType(SPELL_AURA_MANA_SHIELD);
+        std::list<Aura*> const& vSchoolAbsorb = pVictim->GetAurasByType(SPELL_AURA_SCHOOL_ABSORB);
+
+        if (!vManaShield.empty() || !vSchoolAbsorb.empty())
+        {
+            pVictim->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
+        }
+
+        // Auto-attack should be sent to spell hit for mobs.
+        SpellEntry const* spell = sSpellStore.LookupEntry(6603);
+        Creature* pCreature = dynamic_cast<Creature*>(pVictim);
+        if (pCreature && pCreature->AI() && spell)
+            pCreature->AI()->SpellHit(this, spell);
     }
 }
 
@@ -5775,9 +5808,17 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, Spell* spell, SpellEffectIndex /*ef
     switch(spell->m_spellInfo->Id) // Spells that should not be redirected.
     {
     case 100:   // Charge rank 1.
-    case 6178:  // Charge rank 2.
+    case 6178:  // Charge rank 2.	
     case 11578: // Charge rank 3.
-    case 16979: // Feral charge.
+	case 7922:	// Charge stun.
+	case 19675:	// Feral charge effect.
+    case 16979: // Feral charge.	
+	case 20252:	// Intercept rank 1.
+	case 20616:	// Intercept rank 2.
+	case 20617:	// Intercept rank 3.
+	case 20253:	// Intercept stun rank 1.
+	case 20614:	// Intercept stun rank 2.
+	case 20615:	// Intercept stun rank 3.
     case 23620: // Burning Adrenaline - Vaelastrasz in BWL.
     case 23170: // Brood Affliction: Bronze - Chromaggus in BWL.
     case 23154: //  ---  ||  ---   : Black
@@ -7034,7 +7075,8 @@ bool Unit::isTargetableForAttack(bool inverseAlive, bool isAOE) const
     if (GetTypeId()==TYPEID_PLAYER && ((Player *)this)->isGameMaster())
         return false;
 
-    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE))
+    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE) && 
+        (GetTypeId() != TYPEID_UNIT || !dynamic_cast<const Creature*>(this)->GetIgnoreNonCombatFlags()))
         return false;
 
     // to be removed if unit by any reason enter combat
@@ -7113,7 +7155,7 @@ int32 Unit::ModifyPower(Powers power, int32 dVal)
     return gain;
 }
 
-bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, bool detect, bool inVisibleList, bool is3dDistance) const
+bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, bool detect, bool inVisibleList, bool is3dDistance, bool skipDistanceCheck) const
 {
     if(!u || !IsInMap(u))
         return false;
@@ -7167,7 +7209,7 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
     else if(!at_same_transport)                             // distance for show player/pet/creature (no transport case)
     {
         // Any units far than max visible distance for viewer or not in our map are not visible too
-        if (!IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
+        if (!skipDistanceCheck && !IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
             return false;
     }
 
@@ -7929,9 +7971,10 @@ bool Unit::SelectHostileTarget()
                 // If a player is falling we wait until it has landed before we make the creature evade.
                 if(!GetMotionMaster()->operator->()->IsReachable() && (!pTargetPlayer || !pTargetPlayer->HasMovementFlag(MOVEFLAG_FALLING)))
                 {
-                    if (!inEvadeMode)
+                    if (creature->GetUnreachableTimeout() == 0 && !inEvadeMode)
                     {
-                        creature->SetEvadeMode(true);
+                        // Set a timeout of four seconds before a creature evades.
+                        creature->SetUnreachableTimeout(4000);
                     }
 
                     return false;
@@ -7939,6 +7982,8 @@ bool Unit::SelectHostileTarget()
                 {
                     creature->SetEvadeMode(false);
                 }
+                else
+                    creature->SetUnreachableTimeout(0);
             }
         }
         return true;
@@ -9839,16 +9884,18 @@ void Unit::RemovePetAura(PetAura const* petSpell)
         pet->RemoveAurasDueToSpell(petSpell->GetAura(pet->GetEntry()));
 }
 
-TemporaryGameObject* Unit::SummonGameObject(uint32 entry, uint32 duration, float x, float y, float z, float ang)
+TemporaryGameObject* Unit::SummonGameObject(uint32 entry, uint32 duration, float x, float y, float z, float ang, GOState initialState, uint32 animprogress)
 {
     TemporaryGameObject* pGameObj = new TemporaryGameObject(duration);
 
     if(!pGameObj->Create(GetMap()->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), entry, GetMap(),
-                         x, y, z, ang, 0.0f, 0.0f, 0.0f, 0.0f, GO_ANIMPROGRESS_DEFAULT, GO_STATE_READY))
+                         x, y, z, ang, 0.0f, 0.0f, 0.0f, 0.0f, animprogress, GO_STATE_READY))
     {
         delete pGameObj;
         return nullptr;
     }
+
+    pGameObj->SetGoState(initialState);
 
     pGameObj->SetOwnerGuid(GetGUID());
 

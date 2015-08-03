@@ -51,7 +51,16 @@ enum
 
 struct MANGOS_DLL_DECL npc_00x09hlAI : public npc_escortAI
 {
-    npc_00x09hlAI(Creature* pCreature) : npc_escortAI(pCreature) { Reset(); }
+    npc_00x09hlAI(Creature* pCreature) : npc_escortAI(pCreature) 
+    { 
+        m_bFirstSpawned = false;
+        m_bSecondSpawned = false; 
+
+        Reset(); 
+    }
+
+    bool m_bFirstSpawned;
+    bool m_bSecondSpawned;
 
     void Reset() { }
 
@@ -77,22 +86,39 @@ struct MANGOS_DLL_DECL npc_00x09hlAI : public npc_escortAI
     {
         switch(uiPointId)
         {
-            case 27:
-                for(uint8 i = 0; i < 3; ++i)
+            case 5:
                 {
-                    float fX, fY, fZ;
-                    m_creature->GetRandomPoint(147.927444f, -3851.513428f, 130.893f, 7.0f, fX, fY, fZ);
+                    // Reset the two owl encounters.
+                    m_bFirstSpawned = false;
+                    m_bSecondSpawned = false;
+                    break;
+                }
+            case 27:
+                if (!m_bFirstSpawned)
+                {
+                    for(uint8 i = 0; i < 3; ++i)
+                    {
+                        float fX, fY, fZ;
+                        m_creature->GetRandomPoint(147.927444f, -3851.513428f, 130.893f, 7.0f, fX, fY, fZ);
 
-                    m_creature->SummonCreature(NPC_MARAUDING_OWL, fX, fY, fZ, 0.0f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 25000);
+                        m_creature->SummonCreature(NPC_MARAUDING_OWL, fX, fY, fZ, 0.0f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 25000);
+                    }
+
+                    m_bFirstSpawned = true;
                 }
                 break;
             case 44:
-                for(uint8 i = 0; i < 3; ++i)
+                if (!m_bSecondSpawned)
                 {
-                    float fX, fY, fZ;
-                    m_creature->GetRandomPoint(-141.151581f, -4291.213867f, 120.130f, 7.0f, fX, fY, fZ);
+                    for(uint8 i = 0; i < 3; ++i)
+                    {
+                        float fX, fY, fZ;
+                        m_creature->GetRandomPoint(-141.151581f, -4291.213867f, 120.130f, 7.0f, fX, fY, fZ);
 
-                    m_creature->SummonCreature(NPC_VILE_AMBUSHER, fX, fY, fZ, 0.0f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 25000);
+                        m_creature->SummonCreature(NPC_VILE_AMBUSHER, fX, fY, fZ, 0.0f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 25000);
+                    }
+
+                    m_bSecondSpawned = true;
                 }
                 break;
         }
@@ -432,7 +458,7 @@ struct MANGOS_DLL_DECL npc_elder_torntuskAI : public npc_escortAI
 		m_uiPlayerGUID.Clear();
 	}
 
-	void WaypointReached(uint32 uiPointId)
+	void WaypointReached(uint32 /*uiPointId*/)
     {
 	}
 

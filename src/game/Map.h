@@ -234,7 +234,7 @@ public:
         return !m_mapRefManager.isEmpty();
     }
     uint32 GetPlayersCountExceptGMs() const;
-    bool ActiveObjectsNearGrid(uint32 x,uint32 y) const;
+    bool ActiveObjectsNearGrid(uint32 x,uint32 y);
 
     void SendToPlayers(WorldPacket const* data) const;
 
@@ -251,6 +251,11 @@ public:
     void AddToActive(WorldObject* obj);
     // must called with RemoveFromWorld
     void RemoveFromActive(WorldObject* obj);
+    
+    // Add all contient creatures to their own update list.
+    void AddToContinent(WorldObject* obj);
+
+    void RemoveFromContinent(WorldObject* obj);
 
     Player* GetPlayer(ObjectGuid guid);
     Creature* GetCreature(ObjectGuid guid);
@@ -356,8 +361,9 @@ protected:
     MapRefManager m_mapRefManager;
     MapRefManager::iterator m_mapRefIter;
 
-    typedef std::list<WorldObject*> ActiveNonPlayers;
+    typedef std::list<ObjectGuid> ActiveNonPlayers;
     ActiveNonPlayers m_activeNonPlayers;
+    ActiveNonPlayers m_continentMobs;
     
     MapStoredObjectTypesContainer m_objectsStore;
 

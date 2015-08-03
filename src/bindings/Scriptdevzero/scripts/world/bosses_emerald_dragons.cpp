@@ -71,7 +71,7 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
             m_creature->SetDefaultMovementType(IDLE_MOTION_TYPE);
 
             // Make sure the dragon is standing in the correct spot if it shouldn't patrol.
-            const CreatureData* pData = sObjectMgr.GetCreatureData(m_creature->GetObjectGuid().GetCounter());
+            const CreatureData* pData = GetCreatureData(m_creature->GetObjectGuid().GetCounter());
             m_creature->RelocateCreature(pData->posX, pData->posY, pData->posZ, pData->orientation);
         }
 		
@@ -783,6 +783,8 @@ struct MANGOS_DLL_DECL mob_dream_fogAI : public ScriptedAI
 
     uint32 m_uiRoamTimer;
     ObjectGuid BossGuid;
+	bool m_bCanChangeTarget;
+	uint32 m_uiChangeTargetTimer;
 
     void Reset()
     {
@@ -790,38 +792,50 @@ struct MANGOS_DLL_DECL mob_dream_fogAI : public ScriptedAI
 		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
 
         if (m_creature->IsTemporarySummon())
-            BossGuid = ((TemporarySummon*)m_creature)->GetSummonerGuid();
+			BossGuid = ((TemporarySummon*)m_creature)->GetSummonerGuid();
     }
 
+	void MoveInLineOfSight(Unit* /*pWho*/)
+    {
+        // Must to be empty to ignore aggro
+    }
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == 24778 && pTarget->GetTypeId() == TYPEID_PLAYER && m_bCanChangeTarget)		
+			ChangeTarget();
+	}
+
+	void ChangeTarget()
+	{
+		if (Unit* pTarget = GetRandomPlayerInCurrentMap(100))
+		{
+			DoResetThreat();
+			m_creature->AddThreat(pTarget,100000.0f);
+			m_creature->SelectHostileTarget();
+			m_uiChangeTargetTimer = 5000;
+			m_bCanChangeTarget = false;
+			m_uiRoamTimer = urand(20000, 30000);			// Reset the 30 sec timer in case the change is due to hitting a player
+		}
+	}
+	
     void UpdateAI(uint32 const uiDiff)
     {
-        // Return since we have no target
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
         if (m_uiRoamTimer < uiDiff)
         {
-            // Chase target, but don't attack - otherwise just roam around
-            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-            {
-                m_uiRoamTimer = urand(15000, 30000);
-                m_creature->GetMotionMaster()->Clear(false);
-                m_creature->GetMotionMaster()->MoveChase(pTarget, 0.2f);
-            }
-            else
-            {
-                m_uiRoamTimer = 2500;
-                m_creature->GetMotionMaster()->Clear(false);
-                m_creature->GetMotionMaster()->MoveRandom();
-            }
-
-            // Seeping fog movement is slow enough for a player to be able to walk backwards and still outpace it
-			// Changed speed in DB instead************************
-            //m_creature->AddSplineFlag(SPLINEFLAG_WALKMODE);
-            //m_creature->SetSpeedRate(MOVE_WALK, 0.3f);			// 0.75 before, not working still fast speed.
+			ChangeTarget();
+            m_uiRoamTimer = urand(20000, 30000);
         }
         else
             m_uiRoamTimer -= uiDiff;
+
+		if (!m_bCanChangeTarget)
+		{
+			if (m_uiChangeTargetTimer < uiDiff)
+				m_bCanChangeTarget = true;
+			else
+				m_uiChangeTargetTimer -= uiDiff;
+		}
     }
 };
 
