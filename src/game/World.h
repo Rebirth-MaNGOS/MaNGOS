@@ -29,8 +29,6 @@
 #include "Policies/Singleton.h"
 #include "SharedDefines.h"
 
-#include "boost/threadpool.hpp"
-
 #include <map>
 #include <set>
 #include <list>
@@ -176,8 +174,6 @@ enum eConfigUInt32Values
     CONFIG_UINT32_WARDEN_BAN_TIME,
     CONFIG_UINT32_SENTINEL_BAN_TIME,
     CONFIG_UINT32_SENTINEL_ACTION_LEVEL,
-    CONFIG_BOOL_THREAD_POOL_THREADS,
-    CONFIG_UINT32_THREAD_POOL_THREADS,
     CONFIG_UINT32_VALUE_COUNT,
 };
 
@@ -518,8 +514,6 @@ class World
         /// Get a server configuration element (see #eConfigBoolValues)
         bool getConfig(eConfigBoolValues index) const { return m_configBoolValues[index]; }
 	
-	boost::threadpool::pool* GetThreadPool() { return thread_pool; }
-
         /// Are we on a "Player versus Player" server?
         bool IsPvPRealm() { return (getConfig(CONFIG_UINT32_GAME_TYPE) == REALM_TYPE_PVP || getConfig(CONFIG_UINT32_GAME_TYPE) == REALM_TYPE_RPPVP || getConfig(CONFIG_UINT32_GAME_TYPE) == REALM_TYPE_FFA_PVP); }
         bool IsFFAPvPRealm() { return getConfig(CONFIG_UINT32_GAME_TYPE) == REALM_TYPE_FFA_PVP; }
@@ -641,9 +635,6 @@ class World
         //used versions
         std::string m_DBVersion;
         std::string m_CreatureEventAIVersion;
-
-	// Thread pool for map creature updating.
-	boost::threadpool::pool *thread_pool;  // Thread pool containing the worker threads.
 };
 
 extern uint32 realmID;
