@@ -98,16 +98,27 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
         CreatureInfo const* pInfo = pCOwner->GetCreatureInfo();
         if (pInfo)
         {
-            if (!(pInfo->InhabitType & INHABIT_AIR))
+            if (!(pInfo->InhabitType & INHABIT_AIR) && !pCOwner->IsInWater())
             {
                 TerrainInfo const* terrain = pCOwner->GetMap()->GetTerrain();
                 if (terrain)
                 {
-                    float ground = 0;
-                    ground = terrain->GetWaterOrGroundLevel(x, y, z, nullptr, false);
+                    float ground_z = pCOwner->GetMap()->GetTerrain()->GetHeight(x, y, MAX_HEIGHT);
+                    float floor_z = pCOwner->GetMap()->GetTerrain()->GetHeight(x, y, z);
 
-                    if (ground != INVALID_HEIGHT_VALUE)
-                        z = ground;
+                    if(fabs(z - floor_z) < fabs(ground_z - z))
+                    {
+                        z = floor_z;
+                    }
+                    else
+                    {
+                        z = ground_z;
+                    }
+                   // float ground = 0;
+                   // ground = terrain->GetWaterOrGroundLevel(x, y, z, nullptr, false);
+
+                  //  if (ground != INVALID_HEIGHT_VALUE)
+                  //      z = ground;
                 }
             }
         }
