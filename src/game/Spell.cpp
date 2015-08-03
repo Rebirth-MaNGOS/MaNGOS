@@ -5455,10 +5455,14 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (!m_targets.getGOTarget())
                     return SPELL_FAILED_BAD_TARGETS;
 
+    
                 if(GameObject *pGo = m_targets.getGOTarget())
                 {
-                    if(pGo && pGo->IsFriendlyTo(m_caster))
-                        return SPELL_FAILED_BAD_TARGETS;
+                    if(WorldObject *owner = pGo->GetOwner())
+                    {
+                        if(pGo && pGo->GetOwner()->GetTypeId() == TYPEID_PLAYER && pGo->IsFriendlyTo(m_caster))
+                            return SPELL_FAILED_BAD_TARGETS;
+                    }
                 }
             }
 
