@@ -842,6 +842,8 @@ struct MANGOS_DLL_DECL npc_captured_anoarkin : public npc_escortAI
         m_uiEventPhase = 0;
         m_uiEventTimer = 0;
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        m_creature->LoadEquipment(m_creature->GetCreatureInfo()->equipmentId, true);
+        m_creature->UpdateVisibilityAndView();
     }
 
     void WaypointReached(uint32 i)
@@ -992,7 +994,7 @@ bool QuestAccept_npc_captured_anoarkin(Player* pPlayer, Creature* pCreature, con
         npc_captured_anoarkin *pAnarkinAI = dynamic_cast<npc_captured_anoarkin*>(pCreature->AI());
 
         if(pAnarkinAI)
-            pAnarkinAI->Start(true, pPlayer, pQuest, true);
+            pAnarkinAI->Start(false, pPlayer, pQuest, true);
     }
     return true;
 }
@@ -1004,7 +1006,7 @@ bool GossipHello_npc_captured_anoarkin(Player* pPlayer, Creature* pCreature)
         if (pCreature->isQuestGiver())
             pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
 
-        if (pPlayer->GetQuestStatus(QUEST_RESCUE_FROM_JAEDENAR) == QUEST_STATUS_COMPLETE && pPlayer->HasQuest(QUEST_RESCUE_FROM_JAEDENAR))
+        if (pPlayer->GetQuestRewardStatus(QUEST_RESCUE_FROM_JAEDENAR))
             pPlayer->SEND_GOSSIP_MENU(100, pCreature->GetObjectGuid());
         else if(pPlayer->GetQuestStatus(QUEST_RESCUE_FROM_JAEDENAR) == QUEST_STATUS_COMPLETE)
             pPlayer->SEND_GOSSIP_MENU(99, pCreature->GetObjectGuid());
