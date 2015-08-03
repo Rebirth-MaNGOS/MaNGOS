@@ -333,9 +333,15 @@ bool IsNoStackAuraDueToAura(uint32 spellId_1, uint32 spellId_2)
 	if ((spellInfo_1->Id == 11405 && spellInfo_2->Id == 17528) || (spellInfo_2->Id == 11405 && spellInfo_1->Id == 17528))
 		return false;
 
-	// Flask of the Titans and Elixir of Minor Fortitude should stack.
-	if ((spellInfo_1->Id == 17626 && spellInfo_2->Id == 2378) || (spellInfo_2->Id == 17626 && spellInfo_1->Id == 2378))
+	// Flask of the Titans and Elixir of (Minor) Fortitude should stack.
+	if ((spellInfo_1->Id == 17626 && spellInfo_2->Id == 2378) || (spellInfo_2->Id == 17626 && spellInfo_1->Id == 2378) ||
+        (spellInfo_1->Id == 3593 && spellInfo_2->Id == 17626) || (spellInfo_1->Id == 17626 && spellInfo_2->Id == 3593))
 		return false;
+
+    // Mongoose and agility elixir should stack with Grilled Squid.
+    if((spellInfo_1->Id == 18192 && spellInfo_2->Id == 17538) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 17538) || 
+        (spellInfo_2->Id == 11328 && spellInfo_1->Id == 18192) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 11328))
+        return false;
 
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
     {
@@ -2020,13 +2026,20 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 		return false;
 	}
 
-	// (Prayer of ) Fortitude and Fortitude scrolls should not stack.
+	// (Prayer of ) Fortitude and Fortitude scrolls/Elixir of brute force should not stack.
 	if (spellInfo_1->EffectApplyAuraName[0] == 29 && spellInfo_2->EffectApplyAuraName[0] == 29 &&
-		(((spellInfo_1->SpellIconID == 685 || spellInfo_1->SpellIconID == 1669) && spellInfo_2->SpellIconID == 312) ||
-		(spellInfo_1->SpellIconID == 312 && (spellInfo_2->SpellIconID == 685 || spellInfo_2->SpellIconID == 1669))))
+		((((spellInfo_1->SpellIconID == 685 || spellInfo_1->SpellIconID == 1669) && spellInfo_2->SpellIconID == 312) ||
+		(spellInfo_1->SpellIconID == 312 && (spellInfo_2->SpellIconID == 685 || spellInfo_2->SpellIconID == 1669))) ||
+        (((spellInfo_1->SpellIconID == 685 || spellInfo_1->SpellIconID == 1669) && spellInfo_2->Id == 17537) ||
+        (spellInfo_1->Id == 17537 && (spellInfo_2->SpellIconID == 685 || spellInfo_2->SpellIconID == 1669)))))
 	{
 		return true;
 	}
+
+    // Mongoose and agility elixir should stack with Grilled Squid.
+    if((spellInfo_1->Id == 18192 && spellInfo_2->Id == 17538) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 17538) || 
+        (spellInfo_2->Id == 11328 && spellInfo_1->Id == 18192) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 11328))
+        return false;
 
     // Specific spell family spells
     switch(spellInfo_1->SpellFamilyName)
@@ -2485,7 +2498,8 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 					return false;
 
 				// Flask of the Titans and Elixir of Minor Fortitude should stack.
-				if ((spellInfo_1->Id == 17626 && spellInfo_2->Id == 2378) || (spellInfo_2->Id == 17626 && spellInfo_1->Id == 2378))
+				if ((spellInfo_1->Id == 17626 && spellInfo_2->Id == 2378) || (spellInfo_2->Id == 17626 && spellInfo_1->Id == 2378) ||
+                    (spellInfo_1->Id == 17626 && spellInfo_2->Id == 3593) || (spellInfo_2->Id == 17626 && spellInfo_1->Id == 3593))
 					return false;
 			}
         default:
