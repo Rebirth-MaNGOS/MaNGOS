@@ -3,6 +3,7 @@
 #include "ProgressBar.h"
 #include "GridNotifiers.h"
 #include "MapManager.h"
+#include "CellImpl.h"
 
 INSTANTIATE_SINGLETON_1(EventResourceMgr);
 
