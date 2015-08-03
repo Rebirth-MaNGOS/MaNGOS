@@ -11667,7 +11667,7 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
     // prepares quest menu when true
     bool canSeeQuests; 
     if (pSource->GetTypeId() == TYPEID_UNIT)
-        canSeeQuests = menuId == GetDefaultGossipMenuForSource(pSource) && pSource->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+        canSeeQuests = menuId == GetDefaultGossipMenuForSource(pSource) && (pSource->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER) || pSource->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR));
     else
         canSeeQuests = menuId == GetDefaultGossipMenuForSource(pSource);
 
