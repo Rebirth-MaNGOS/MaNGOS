@@ -441,7 +441,23 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
                     const Player* pPlayer = dynamic_cast<const Player*>(this);
                     if (pUnit && pUnit->GetOwner() != target && (!pPlayer || 
                         pPlayer->GetTeam() != target->GetTeam()))
-                        *data << (uint32)(100.f * pUnit->GetHealth() / pUnit->GetMaxHealth());
+                    {
+                        uint32 val = (uint32)(100.f * pUnit->GetHealth() / pUnit->GetMaxHealth()); 
+
+                        if (val > 0)
+                            *data << val;
+                        else if (val == 0) // If the mob is still alive but the health is rounded to 0 we send 1 %.
+                        {
+                            if (pUnit->isAlive())
+                            {
+                                *data << (uint32) 1;
+                            }
+                            else
+                            {
+                                *data << val;
+                            }
+                        }
+                    }
                     else
                         *data << m_uint32Values[index];
                 }
