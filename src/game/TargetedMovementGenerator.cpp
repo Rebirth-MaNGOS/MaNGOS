@@ -230,7 +230,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         if (i_path)
         {
             // send 10 nodes, or send all nodes if there are less than 10 left
-            uint32 endIndex = m_pathPointsSent + 1;
+            uint32 endIndex = m_pathPointsSent;
 
             float x, y, z;
             i_path->getNextPosition(x, y, z);
