@@ -1397,16 +1397,19 @@ void GameObject::Use(Unit* user)
 
             AddUniqueUse(player);
 
-            // Store the summon ritual's owner's guid.
-            // It is used to cancel the ritual if the player stops channeling.
-            player->m_summonMasterGuid = owner->GetObjectGuid();
-            player->m_summonParticipantGuid = [=]() -> ObjectGuid { 
-                for (ObjectGuid guid : m_UniqueUsers) 
-                    if (guid != owner->GetObjectGuid()) 
-                        return owner->GetObjectGuid(); 
+            if (owner)
+            {
+                // Store the summon ritual's owner's guid.
+                // It is used to cancel the ritual if the player stops channeling.
+                player->m_summonMasterGuid = owner->GetObjectGuid();
+                player->m_summonParticipantGuid = [=]() -> ObjectGuid { 
+                    for (ObjectGuid guid : m_UniqueUsers) 
+                        if (guid != owner->GetObjectGuid()) 
+                            return owner->GetObjectGuid(); 
 
-                return ObjectGuid();
-            }();
+                    return ObjectGuid();
+                }();
+            }
 
             if (info->summoningRitual.animSpell)
             {
@@ -1470,6 +1473,9 @@ void GameObject::Use(Unit* user)
                     // If we have a timed deletion timer we interrupted before the spell was completed.
                     if (m_timedDeletionTimer)
                     {
+                        if (!owner)
+                            return shouldCast;
+
                         owner->FinishSpell(CURRENT_CHANNELED_SPELL);
                         
                         for (ObjectGuid playerGuid : m_UniqueUsers)
