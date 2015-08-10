@@ -179,7 +179,7 @@ enum eFleshHunter
 	SPELL_CONSUME_ROOT	= 25374,
     SPELL_POISON_BOLT   = 25424,
     SPELL_TRASH         = 3391,
-	SPELL_KNOCKBACK		= 24199,			// used if a player survives consume, wrong spell for now
+	SPELL_SPIT_OUT		= 25383//24199,			// used if a player survives consume, wrong spell for now
 };
 
 struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
@@ -252,12 +252,12 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
                 m_creature->CastSpell(pTarget, SPELL_CONSUME, true);
 				m_creature->CastSpell(pTarget, SPELL_CONSUME_ROOT, true);
 				m_uiConsumeVictim = pTarget->GetObjectGuid();
-                DoTeleportPlayer(m_creature->getVictim(), m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ()+.5f, 0);
+                DoTeleportPlayer(m_creature->getVictim(), m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ()+.75f, 0);
 				if (m_creature->getThreatManager().getThreat(pTarget))
 					m_creature->getThreatManager().modifyThreatPercent(pTarget, -100);			// never attack the player that is consumed
                 m_bPlayerConsumed = true;
 				m_bCanTurn = true;
-				m_uiTurnTimer = 3000;
+				m_uiTurnTimer = 50;
 				m_uiConsumeRemoveTimer = 15010;			// slightly longer so we're sure the aura is removed
             }
             m_uiConsumeTimer = urand(25000,35000);
@@ -299,7 +299,7 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
 			{
 				if(Unit* pConsumeTarget = m_creature->GetMap()->GetUnit(m_uiConsumeVictim))
 					if(pConsumeTarget->isAlive())
-						m_creature->CastSpell(pConsumeTarget, SPELL_KNOCKBACK, true);
+						m_creature->CastSpell(pConsumeTarget, SPELL_SPIT_OUT, true);
 
 				m_bPlayerConsumed = false;
 			}
