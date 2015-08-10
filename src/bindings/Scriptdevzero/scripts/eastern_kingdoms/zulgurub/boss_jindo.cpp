@@ -70,11 +70,11 @@ struct MANGOS_DLL_DECL boss_jindoAI : public ScriptedAI
         m_uiCurseCounter = 0;
         m_uiBrainWashTotemTimer = 20000;
         m_uiHealingWardTimer = 16000;
-        /*m_uiHexTimer = 8000;
+        m_uiHexTimer = 8000;
         m_uiDelusionsTimer = 10000;
         m_uiTeleportTimer = 5000;
         m_hexedTarget = NULL;
-        m_uiHexSaveTimer = 1000;*/
+        m_uiHexSaveTimer = 1000;
     }
 
     void Aggro(Unit* /*pWho*/)
