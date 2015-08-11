@@ -442,13 +442,14 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
                     if (pUnit && pUnit->GetOwner() != target && (!pPlayer || 
                         pPlayer->GetTeam() != target->GetTeam()))
                     {
-                        uint32 val = (uint32)(100.f * pUnit->GetHealth() / pUnit->GetMaxHealth()); 
+                        float precise_val = 100.f * pUnit->GetHealth() / pUnit->GetMaxHealth(); 
+                        uint32 val = floor(precise_val);
 
                         if (val > 0)
                             *data << val;
                         else if (val == 0) // If the mob is still alive but the health is rounded to 0 we send 1 %.
                         {
-                            if (pUnit->isAlive())
+                            if (precise_val > 0)
                             {
                                 *data << (uint32) 1;
                             }
