@@ -265,6 +265,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 		{
 			m_creature->SetVisibility(VISIBILITY_OFF);	
             m_creature->SetHealth(m_health);
+            m_creature->SetUInt32Value(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_NONE);
 		}
 		else if (Visible == 1)
 		{
@@ -273,6 +274,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             m_creature->SetVisibility(VISIBILITY_ON);
 			m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);			
             m_creature->RelocateCreature(-7991.48f, 920.19f, -52.91f, 0.f);
+            m_creature->SetHealth(m_health - globCounter * 0.05f * m_creature->GetMaxHealth());
 
             if (m_creature->getVictim())
                 m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim());
@@ -285,10 +287,12 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         globs = floor(((float) m_creature->GetHealth() / (float) m_creature->GetMaxHealth()) / 0.05f);
         for (float angle = 0; angle < 2 * 3.141592654; angle += 2 * 3.141592654 / globs)
         {
-            Unit* pSummon = m_creature->SummonCreature(NPC_GLOB_OF_VISCIDUS, -7990.f + 50.f * cosf(angle),
+            m_creature->SummonCreature(NPC_GLOB_OF_VISCIDUS, -7990.f + 50.f * cosf(angle),
                                        925.f + 50.f * sinf(angle),-42.f, 0.f,
                                        TEMPSUMMON_DEAD_DESPAWN, 0, true);
         }
+
+        globCounter = 0;
 	}
 
 	void JustSummoned(Creature* pSummoned)
@@ -304,23 +308,14 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         {
             pSummoned->CastSpell(m_creature, SPELL_REJOIN_VISCIDUS, true);
 			pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
-            pSummoned->ForcedDespawn(globCounter >= globs ? 50 : 2000);
-            ++globCounter;
-
-    //        if (globCounter >= globs)
-    //        {
-				//m_creature->SetObjectScale(Scale-(3.f/globCounter));
-    //            SetVisible(1);
-    //            m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
-    //        }
+            pSummoned->ForcedDespawn(50);
         }
 	}
 	
     void SummonedCreatureJustDied(Creature* pSummoned)
     {
         if (pSummoned->GetEntry() == NPC_GLOB_OF_VISCIDUS)
-            //m_creature->DealDamage(m_creature, m_creature->GetMaxHealth() * 0.05f, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
-			m_creature->SetHealth(m_creature->GetHealth()*0.95f);
+            ++globCounter;
     }
 
     void UpdateAI(const uint32 uiDiff)
