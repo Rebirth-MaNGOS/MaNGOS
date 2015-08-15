@@ -44,6 +44,7 @@ enum
     NPC_OURO_SCARAB         = 15718,
     NPC_OURO_SPAWNER        = 15957,
     NPC_OURO_TRIGGER        = 15717,
+	NPC_DIRT_MOUND			= 15712,
 
 	BOSS_STATE_NORMAL           = 0,
     BOSS_STATE_SUBMERGE         = 1,
@@ -75,6 +76,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 	bool m_bReSubmerge;
 	bool m_bCanSubmerge;
 
+	GUIDList m_lDirtMounds;
+
     void Reset()
     {
 		m_bCanSubmerge = false;
@@ -95,6 +98,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             m_bossState = BOSS_STATE_NORMAL;
         m_bEnraged = false;
 		m_creature->setFaction(14);
+		RemoveDirtMounds(1);			// remove all that would be up after a wipe
+		m_lDirtMounds.clear();
     }
 
 	Player* DoGetPlayerInMeleeRangeByThreat()
@@ -142,6 +147,48 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 		m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
     }
 
+	void SpawnDirtMound()
+	{
+		float fX, fY, fZ;
+		m_creature->GetPosition(fX, fY, fZ);
+		for(uint8 i = 0; i < 2; ++i)
+		{
+			if(Creature* pDirtMound = m_creature->SummonCreature(NPC_DIRT_MOUND, fX+urand(-5,5),fY+urand(-5,5),fZ, 0,TEMPSUMMON_TIMED_DESPAWN,45000,false))
+			{
+				pDirtMound->SetRespawnDelay(-10);				// to stop them from randomly respawning
+				m_lDirtMounds.push_back(pDirtMound->GetObjectGuid());
+			}
+		}
+	}
+
+	void RemoveDirtMounds(int action = 0)		// just the basics for now
+	{
+		for (GUIDList::iterator itr = m_lDirtMounds.begin(); itr != m_lDirtMounds.end(); itr++)
+		{
+			if (Creature* pDirtMound = m_creature->GetMap()->GetCreature(*itr))
+				if (pDirtMound->isAlive())
+				{
+					if(action == 0)
+					{
+						float fX, fY, fZ;
+						pDirtMound->GetPosition(fX, fY, fZ);
+						for(uint8 i = 0; i < 5; ++i)
+						{
+							if(Creature* pScarab = m_creature->SummonCreature(NPC_OURO_SCARAB, fX+urand(-5,5),fY+urand(-5,5),fZ, 0,TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,15000,false))
+							{
+								if(Player* pPlayer = GetRandomPlayerInCurrentMap(50))
+									pScarab->AddThreat(pPlayer,100000.0f);
+								pScarab->SetRespawnDelay(-10);				// to stop them from randomly respawning
+							}
+						}	
+						pDirtMound->ForcedDespawn();		// should be instant despawn?
+					}
+					else
+						pDirtMound->ForcedDespawn();		// should be instant despawn?
+				}
+		}
+	}
+
 	void Submerge()			// not doing submerge animation, it's right emote tho
 	{           
 		// Submerge
@@ -152,10 +199,11 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 		m_creature->SetVisibility(VISIBILITY_OFF);
 		m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
 		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-		m_creature->setFaction(34);
+		m_creature->setFaction(34); // not quite friendly because it stops combat if he is 35
 
 		m_bossState = BOSS_STATE_SUBMERGE;
 		m_uiBackTimer = 10000;//urand(30000, 45000);			// for testing purposes, change back after
+		SpawnDirtMound();
 	}      
 
 	void DoSubmergeState(uint32 uiDiff)
@@ -191,6 +239,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             m_uiSubmergeTimer = 90000;//urand(60000, 120000);
 			
 			m_creature->UpdateVisibilityAndView();
+			RemoveDirtMounds(0);
         }
         else
             m_uiBackTimer -= uiDiff;
@@ -325,11 +374,83 @@ CreatureAI* GetAI_boss_ouro(Creature* pCreature)
     return new boss_ouroAI(pCreature);
 }
 
+struct MANGOS_DLL_DECL mob_dirt_moundAI : public ScriptedAI				// should they behave like the clouds on nightmare dragons?
+{
+    mob_dirt_moundAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		m_creature->CastSpell(m_creature,SPELL_DIRTMOUND_PASSIVE,true);
+		Reset(); 
+	}
+
+    uint32 m_uiRoamTimer;
+	bool m_bCanChangeTarget;
+	uint32 m_uiChangeTargetTimer;
+
+    void Reset()
+    {
+        m_uiRoamTimer = 0;
+		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+    }
+
+	void MoveInLineOfSight(Unit* /*pWho*/)
+    {
+        // Must to be empty to ignore aggro
+    }
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == 26092 && pTarget->GetTypeId() == TYPEID_PLAYER && m_bCanChangeTarget)		
+			ChangeTarget();
+	}
+
+	void ChangeTarget()
+	{
+		if (Unit* pTarget = GetRandomPlayerInCurrentMap(50))
+		{
+			DoResetThreat();
+			m_creature->AddThreat(pTarget,100000.0f);
+			m_creature->SelectHostileTarget();
+			m_uiChangeTargetTimer = 5000;
+			m_bCanChangeTarget = false;
+			m_uiRoamTimer = urand(20000, 30000);			// Reset the 30 sec timer in case the change is due to hitting a player
+		}
+	}
+	
+    void UpdateAI(uint32 const uiDiff)
+    {
+        if (m_uiRoamTimer < uiDiff)
+        {
+			ChangeTarget();
+            m_uiRoamTimer = urand(20000, 30000);
+        }
+        else
+            m_uiRoamTimer -= uiDiff;
+
+		if (!m_bCanChangeTarget)
+		{
+			if (m_uiChangeTargetTimer < uiDiff)
+				m_bCanChangeTarget = true;
+			else
+				m_uiChangeTargetTimer -= uiDiff;
+		}
+    }
+};
+
+CreatureAI* GetAI_mob_dirt_mound(Creature* pCreature)
+{
+    return new mob_dirt_moundAI(pCreature);
+}
+
 void AddSC_boss_ouro()
 {
     Script* newscript;
     newscript = new Script;
     newscript->Name = "boss_ouro";
     newscript->GetAI = &GetAI_boss_ouro;
+    newscript->RegisterSelf();
+
+	newscript = new Script;
+    newscript->Name = "mob_dirt_mound";
+    newscript->GetAI = &GetAI_mob_dirt_mound;
     newscript->RegisterSelf();
 }
