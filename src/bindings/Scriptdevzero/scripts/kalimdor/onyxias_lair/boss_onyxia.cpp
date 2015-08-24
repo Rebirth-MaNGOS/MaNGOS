@@ -92,6 +92,7 @@ struct MANGOS_DLL_DECL boss_onyxiaAI : public ScriptedAI
     {
 		m_baseRunSpeed = m_creature->GetSpeedRate(MOVE_RUN);
         m_pInstance = (instance_onyxias_lair*)pCreature->GetInstanceData();
+		m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_FIRE, true);
         Reset();
     }
 
