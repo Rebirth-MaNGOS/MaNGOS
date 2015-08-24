@@ -503,7 +503,15 @@ void ThreatManager::tauntApply(Unit* pTaunter)
             // Ok, temp threat is unused
             if(ref->getTempThreatModifyer() == 0.0f)
             {
-                ref->setTempThreat(getCurrentVictim()->getThreat());
+				if(Unit* pCurrentVictim = getCurrentVictim()->getSource)
+				{
+					Creature* pCreature  = dynamic_cast<Creature*>(getOwner());
+
+					if (pCreature && !pCreature->CanReachWithMeleeAttack(pCurrentVictim))
+						ref->setTempThreat(getCurrentVictim()->getThreat() * 1.3);
+					else
+						ref->setTempThreat(getCurrentVictim()->getThreat() * 1.1);
+				}
             }
         }
     }
