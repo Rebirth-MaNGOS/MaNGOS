@@ -4050,7 +4050,7 @@ void Spell::EffectTaunt(SpellEffectIndex /*eff_idx*/)
     {
         float current_caster_threat = unitTarget->getThreatManager().getThreat(m_caster);
         unitTarget->getThreatManager().addThreatDirectly(m_caster, -current_caster_threat);												// Remove the caster's current threat.
-        unitTarget->getThreatManager().addThreatDirectly(m_caster,unitTarget->getThreatManager().getCurrentVictim()->getThreat());		// Add the current target's threat to the caster.
+        unitTarget->getThreatManager().addThreatDirectly(m_caster,unitTarget->getThreatManager().getCurrentVictim()->getThreat() * 1.1000001f);		// Add the current target's threat to the caster and 10% extra so we can hold aggro.);		// Add the current target's threat to the caster.
     }
 }
 
