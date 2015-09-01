@@ -662,6 +662,12 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
         {
             BattleGround* bg = *itr; //we have to store battleground pointer here, because when battleground is full, it is removed from free queue (not yet implemented!!)
             // and iterator is invalid
+            
+            // Only allow invites of more players if there is at least one group of players per team waiting for invites.
+            size_t allianceGroups = m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_ALLIANCE].size() + m_QueuedGroups[bracket_id][BG_QUEUE_PREMADE_ALLIANCE].size();
+            size_t hordeGroups = m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_HORDE].size() + m_QueuedGroups[bracket_id][BG_QUEUE_PREMADE_HORDE].size();
+            if (hordeGroups < 1 || allianceGroups < 1)
+                continue;
 
             // clear selection pools
             m_SelectionPools[BG_TEAM_ALLIANCE].Init();
