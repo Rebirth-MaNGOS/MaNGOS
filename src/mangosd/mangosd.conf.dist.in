@@ -391,6 +391,7 @@ GmLogPerAccount = 0
 RaLogFile = ""
 LogColors = ""
 WardenLogFile = ""
+BGQueueLogFile = "BGQueue.log"
 
 ###################################################################################################################
 # SERVER SETTINGS
