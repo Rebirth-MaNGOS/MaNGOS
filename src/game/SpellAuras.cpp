@@ -3507,10 +3507,12 @@ void Aura::HandleModStealth(bool apply, bool Real)
         if (Real && target->GetTypeId()==TYPEID_PLAYER && GetId() == 20580)
             target->RemoveAurasDueToSpell(21009);
 
-        // Remove vanish if stealth is removed FIX DIS
-        if (Real && target->GetTypeId()==TYPEID_PLAYER && GetId() == 1787)
-            target->RemoveAurasDueToSpell(11329);
-
+        // Remove vanish if stealth is removed
+        if (Real && target->GetTypeId()==TYPEID_PLAYER && GetId() == 1784||GetId() == 1785||GetId() == 1786||GetId() == 1787)
+		{ 
+			target->RemoveAurasDueToSpell(11327);
+			target->RemoveAurasDueToSpell(11329);
+		}
         // only at real aura remove of _last_ SPELL_AURA_MOD_STEALTH
         if (Real && !target->HasStealthAura())
         {
