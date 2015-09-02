@@ -96,7 +96,7 @@ void Pet::RemoveFromWorld()
 	Unit::RemoveFromWorld();
 }
 
-bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool current )
+bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool current, bool expectedDead )
 {
 	m_loading = true;
 
@@ -219,6 +219,33 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
 		petlevel=owner->getLevel();
 		break;
 	case HUNTER_PET:
+        // Check the pets saved health. If it was dead when saved it will have
+        // a health value of 1. If that's the case we don't allow call pet.
+        if (expectedDead)
+        {
+            if (fields[13].GetUInt32() != 1)
+            {
+                WorldSession* session = owner->GetSession();
+                if (session)
+                    session->SendNotification("Your pet is not dead");
+
+                delete result;
+                return false;
+            }
+        }
+        else
+        {
+            if (fields[13].GetUInt32() == 1)
+            {
+                WorldSession* session = owner->GetSession();
+                if (session)
+                    session->SendNotification("Your pet is dead");
+
+                delete result;
+                return false;
+            }
+        }
+
 		// loyalty
 		SetByteValue(UNIT_FIELD_BYTES_1, 1, fields[8].GetUInt32());
 
@@ -352,6 +379,29 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
 
 	SynchronizeLevelWithOwner();
 	return true;
+}
+
+bool Pet::IsPetDeadInDB(Player* owner)
+{
+    uint32 ownerid = owner->GetGUIDLow();
+
+    QueryResult* result = CharacterDatabase.PQuery("SELECT curhealth "
+		"FROM character_pet WHERE owner = '%u' AND (slot = '%u' OR slot > '%u') ",
+		ownerid,PET_SAVE_AS_CURRENT,PET_SAVE_LAST_STABLE_SLOT);
+
+	if(!result)
+		return false;
+
+	Field *fields = result->Fetch();
+
+    uint32 health = fields[0].GetUInt32();
+
+    delete result;
+
+    if (health == 1)
+        return true;
+
+    return false;
 }
 
 void Pet::SavePetToDB(PetSaveMode mode)

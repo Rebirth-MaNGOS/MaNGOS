@@ -5807,8 +5807,24 @@ void Spell::EffectSummonDeadPet(SpellEffectIndex /*eff_idx*/)
         return;
     Player *_player = (Player*)m_caster;
     Pet *pet = _player->GetPet();
+
+    // Handle reviving a pet that isn't in the world.
     if(!pet)
+    {
+        Pet* NewSummon = new Pet;
+
+        // petentry==0 for hunter "call pet" (current pet summoned if any)
+        if (NewSummon->LoadPetFromDB((Player*)m_caster, 0, 0, false, true))
+        {
+            NewSummon->SetHealth(uint32(NewSummon->GetMaxHealth() * (float(damage) / 100)));
+            return;
+        }
+
+        // If we failed loading a dead pet we delete the newly created pet.
+        delete NewSummon;
         return;
+    }
+
     if(pet->isAlive())
         return;
     if(damage < 0)

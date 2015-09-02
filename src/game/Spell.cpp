@@ -4798,19 +4798,24 @@ SpellCastResult Spell::CheckCast(bool strict)
                 return SPELL_FAILED_BAD_TARGETS;
         }
 
-        // check pet presents
-        for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
+        // Revive Pet shouldn't check if the pet is actually in the world
+        // if the pet is dead and despawned it should still need to be revived.
+        if (m_spellInfo->Id != 982)
         {
-            if(m_spellInfo->EffectImplicitTargetA[j] == TARGET_PET)
+            // check pet presents
+            for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
             {
-                if(!m_caster->GetPet())
+                if(m_spellInfo->EffectImplicitTargetA[j] == TARGET_PET)
                 {
-                    if(m_triggeredByAuraSpell)              // not report pet not existence for triggered spells
-                        return SPELL_FAILED_DONT_REPORT;
-                    else
-                        return SPELL_FAILED_NO_PET;
+                    if(!m_caster->GetPet())
+                    {
+                        if(m_triggeredByAuraSpell)              // not report pet not existence for triggered spells
+                            return SPELL_FAILED_DONT_REPORT;
+                        else
+                            return SPELL_FAILED_NO_PET;
+                    }
+                    break;
                 }
-                break;
             }
         }
 
@@ -5522,7 +5527,21 @@ SpellCastResult Spell::CheckCast(bool strict)
         {
             Creature *pet = m_caster->GetPet();
             if(!pet)
+            {
+                Player* pPlayer = dynamic_cast<Player*>(m_caster);
+                // We do allow Revive Pet if the pet is despawned.
+                if (pPlayer && m_spellInfo->Id == 982)
+                {
+                    if (!Pet::IsPetDeadInDB(pPlayer))
+                    {
+                        return SPELL_FAILED_ALREADY_HAVE_SUMMON;
+                    }
+                    else
+                        break;
+                }
+
                 return SPELL_FAILED_NO_PET;
+            }
 
             if(pet->isAlive())
                 return SPELL_FAILED_ALREADY_HAVE_SUMMON;
