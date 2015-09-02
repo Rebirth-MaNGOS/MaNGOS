@@ -85,6 +85,16 @@ void PetAI::AttackStart(Unit *u)
         //i_pet->Clear();
         m_creature->GetMotionMaster()->MoveChase(u);
         inCombat = true;
+
+        // Make sure that pets attacking players of the opposite faction will
+        // mark themselves and their owner for PvP.
+        Player* pEnemy = dynamic_cast<Player*>(u);
+        Player* owner = dynamic_cast<Player*>(m_creature->GetOwner());
+        if (owner && pEnemy && pEnemy->GetTeam() != owner->GetTeam())
+        {
+            m_creature->SetPvP(true);
+            owner->SetPvP(true);
+        }
     }
 }
 
