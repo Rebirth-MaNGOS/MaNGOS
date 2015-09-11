@@ -26,6 +26,7 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "IVMapManager.h"
 
 #define SMALL_ALPHA 0.05f
 
@@ -104,15 +105,17 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
                 if (terrain)
                 {
                     float ground_z = pCOwner->GetMap()->GetTerrain()->GetHeight(x, y, MAX_HEIGHT);
-                    float floor_z = pCOwner->GetMap()->GetTerrain()->GetHeight(x, y, z);
+                    float floor_z = pCOwner->GetMap()->GetTerrain()->GetHeight(x, y, z, true, 100.f);
 
                     if(fabs(z - floor_z) < fabs(ground_z - z))
                     {
-                        z = floor_z;
+                        if (floor_z != VMAP_INVALID_HEIGHT_VALUE)
+                            z = floor_z;
                     }
                     else
                     {
-                        z = ground_z;
+                        if (ground_z != VMAP_INVALID_HEIGHT_VALUE)
+                            z = ground_z;
                     }
                    // float ground = 0;
                    // ground = terrain->GetWaterOrGroundLevel(x, y, z, nullptr, false);
