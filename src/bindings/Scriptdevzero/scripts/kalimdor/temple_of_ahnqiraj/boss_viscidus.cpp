@@ -82,6 +82,9 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     uint32 m_uiPoisonShockTimer;
     uint32 m_uiPoisonVolleyTimer;
     uint32 m_uiToxicCloudTimer;
+    uint32 m_uiPoisonBoltCastTimer;
+
+    ObjectGuid m_PoisonTargetGuid;
 
     float globs;
     uint32 globCounter;
@@ -98,6 +101,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         m_uiPoisonVolleyTimer = 10000;									// timer confirmed
         m_uiPoisonShockTimer = 11000;
         m_uiToxicCloudTimer = urand(30000,40000);
+        m_uiPoisonBoltCastTimer = 0;
         m_uiThawTimer = 20000;
         m_bSummoned = false;
         globCounter = 0;
@@ -366,6 +370,30 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
         if (m_bCanDoDamage)
         {
+            if (m_uiPoisonBoltCastTimer)
+            {
+                if (m_uiPoisonBoltCastTimer > uiDiff)
+                {
+                    m_uiPoisonBoltCastTimer -= uiDiff;
+
+                    Unit* pTarget = m_creature->GetMap()->GetUnit(m_PoisonTargetGuid);
+                    if (m_uiPoisonBoltCastTimer < 500 && pTarget)
+                    {
+                        m_creature->SetTargetGuid(pTarget->GetObjectGuid());
+                        m_creature->SetFacingToObject(pTarget);
+                        return;
+                    }
+                }
+                else
+                {
+                    if (m_creature->SelectHostileTarget() && m_creature->getVictim())
+                        m_creature->SetTargetGuid(m_creature->getVictim()->GetObjectGuid());
+
+                    m_uiPoisonBoltCastTimer = 0;
+                    return;
+                }
+            }
+
             //Return since we have no target
             if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
                 return;
@@ -391,8 +419,11 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
                 if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
                 {
                     m_creature->CastSpell(pTarget, SPELL_POISON_BOLT, true); 
+                    m_PoisonTargetGuid = pTarget->GetObjectGuid();
+                    m_uiPoisonBoltCastTimer = 2800;
                 }
                 m_uiToxicCloudTimer = urand(30000,40000);
+                return;
             }
             else
                 m_uiToxicCloudTimer -= uiDiff;
