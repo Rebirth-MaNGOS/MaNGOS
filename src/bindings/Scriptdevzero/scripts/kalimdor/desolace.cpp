@@ -626,7 +626,8 @@ struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
         targetY = 0;
         targetZ = 0;
         DoCast(m_creature, GHOST_VISUAL);
-        m_creature->setFaction(189);
+        //m_creature->setFaction(189);
+		m_creature->setFaction(35);
         m_creature->SetVisibility(VISIBILITY_OFF);
         m_creature->UpdateVisibilityAndView();
         trapDetected = false;
@@ -637,9 +638,9 @@ struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
         m_summonedTiemr = 0;
     }
 
-    void Aggro(Unit* /*pTarget*/)
+	void Aggro(Unit* /*pTarget*/)
     {
-        m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+		m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
     }
 
     void JustDied(Unit *pKiller)
@@ -655,7 +656,8 @@ struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
 
                     if(magramiAI)
                     {
-                        magramiAI->trapDetected = true;
+                        magramiAI->trapDetected = true;	
+						summonedGhost->setFaction(189);
                         summonedGhost->SetVisibility(VISIBILITY_ON);
                         summonedGhost->UpdateVisibilityAndView();
                         summonedGhost->SetSplineFlags(SPLINEFLAG_WALKMODE);
@@ -673,7 +675,8 @@ struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
         if(m_summonedTiemr)
         {
             if(m_summonedTiemr <= uiDiff)
-            {
+            {				
+				m_creature->setFaction(189);
                 m_creature->SetVisibility(VISIBILITY_ON);
                 m_creature->UpdateVisibilityAndView();
                 m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);
@@ -696,6 +699,7 @@ struct MANGOS_DLL_DECL mob_magrami_spectre : public ScriptedAI
                             targetX = ghostHandler->GetPositionX();
                             targetY = ghostHandler->GetPositionY();
                             targetZ = ghostHandler->GetPositionZ();
+							m_creature->setFaction(189);
                             m_creature->SetVisibility(VISIBILITY_ON);
                             m_creature->UpdateVisibilityAndView();
                             m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);
