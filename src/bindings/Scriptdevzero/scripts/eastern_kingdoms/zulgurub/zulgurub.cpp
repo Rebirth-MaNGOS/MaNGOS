@@ -489,6 +489,81 @@ CreatureAI* GetAI_mob_withered_mistress(Creature* pCreature)
 }
 
 /*######
+## npc_Gurubashi
+######*/
+
+struct MANGOS_DLL_DECL npc_GurubashiAI : public ScriptedAI
+{
+    npc_GurubashiAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	bool m_bMC;
+	ObjectGuid m_uiPlayerGUID;
+	uint32 m_uiMCTimer;
+
+    void Reset()
+    {
+    }
+	void DoMC(ObjectGuid pPlayerGUID)
+	{
+		if (!pPlayerGUID)
+            return;
+
+        m_uiPlayerGUID = pPlayerGUID;
+		
+		m_uiMCTimer = 3000;
+	}
+
+	void handleMC()
+	{
+		Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+		if(pPlayer && m_creature && pPlayer->IsWithinDistInMap(m_creature,50.f,true))
+			m_creature->CastSpell(pPlayer,24178,true);
+	}
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiMCTimer <= uiDiff)
+		{
+			if(m_bMC)
+			{
+				handleMC();
+				m_bMC = false;
+				return;			
+			}
+		}
+		else
+			m_uiMCTimer -= uiDiff;
+	}
+};
+
+CreatureAI* GetAI_npc_Gurubashi(Creature* pCreature)
+{
+    return new npc_GurubashiAI(pCreature);
+}
+
+/*######
+## go_jinxed_hoodoo_pile
+######*/
+
+bool GOUse_go_jinxed_hoodoo_pile(Player* pPlayer, GameObject* pGo)
+{
+	if(Creature* pGurubashi = pPlayer->SummonCreature(15047, 0,0,0,0,TEMPSUMMON_TIMED_DESPAWN,30000,false))
+	{
+		if (npc_GurubashiAI* pAI = dynamic_cast<npc_GurubashiAI*>(pGurubashi->AI()))
+		{
+			int r = urand(1,4);		// 75% chance to MC the player
+				if(r != 4)
+					pAI->DoMC(pPlayer->GetObjectGuid());
+			return true;
+		}
+	}
+
+    return false;
+}
+
+/*######
 ## AddSC
 ######*/
 
@@ -520,4 +595,14 @@ void AddSC_zulgurub()
 	pNewScript->Name = "mob_withered_mistress";
 	pNewScript->GetAI = GetAI_mob_withered_mistress;
 	pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+	pNewScript->Name = "npc_Gurubashi";
+	pNewScript->GetAI = GetAI_npc_Gurubashi;
+	pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "go_jinxed_hoodoo_pile";
+    pNewScript->pGOUse = &GOUse_go_jinxed_hoodoo_pile;
+    pNewScript->RegisterSelf();
 }
