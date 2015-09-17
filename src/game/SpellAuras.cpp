@@ -943,7 +943,12 @@ void Aura::HandleAddModifier(bool apply, bool Real)
             for (uint8 i = 0; i <= EFFECT_INDEX_2; i++)
                 GetTarget()->RemoveAura(11129, (SpellEffectIndex) i);
         }
-
+		// If Barkskin is removed, the damage reduction should be removed aswell
+        if (!GetTarget()->HasAura(22812))
+		{
+			for (uint8 i = 0; i <= EFFECT_INDEX_2; i++)
+				GetTarget()->RemoveAura(22839, (SpellEffectIndex) i);
+		}
     }
 
 

@@ -3186,6 +3186,10 @@ void Spell::cast(bool skipCheck)
 
     case SPELLFAMILY_WARRIOR:
         break;
+	case SPELLFAMILY_DRUID:
+		if(m_spellInfo->SpellFamilyName == SPELLFAMILY_DRUID && m_spellInfo->Id == 22812)		// barkskin and damage reduction
+            AddPrecastSpell(22839);   
+		break;
     case SPELLFAMILY_PRIEST:
     {
         // Power Word: Shield
