@@ -1955,6 +1955,7 @@ void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
             return;
 
         ((Player*)unitTarget)->TeleportToHomebind(unitTarget==m_caster ? TELE_TO_SPELL : 0);
+		m_caster->CastSpell(m_caster,2479,true);	// Honorless target should be applied after using HS
         return;
     }
     case TARGET_AREAEFFECT_INSTANT:                     // in all cases first TARGET_TABLE_X_Y_Z_COORDINATES
