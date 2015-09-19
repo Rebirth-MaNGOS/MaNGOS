@@ -344,6 +344,13 @@ bool IsNoStackAuraDueToAura(uint32 spellId_1, uint32 spellId_2)
         (spellInfo_2->Id == 11334 && spellInfo_1->Id == 18192) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 11334))
         return false;
 
+    // Flask of Supreme Power should stack with (Greater) Arcane Elixir.
+    if ((spellInfo_1->Id == 17628  && spellInfo_2->Id == 17539) ||
+        (spellInfo_2->Id == 17628  && spellInfo_1->Id == 17539) ||
+        (spellInfo_2->Id == 17628  && spellInfo_1->Id == 11390) ||
+        (spellInfo_1->Id == 17628  && spellInfo_2->Id == 11390))
+        return false;
+
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
     {
         for (int32 j = 0; j < MAX_EFFECT_INDEX; ++j)
@@ -2092,6 +2099,13 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     if ((spellInfo_1->Id == 3166 && spellInfo_2->Id == 23028) || 
         (spellInfo_2->Id == 3166 && spellInfo_1->Id == 23028))
             return true;
+
+    // Flask of Supreme Power should stack with (Greater) Arcane Elixir.
+    if ((spellInfo_1->Id == 17628  && spellInfo_2->Id == 17539) ||
+        (spellInfo_2->Id == 17628  && spellInfo_1->Id == 17539) ||
+        (spellInfo_2->Id == 17628  && spellInfo_1->Id == 11390) ||
+        (spellInfo_1->Id == 17628  && spellInfo_2->Id == 11390))
+        return false;
 
     // Specific spell family spells
     switch(spellInfo_1->SpellFamilyName)
