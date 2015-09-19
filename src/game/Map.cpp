@@ -1389,6 +1389,10 @@ DungeonMap::DungeonMap(uint32 id, time_t expiry, uint32 InstanceId)
     if (!result)
         return;
 
+    // TODO: Move the loading of entire instances to some other place.
+    // It seems loading all creatures in the contstructor is causing mobs
+    // to not get their instance pointer.
+/*
     do
     {
         Field* fields = result->Fetch();
@@ -1400,6 +1404,7 @@ DungeonMap::DungeonMap(uint32 id, time_t expiry, uint32 InstanceId)
         Cell cell(pair);
         LoadGrid(cell);
     } while (result->NextRow());
+*/
 
     delete result;
 }
