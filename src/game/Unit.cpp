@@ -3958,6 +3958,7 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
                     case 10211:
                     case 10212:
                     case 25345:                 // Rank 8
+                    case 23577:                 // Hunter Expose Weakness
                         break;
                     default:
                         RemoveSpellAuraHolder(foundHolder,AURA_REMOVE_BY_STACK);
