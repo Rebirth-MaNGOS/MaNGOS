@@ -6124,14 +6124,13 @@ bool Spell::CheckBuffOverwrite(SpellEntry const* spellProto)
 
                     for (Aura* aura : list)
                     {
-/*
                         // If the buff is supposed to stack we ignore it.
                         if (!sSpellMgr.IsNoStackSpellDueToSpell(aura->GetId(), spellProto->Id))
                             continue;
 
                         if (!IsNoStackAuraDueToAura(aura->GetId(), spellProto->Id))
                             continue;
-*/
+
                         Modifier* pMod = aura->GetModifier();
 
                         // Make sure that the buffs affect the same stats.
