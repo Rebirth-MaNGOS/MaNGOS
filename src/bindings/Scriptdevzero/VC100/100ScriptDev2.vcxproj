@@ -187,6 +187,8 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImportLibrary>$(OutDir)mangosscript.lib</ImportLibrary>
+      <AdditionalOptions>/SAFESH:NO %(AdditionalOptions)</AdditionalOptions>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -482,6 +484,7 @@
     <ClCompile Include="..\scripts\kalimdor\temple_of_ahnqiraj\boss_viscidus.cpp" />
     <ClCompile Include="..\scripts\kalimdor\temple_of_ahnqiraj\instance_temple_of_ahnqiraj.cpp" />
     <ClCompile Include="..\scripts\kalimdor\temple_of_ahnqiraj\mob_anubisath_sentinel.cpp" />
+    <ClCompile Include="..\scripts\kalimdor\temple_of_ahnqiraj\temple_of_ahnqiraj.cpp" />
     <ClCompile Include="..\scripts\kalimdor\the_barrens.cpp" />
     <ClCompile Include="..\scripts\kalimdor\thousand_needles.cpp" />
     <ClCompile Include="..\scripts\kalimdor\thunder_bluff.cpp" />
@@ -495,6 +498,7 @@
     <ClCompile Include="..\scripts\kalimdor\zulfarrak\boss_zum_rah.cpp" />
     <ClCompile Include="..\scripts\kalimdor\zulfarrak\instance_zulfarrak.cpp" />
     <ClCompile Include="..\scripts\kalimdor\zulfarrak\zulfarrak.cpp" />
+    <ClCompile Include="..\scripts\world\ahnqiraj_turnin_scripts.cpp" />
     <ClCompile Include="..\scripts\world\areatrigger_scripts.cpp" />
     <ClCompile Include="..\scripts\world\bosses_ancient_leaf_demons.cpp" />
     <ClCompile Include="..\scripts\world\bosses_emerald_dragons.cpp" />
@@ -553,6 +557,8 @@
     <ClInclude Include="..\scripts\kalimdor\temple_of_ahnqiraj\temple_of_ahnqiraj.h" />
     <ClInclude Include="..\scripts\kalimdor\wailing_caverns\wailing_caverns.h" />
     <ClInclude Include="..\scripts\kalimdor\zulfarrak\zulfarrak.h" />
+    <ClInclude Include="..\scripts\world\ahnqiraj-event\event_defines.h" />
+    <ClInclude Include="..\scripts\world\ahnqiraj_turnin_defines.h" />
     <ClInclude Include="..\system\revision_nr.h" />
     <ClInclude Include="..\system\revision_sql.h" />
     <ClInclude Include="..\system\ScriptLoader.h" />

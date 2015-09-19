@@ -332,7 +332,7 @@ struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
         std::list<Player*> lPlayers;
 
         ObjectGuid m_uiMaxAlonePlayerGUID;
-        float  m_fMaxAlonePlayerDist  = 8;			// 0 before, now spreading within 8yrds is ok, else he charges the player that is alone
+        float  m_fMaxAlonePlayerDist  = 4;			// 0 before, now spreading within 8yrds is ok, else he charges the player that is alone
 
         GUIDVector vGuids;
         m_creature->FillGuidsListFromThreatList(vGuids);

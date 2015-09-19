@@ -16,7 +16,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 file(GLOB_RECURSE game_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp *.h)
-find_package(Boost COMPONENTS thread system REQUIRED)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}

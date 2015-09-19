@@ -503,8 +503,147 @@ enum eYehkinya
 {
     SPELL_CREATE_ITEM_YEHKINYAS_SCROLL    = 12998,
     ITEM_YEHKINYAS_SCROLL                 = 10818,
-    QUEST_THE_GOD_HAKKAR                  = 3528
+    QUEST_THE_GOD_HAKKAR                  = 3528,
+	QUEST_ID_CONFRONT_YEHKINYA			  = 8181,
+	YEHKINYA_SAY_1						  = -1720217,
+	YEHKINYA_SAY_2						  = -1720218
 };
+
+struct Loc
+{
+    float x, y, z;
+};
+
+static Loc Move[]=
+{
+    {-6907.f,-4843.f,8.37f},
+	{-6909.f,-4849.f,8.29f},
+	{-6909.f,-4855.f,14.29f},
+	{-6904.f,-4955.f,16.37f}
+};
+
+struct MANGOS_DLL_DECL npc_yehkinyaAI : public ScriptedAI
+{
+    npc_yehkinyaAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro8181;
+
+	ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+	{
+		m_bOutro8181 = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+		m_uiPlayerGUID.Clear();
+		m_creature->SetDisplayId(7902);
+		m_creature->UpdateModelData();
+		m_creature->SetSplineFlags(SPLINEFLAG_WALKMODE);
+	}
+
+	void StartOutro(ObjectGuid pPlayerGUID, uint32 uiQuestId = 0)
+	{		
+		if (uiQuestId == 8181)
+		{
+			if (!pPlayerGUID)
+				return;
+
+			m_uiPlayerGUID = pPlayerGUID;
+			m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+			
+			if(Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
+				DoScriptText(YEHKINYA_SAY_1, m_creature, pPlayer);
+			m_bOutro8181 = true; 
+			m_uiSpeechTimer = 3000;
+			m_uiSpeechStep = 1;
+			
+		}
+	}
+
+	void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId)
+    {
+       if(uiPointId == 3)
+		   m_creature->GetMotionMaster()->MovePoint(4, Move[3].x, Move[3].y, Move[3].z, false);
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro8181)							// handle RP at quest end 8181
+		{
+			if(!m_uiSpeechStep)
+				return;
+		
+			if(m_uiSpeechTimer <= uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {		
+					case 1:
+						m_creature->GetMotionMaster()->MovePoint(1, Move[0].x, Move[0].y, Move[0].z);
+						m_uiSpeechTimer = 2000;
+                        break;
+					case 2:
+						m_creature->HandleEmote(EMOTE_ONESHOT_ROAR);
+						m_uiSpeechTimer = 2000;
+                        break;
+					case 3:						
+						m_creature->GetMotionMaster()->MovePoint(2, Move[1].x, Move[1].y, Move[1].z);						
+						m_uiSpeechTimer = 3000;
+                        break;
+                    case 4:
+						m_creature->SetDisplayId(10991);
+						m_creature->UpdateModelData();
+						m_uiSpeechTimer = 5000;
+                        break;
+					case 5:
+						m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+						m_creature->SetSplineFlags(SPLINEFLAG_FLYING);
+						m_creature->GetMotionMaster()->MovePoint(3, Move[2].x, Move[2].y, Move[2].z,false);
+						m_uiSpeechTimer = 5000;
+                        break;
+					case 6:
+						DoScriptText(YEHKINYA_SAY_2, m_creature, NULL);
+						m_creature->ForcedDespawn(10000);
+                        m_uiSpeechTimer = 9990;
+                        break;
+					case 7:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro8181 = false;
+						break;
+					/*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_yehkinya(Creature* pCreature)
+{
+    return new npc_yehkinyaAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_yehkinya(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_CONFRONT_YEHKINYA)
+    {
+		if (npc_yehkinyaAI* pYehkinyaAI = dynamic_cast<npc_yehkinyaAI*>(pCreature->AI()))
+			pYehkinyaAI->StartOutro(pPlayer->GetObjectGuid(), 8181);
+	}
+	return true;
+}
 
 bool GossipHello_npc_yehkinya(Player* pPlayer, Creature* pCreature)
 {
@@ -719,6 +858,8 @@ void AddSC_tanaris()
 
     pNewscript = new Script;
     pNewscript->Name = "npc_yehkinya";
+	pNewscript->GetAI = &GetAI_npc_yehkinya;
+	pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_yehkinya;
     pNewscript->pGossipHello =  &GossipHello_npc_yehkinya;
     pNewscript->pGossipSelect = &GossipSelect_npc_yehkinya;
     pNewscript->RegisterSelf();

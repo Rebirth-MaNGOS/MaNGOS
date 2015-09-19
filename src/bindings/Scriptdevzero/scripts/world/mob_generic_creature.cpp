@@ -213,6 +213,99 @@ CreatureAI* GetAI_mob_schnake(Creature* pCreature)
 	return new mob_schnakeAI(pCreature);
 }
 
+enum resonating_crystal
+{
+    MOB_ERODED_ANUBISATH = 15810,
+    MOB_MINOR_ANUBISATH = 15807,
+    MOB_ANUBISATH = 15751,
+    MOB_GREATER_ANUBISATH = 15754,
+    MOB_SUPREME_ANUBISATH = 15758,
+    MOB_COLOSSAL_ANUBISATH = 15743,
+
+    CREATURE_OF_NIGHTMARE = 25806,
+};
+
+static uint32 m_AnubisathTypes[6] = {
+    MOB_ERODED_ANUBISATH,
+    MOB_MINOR_ANUBISATH,
+    MOB_ANUBISATH,
+    MOB_GREATER_ANUBISATH,
+    MOB_SUPREME_ANUBISATH,
+    MOB_COLOSSAL_ANUBISATH
+};
+
+struct MANGOS_DLL_DECL trigger_resonating_crystal : public ScriptedAI
+{
+	trigger_resonating_crystal(Creature* pCreature) : ScriptedAI(pCreature)
+	{
+		Reset();
+	}
+
+    uint32 m_McTimer;
+
+	void Reset()
+	{
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        m_creature->SetVisibility(VISIBILITY_OFF);
+        m_creature->UpdateVisibilityAndView();
+        m_McTimer = 30000;
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+	{
+        if(m_McTimer)
+        {
+            if(m_McTimer <= uiDiff)
+            {
+
+                std::list<Creature*> l_Anubisath;
+                
+                for(int i = 0; i < 5; ++i)
+                {
+                    GetCreatureListWithEntryInGrid(l_Anubisath, m_creature, m_AnubisathTypes[i], 50.0f);
+
+                    if(!l_Anubisath.empty())
+                        break;
+                }
+
+                if(!l_Anubisath.empty())
+                {
+			        for (std::list<Creature*>::iterator iter = l_Anubisath.begin(); iter != l_Anubisath.end(); ++iter)
+			        {
+				        if (*iter)
+				        {
+					        Creature *pAnub = (*iter);
+
+                            if(pAnub && !pAnub->isDead() && pAnub->isInCombat() && pAnub->getVictim())
+                            {
+                                Unit *pTarget = pAnub->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+
+                                if(pTarget)
+                                {
+                                    pAnub->AI()->DoCastSpellIfCan(pTarget, CREATURE_OF_NIGHTMARE, CastFlags::CAST_TRIGGERED);
+                                    m_McTimer = 30000;
+                                    
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                m_McTimer = 30000;
+            }
+            else
+                m_McTimer -= uiDiff;
+        }
+
+	}
+};
+
+CreatureAI* GetAI_trigger_resonating_crystal(Creature* pCreature)
+{
+	return new trigger_resonating_crystal(pCreature);
+}
+
 void AddSC_generic_creature()
 {
     Script* pNewscript;
@@ -224,5 +317,10 @@ void AddSC_generic_creature()
 	pNewscript = new Script;
 	pNewscript->Name = "mob_schnake";
 	pNewscript->GetAI = &GetAI_mob_schnake;
+	pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+	pNewscript->Name = "trigger_resonating_crystal";
+	pNewscript->GetAI = &GetAI_trigger_resonating_crystal;
 	pNewscript->RegisterSelf();
 }

@@ -65,7 +65,8 @@ const int LogType_count = int(LogError) +1;
 
 Log::Log() :
     raLogfile(NULL), logfile(NULL), gmLogfile(NULL), charLogfile(NULL),
-    dberLogfile(NULL), wardenLogFile(NULL), m_colored(false), m_includeTime(false), m_gmlog_per_account(false)
+    dberLogfile(NULL), wardenLogFile(NULL),bgQueueLogFile(nullptr), 
+    m_colored(false), m_includeTime(false), m_gmlog_per_account(false)
 {
     Initialize();
 }
@@ -264,6 +265,7 @@ void Log::Initialize()
     raLogfile = openLogFile("RaLogFile",NULL,"a");
     worldLogfile = openLogFile("WorldLogFile","WorldLogTimestamp","a");
 	wardenLogFile = openLogFile("WardenLogFile", NULL, "a");
+    bgQueueLogFile = openLogFile("BGQueueLogFile", nullptr, "a");
 
     // Main log file settings
     m_includeTime  = sConfig.GetBoolDefault("LogTime", false);
@@ -921,5 +923,38 @@ void Log::outWarden(const char * str, ...)
         ss << buffer;
         
         m_LastWardenMessage = ss.str();
+    }
+}
+
+void Log::beginBGQueueEntry(std::string bgName, uint32 id)
+{
+    if (bgQueueLogFile)
+    {
+        fprintf(bgQueueLogFile, "----------------- %s (%u) - Invite Started! ----------------\n",
+                bgName.c_str(), id);
+        fflush(bgQueueLogFile);
+    }
+}
+
+void Log::endBGQueueEntry()
+{
+    if (bgQueueLogFile)
+    {
+        fprintf(bgQueueLogFile, "---------------------------- End ------------------------------\n");
+        fflush(bgQueueLogFile);
+    }
+}
+
+void Log::outBGQueue(uint32 userID, std::string ip, std::string character_name, std::string faction)
+{
+    if (bgQueueLogFile)
+    {
+        std::stringstream ss;
+
+        ss << GetTimestampStr();
+        ss << " " << userID  << ", " << ip << ", " << character_name << faction;
+        fprintf(bgQueueLogFile, "%s\n", ss.str().c_str());
+
+        fflush(bgQueueLogFile);
     }
 }

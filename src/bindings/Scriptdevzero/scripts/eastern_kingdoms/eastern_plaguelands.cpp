@@ -942,7 +942,7 @@ struct MANGOS_DLL_DECL mob_eris_havenfireAI : public ScriptedAI
         }
         else if (uiSummonId == NPC_SCOURGE_FOOTSOLDIER)
         {
-            uint8 uiRand = urand(2, 6);
+            uint8 uiRand = urand(3, 8);
             for (uint8 i = 0; i < uiRand; ++i)
             {
                 m_creature->GetRandomPoint(peasants_pos[i][0], peasants_pos[i][1], peasants_pos[i][2], 10.0f, fX, fY, fZ);
@@ -1118,6 +1118,15 @@ struct MANGOS_DLL_DECL mob_eris_havenfireAI : public ScriptedAI
 CreatureAI * GetAI_mob_eris_havenfire(Creature* pCreature)
 {
     return new mob_eris_havenfireAI(pCreature);
+}
+
+bool GossipHello_mob_eris_havenfire(Player* pPlayer, Creature* pCreature)
+{
+    if (pCreature->isQuestGiver() && pPlayer->HasAura(23101))//pPlayer->HasItemCount(18646,1,false))		// check for aura instead of the item
+        pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
+	
+	pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetObjectGuid());
+    return true;
 }
 
 bool QuestAccept_mob_eris_havenfire(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
@@ -1446,6 +1455,7 @@ void AddSC_eastern_plaguelands()
     pNewscript = new Script;
     pNewscript->Name = "mob_eris_havenfire";
     pNewscript->GetAI = &GetAI_mob_eris_havenfire;
+	pNewscript->pGossipHello = &GossipHello_mob_eris_havenfire;
     pNewscript->pQuestAcceptNPC = &QuestAccept_mob_eris_havenfire;
     pNewscript->RegisterSelf();
 

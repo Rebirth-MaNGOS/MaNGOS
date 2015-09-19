@@ -679,6 +679,433 @@ CreatureAI* GetAI_mob_phase_lasher(Creature* pCreature)
 	return new mob_phase_lasherAI(pCreature);
 }
 
+/*######
+## boss_mushgog
+######*/
+
+enum eMushgog
+{
+	SPELL_ENTANGLING_ROOTS	= 22127,
+	SPELL_THORN_VOLLEY_1	= 21749,
+	SPELL_SPORE				= 22948,
+	SPELL_SUMMON			= 22951,
+	SAY_KILLED				= -1720209,
+	GOBJ_DREAMFOIL			= 176584,
+	GOBJ_MOUNTAIN_SILVERSAGE= 180166,
+	GOBJ_PURPLE_LOTUS		= 142140
+};
+
+static Loc HerbSpawn[]=
+{
+    {-3701.0f, 1124.0f, 131.96f,0},
+    {-3687.0f, 1106.0f, 132.0f,0},
+	{-3699.0f, 1070.0f, 131.96f,0},
+	{-3715.0f, 1084.0f, 131.96f,0},
+	{-3743.0f, 1126.0f, 132.62f},
+	{-3725.0f, 1079.0f, 131.96f},
+	{-3799.0f, 1062.0f, 132.82f}
+};
+static const uint32 aHerbType[] = {GOBJ_DREAMFOIL,GOBJ_MOUNTAIN_SILVERSAGE,GOBJ_PURPLE_LOTUS,};
+
+struct MANGOS_DLL_DECL boss_mushgogAI : public ScriptedAI
+{
+	boss_mushgogAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiEntanglingRootsTimer;
+	uint32 m_uiThornVolleyTimer;
+	uint32 m_uiSummonTimer;
+
+	void Reset() 
+	{
+		m_uiEntanglingRootsTimer = urand(8000,18000);
+		m_uiThornVolleyTimer = urand(10000,15000);
+		m_uiSummonTimer = urand(15000,28000);
+		HandleArenaDoor(1);
+		//HandleHerbs();
+	}
+
+	void HandleArenaDoor(int action = 0)
+	{
+		if(GameObject* pDoor = m_creature->GetClosestGameObjectWithEntry(m_creature,179469,100.f))
+			if(action == 0)
+				pDoor->SetGoState(GO_STATE_READY);
+			else
+				pDoor->SetGoState(GO_STATE_ACTIVE);
+	}
+
+	void Aggro(Unit* pWho)
+    {
+		HandleArenaDoor(0);
+    }
+
+	void HandleHerbs()		// herbs are unlootable
+	{		
+		int HerbAmount = urand(1,3);
+
+		for(uint8 i = 0; i < HerbAmount; ++i) 
+		{
+			int SpawnPos = urand(0,6);		// let the herb be up for 7h maximum, so when the next ones spawn there's no herbs up already
+			if(GameObject* pHerb = m_creature->SummonGameObject(aHerbType[urand(0,2)],25200000, HerbSpawn[SpawnPos+urand(0,1)].x,HerbSpawn[SpawnPos+urand(0,1)].y,HerbSpawn[SpawnPos].z,0,GO_STATE_READY,0.f))
+			{
+				if (pHerb->getLootState() != GO_NOT_READY)
+					pHerb->SetLootState(GO_NOT_READY);			
+			}
+		}
+	}
+
+	void JustDied(Unit* /*pKiller*/)
+    {
+		HandleArenaDoor(1);
+		m_creature->CastSpell(m_creature,SPELL_SPORE,true);
+
+		uint32 respawn_time = 0;
+		int RespawnType = urand(0,2);
+		switch(RespawnType)
+		{
+		case 0:		// 8 hours
+			respawn_time = 28800+(urand(-1200,1200));
+			break;
+		case 1:		// 12 hours
+			respawn_time = 43200+(urand(-1200,1200));
+			break;
+		case 2:		// 16 hours
+			respawn_time = 57600+(urand(-1200,1200));
+			break;
+		}
+	
+		m_creature->SetRespawnDelay(respawn_time);
+		m_creature->SetRespawnTime(respawn_time);
+		m_creature->SaveRespawnTime();
+    }
+
+	void JustRespawned()
+	{
+		HandleHerbs();
+	}
+
+	void KilledUnit(Unit* victim)
+    {
+		int rand = urand(0,1);
+		if(rand == 1)
+			DoScriptText(SAY_KILLED,m_creature,victim);
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+	{
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+			return;
+
+		if (m_uiEntanglingRootsTimer <= uiDiff)
+		{
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_ENTANGLING_ROOTS);
+			m_uiEntanglingRootsTimer = urand(12000,18000);
+		}
+		else
+			m_uiEntanglingRootsTimer -= uiDiff;
+
+		if (m_uiThornVolleyTimer <= uiDiff)
+		{
+            DoCastSpellIfCan(m_creature, SPELL_THORN_VOLLEY_1);
+			m_uiThornVolleyTimer = urand(10000,20000);
+		}
+		else
+			m_uiThornVolleyTimer -= uiDiff;
+
+		if (m_uiSummonTimer <= uiDiff)
+		{
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_SUMMON);
+			m_uiSummonTimer = urand(18000,25000);
+		}
+		else
+			m_uiSummonTimer -= uiDiff;
+
+		DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_boss_mushgog(Creature* pCreature)
+{
+    return new boss_mushgogAI(pCreature);
+}
+
+/*######
+## boss_the_razza
+######*/
+
+enum eRazza
+{
+	SPELL_POISON_BOLT		= 22937,
+	SPELL_CHAIN_LIGHTNINGT	= 16033,
+	YELL_RAZZA_SPAWN		= -1720210,
+	YELL_RAZZA_AGGRO		= -1720211
+};
+
+struct MANGOS_DLL_DECL boss_the_razzaAI : public ScriptedAI
+{
+	boss_the_razzaAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+		Griniblix(0);
+        Reset();
+    }
+
+	uint32 m_uiPoisonBoltTimer;
+	uint32 m_uiChainLightningTimer;
+	uint32 m_uiSummonTimer;
+
+	void Reset() 
+	{
+		m_uiPoisonBoltTimer = urand(5000,8000);
+		m_uiChainLightningTimer = urand(10000,15000);
+		m_uiSummonTimer = urand(15000,28000);
+		HandleArenaDoor(1);
+	}
+
+	void Griniblix(int action = 0)			// missing the yell for all DM instances, and spawn yell doesn't happen in the arena, just outside due to unknown map
+	{
+		Creature* pGriniblix = GetClosestCreatureWithEntry(m_creature,14395,100.f);
+
+		if(action == 0)
+		{
+			if(pGriniblix)
+			{
+				DoScriptText(YELL_RAZZA_SPAWN,pGriniblix,NULL);
+			}
+		}
+		else
+			if(pGriniblix)
+				DoScriptText(YELL_RAZZA_AGGRO,pGriniblix,NULL);
+	}
+
+	void HandleArenaDoor(int action = 0)
+	{
+		if(GameObject* pDoor = m_creature->GetClosestGameObjectWithEntry(m_creature,179469,100.f))
+			if(action == 0)
+				pDoor->SetGoState(GO_STATE_READY);
+			else
+				pDoor->SetGoState(GO_STATE_ACTIVE);
+	}
+
+	void Aggro(Unit* /*pWho*/)
+    {
+		Griniblix(1);
+		HandleArenaDoor(0);
+    }
+
+	void JustRespawned()
+	{
+		Griniblix(0);
+	}
+
+	void JustDied(Unit* /*pKiller*/)
+    {
+		HandleArenaDoor(1);
+
+		uint32 respawn_time = 0;
+		int RespawnType = urand(0,2);
+		switch(RespawnType)
+		{
+		case 0:		// 4 hours
+			respawn_time = 14400+(urand(-1200,1200));
+			break;
+		case 1:		// 6 hours
+			respawn_time = 21600+(urand(-1200,1200));
+			break;
+		case 2:		// 8 hours
+			respawn_time = 28800+(urand(-1200,1200));
+			break;
+		}
+	
+		m_creature->SetRespawnDelay(respawn_time);
+		m_creature->SetRespawnTime(respawn_time);
+		m_creature->SaveRespawnTime();
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+	{
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+			return;
+
+		if (m_uiPoisonBoltTimer <= uiDiff)
+		{
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_POISON_BOLT);
+			m_uiPoisonBoltTimer = urand(8000,15000);
+		}
+		else
+			m_uiPoisonBoltTimer -= uiDiff;
+
+		if (m_uiChainLightningTimer <= uiDiff)
+		{
+            Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_CHAIN_LIGHTNINGT);
+			m_uiChainLightningTimer = urand(9000,20000);
+		}
+		else
+			m_uiChainLightningTimer -= uiDiff;
+
+		if (m_uiSummonTimer <= uiDiff)
+		{
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_SUMMON);
+			m_uiSummonTimer = urand(18000,25000);
+		}
+		else
+			m_uiSummonTimer -= uiDiff;
+
+		DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_boss_the_razza(Creature* pCreature)
+{
+    return new boss_the_razzaAI(pCreature);
+}
+
+/*######
+## boss_skarr_the_unbreakable
+######*/
+
+enum eSkarr
+{
+	SPELL_CLEAVE		= 15496,
+	SPELL_MORTAL_STRIKE = 15708,
+	SPELL_KNOCKDOWN		= 11428,
+	YELL_SKARR_SPAWN	= -1720212,
+	YELL_SKARR_AGGRO	= -1720213
+};
+
+struct MANGOS_DLL_DECL boss_skarr_the_unbreakableAI : public ScriptedAI
+{
+	boss_skarr_the_unbreakableAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+		Griniblix(0);
+        Reset();
+    }
+
+	uint32 m_uiCleaveTimer;
+	uint32 m_uiMortalStrikeTimer;
+	uint32 m_uiKnockdownTimer;
+	uint32 m_uiSummonTimer;
+
+	void Reset() 
+	{
+		m_uiCleaveTimer = urand(7000,10000);
+		m_uiMortalStrikeTimer = urand(8000,12000);
+		m_uiKnockdownTimer = urand(13000,20000);
+		m_uiSummonTimer = urand(15000,28000);
+		HandleArenaDoor(1);
+	}
+
+	void Griniblix(int action = 0)			// missing the yell for all DM instances, and spawn yell doesn't happen in the arena, just outside due to unknown map
+	{
+		Creature* pGriniblix = GetClosestCreatureWithEntry(m_creature,14395,100.f);
+
+		if(action == 0)
+		{
+			if(pGriniblix)
+			{
+				DoScriptText(YELL_SKARR_SPAWN,pGriniblix,NULL);
+			}
+		}
+		else
+			if(pGriniblix)
+				DoScriptText(YELL_SKARR_AGGRO,pGriniblix,NULL);
+	}
+
+	void HandleArenaDoor(int action = 0)
+	{
+		if(GameObject* pDoor = m_creature->GetClosestGameObjectWithEntry(m_creature,179469,100.f))
+			if(action == 0)
+				pDoor->SetGoState(GO_STATE_READY);
+			else
+				pDoor->SetGoState(GO_STATE_ACTIVE);
+	}
+
+	void Aggro(Unit* /*pWho*/)
+    {
+		Griniblix(1);
+		HandleArenaDoor(0);
+    }
+
+	void JustRespawned()
+	{
+		Griniblix(0);
+	}
+
+	void JustDied(Unit* /*pKiller*/)
+    {
+		HandleArenaDoor(1);
+
+		uint32 respawn_time = 0;
+		int RespawnType = urand(0,2);
+		switch(RespawnType)
+		{
+		case 0:		// 4 hours
+			respawn_time = 14400+(urand(-1200,1200));
+			break;
+		case 1:		// 6 hours
+			respawn_time = 21600+(urand(-1200,1200));
+			break;
+		case 2:		// 8 hours
+			respawn_time = 28800+(urand(-1200,1200));
+			break;
+		}
+	
+		m_creature->SetRespawnDelay(respawn_time);
+		m_creature->SetRespawnTime(respawn_time);
+		m_creature->SaveRespawnTime();
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+	{
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+			return;
+
+		if (m_uiCleaveTimer <= uiDiff)
+		{
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_CLEAVE);
+			m_uiCleaveTimer = urand(7000,12000);
+		}
+		else
+			m_uiCleaveTimer -= uiDiff;
+
+		if (m_uiMortalStrikeTimer <= uiDiff)
+		{
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_MORTAL_STRIKE, CAST_AURA_NOT_PRESENT);
+			m_uiMortalStrikeTimer = urand(9000,15000);
+		}
+		else
+			m_uiMortalStrikeTimer -= uiDiff;
+
+		if (m_uiKnockdownTimer <= uiDiff)
+		{
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_KNOCKDOWN);
+			m_uiKnockdownTimer = urand(12000,17000);
+		}
+		else
+			m_uiKnockdownTimer -= uiDiff;
+
+		if (m_uiSummonTimer <= uiDiff)
+		{
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_SUMMON);
+			m_uiSummonTimer = urand(18000,25000);
+		}
+		else
+			m_uiSummonTimer -= uiDiff;
+
+		DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_boss_skarr_the_unbreakable(Creature* pCreature)
+{
+    return new boss_skarr_the_unbreakableAI(pCreature);
+}
+
 void AddSC_dire_maul()
 {
     Script* pNewscript;
@@ -738,5 +1165,20 @@ void AddSC_dire_maul()
 	pNewscript = new Script;
     pNewscript->Name = "mob_phase_lasher";
     pNewscript->GetAI = &GetAI_mob_phase_lasher;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "boss_mushgog";
+    pNewscript->GetAI = &GetAI_boss_mushgog;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "boss_the_razza";
+    pNewscript->GetAI = &GetAI_boss_the_razza;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "boss_skarr_the_unbreakable";
+    pNewscript->GetAI = &GetAI_boss_skarr_the_unbreakable;
     pNewscript->RegisterSelf();
 }

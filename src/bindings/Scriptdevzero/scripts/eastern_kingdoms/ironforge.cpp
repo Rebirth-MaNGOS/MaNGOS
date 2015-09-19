@@ -284,6 +284,178 @@ CreatureAI* GetAI_npc_haggle(Creature* pCreature)
     return new npc_haggleAI(pCreature);
 }
 
+/*####
+# npc_grand_mason_marblesten
+####*/
+
+enum eMarblesten
+{
+	MARBLESTEN_SAY_1					 = -1720214,
+	MARBLESTEN_SAY_2					 = -1720215,
+	MARBLESTEN_SAY_3					 = -1720216,
+
+	QUEST_ID_A_KINGS_TRIBUTE			 = 689,
+	GO_MEMORIAL_TO_SULLY_BALLOO			 = 139852
+};
+
+struct Loc
+{
+    float x, y, z;
+};
+
+static Loc Move[]=
+{
+    {-5032.62f,-1015.52f,508.87f},
+	{-5030.15f,-1007.26f,505.26f},
+	{-5022.60f,-1009.0f,502.20f},
+	{-5026.23f,-1014.53f,502.20f},
+	{-5027.37f,-1018.53f,502.20f},	// memorial, now backwards
+	{-5026.23f,-1014.53f,502.20f},
+	{-5022.60f,-1009.0f,502.20f},
+	{-5030.15f,-1007.26f,505.26f},
+	{-5032.62f,-1015.52f,508.87f}
+};
+
+struct MANGOS_DLL_DECL npc_grand_mason_marblestenAI : public ScriptedAI
+{
+    npc_grand_mason_marblestenAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro689;
+
+	ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+	{
+		m_bOutro689 = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+		m_uiPlayerGUID.Clear();
+	}
+
+	void StartOutro(ObjectGuid pPlayerGUID, uint32 uiQuestId = 0)
+	{		
+		if (uiQuestId == 689)
+		{
+			if (!pPlayerGUID)
+				return;
+
+			m_uiPlayerGUID = pPlayerGUID;
+			m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+			
+			if(Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID))
+				DoScriptText(MARBLESTEN_SAY_1, m_creature, pPlayer);
+			m_bOutro689 = true; 
+			m_uiSpeechTimer = 1000;
+			m_uiSpeechStep = 1;
+			m_creature->GetMotionMaster()->MovePoint(1, Move[0].x, Move[0].y, Move[0].z);
+		}
+	}
+
+	void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId)
+    {
+        switch(uiPointId)
+        {
+        case 1:
+            m_creature->GetMotionMaster()->MovePoint(2, Move[1].x, Move[1].y, Move[1].z);
+            break;
+        case 2:
+            m_creature->GetMotionMaster()->MovePoint(3, Move[2].x, Move[2].y, Move[2].z);
+            return;
+        case 3:
+            m_creature->GetMotionMaster()->MovePoint(4, Move[3].x, Move[3].y, Move[3].z);
+            return;
+        case 4:
+            m_creature->GetMotionMaster()->MovePoint(5, Move[4].x, Move[4].y, Move[4].z);
+            break;
+		case 6:
+            m_creature->GetMotionMaster()->MovePoint(7, Move[7].x, Move[7].y, Move[7].z);
+            return;
+		case 7:
+            m_creature->GetMotionMaster()->MovePoint(8, Move[8].x, Move[8].y, Move[8].z);
+            return;
+		case 8:
+            m_creature->GetMotionMaster()->MoveTargetedHome();
+            break;
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro689)							// handle RP at quest end 689
+		{
+			if(!m_uiSpeechStep)
+				return;
+		
+			if(m_uiSpeechTimer <= uiDiff)
+            {
+				Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+				GameObject* pGo = m_creature->GetClosestGameObjectWithEntry(m_creature, GO_MEMORIAL_TO_SULLY_BALLOO, 20.f);
+                switch(m_uiSpeechStep)
+                {					
+                    case 1:
+						if (pGo)
+                            pGo->SetGoState(GO_STATE_READY);
+						m_uiSpeechTimer = 29000;
+                        break;
+					case 2:
+						m_creature->HandleEmoteState(EMOTE_STATE_NONE);
+                        if (pGo)
+                            pGo->SetGoState(GO_STATE_ACTIVE);
+						m_uiSpeechTimer = 3000;
+                        break;
+					case 3:
+						DoScriptText(MARBLESTEN_SAY_2, m_creature, NULL);
+                        m_uiSpeechTimer = 6000;
+                        break;
+					case 4:
+						DoScriptText(MARBLESTEN_SAY_3, m_creature, pPlayer);
+						m_creature->SetFacingTo(1.29f);
+                        m_uiSpeechTimer = 4000;
+						break;
+					case 5:
+						m_creature->GetMotionMaster()->MovePoint(6, Move[5].x, Move[5].y, Move[5].z);
+                        m_uiSpeechTimer = 10000;
+						break;
+					case 6:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro689 = false;
+						break;
+					/*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_grand_mason_marblesten(Creature* pCreature)
+{
+    return new npc_grand_mason_marblestenAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_grand_mason_marblesten(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_A_KINGS_TRIBUTE)
+    {
+		if (npc_grand_mason_marblestenAI* pMarblestenAI = dynamic_cast<npc_grand_mason_marblestenAI*>(pCreature->AI()))
+			pMarblestenAI->StartOutro(pPlayer->GetObjectGuid(), 689);
+	}
+	return true;
+}
+
 void AddSC_ironforge()
 {
     Script* pNewscript;
@@ -303,4 +475,10 @@ void AddSC_ironforge()
 	pNewscript->Name = "npc_haggle";
 	pNewscript->GetAI = &GetAI_npc_haggle;
 	pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_grand_mason_marblesten";
+    pNewscript->GetAI = &GetAI_npc_grand_mason_marblesten;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_grand_mason_marblesten;
+    pNewscript->RegisterSelf();
 }

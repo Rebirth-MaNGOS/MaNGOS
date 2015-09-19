@@ -215,9 +215,6 @@ void CreatureGroup::MemberAttackStart(Creature* member, Unit* target)
 		if (!itr->first->IsWithinLOSInMap(member))
 			continue;
 
-		if (itr->first->getFaction() != member->getFaction())
-			continue;
- 
         if ( itr->first->IsHostileTo(target) && itr->first->AI()) 
 		{
             itr->first->SetNoCallAssistance(true);

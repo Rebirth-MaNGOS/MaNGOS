@@ -3415,7 +3415,12 @@ void Unit::_UpdateAutoRepeatSpell()
         //Update Target for Player
         if (GetTypeId() == TYPEID_PLAYER && GetMap())
         {
-            Unit* target = GetMap()->GetUnit(GetTargetGuid());
+            Player* const pPlayer = dynamic_cast<Player* const>(this);
+
+            // Use the selection guid here rather than the target guid since the player
+            // always expect the auto-shot to hit the selected unit and not necessarily 
+            // what the server considers to be its current target.
+            Unit* target = GetMap()->GetUnit(pPlayer->GetSelectionGuid());
             if (target)
             {
                 if (!IsFriendlyTo(target) && !target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE))
@@ -3953,6 +3958,7 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
                     case 10211:
                     case 10212:
                     case 25345:                 // Rank 8
+                    case 23577:                 // Hunter Expose Weakness
                         break;
                     default:
                         RemoveSpellAuraHolder(foundHolder,AURA_REMOVE_BY_STACK);

@@ -967,6 +967,19 @@
     <ClCompile Include="..\scripts\world\spell_scripts.cpp">
       <Filter>scripts\world</Filter>
     </ClCompile>
+    <ClCompile Include="..\scripts\eastern_kingdoms\duskwood.cpp">
+      <Filter>scripts\eastern_kingdoms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\scripts\world\bosses_ancient_leaf_demons.cpp">
+      <Filter>scripts\world</Filter>
+    </ClCompile>
+    <ClCompile Include="..\scripts\eastern_kingdoms\southshore.cpp" />
+    <ClCompile Include="..\scripts\world\ahnqiraj_turnin_scripts.cpp">
+      <Filter>scripts\world</Filter>
+    </ClCompile>
+    <ClCompile Include="..\scripts\kalimdor\temple_of_ahnqiraj\temple_of_ahnqiraj.cpp">
+      <Filter>scripts\kalimdor\temple_of_ahnqiraj</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\base\escort_ai.h">
@@ -1085,6 +1098,12 @@
     </ClInclude>
     <ClInclude Include="..\base\patrol_ai.h">
       <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\scripts\world\ahnqiraj-event\event_defines.h">
+      <Filter>scripts\world</Filter>
+    </ClInclude>
+    <ClInclude Include="..\scripts\world\ahnqiraj_turnin_defines.h">
+      <Filter>scripts\world</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

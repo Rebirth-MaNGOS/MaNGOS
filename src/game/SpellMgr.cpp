@@ -2043,6 +2043,56 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
         (spellInfo_2->Id == 11334 && spellInfo_1->Id == 18192) || (spellInfo_2->Id == 18192 && spellInfo_1->Id == 11334))
         return false;
 
+    // Arcane Intellect should not stack with Elixir of Greater Intellect
+    if ((spellInfo_1->Id == 11396 && sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 1459) || 
+        (spellInfo_2->Id == 11396 && sSpellMgr.GetFirstSpellInChain(spellInfo_1->Id) == 1459))
+            return true;
+
+    // Arcane Intellect should not stack with Elixir of the Sages.
+    if ((spellInfo_1->Id == 17535 && sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 1459) || 
+        (spellInfo_2->Id == 17535 && sSpellMgr.GetFirstSpellInChain(spellInfo_1->Id) == 1459))
+            return true;
+
+    // Arcane Intellect should not stack with Elixir of Wisdom.
+    if ((spellInfo_1->Id == 3166 && sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 1459) || 
+        (spellInfo_2->Id == 3166 && sSpellMgr.GetFirstSpellInChain(spellInfo_1->Id) == 1459))
+            return true;
+
+    // Juju Guilde should not stack with Elixir of Wisdom.
+    if ((spellInfo_1->Id == 3166 && sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 16327) || 
+        (spellInfo_2->Id == 3166 && sSpellMgr.GetFirstSpellInChain(spellInfo_1->Id) == 16327))
+            return true;
+
+    // Elixir of the Sages should not stack with Exlixir of Greater Intellect
+    if ((spellInfo_1->Id == 17535 && spellInfo_2->Id == 11396) || 
+        (spellInfo_2->Id == 17535 && spellInfo_1->Id == 11396))
+            return true;
+
+    // Elixir of the Sages should not stack with Juju Guile.
+    if ((spellInfo_1->Id == 17535 && spellInfo_2->Id == 16327) || 
+        (spellInfo_2->Id == 17535 && spellInfo_1->Id == 16327))
+            return true;
+
+    // Juju Guile should not stack with Exlixir of Greater Intellect
+    if ((spellInfo_1->Id == 16327 && spellInfo_2->Id == 11396) || 
+        (spellInfo_2->Id == 16327 && spellInfo_1->Id == 11396))
+            return true;
+
+    // Arcane Brilliance should not stack with Elixir of Greater Intellect
+    if ((spellInfo_1->Id == 11396 && spellInfo_2->Id == 23028) || 
+        (spellInfo_2->Id == 11396 && spellInfo_1->Id == 23028))
+            return true;
+
+    // Arcane Brilliance should not stack with Elixir of the Sages.
+    if ((spellInfo_1->Id == 17535 && spellInfo_2->Id == 23028) || 
+        (spellInfo_2->Id == 17535 && spellInfo_1->Id == 23028))
+            return true;
+
+    // Arcane Brilliance should not stack with Elixir of Wisdom.
+    if ((spellInfo_1->Id == 3166 && spellInfo_2->Id == 23028) || 
+        (spellInfo_2->Id == 3166 && spellInfo_1->Id == 23028))
+            return true;
+
     // Specific spell family spells
     switch(spellInfo_1->SpellFamilyName)
     {

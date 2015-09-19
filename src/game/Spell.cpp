@@ -3186,6 +3186,10 @@ void Spell::cast(bool skipCheck)
 
     case SPELLFAMILY_WARRIOR:
         break;
+	case SPELLFAMILY_DRUID:
+		if(m_spellInfo->SpellFamilyName == SPELLFAMILY_DRUID && m_spellInfo->Id == 22812)		// barkskin and damage reduction
+            AddPrecastSpell(22839);   
+		break;
     case SPELLFAMILY_PRIEST:
     {
         // Power Word: Shield
@@ -3254,7 +3258,7 @@ void Spell::cast(bool skipCheck)
         return;
     }
 
-
+    // TODO: Filter out equipment spells from the check.
     if (!CheckBuffOverwrite(spellProto))
     {
         SendCastResult(SPELL_FAILED_MORE_POWERFUL_SPELL_ACTIVE);
@@ -4738,10 +4742,12 @@ SpellCastResult Spell::CheckCast(bool strict)
             Totem* pCasterT = dynamic_cast<Totem*>(m_caster);
 
             // Make sure that the dispel check is only applied on player targets. Warriors' Shield Bash should also be an exception.
+            // 24406 - Improved Mend Pet is also excepted.
             if(m_caster && m_caster->getClass() != CLASS_WARRIOR && target->GetTypeId() != TYPEID_UNIT && !pCasterT )
             {
                 if (m_spellInfo->Id != 552 && m_spellInfo->Id != 10872 &&
-                    m_spellInfo->Id != 2893 && m_spellInfo->Id != 3137)
+                    m_spellInfo->Id != 2893 && m_spellInfo->Id != 3137 &&
+                    m_spellInfo->Id != 24406)
                     return SPELL_FAILED_NOTHING_TO_DISPEL;
             }
         }
@@ -4796,19 +4802,24 @@ SpellCastResult Spell::CheckCast(bool strict)
                 return SPELL_FAILED_BAD_TARGETS;
         }
 
-        // check pet presents
-        for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
+        // Revive Pet shouldn't check if the pet is actually in the world
+        // if the pet is dead and despawned it should still need to be revived.
+        if (m_spellInfo->Id != 982)
         {
-            if(m_spellInfo->EffectImplicitTargetA[j] == TARGET_PET)
+            // check pet presents
+            for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
             {
-                if(!m_caster->GetPet())
+                if(m_spellInfo->EffectImplicitTargetA[j] == TARGET_PET)
                 {
-                    if(m_triggeredByAuraSpell)              // not report pet not existence for triggered spells
-                        return SPELL_FAILED_DONT_REPORT;
-                    else
-                        return SPELL_FAILED_NO_PET;
+                    if(!m_caster->GetPet())
+                    {
+                        if(m_triggeredByAuraSpell)              // not report pet not existence for triggered spells
+                            return SPELL_FAILED_DONT_REPORT;
+                        else
+                            return SPELL_FAILED_NO_PET;
+                    }
+                    break;
                 }
-                break;
             }
         }
 
@@ -5520,7 +5531,21 @@ SpellCastResult Spell::CheckCast(bool strict)
         {
             Creature *pet = m_caster->GetPet();
             if(!pet)
+            {
+                Player* pPlayer = dynamic_cast<Player*>(m_caster);
+                // We do allow Revive Pet if the pet is despawned.
+                if (pPlayer && m_spellInfo->Id == 982)
+                {
+                    if (!Pet::IsPetDeadInDB(pPlayer))
+                    {
+                        return SPELL_FAILED_ALREADY_HAVE_SUMMON;
+                    }
+                    else
+                        break;
+                }
+
                 return SPELL_FAILED_NO_PET;
+            }
 
             if(pet->isAlive())
                 return SPELL_FAILED_ALREADY_HAVE_SUMMON;
@@ -6073,9 +6098,13 @@ bool Spell::CheckBuffOverwrite(SpellEntry const* spellProto)
     if (!spellProto)
         return true;
 
+    // Hidden Buffs should not be checked, such as those from gear.
+    if (spellProto->Attributes & SPELL_ATTR_HIDDEN)
+       return true;
+
     // Buffs are positive spells.
     if (spellProto->AttributesEx & SPELL_ATTR_EX_NEGATIVE)
-        return true;
+       return true;
 
     for (short i = 0; i < MAX_EFFECT_INDEX; i++)
     {
@@ -6095,14 +6124,14 @@ bool Spell::CheckBuffOverwrite(SpellEntry const* spellProto)
 
                     for (Aura* aura : list)
                     {
-
+/*
                         // If the buff is supposed to stack we ignore it.
                         if (!sSpellMgr.IsNoStackSpellDueToSpell(aura->GetId(), spellProto->Id))
                             continue;
 
                         if (!IsNoStackAuraDueToAura(aura->GetId(), spellProto->Id))
                             continue;
-
+*/
                         Modifier* pMod = aura->GetModifier();
 
                         // Make sure that the buffs affect the same stats.

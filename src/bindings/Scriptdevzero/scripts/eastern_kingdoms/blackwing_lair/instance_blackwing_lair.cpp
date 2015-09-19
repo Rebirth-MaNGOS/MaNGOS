@@ -481,7 +481,7 @@ void instance_blackwing_lair::Update(uint32 uiDiff)
             {
                 for (Creature* current_add :  m_vecSummonList)
                 {
-                    DoScriptText(EMOTE_TROOPS_FLEE, current_add);
+                    //DoScriptText(EMOTE_TROOPS_FLEE, current_add);
                     current_add->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
                     current_add->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     current_add->getThreatManager().clearReferences();

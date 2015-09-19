@@ -105,6 +105,7 @@ option(DEBUG "Debug mode" 0)
 option(TBB_USE_EXTERNAL "Use external TBB" 0)
 option(USE_STD_MALLOC "Use standard malloc instead of TBB" 0)
 option(ACE_USE_EXTERNAL "Use external ACE" 0)
+option(SCRIPTDEV "Compile Scriptdev scripts" 1)
 
 find_package(PCHSupport)
 

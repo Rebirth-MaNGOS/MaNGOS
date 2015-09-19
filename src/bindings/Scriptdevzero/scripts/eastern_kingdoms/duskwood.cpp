@@ -82,7 +82,6 @@ struct MANGOS_DLL_DECL npc_morgan_ladimoreAI : public ScriptedAI
         m_uiSpeechStep = 1;
     }
 
-
     void UpdateAI(const uint32 uiDiff)					// handle Rp at end of A daughter's love quest, it's a hack but can't do it in DB
     {
 		if (!m_uiSpeechStep)
@@ -108,7 +107,6 @@ struct MANGOS_DLL_DECL npc_morgan_ladimoreAI : public ScriptedAI
 					m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
 					m_uiSpeechStep = 0;
 					return;
-
                 default:
                     m_uiSpeechStep = 0;
                     return;
@@ -424,6 +422,7 @@ CreatureAI* GetAI_mob_stitches(Creature* pCreature)
     return new mob_stitchesAI(pCreature);
 }
 
+<<<<<<< HEAD
 enum
 {
     TWILIGHT_CORRUPTER_AGGRO = -1720121,
@@ -478,12 +477,41 @@ struct MANGOS_DLL_DECL mob_twilight_corrupter : public ScriptedAI
             }
         }
     }
+=======
+/*######
+## mob_commander_felstrom
+######*/
+
+enum eFelstrom
+{
+	SPELL_FELSTROM_RESURRECTION = 3488
+};
+
+struct MANGOS_DLL_DECL mob_commander_felstromAI : public ScriptedAI						
+{
+    mob_commander_felstromAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+	bool m_bDidCast;
+    void Reset()
+    {
+		m_bDidCast = false;		
+    }
+
+	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)
+    {
+        if (pSpell->Id == SPELL_FELSTROM_RESURRECTION && pCaster == m_creature)
+        {
+			m_creature->SetLootRecipient(NULL);
+			m_creature->SetOwnerGuid(m_creature->GetObjectGuid());				// no owner means no exp
+		}
+	}
+>>>>>>> 12145df01cc9aa6717610e28466f690ac7dc67c4
 
 	void UpdateAI(const uint32 uiDiff)
     {
 		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+<<<<<<< HEAD
         if(m_uicorruption_timer)
         {
             if(m_uicorruption_timer <= uiDiff)
@@ -509,11 +537,19 @@ struct MANGOS_DLL_DECL mob_twilight_corrupter : public ScriptedAI
             else
                 m_uinightmare_timer -= uiDiff;
         }
+=======
+		if(HealthBelowPct(11) && !m_bDidCast)
+		{
+			DoCastSpellIfCan(m_creature,SPELL_FELSTROM_RESURRECTION);
+			m_bDidCast = true;
+		}
+>>>>>>> 12145df01cc9aa6717610e28466f690ac7dc67c4
 
         DoMeleeAttackIfReady();
 	}
 };
 
+<<<<<<< HEAD
 
 CreatureAI* GetAI_mob_twilight_corrupter(Creature* pCreature)
 {
@@ -533,6 +569,11 @@ bool AreaTrigger_at_Twilight_Grove(Player* pPlayer, AreaTriggerEntry const* pAt)
         }
     }
     return false;
+=======
+CreatureAI* GetAI_mob_commander_felstrom(Creature* pCreature)
+{
+    return new mob_commander_felstromAI(pCreature);
+>>>>>>> 12145df01cc9aa6717610e28466f690ac7dc67c4
 }
 
 void AddSC_duskwood()
@@ -560,6 +601,7 @@ void AddSC_duskwood()
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_ello_ebonlocke;
     pNewscript->RegisterSelf();
 
+<<<<<<< HEAD
     pNewscript = new Script;
 	pNewscript->Name = "mob_twilight_corrupter";
 	pNewscript->GetAI = &GetAI_mob_twilight_corrupter;
@@ -569,4 +611,10 @@ void AddSC_duskwood()
     pNewscript->Name = "at_Twilight_Grove";
     pNewscript->pAreaTrigger = &AreaTrigger_at_Twilight_Grove;
     pNewscript->RegisterSelf();
+=======
+	pNewscript = new Script;
+	pNewscript->Name = "mob_commander_felstrom";
+	pNewscript->GetAI = &GetAI_mob_commander_felstrom;
+	pNewscript->RegisterSelf();
+>>>>>>> 12145df01cc9aa6717610e28466f690ac7dc67c4
 }

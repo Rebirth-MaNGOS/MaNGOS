@@ -98,7 +98,6 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
 		m_uiSummonCount = 0;
 		m_bCanSay = true;
 		m_bCleanerSay = true;
-		hasStart = false;
     }
 
     void JustReachedHome()
@@ -143,7 +142,7 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
 		m_creature->GetMotionMaster()->MovementExpired();
 		m_creature->GetMotionMaster()->MoveIdle();
 
-		//hasStart = true;
+		hasStart = true;
 
 		PausePatrol(true);
     }
@@ -189,6 +188,7 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
             m_creature->SetDeathState(JUST_DIED);
             m_creature->Respawn();
         }
+		hasStart = false;
 		Reset();
     }
 
@@ -200,6 +200,7 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
         m_uiResetOOCTimer   = 0;
 		m_creature->UpdateEntry(m_uiDefaultEntry);
 		PausePatrol(false);
+		hasStart = false;
 		
 		if (Creature* pPrecious = GetPreciousPet())
             pPrecious->UpdateEntry(NPC_PRECIOUS);   // restore default entry
@@ -228,8 +229,10 @@ struct MANGOS_DLL_DECL bosses_ancient_leaf_demonsAI : public npc_patrolAI
 			float fX, fY, fZ;
 			m_creature->GetPosition(fX, fY, fZ);
 			for(uint8 i = 0; i < 1; ++i)
-				if (Creature* pCleaner = m_creature->SummonCreature(NPC_THE_CLEANER, fX, fY, fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000))
+				if (Creature* pCleaner = m_creature->SummonCreature(NPC_THE_CLEANER, fX, fY, fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 5000))
 				{ 
+					if(Player* pTarget = GetPlayerAtMinimumRange(30))
+						pCleaner->AI()->AttackStart(pTarget);
 					pCleaner->SetRespawnDelay(-10);				// to stop him from randomly respawning
 				}
 				CompleteDemonChallenge(true);

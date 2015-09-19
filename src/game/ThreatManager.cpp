@@ -498,12 +498,21 @@ void ThreatManager::tauntApply(Unit* pTaunter)
 {
     if(HostileReference* ref = iThreatContainer.getReferenceByTarget(pTaunter))
     {
-        if(getCurrentVictim() && (ref->getThreat() < getCurrentVictim()->getThreat()))
+        HostileReference* victRef = getCurrentVictim();
+        if(victRef && (ref->getThreat() < victRef->getThreat()))
         {
             // Ok, temp threat is unused
             if(ref->getTempThreatModifyer() == 0.0f)
             {
-                ref->setTempThreat(getCurrentVictim()->getThreat());
+                if(Unit* pCurrentVictim = victRef->getTarget())
+                {
+                    Creature* pCreature  = dynamic_cast<Creature*>(getOwner());
+
+                    if (pCreature && !pCreature->CanReachWithMeleeAttack(pCurrentVictim))
+                        ref->setTempThreat(victRef->getThreat() * 1.3);
+                    else
+                        ref->setTempThreat(victRef->getThreat() * 1.1);
+                }
             }
         }
     }

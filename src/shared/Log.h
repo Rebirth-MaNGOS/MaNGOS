@@ -120,6 +120,10 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
 		if (wardenLogFile != NULL)
                 fclose(wardenLogFile);
         wardenLogFile = NULL;
+
+        if (bgQueueLogFile != nullptr)
+            fclose(bgQueueLogFile);
+        bgQueueLogFile = nullptr;
     }
     public:
         void Initialize();
@@ -148,7 +152,10 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
         // any log level
         void outCharDump( const char * str, uint32 account_id, uint32 guid, const char * name );
         void outRALog( const char * str, ... )       ATTR_PRINTF(2,3);
-	void outWarden(const char* str, ...)		 ATTR_PRINTF(2, 3);
+        void outWarden(const char* str, ...)		 ATTR_PRINTF(2, 3);
+        void beginBGQueueEntry(std::string bgName, uint32 id);
+        void endBGQueueEntry();
+        void outBGQueue(uint32 userID, std::string ip, std::string character_name, std::string faction);
         uint32 GetLogLevel() const { return m_logLevel; }
         void SetLogLevel(char * Level);
         void SetLogFileLevel(char * Level);
@@ -177,6 +184,7 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
         FILE* dberLogfile;
         FILE* worldLogfile;
 		FILE* wardenLogFile;
+        FILE* bgQueueLogFile;
 
         // log/console control
         LogLevel m_logLevel;

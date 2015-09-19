@@ -115,8 +115,6 @@ World::World()
 
     for(int i = 0; i < CONFIG_BOOL_VALUE_COUNT; ++i)
         m_configBoolValues[i] = false;
-
-    thread_pool = nullptr;   
 }
 
 /// World destructor
@@ -134,9 +132,6 @@ World::~World()
 
     VMAP::VMapFactory::clear();
     MMAP::MMapFactory::clear();
-
-	if (thread_pool)
-		delete thread_pool;
 
     //TODO free addSessQueue
 }
@@ -510,8 +505,6 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_BOOL_ADDON_CHANNEL, "AddonChannel", true);
     setConfig(CONFIG_BOOL_CLEAN_CHARACTER_DB, "CleanCharacterDB", true);
     setConfig(CONFIG_BOOL_GRID_UNLOAD, "GridUnload", true);
-    setConfig(CONFIG_BOOL_THREAD_POOL_THREADS, "ActiveContinentMobs", false);
-    setConfig(CONFIG_UINT32_THREAD_POOL_THREADS, "ThreadPoolThreads", 1);
     setConfig(CONFIG_UINT32_INTERVAL_SAVE, "PlayerSave.Interval", 15 * MINUTE * IN_MILLISECONDS);
     setConfigMinMax(CONFIG_UINT32_MIN_LEVEL_STAT_SAVE, "PlayerSave.Stats.MinLevel", 0, 0, MAX_LEVEL);
     setConfig(CONFIG_BOOL_STATS_SAVE_ONLY_ON_LOGOUT, "PlayerSave.Stats.SaveOnlyOnLogout", true);
@@ -1311,9 +1304,6 @@ void World::SetInitialWorldSettings()
     uint32 nextGameEvent = sGameEventMgr.Initialize();
     m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);    //depend on next event
 
-    sLog.outBasic("Creating a thread pool with %u threads for map updating...", getConfig(CONFIG_UINT32_THREAD_POOL_THREADS));
-    thread_pool = new boost::threadpool::pool(getConfig(CONFIG_UINT32_THREAD_POOL_THREADS));
-    
     sLog.outString("Deleting old instance reset quotas...");
     CharacterDatabase.PExecute("DELETE FROM character_instance_quota WHERE time < '%lu'", time(0) - 3600);
 

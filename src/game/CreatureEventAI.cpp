@@ -529,7 +529,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                             case CHASE_MOTION_TYPE:
                             case FOLLOW_MOTION_TYPE:
 							case IDLE_MOTION_TYPE:
-                                m_AttackDistance = 0.0f;
+                                //m_AttackDistance = 0.0f;
                                 m_AttackAngle = 0.0f;
 
                                 m_creature->GetMotionMaster()->Clear(false);

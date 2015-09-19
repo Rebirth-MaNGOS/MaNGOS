@@ -542,6 +542,65 @@ bool OnQuestRewarded_npc_gormul(Player* pPlayer, Creature* pCreature, Quest cons
 	return true;
 }
 
+/*######
+## npc_kovork
+######*/
+
+enum eKovork
+{
+	SPELL_FRENZY		= 8269,
+	EMOTE_FRENZY		= -1000002,
+};
+
+struct MANGOS_DLL_DECL npc_kovorkAI : public ScriptedAI
+{
+	npc_kovorkAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	bool m_bFrenzy;
+
+	void Reset() 
+	{
+		m_bFrenzy = false;
+	}
+
+	void SpellHit(Unit* /*pCaster*/, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_FRENZY)
+		{
+			DoScriptText(EMOTE_FRENZY,m_creature,NULL);
+			m_bFrenzy = true;
+		}
+    }
+
+	void JustDied(Unit* /*pKiller*/)
+    {
+		uint32 respawn_time = urand(18000,28800);
+	
+		m_creature->SetRespawnDelay(respawn_time);
+		m_creature->SetRespawnTime(respawn_time);
+		m_creature->SaveRespawnTime();
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+	{
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+			return;
+
+		if(HealthBelowPct(50) && !m_bFrenzy)
+			m_creature->CastSpell(m_creature, SPELL_FRENZY,true);
+
+		DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_kovork(Creature* pCreature)
+{
+    return new npc_kovorkAI(pCreature);
+}
+
 void AddSC_arathi_highlands()
 {
     Script * pNewscript;
@@ -568,5 +627,10 @@ void AddSC_arathi_highlands()
     pNewscript->Name = "npc_gormul";
     pNewscript->GetAI = &GetAI_npc_gormul;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_gormul;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_kovork";
+    pNewscript->GetAI = &GetAI_npc_kovork;
     pNewscript->RegisterSelf();
 }

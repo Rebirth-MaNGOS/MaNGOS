@@ -46,6 +46,7 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "extras/Mod.h"
+#include "MapManager.h"
 
 #define NULL_AURA_SLOT 0xFF
 
@@ -942,7 +943,12 @@ void Aura::HandleAddModifier(bool apply, bool Real)
             for (uint8 i = 0; i <= EFFECT_INDEX_2; i++)
                 GetTarget()->RemoveAura(11129, (SpellEffectIndex) i);
         }
-
+		// If Barkskin is removed, the damage reduction should be removed aswell
+        if (!GetTarget()->HasAura(22812))
+		{
+			for (uint8 i = 0; i <= EFFECT_INDEX_2; i++)
+				GetTarget()->RemoveAura(22839, (SpellEffectIndex) i);
+		}
     }
 
 
@@ -3506,6 +3512,12 @@ void Aura::HandleModStealth(bool apply, bool Real)
         if (Real && target->GetTypeId()==TYPEID_PLAYER && GetId() == 20580)
             target->RemoveAurasDueToSpell(21009);
 
+        // Remove vanish if stealth is removed
+        if (Real && target->GetTypeId()==TYPEID_PLAYER && GetId() == 1784||GetId() == 1785||GetId() == 1786||GetId() == 1787)
+		{ 
+			target->RemoveAurasDueToSpell(11327);
+			target->RemoveAurasDueToSpell(11329);
+		}
         // only at real aura remove of _last_ SPELL_AURA_MOD_STEALTH
         if (Real && !target->HasStealthAura())
         {

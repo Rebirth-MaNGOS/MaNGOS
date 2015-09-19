@@ -11665,7 +11665,12 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
     GossipMenuItemsMapBounds pMenuItemBounds = sObjectMgr.GetGossipMenuItemsMapBounds(menuId);
 
     // prepares quest menu when true
-    bool canSeeQuests = menuId == GetDefaultGossipMenuForSource(pSource) && pSource->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+    bool canSeeQuests; 
+    if (pSource->GetTypeId() == TYPEID_UNIT)
+        canSeeQuests = menuId == GetDefaultGossipMenuForSource(pSource) && (pSource->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER) || pSource->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR));
+    else
+        canSeeQuests = menuId == GetDefaultGossipMenuForSource(pSource);
+
 
     // if canSeeQuests (the default, top level menu) and no menu options exist for this, use options from default options
     if (pMenuItemBounds.first == pMenuItemBounds.second && canSeeQuests)

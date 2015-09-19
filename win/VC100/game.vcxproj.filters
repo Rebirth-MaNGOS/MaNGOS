@@ -468,6 +468,9 @@
     <ClCompile Include="..\..\src\game\TemporaryGameObject.cpp">
       <Filter>Object</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\BugReportMgr.cpp" />
+    <ClCompile Include="..\..\src\game\ExclusivePoolMgr.cpp" />
+    <ClCompile Include="..\..\src\game\EventResourceMgr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\game\AccountMgr.h">
@@ -894,5 +897,8 @@
     <ClInclude Include="..\..\src\game\TemporaryGameObject.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\game\BugReportMgr.h" />
+    <ClInclude Include="..\..\src\game\ExclusivePoolMgr.h" />
+    <ClInclude Include="..\..\src\game\EventResourceMgr.h" />
   </ItemGroup>
 </Project>

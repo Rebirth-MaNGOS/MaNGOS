@@ -1807,10 +1807,6 @@ void Spell::EffectTriggerSpell(SpellEffectIndex eff_idx)
     // Vanish (not exist)
     case 18461:
     {
-        unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_ROOT);
-        unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_DECREASE_SPEED);
-        unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_STALKED);
-
         // if this spell is given to NPC it must handle rest by it's own AI
         if (unitTarget->GetTypeId() != TYPEID_PLAYER)
             return;
@@ -1838,6 +1834,19 @@ void Spell::EffectTriggerSpell(SpellEffectIndex eff_idx)
         // no Stealth spell found
         if (!spellId)
             return;
+
+        unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_ROOT);
+        unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_STALKED);
+
+
+        // If the player is already stealthed we don't reapply the stealth.
+        if (SpellAuraHolder* stealthHolder = unitTarget->GetSpellAuraHolder(spellId))
+        {
+            unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_DECREASE_SPEED, stealthHolder);
+            return;
+        }
+        else
+            unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_DECREASE_SPEED);
 
         // reset cooldown on it if needed
         if (((Player*)unitTarget)->HasSpellCooldown(spellId))
@@ -1946,6 +1955,7 @@ void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
             return;
 
         ((Player*)unitTarget)->TeleportToHomebind(unitTarget==m_caster ? TELE_TO_SPELL : 0);
+		m_caster->CastSpell(m_caster,2479,true);	// Honorless target should be applied after using HS
         return;
     }
     case TARGET_AREAEFFECT_INSTANT:                     // in all cases first TARGET_TABLE_X_Y_Z_COORDINATES
@@ -5798,8 +5808,24 @@ void Spell::EffectSummonDeadPet(SpellEffectIndex /*eff_idx*/)
         return;
     Player *_player = (Player*)m_caster;
     Pet *pet = _player->GetPet();
+
+    // Handle reviving a pet that isn't in the world.
     if(!pet)
+    {
+        Pet* NewSummon = new Pet;
+
+        // petentry==0 for hunter "call pet" (current pet summoned if any)
+        if (NewSummon->LoadPetFromDB((Player*)m_caster, 0, 0, false, true))
+        {
+            NewSummon->SetHealth(uint32(NewSummon->GetMaxHealth() * (float(damage) / 100)));
+            return;
+        }
+
+        // If we failed loading a dead pet we delete the newly created pet.
+        delete NewSummon;
         return;
+    }
+
     if(pet->isAlive())
         return;
     if(damage < 0)
