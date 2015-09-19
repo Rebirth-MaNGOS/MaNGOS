@@ -61,6 +61,75 @@ static uint32 ReputationRankStrIndex[MAX_REPUTATION_RANK] =
     LANG_REP_FRIENDLY, LANG_REP_HONORED, LANG_REP_REVERED,    LANG_REP_EXALTED
 };
 
+bool ChatHandler::HandleBagClearCommand(char* args)
+{
+    Player *target = m_session->GetPlayer();
+
+    if(target)
+    {
+        uint8 count = 0;
+
+        for(int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
+        {
+            Bag* pBag = (Bag*)target->GetItemByPos( INVENTORY_SLOT_BAG_0, i );
+            if (pBag)
+            {
+                for(uint32 j = 0; j < pBag->GetBagSize(); ++j)
+                {
+                    Item* pItem = target->GetItemByPos( i, j );
+                    if (pItem)
+                    {
+                        target->RemoveItem(i, j, true);
+                        ++count;
+                    }
+                }
+            }     
+        }
+
+        for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+        {
+                    Item* pItem = target->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+                    if (pItem)
+                    {
+                        target->RemoveItem(INVENTORY_SLOT_BAG_0, i, true);
+                        ++count;
+                    }  
+        }
+
+        PSendSysMessage("Your bags have been cleared, %d items removed.", count);
+        return true;
+    }
+
+    PSendSysMessage("Bags could not be cleared.");
+    return false;
+}
+
+bool ChatHandler::HandleBagAddCommand(char* args)
+{
+    Player *target = m_session->GetPlayer();
+
+    if(target)
+    {
+        uint8 count = 0;
+
+        for(int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
+        {
+            Bag* pBag = (Bag*)target->GetItemByPos( INVENTORY_SLOT_BAG_0, i );
+            if(!pBag)
+            {
+                if(target->StoreNewItemInBestSlots(17966, 1))
+                    ++count;
+            }     
+        }
+
+        PSendSysMessage("%d bags added.", count);
+        return true;
+    }
+
+    PSendSysMessage("Bags could not be added.");
+    return false;
+}
+
 bool ChatHandler::HandleBugReportTicketToReportCommand(char* args)
 {
     std::string title;
