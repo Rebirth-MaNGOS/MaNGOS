@@ -465,14 +465,15 @@ void Transport::TeleportTransport(uint32 newMapid, float x, float y, float z)
     //we need to create and save new Map object with 'newMapid' because if not done -> lead to invalid Map object reference...
     //player far teleport would try to create same instance, but we need it NOW for transport...
     //correct me if I'm wrong O.o
+    
     Map * newMap = sMapMgr.CreateMap(newMapid, this);
-    SetMap(newMap);
+    SetMap(newMap);/*
 
     if(oldMap != newMap)
     {
         UpdateForMap(oldMap);
         UpdateForMap(newMap);
-    }
+    }*/
 }
 
 bool Transport::AddPassenger(Player* passenger)

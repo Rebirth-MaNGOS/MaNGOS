@@ -403,12 +403,12 @@ CreatureAI* GetAI_mob_frenzied_bloodseeker_bat(Creature* pCreature)
 enum eBatRider
 {
     // Normal mode
-    SPELL_DEMORALIZING_SHOUT  = 23511,
-    SPELL_BATTLE_COMMAND      = 5115,
-    SPELL_INFECTED_BITE       = 16128,
-    SPELL_THRASH              = 3391,
-    SPELL_UNSTABLE_CONCOTION  = 24024,
-    SPELL_THROW_LIQUID_FIRE   = 23968,
+    SPELL_DEMORALIZING_SHOUT        = 23511,
+    SPELL_BATTLE_COMMAND            = 5115,
+    SPELL_INFECTED_BITE             = 16128,
+    SPELL_THRASH                    = 3391,
+    SPELL_UNSTABLE_CONCOTION        = 24024,
+    SPELL_THROW_LIQUID_FIRE         = 23968,
     
     // Flying mode (Jeklik's encounter)
     SPELL_THROW_LIQUID_FIRE__ = 23970,          // 22334

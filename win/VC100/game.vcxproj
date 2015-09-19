@@ -198,7 +198,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalOptions>/MP /bigobj %(AdditionalOptions) /Zm250</AdditionalOptions>
+      <AdditionalOptions>/MP /bigobj %(AdditionalOptions) /Zm500</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\dep\boost_1_55_0;..\..\dep\include;..\..\src\framework;..\..\src\shared;..\..\src\game\vmap;..\..\dep\ACE_wrappers;..\..\dep\include\g3dlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;MANGOS_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -264,6 +264,7 @@
       <AdditionalDependencies>.\shared__$(Platform)_$(Configuration)\shared.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies>.\g3dlite__$(Platform)_$(Configuration)\g3dlite.lib;..\..\dep\alglib-3.8.2\VS\alglib\Win32\Release\alglib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalOptions>/SAFESH:NO %(AdditionalOptions)</AdditionalOptions>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
@@ -387,6 +388,7 @@
     <ClCompile Include="..\..\src\game\BattleGroundHandler.cpp" />
     <ClCompile Include="..\..\src\game\BattleGroundMgr.cpp" />
     <ClCompile Include="..\..\src\game\BattleGroundWS.cpp" />
+    <ClCompile Include="..\..\src\game\BugReportMgr.cpp" />
     <ClCompile Include="..\..\src\game\Camera.cpp" />
     <ClCompile Include="..\..\src\game\Channel.cpp" />
     <ClCompile Include="..\..\src\game\ChannelHandler.cpp" />
@@ -410,6 +412,8 @@
     <ClCompile Include="..\..\src\game\DestinationHolder.cpp" />
     <ClCompile Include="..\..\src\game\DuelHandler.cpp" />
     <ClCompile Include="..\..\src\game\DynamicObject.cpp" />
+    <ClCompile Include="..\..\src\game\EventResourceMgr.cpp" />
+    <ClCompile Include="..\..\src\game\ExclusivePoolMgr.cpp" />
     <ClCompile Include="..\..\src\game\FleeingMovementGenerator.cpp" />
     <ClCompile Include="..\..\src\game\FollowerReference.cpp" />
     <ClCompile Include="..\..\src\game\GameEventMgr.cpp" />
@@ -542,6 +546,7 @@
     <ClInclude Include="..\..\src\game\BattleGroundAV.h" />
     <ClInclude Include="..\..\src\game\BattleGroundMgr.h" />
     <ClInclude Include="..\..\src\game\BattleGroundWS.h" />
+    <ClInclude Include="..\..\src\game\BugReportMgr.h" />
     <ClInclude Include="..\..\src\game\Camera.h" />
     <ClInclude Include="..\..\src\game\Cell.h" />
     <ClInclude Include="..\..\src\game\CellImpl.h" />
@@ -566,6 +571,8 @@
     <ClInclude Include="..\..\src\game\DestinationHolder.h" />
     <ClInclude Include="..\..\src\game\DestinationHolderImp.h" />
     <ClInclude Include="..\..\src\game\DynamicObject.h" />
+    <ClInclude Include="..\..\src\game\EventResourceMgr.h" />
+    <ClInclude Include="..\..\src\game\ExclusivePoolMgr.h" />
     <ClInclude Include="..\..\src\game\FleeingMovementGenerator.h" />
     <ClInclude Include="..\..\src\game\FollowerReference.h" />
     <ClInclude Include="..\..\src\game\FollowerRefManager.h" />

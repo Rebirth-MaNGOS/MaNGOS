@@ -2,6 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "game", "VC100\game.vcxproj", "{1DC6C4DA-A028-41F3-877D-D5400C594F88}"
 	ProjectSection(ProjectDependencies) = postProject
+		{BF6F5D0E-33A5-4E23-9E7D-DD481B7B5B9E} = {BF6F5D0E-33A5-4E23-9E7D-DD481B7B5B9E}
 		{90297C34-F231-4DF4-848E-A74BCC0E40ED} = {90297C34-F231-4DF4-848E-A74BCC0E40ED}
 		{A352C954-4BC2-44FD-A048-90F8568CDF66} = {A352C954-4BC2-44FD-A048-90F8568CDF66}
 		{72BDF975-4D4A-42C7-B2C4-F9ED90A2ABB6} = {72BDF975-4D4A-42C7-B2C4-F9ED90A2ABB6}
@@ -70,54 +71,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "alglib", "..\dep\alglib-3.8.2\VS\alglib\alglib.vcxproj", "{A352C954-4BC2-44FD-A048-90F8568CDF66}"
 EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 15
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://n2focus.visualstudio.com/defaultcollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = VC100\\game.vcxproj
-		SccProjectName1 = VC100
-		SccLocalPath1 = VC100
-		SccProjectUniqueName2 = VC100\\shared.vcxproj
-		SccProjectName2 = VC100
-		SccLocalPath2 = VC100
-		SccProjectUniqueName3 = VC100\\mangosd.vcxproj
-		SccProjectName3 = VC100
-		SccLocalPath3 = VC100
-		SccProjectUniqueName4 = VC100\\zlib.vcxproj
-		SccProjectName4 = VC100
-		SccLocalPath4 = VC100
-		SccProjectUniqueName5 = VC100\\framework.vcxproj
-		SccProjectName5 = VC100
-		SccLocalPath5 = VC100
-		SccProjectUniqueName6 = VC100\\realmd.vcxproj
-		SccProjectName6 = VC100
-		SccLocalPath6 = VC100
-		SccProjectUniqueName7 = VC100\\g3dlite.vcxproj
-		SccProjectName7 = VC100
-		SccLocalPath7 = VC100
-		SccProjectUniqueName8 = VC100\\genrevision.vcxproj
-		SccProjectName8 = VC100
-		SccLocalPath8 = VC100
-		SccProjectUniqueName9 = VC100\\ACE_vc10.vcxproj
-		SccProjectName9 = VC100
-		SccLocalPath9 = VC100
-		SccProjectUniqueName10 = ..\\dep\\recastnavigation\\Detour\\win\\VC100\\Detour.vcxproj
-		SccProjectName10 = ../dep/recastnavigation/Detour/win/VC100
-		SccLocalPath10 = ..\\dep\\recastnavigation\\Detour\\win\\VC100
-		SccProjectUniqueName11 = ..\\src\\bindings\\Scriptdevzero\\VC100\\100ScriptDev2.vcxproj
-		SccProjectName11 = ../src/bindings/Scriptdevzero/VC100
-		SccLocalPath11 = ..\\src\\bindings\\Scriptdevzero\\VC100
-		SccProjectUniqueName12 = VC100\\tbbmalloc.vcxproj
-		SccProjectName12 = VC100
-		SccLocalPath12 = VC100
-		SccProjectUniqueName13 = VC100\\tbb.vcxproj
-		SccProjectName13 = VC100
-		SccLocalPath13 = VC100
-		SccProjectUniqueName14 = ..\\dep\\alglib-3.8.2\\VS\\alglib\\alglib.vcxproj
-		SccProjectName14 = ../dep/alglib-3.8.2/VS/alglib
-		SccLocalPath14 = ..\\dep\\alglib-3.8.2\\VS\\alglib
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_NoPCH|Mixed Platforms = Debug_NoPCH|Mixed Platforms
 		Debug_NoPCH|Win32 = Debug_NoPCH|Win32
