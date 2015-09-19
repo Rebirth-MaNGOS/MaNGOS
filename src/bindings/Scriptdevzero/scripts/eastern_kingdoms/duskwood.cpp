@@ -424,6 +424,117 @@ CreatureAI* GetAI_mob_stitches(Creature* pCreature)
     return new mob_stitchesAI(pCreature);
 }
 
+enum
+{
+    TWILIGHT_CORRUPTER_AGGRO = -1720121,
+    SOUL_CORRUPTION          = 25805,
+    CREATURE_OF_NIGHTMARE          = 25806,
+    SPELL_LEVEL_UP      = 24312,
+    QUEST_THE_NIGHTMARES_CORRUPTION = 8735,
+    TWILIGHT_CORRUPTER = 15625,
+};
+
+struct MANGOS_DLL_DECL mob_twilight_corrupter : public ScriptedAI
+{
+    mob_twilight_corrupter(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uicorruption_timer;
+    uint32 m_uinightmare_timer;
+    uint32 m_uikill_counter;
+
+    void Reset()
+    {
+        m_uicorruption_timer = urand(5000,15000);
+        m_uinightmare_timer = urand(20000, 30000);
+        m_uikill_counter = 0;
+    }
+
+	void Aggro(Unit* /*pWho*/)
+    {
+        DoScriptText(TWILIGHT_CORRUPTER_AGGRO, m_creature);
+    }
+
+    void EnterCombat(Unit* /*pWho*/)
+    {
+        m_uikill_counter = 0;
+    }
+
+    void KilledUnit(Unit* pVictim)
+    {
+        if(pVictim && pVictim->GetTypeId() == TYPEID_PLAYER)
+        {
+            m_creature->GenericTextEmote(std::string("Twilight Corrupter squeezes the last bit of life out of " + std::string(pVictim->GetName()) + " and swallows their soul.").c_str(), nullptr, false);
+            
+            ++m_uikill_counter;
+
+            if(m_uikill_counter == 3)
+            {
+                DoCastSpellIfCan(m_creature, SPELL_LEVEL_UP, CAST_TRIGGERED);
+                m_creature->SetLevel(m_creature->getLevel() + 1);
+                m_uikill_counter = 0;
+            }
+        }
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if(m_uicorruption_timer)
+        {
+            if(m_uicorruption_timer <= uiDiff)
+            {
+                if(Unit *pVictim = m_creature->getVictim())
+                    DoCastSpellIfCan(pVictim, SOUL_CORRUPTION);
+
+                m_uicorruption_timer = urand(5000,15000);
+            }
+            else
+                m_uicorruption_timer -= uiDiff;
+        }
+
+        if(m_uinightmare_timer)
+        {
+            if(m_uinightmare_timer <= uiDiff)
+            {
+                if(Unit *pVictim = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    DoCastSpellIfCan(pVictim, CREATURE_OF_NIGHTMARE);
+
+                m_uinightmare_timer = urand(20000, 30000);
+            }
+            else
+                m_uinightmare_timer -= uiDiff;
+        }
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+
+CreatureAI* GetAI_mob_twilight_corrupter(Creature* pCreature)
+{
+    return new mob_twilight_corrupter(pCreature);
+}
+
+bool AreaTrigger_at_Twilight_Grove(Player* pPlayer, AreaTriggerEntry const* pAt)
+{
+    if (pPlayer->GetQuestStatus(QUEST_THE_NIGHTMARES_CORRUPTION) == QUEST_STATUS_INCOMPLETE)
+    {
+        Creature* corrupter = GetClosestCreatureWithEntry(pPlayer, TWILIGHT_CORRUPTER, 10000);
+
+        if(!corrupter && pPlayer)
+        {
+            corrupter = pPlayer->SummonCreature(TWILIGHT_CORRUPTER, -10337, -494, 51.32, 2.68, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 600000);
+            corrupter->MonsterWhisper(std::string("Come, " + std::string(pPlayer->GetName()) + ". See what the nightmare brings.").c_str(), pPlayer, false);
+        }
+    }
+    return false;
+}
+
 void AddSC_duskwood()
 {
     Script* pNewscript;
@@ -447,5 +558,15 @@ void AddSC_duskwood()
     pNewscript->Name = "npc_ello_ebonlocke";
     pNewscript->GetAI = &GetAI_npc_ello_ebonlocke;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_ello_ebonlocke;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+	pNewscript->Name = "mob_twilight_corrupter";
+	pNewscript->GetAI = &GetAI_mob_twilight_corrupter;
+	pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "at_Twilight_Grove";
+    pNewscript->pAreaTrigger = &AreaTrigger_at_Twilight_Grove;
     pNewscript->RegisterSelf();
 }
