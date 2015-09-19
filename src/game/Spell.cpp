@@ -3259,7 +3259,6 @@ void Spell::cast(bool skipCheck)
     }
 
     // TODO: Filter out equipment spells from the check.
-    /*
     if (!CheckBuffOverwrite(spellProto))
     {
         SendCastResult(SPELL_FAILED_MORE_POWERFUL_SPELL_ACTIVE);
@@ -3269,7 +3268,6 @@ void Spell::cast(bool skipCheck)
         SetExecutedCurrently(false);
         return;
     }
-    */
 
     // CAST SPELL
     SendSpellCooldown();
@@ -6100,9 +6098,13 @@ bool Spell::CheckBuffOverwrite(SpellEntry const* spellProto)
     if (!spellProto)
         return true;
 
+    // Hidden Buffs should not be checked, such as those from gear.
+    if (spellProto->Attributes & SPELL_ATTR_HIDDEN)
+       return true;
+
     // Buffs are positive spells.
     if (spellProto->AttributesEx & SPELL_ATTR_EX_NEGATIVE)
-        return true;
+       return true;
 
     for (short i = 0; i < MAX_EFFECT_INDEX; i++)
     {
