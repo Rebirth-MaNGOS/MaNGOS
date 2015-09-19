@@ -422,7 +422,6 @@ CreatureAI* GetAI_mob_stitches(Creature* pCreature)
     return new mob_stitchesAI(pCreature);
 }
 
-<<<<<<< HEAD
 enum
 {
     TWILIGHT_CORRUPTER_AGGRO = -1720121,
@@ -477,7 +476,38 @@ struct MANGOS_DLL_DECL mob_twilight_corrupter : public ScriptedAI
             }
         }
     }
-=======
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+        if(m_uicorruption_timer)
+        {
+            if(m_uicorruption_timer <= uiDiff)
+            {
+                if(Unit *pVictim = m_creature->getVictim())
+                    DoCastSpellIfCan(pVictim, SOUL_CORRUPTION);
+
+                m_uicorruption_timer = urand(5000,15000);
+            }
+            else
+                m_uicorruption_timer -= uiDiff;
+        }
+
+        if(m_uinightmare_timer)
+        {
+            if(m_uinightmare_timer <= uiDiff)
+            {
+                if(Unit *pVictim = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    DoCastSpellIfCan(pVictim, CREATURE_OF_NIGHTMARE);
+
+                m_uinightmare_timer = urand(20000, 30000);
+            }
+            else
+                m_uinightmare_timer -= uiDiff;
+        }
+    }
+
+};
+
 /*######
 ## mob_commander_felstrom
 ######*/
@@ -504,52 +534,22 @@ struct MANGOS_DLL_DECL mob_commander_felstromAI : public ScriptedAI
 			m_creature->SetOwnerGuid(m_creature->GetObjectGuid());				// no owner means no exp
 		}
 	}
->>>>>>> 12145df01cc9aa6717610e28466f690ac7dc67c4
 
 	void UpdateAI(const uint32 uiDiff)
     {
 		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-<<<<<<< HEAD
-        if(m_uicorruption_timer)
-        {
-            if(m_uicorruption_timer <= uiDiff)
-            {
-                if(Unit *pVictim = m_creature->getVictim())
-                    DoCastSpellIfCan(pVictim, SOUL_CORRUPTION);
-
-                m_uicorruption_timer = urand(5000,15000);
-            }
-            else
-                m_uicorruption_timer -= uiDiff;
-        }
-
-        if(m_uinightmare_timer)
-        {
-            if(m_uinightmare_timer <= uiDiff)
-            {
-                if(Unit *pVictim = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                    DoCastSpellIfCan(pVictim, CREATURE_OF_NIGHTMARE);
-
-                m_uinightmare_timer = urand(20000, 30000);
-            }
-            else
-                m_uinightmare_timer -= uiDiff;
-        }
-=======
 		if(HealthBelowPct(11) && !m_bDidCast)
 		{
 			DoCastSpellIfCan(m_creature,SPELL_FELSTROM_RESURRECTION);
 			m_bDidCast = true;
 		}
->>>>>>> 12145df01cc9aa6717610e28466f690ac7dc67c4
 
         DoMeleeAttackIfReady();
 	}
 };
 
-<<<<<<< HEAD
 
 CreatureAI* GetAI_mob_twilight_corrupter(Creature* pCreature)
 {
@@ -569,11 +569,11 @@ bool AreaTrigger_at_Twilight_Grove(Player* pPlayer, AreaTriggerEntry const* pAt)
         }
     }
     return false;
-=======
+}
+
 CreatureAI* GetAI_mob_commander_felstrom(Creature* pCreature)
 {
     return new mob_commander_felstromAI(pCreature);
->>>>>>> 12145df01cc9aa6717610e28466f690ac7dc67c4
 }
 
 void AddSC_duskwood()
@@ -601,7 +601,6 @@ void AddSC_duskwood()
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_ello_ebonlocke;
     pNewscript->RegisterSelf();
 
-<<<<<<< HEAD
     pNewscript = new Script;
 	pNewscript->Name = "mob_twilight_corrupter";
 	pNewscript->GetAI = &GetAI_mob_twilight_corrupter;
@@ -611,10 +610,9 @@ void AddSC_duskwood()
     pNewscript->Name = "at_Twilight_Grove";
     pNewscript->pAreaTrigger = &AreaTrigger_at_Twilight_Grove;
     pNewscript->RegisterSelf();
-=======
+
 	pNewscript = new Script;
 	pNewscript->Name = "mob_commander_felstrom";
 	pNewscript->GetAI = &GetAI_mob_commander_felstrom;
 	pNewscript->RegisterSelf();
->>>>>>> 12145df01cc9aa6717610e28466f690ac7dc67c4
 }
