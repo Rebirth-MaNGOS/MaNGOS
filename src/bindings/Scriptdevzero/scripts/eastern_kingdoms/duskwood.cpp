@@ -82,7 +82,6 @@ struct MANGOS_DLL_DECL npc_morgan_ladimoreAI : public ScriptedAI
         m_uiSpeechStep = 1;
     }
 
-
     void UpdateAI(const uint32 uiDiff)					// handle Rp at end of A daughter's love quest, it's a hack but can't do it in DB
     {
 		if (!m_uiSpeechStep)
@@ -108,7 +107,6 @@ struct MANGOS_DLL_DECL npc_morgan_ladimoreAI : public ScriptedAI
 					m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
 					m_uiSpeechStep = 0;
 					return;
-
                 default:
                     m_uiSpeechStep = 0;
                     return;
@@ -424,6 +422,53 @@ CreatureAI* GetAI_mob_stitches(Creature* pCreature)
     return new mob_stitchesAI(pCreature);
 }
 
+/*######
+## mob_commander_felstrom
+######*/
+
+enum eFelstrom
+{
+	SPELL_FELSTROM_RESURRECTION = 3488
+};
+
+struct MANGOS_DLL_DECL mob_commander_felstromAI : public ScriptedAI						
+{
+    mob_commander_felstromAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+	bool m_bDidCast;
+    void Reset()
+    {
+		m_bDidCast = false;		
+    }
+
+	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)
+    {
+        if (pSpell->Id == SPELL_FELSTROM_RESURRECTION && pCaster == m_creature)
+        {
+			m_creature->SetLootRecipient(NULL);
+			m_creature->SetOwnerGuid(m_creature->GetObjectGuid());				// no owner means no exp
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if(HealthBelowPct(11) && !m_bDidCast)
+		{
+			DoCastSpellIfCan(m_creature,SPELL_FELSTROM_RESURRECTION);
+			m_bDidCast = true;
+		}
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_mob_commander_felstrom(Creature* pCreature)
+{
+    return new mob_commander_felstromAI(pCreature);
+}
+
 void AddSC_duskwood()
 {
     Script* pNewscript;
@@ -448,4 +493,9 @@ void AddSC_duskwood()
     pNewscript->GetAI = &GetAI_npc_ello_ebonlocke;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_ello_ebonlocke;
     pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+	pNewscript->Name = "mob_commander_felstrom";
+	pNewscript->GetAI = &GetAI_mob_commander_felstrom;
+	pNewscript->RegisterSelf();
 }
