@@ -39,6 +39,16 @@ void instance_deadmines::Initialize()
     memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
 }
 
+void instance_deadmines::OnPlayerEnter(Player* pPlayer)
+{
+    // Respawn the Mysterious chest if one of the players who enter the instance has the quest in his log
+    if (pPlayer->GetQuestStatus(QUEST_FORTUNE_AWAITS) == QUEST_STATUS_COMPLETE &&
+        !pPlayer->GetQuestRewardStatus(QUEST_FORTUNE_AWAITS))
+    {
+        DoRespawnGameObject(GO_MYSTERIOUS_CHEST, HOUR);
+    }
+}
+
 void instance_deadmines::OnCreatureCreate(Creature* pCreature)
 {
     switch(pCreature->GetEntry())
@@ -112,6 +122,7 @@ void instance_deadmines::OnObjectCreate(GameObject* pGo)
         case GO_IRON_CLAD_DOOR:
         case GO_DEFIAS_CANNON:
         case GO_SMITE_CHEST:
+		case GO_MYSTERIOUS_CHEST:
             break;
 
         default:
