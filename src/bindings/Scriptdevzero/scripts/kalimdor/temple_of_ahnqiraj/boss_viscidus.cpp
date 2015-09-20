@@ -243,11 +243,10 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
                 }
                 m_bCanDoDamage = false;
                 m_bExploded = true;
-                //RemoveAuras();					// remove auras if we're gonna explode, not needed?
                 m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
                 m_creature->CastSpell(m_creature, SPELL_VISCIDUS_EXPLODE,true);
-                m_creature->GenericTextEmote("Viscidus explodes.", NULL, false);			// missing death animation
-                m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);		// not really working	
+                m_creature->GenericTextEmote("Viscidus explodes.", NULL, false);
+                m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 
                 // Clear the target to prevent him from rotating.
                 m_creature->SetTargetGuid(ObjectGuid());
@@ -257,7 +256,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
                 m_creature->SetHealth(0);
 
                 m_uiSetInvisTimer = 1700;
-                m_uiGlobSpawnTimer = 3000;			// slight delay before we spawn the adds
+                m_uiGlobSpawnTimer = 4000;			// slight delay before we spawn the adds
                 m_uiSetVisibleTimer = 18000;			// adjust this when adds are spawning/moving correctly
             }
         }
@@ -330,6 +329,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             {
                 RemoveAuras();
                 ResetBool(0);	
+				ResetBool(1);
             }
             else
                 m_uiThawTimer -= uiDiff;
@@ -349,7 +349,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             if (m_uiSetVisibleTimer <= uiDiff)
             {
                 SetVisible(1);
-                m_creature->SetObjectScale(2*(m_creature->GetHealthPercent()/100));			// set Viscidus' size depending on the blobs that are alive 1/ too small?   
+                m_creature->SetObjectScale(1.2*(m_creature->GetHealthPercent()/100));			// set Viscidus' size depending on the blobs that are alive 1/ too small?   
                 m_creature->UpdateModelData();
                 m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
             }
@@ -469,13 +469,14 @@ struct MANGOS_DLL_DECL boss_glob_of_viscidusAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        //Return since we have no target
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
+        ////Return since we have no target
+        //if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+        //    return;
 
         if (m_uiSpeedUpTimer <= uiDiff)				// increase the speed every half a sec
         {
-            m_creature->SetSpeedRate(MOVE_RUN, m_creature->GetSpeedRate(MOVE_RUN)+0.05f);
+			m_creature->UpdateSpeed(MOVE_RUN, m_creature->GetSpeedRate(MOVE_RUN)+0.15f);
+			m_creature->UpdateVisibilityAndView();			// not really helping
             m_uiSpeedUpTimer = 500;
         }
         else
