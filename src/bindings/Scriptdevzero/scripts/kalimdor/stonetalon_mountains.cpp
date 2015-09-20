@@ -142,163 +142,204 @@ bool QuestAccept_npc_kaya(Player* pPlayer, Creature* pCreature, Quest const* pQu
 ## npc_piznik
 ######*/
 
-enum ePiznik
+enum
 {
-	QUEST_GERENZOS_ORDERS   = 1090,
+    QUEST_GERENZOS_ORDERS      = 1090,
 
-	NPC_WINDSHEAR_DIGGER    = 3999,
-	NPC_WINDSHEAR_GEOMANCER = 4003,
+    NPC_WINDSHEAR_VERMIN       = 3998,
+    NPC_WINDSHEAR_TUNNEL_RAT   = 4001,
+    NPC_WINDSHEAR_STONECUTTER  = 4002,
+    NPC_WINDSHEAR_GEOMANCER    = 4003,
+    NPC_WINDSHEAR_OVERLORD     = 4004,
+    FACTION_QUEST              = 495
 };
 
-#define SPAWN_X 942.10f
-#define SPAWN_Y -254.33f
-#define SPAWN_Z -2.35f
-
-struct MANGOS_DLL_DECL npc_piznikAI : public npc_escortAI
+struct SpawnPointstone
 {
-	npc_piznikAI(Creature* pCreature) : npc_escortAI(pCreature)
-	{
-		Reset();
-	}
-
-	Creature* WindshearKobold[12];
-	uint32 WindshearKoboldCounter;
-	uint32 EventPhase;
-	uint32 EventTimer;
-	bool CanWalk;
-
-	void Reset()
-	{
-		if (HasEscortState(STATE_ESCORT_ESCORTING))
-			return;
-
-		for(uint8 i = 0; i < 12; ++i)
-			WindshearKobold[i] = 0;
-
-		WindshearKoboldCounter = 0;
-		EventPhase = 0;
-		EventTimer = 0;
-
-		CanWalk = true;
-	}
-
-	void WaypointReached(uint32 uiPoint)
-	{
-		Player* pPlayer = GetPlayerForEscort();
-		if (!pPlayer)
-			return;
-
-		switch(uiPoint)
-		{
-			case 0:
-				EventTimer = 1;
-				EventPhase = 1;
-				CanWalk = false;
-				break;
-		}
-	}
-
-	void JustSummoned(Creature* pSummon)
-	{
-		if (pSummon)
-			pSummon->AI()->AttackStart(m_creature);
-	}
-
-	void SummonWindshearKobold()
-	{
-		switch(urand(1,2))
-		{
-			case 1: WindshearKobold[++WindshearKoboldCounter] = m_creature->SummonCreature(NPC_WINDSHEAR_DIGGER, SPAWN_X, SPAWN_Y, SPAWN_Z, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000); break;
-			case 2: WindshearKobold[++WindshearKoboldCounter] = m_creature->SummonCreature(NPC_WINDSHEAR_GEOMANCER, SPAWN_X, SPAWN_Y, SPAWN_Z, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000); break;
-		}
-	}
-
-	bool CanCompletePiznikQuest()
-	{
-		if (WindshearKobold[9] && WindshearKobold[9]->isAlive() && !WindshearKobold[9]->isDead())
-			return false;
-		if (WindshearKobold[10] && WindshearKobold[10]->isAlive() && !WindshearKobold[10]->isDead())
-			return false;
-		if (WindshearKobold[11] && WindshearKobold[11]->isAlive() && !WindshearKobold[11]->isDead())
-			return false;
-
-		return true;
-	}
-
-	void UpdateAI(const uint32 uiDiff)
-	{
-		Player* pPlayer = GetPlayerForEscort();
-
-		if (EventTimer && pPlayer && m_creature->isAlive())
-		{
-			if (EventTimer <= uiDiff)
-			{
-				switch(EventPhase)
-				{
-					case 1:
-						SummonWindshearKobold();
-						SummonWindshearKobold();
-						SummonWindshearKobold();
-						EventTimer = 30000;
-						break;
-					case 2:
-						SummonWindshearKobold();
-						SummonWindshearKobold();
-						SummonWindshearKobold();
-						EventTimer = 30000;
-						break;
-					case 3:
-						SummonWindshearKobold();
-						SummonWindshearKobold();
-						SummonWindshearKobold();
-						EventTimer = 30000;
-						break;
-					case 4:
-						SummonWindshearKobold();
-						SummonWindshearKobold();
-						SummonWindshearKobold();
-						EventTimer = 1;
-						break;
-					case 5:
-						if (CanCompletePiznikQuest())
-						{
-							m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
-							pPlayer->AreaExploredOrEventHappens(QUEST_GERENZOS_ORDERS);
-							EventTimer = 0; // event done
-							CanWalk = true;
-						}
-						else
-						{
-							EventPhase = 4; // repeat this phase
-							EventTimer = 1; // holding event repeat
-						}
-						break;
-				}
-				++EventPhase;
-			}
-				else EventTimer -= uiDiff;
-		}
-
-		if (CanWalk)
-			npc_escortAI::UpdateAI(uiDiff);
-
-		if (m_creature->SelectHostileTarget() || m_creature->getVictim())
-			DoMeleeAttackIfReady();
-	}
+    float fX;
+    float fY;
+    float fZ;
+    float fO;
 };
-CreatureAI* GetAI_npc_piznik(Creature* pCreature)
-{
-    return new npc_piznikAI (pCreature);
-}
 
-bool QuestAccept_npc_piznik(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+SpawnPointstone SpawnPointsst[] =  // Set Spawnpoints for Waves
+{
+    { 938.30f, -257.35f, -2.22f, 6.2f},
+    { 942.28f, -254.49f, -2.38f, 6.2f},
+    { 938.52f, -253.20f, -2.08f, 6.2f},
+    { 939.51f, -253.11f, -2.02f, 6.2f}
+};
+
+struct MovePointStone
+{
+    float fX;
+    float fY;
+    float fZ;
+};
+
+MovePointStone MovePointsst[] =   // // Set Movementpoints for Waves
+{
+    { 957.69f, -256.17f, -3.61f},
+    { 957.12f, -260.06f, -4.68f},
+    { 958.76f, -257.87f, -4.28f},
+    { 953.72f, -257.25f, -3.38f}
+};
+
+
+
+struct MANGOS_DLL_DECL npc_piznikAI : public ScriptedAI
+{
+    npc_piznikAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_uiPlayerGUID  = 0;
+        m_bEventStarted = false;
+        m_uiWaveTimer   = 60000;  // One minute until first Wave
+        m_uiEventTimer  = 420000; // 7 minutes Event time
+        m_uiSummonCount = 0;
+        m_uiNormFaction = pCreature->getFaction();
+        m_uiWaveCount   = 0;
+        m_uiMoveCount   = 0;
+        Reset();
+    }
+
+    void Reset()
+    {
+    }
+
+    uint64 m_uiPlayerGUID;
+    uint32 m_uiWaveTimer;
+    uint32 m_uiEventTimer;
+    uint32 m_uiSummonCount;
+    uint32 m_uiNormFaction;
+    uint8  m_uiWaveCount;
+    uint8  m_uiMoveCount;
+    bool   m_bEventStarted;
+
+    void StartEvent(uint64 uiPlayerGUID)
+    {
+        m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+        m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
+        m_creature->setFaction(FACTION_QUEST);
+
+        m_uiPlayerGUID  = uiPlayerGUID;
+        m_bEventStarted = true;
+        m_uiWaveTimer   = 60000;  // One minute until first Wave
+        m_uiEventTimer  = 300000; // 5 minutes Event time
+        m_uiSummonCount = 0;
+        m_uiWaveCount   = 0;
+        m_uiMoveCount   = 0;
+    }
+
+    void FinishEvent()
+    {
+        m_uiPlayerGUID = 0;
+        m_bEventStarted = false;
+        m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+        m_creature->setFaction(m_uiNormFaction);
+    }
+
+    void JustDied(Unit* pKiller)
+    {
+        if (Player* pPlayer = (m_creature->GetMap()->GetPlayer(m_uiPlayerGUID)))
+        {
+            pPlayer->SendQuestFailed(QUEST_GERENZOS_ORDERS);
+        }
+
+        FinishEvent();
+    }
+
+    void JustSummoned(Creature* pSummoned)
+    {
+        ++m_uiSummonCount;
+
+        // Get waypoint for each creature
+        pSummoned->GetMotionMaster()->MovePoint(0, MovePointsst[m_uiMoveCount].fX, MovePointsst[m_uiMoveCount].fY, MovePointsst[m_uiMoveCount].fZ);
+
+        ++m_uiMoveCount;
+    }
+
+    void SummonedCreatureJustDied(Creature* pKilled)
+    {
+        --m_uiSummonCount;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+
+        if (m_uiEventTimer < uiDiff)  //Event should be completed after 5 minutes even if waves are alive
+        {
+            if (Player* pPlayer = (m_creature->GetMap()->GetPlayer(m_uiPlayerGUID)))
+            {
+                pPlayer->GroupEventHappens(QUEST_GERENZOS_ORDERS, m_creature);
+            }
+
+            FinishEvent();
+        }
+
+
+        if (m_bEventStarted && !m_uiSummonCount)
+        {
+
+            if (m_uiWaveTimer < uiDiff && m_uiWaveCount <= 2)
+            {
+                switch (m_uiWaveCount)
+                {
+
+                    case 0:
+                        m_creature->SummonCreature(NPC_WINDSHEAR_VERMIN,   SpawnPointsst[2].fX, SpawnPointsst[2].fY, SpawnPointsst[2].fZ, SpawnPointsst[2].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_creature->SummonCreature(NPC_WINDSHEAR_TUNNEL_RAT,    SpawnPointsst[0].fX, SpawnPointsst[0].fY, SpawnPointsst[0].fZ, SpawnPointsst[0].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_creature->SummonCreature(NPC_WINDSHEAR_VERMIN, SpawnPointsst[1].fX, SpawnPointsst[1].fY, SpawnPointsst[1].fZ, SpawnPointsst[1].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_uiWaveTimer = 45000;
+                        m_uiMoveCount = 0;
+                        break;
+                    case 1:
+                        m_creature->SummonCreature(NPC_WINDSHEAR_GEOMANCER,   SpawnPointsst[2].fX, SpawnPointsst[2].fY, SpawnPointsst[2].fZ, SpawnPointsst[2].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_creature->SummonCreature(NPC_WINDSHEAR_STONECUTTER,    SpawnPointsst[0].fX, SpawnPointsst[0].fY, SpawnPointsst[0].fZ, SpawnPointsst[0].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_creature->SummonCreature(NPC_WINDSHEAR_GEOMANCER, SpawnPointsst[1].fX, SpawnPointsst[1].fY, SpawnPointsst[1].fZ, SpawnPointsst[1].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_creature->SummonCreature(NPC_WINDSHEAR_STONECUTTER, SpawnPointsst[3].fX, SpawnPointsst[3].fY, SpawnPointsst[3].fZ, SpawnPointsst[3].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_uiWaveTimer  = 45000;
+                        m_uiMoveCount = 0;
+                        break;
+                    case 2:
+                        m_creature->SummonCreature(NPC_WINDSHEAR_TUNNEL_RAT,   SpawnPointsst[2].fX, SpawnPointsst[2].fY, SpawnPointsst[2].fZ, SpawnPointsst[2].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_creature->SummonCreature(NPC_WINDSHEAR_OVERLORD,    SpawnPointsst[0].fX, SpawnPointsst[0].fY, SpawnPointsst[0].fZ, SpawnPointsst[0].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_creature->SummonCreature(NPC_WINDSHEAR_TUNNEL_RAT, SpawnPointsst[1].fX, SpawnPointsst[1].fY, SpawnPointsst[1].fZ, SpawnPointsst[1].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_creature->SummonCreature(NPC_WINDSHEAR_TUNNEL_RAT, SpawnPointsst[3].fX, SpawnPointsst[3].fY, SpawnPointsst[3].fZ, SpawnPointsst[3].fO, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+                        m_uiMoveCount = 0;
+                        break;
+                }
+
+                ++m_uiWaveCount;
+            }
+            else
+            {
+                m_uiWaveTimer -= uiDiff;
+            }
+            m_uiEventTimer -= uiDiff;
+        }
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+bool QuestAccept_npc_piznik(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
 {
     if (pQuest->GetQuestId() == QUEST_GERENZOS_ORDERS)
     {
-        if (npc_piznikAI* pEscortAI = dynamic_cast<npc_piznikAI*>(pCreature->AI()))
-            pEscortAI->Start(false, pPlayer, pQuest, true, false);
+        if (npc_piznikAI* ppiznikAI = dynamic_cast<npc_piznikAI*>(pCreature->AI()))
+        {
+            ppiznikAI->StartEvent(pPlayer->GetObjectGuid());
+        }
     }
     return true;
+}
+
+CreatureAI* GetAI_npc_piznik(Creature* pCreature)
+{
+    return new npc_piznikAI(pCreature);
 }
 
 /*######
