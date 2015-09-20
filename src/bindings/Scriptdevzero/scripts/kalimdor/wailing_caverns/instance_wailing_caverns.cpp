@@ -35,6 +35,16 @@ void instance_wailing_caverns::Initialize()
     memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
 }
 
+void instance_wailing_caverns::OnPlayerEnter(Player* pPlayer)
+{
+    // Respawn the Mysterious chest if one of the players who enter the instance has the quest in his log
+    if (pPlayer->GetQuestStatus(QUEST_FORTUNE_AWAITS) == QUEST_STATUS_COMPLETE &&
+        !pPlayer->GetQuestRewardStatus(QUEST_FORTUNE_AWAITS))
+    {
+        DoRespawnGameObject(GO_MYSTERIOUS_CHEST, HOUR);
+    }
+}
+
 void instance_wailing_caverns::OnCreatureCreate(Creature* pCreature)
 {
     switch(pCreature->GetEntry())
@@ -53,6 +63,14 @@ void instance_wailing_caverns::OnCreatureCreate(Creature* pCreature)
     }
 	
 	m_mNpcEntryGuidStore[pCreature->GetEntry()] = pCreature->GetObjectGuid();
+}
+
+void instance_wailing_caverns::OnObjectCreate(GameObject* pGo)
+{
+    if (pGo->GetEntry() == GO_MYSTERIOUS_CHEST)
+    {
+        m_mGoEntryGuidStore[GO_MYSTERIOUS_CHEST] = pGo->GetObjectGuid();
+    }
 }
 
 void instance_wailing_caverns::SetData(uint32 uiType, uint32 uiData)
