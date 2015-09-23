@@ -128,7 +128,7 @@ struct MANGOS_DLL_DECL boss_urok_doomhowlAI : public ScriptedAI
     void UpdateAI(const uint32 uiDiff)
     {
         // If event is done or gameobject Challenge to Urok TRAP is not spawned, return
-        if ((m_pInstance && m_pInstance->GetData(TYPE_UROK_DOOMHOWL) == DONE) || !GetClosestGameObjectWithEntry(m_creature, GO_CHALLENGE_TO_UROK_TRAP, 20.f))
+        if ((m_pInstance && m_pInstance->GetData(TYPE_UROK_DOOMHOWL) == DONE) || !GetClosestGameObjectWithEntry(m_creature, GO_CHALLENGE_TO_UROK_TRAP, 200.f))
             return;
         
         // If summoning adds event is not started, start him :)
