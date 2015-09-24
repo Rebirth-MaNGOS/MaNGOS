@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Urok Doomhowl
 SD%Complete: 90
-SDComment: Correct Challenge to Urok gameobject effect kill some Urok's add
+SDComment: Correct Challenge to Urok gameobject effect kill some Urok's add. Gobj is only usable once(to start the event, then never again).
 SDCategory: Blackrock Spire
 EndScriptData */
 
@@ -28,7 +28,24 @@ enum eUrokDoomhowl
 {
 	SPELL_INTIMIDATING_ROAR = 16508,
 	SPELL_REND              = 16509,
-	SPELL_STRIKE            = 15580
+	SPELL_STRIKE            = 15580,
+	SPELL_SIMPLE_TELEPORT	= 16807,		// Spawn visual
+	SPELL_SUMMON_UROK		= 16473			// Urok spawn visual
+};
+
+struct Locd
+{
+    float x, y, z, o;
+};
+
+static Locd aOgreSpawn[]=
+{
+    {-27.4654f, -386.146f, 48.5094f, 1.53423f},
+	{-14.481f, -385.668f, 48.9201f, 1.59706f},
+    {-12.2959f, -376.803f, 49.3246f, 1.59313f},
+	{-24.613f, -369.723f, 49.6684f, 3.35637f},
+	{-35.0492f, -370.308f, 50.3656f, 5.55941f},
+	{-47.203f, -369.248f, 51.4629f, 1.12192f},
 };
 
 struct MANGOS_DLL_DECL boss_urok_doomhowlAI : public ScriptedAI
@@ -47,6 +64,8 @@ struct MANGOS_DLL_DECL boss_urok_doomhowlAI : public ScriptedAI
 
     uint32 EventTimer;
     uint32 EventPhase;
+
+	GUIDList m_lOgreRune;
 
     void Reset()
     {
@@ -75,6 +94,9 @@ struct MANGOS_DLL_DECL boss_urok_doomhowlAI : public ScriptedAI
             m_creature->SetVisibility(VISIBILITY_ON);
   			m_creature->setFaction(m_creature->GetCreatureInfo()->faction_A);
   			m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE + UNIT_FLAG_NOT_ATTACKABLE_1);
+			m_creature->CastSpell(m_creature,SPELL_SUMMON_UROK,true);
+			 if (Unit* pTarget = GetRandomPlayerInCurrentMap(30))
+				m_creature->AI()->AttackStart(pTarget);
         }
         else
         {
@@ -86,26 +108,78 @@ struct MANGOS_DLL_DECL boss_urok_doomhowlAI : public ScriptedAI
         }
     }
 
+	void SpawnRunes(int action = 0)
+	{
+		if(action == 10)
+		{		
+			for(uint32 i = 0; i < 7; ++i)
+			{
+				if(Object* pRune = m_creature->SummonGameObject(GO_OGRE_RUNE,0,aOgreSpawn[i].x,aOgreSpawn[i].y,aOgreSpawn[i].z,0,GO_STATE_READY,100))
+				{	
+					m_lOgreRune.push_back(pRune->GetObjectGuid());
+				}
+			}
+		}
+		if(action == 11)
+		{	
+			for (GUIDList::iterator itr = m_lOgreRune.begin(); itr != m_lOgreRune.end(); itr++)
+			{
+				if (Object* pRune = m_creature->GetMap()->GetGameObject(*itr))
+					pRune->RemoveFromWorld();
+			}
+		}
+		else	// spawn a new rune that does the animation
+			m_creature->SummonGameObject(GO_OGRE_RUNE,3000,aOgreSpawn[action].x,aOgreSpawn[action].y,aOgreSpawn[action].z,0,GO_STATE_ACTIVE,100);
+	}
+
     void SpawnWaveOrBoss()
     {
+		int r = urand(0,2);		// random kind of mob
+		int a = urand(4,5);		// a bit random spawn
         switch(++EventPhase)
-        {
-            case 1:
-				DoSpawnCreature(NPC_UROK_ENFORCER, 4.f, 2.f, 0.f, 0.f, TEMPSUMMON_DEAD_DESPAWN, 0);
-				DoSpawnCreature(NPC_UROK_ENFORCER, 2.f, 4.f, 0.f, 0.f, TEMPSUMMON_DEAD_DESPAWN, 0);
-				DoSpawnCreature(NPC_UROK_ENFORCER, 3.f, 3.f, 0.f, 0.f, TEMPSUMMON_DEAD_DESPAWN, 0);
+        {	
+			case 1:
+				SpawnRunes(10);
+				SpawnRunes(0);			// lots of them, oh well
+				SpawnRunes(1);
+				SpawnRunes(2);
+				m_creature->SummonCreature(NPC_UROK_OGRE_MAGUS,aOgreSpawn[0].x,aOgreSpawn[0].y,aOgreSpawn[0].z,0, TEMPSUMMON_DEAD_DESPAWN, 0);
+				m_creature->SummonCreature(NPC_UROK_ENFORCER, aOgreSpawn[1].x,aOgreSpawn[1].y,aOgreSpawn[1].z,0, TEMPSUMMON_DEAD_DESPAWN, 0);
+				m_creature->SummonCreature(NPC_UROK_ENFORCER, aOgreSpawn[2].x,aOgreSpawn[2].y,aOgreSpawn[2].z,0, TEMPSUMMON_DEAD_DESPAWN, 0);
+				EventTimer = 30000;
 			    break;
             case 2:
-				DoSpawnCreature(NPC_UROK_ENFORCER, 4.f, 2.f, 0.f, 0.f, TEMPSUMMON_DEAD_DESPAWN, 0);
-				DoSpawnCreature(NPC_UROK_OGRE_MAGUS, 2.f, 4.f, 0.f, 0.f, TEMPSUMMON_DEAD_DESPAWN, 0);
+				SpawnRunes(3);
+				m_creature->SummonCreature(NPC_UROK_ENFORCER, aOgreSpawn[3].x,aOgreSpawn[3].y,aOgreSpawn[3].z,0, TEMPSUMMON_DEAD_DESPAWN, 0);
+				EventTimer = 2000;
 				break;
   			case 3:
-  			case 4:
+				SpawnRunes(a);
+				m_creature->SummonCreature(NPC_UROK_ENFORCER, aOgreSpawn[a].x,aOgreSpawn[a].y,aOgreSpawn[a].z,0, TEMPSUMMON_DEAD_DESPAWN, 0);
+				EventTimer = 32000;
+				break;
+  			case 4:		
+				SpawnRunes(1);
+				m_creature->SummonCreature((r>0?NPC_UROK_ENFORCER:NPC_UROK_OGRE_MAGUS), aOgreSpawn[1].x,aOgreSpawn[1].y,aOgreSpawn[1].z,0, TEMPSUMMON_DEAD_DESPAWN, 0);
+				EventTimer = 5000;
+				break;
   			case 5:
-				DoSpawnCreature(NPC_UROK_OGRE_MAGUS, 4.f, 2.f, 0.f, 0.f, TEMPSUMMON_DEAD_DESPAWN, 0);
-				DoSpawnCreature(NPC_UROK_OGRE_MAGUS, 2.f, 4.f, 0.f, 0.f, TEMPSUMMON_DEAD_DESPAWN, 0);
-                break;
-            case 6:
+				SpawnRunes(0);
+				m_creature->SummonCreature(NPC_UROK_ENFORCER,aOgreSpawn[0].x,aOgreSpawn[0].y,aOgreSpawn[0].z,0, TEMPSUMMON_DEAD_DESPAWN, 0);
+                EventTimer = 10000;
+				break;
+			case 6:
+				SpawnRunes(2);
+				m_creature->SummonCreature((r>0?NPC_UROK_ENFORCER:NPC_UROK_OGRE_MAGUS), aOgreSpawn[2].x,aOgreSpawn[2].y,aOgreSpawn[2].z,0, TEMPSUMMON_DEAD_DESPAWN, 0);
+				EventTimer = 8000;
+				break;
+			case 7:
+				SpawnRunes(0);
+				m_creature->SummonCreature(NPC_UROK_OGRE_MAGUS,aOgreSpawn[0].x,aOgreSpawn[0].y,aOgreSpawn[0].z,0, TEMPSUMMON_DEAD_DESPAWN, 0);
+				EventTimer = 8000;
+				break;
+            case 8:
+				SpawnRunes(11);
 				SetVisible();
 				//EventPhase = 0;
 				EventTimer = 0; // event done
@@ -115,7 +189,9 @@ struct MANGOS_DLL_DECL boss_urok_doomhowlAI : public ScriptedAI
     
     void JustSummoned(Creature* pSummoned)
     {
-        if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+		pSummoned->CastSpell(pSummoned,SPELL_SIMPLE_TELEPORT,true);
+
+        if (Unit* pTarget = GetRandomPlayerInCurrentMap(30))
             pSummoned->AI()->AttackStart(pTarget);
     }
     
@@ -128,7 +204,7 @@ struct MANGOS_DLL_DECL boss_urok_doomhowlAI : public ScriptedAI
     void UpdateAI(const uint32 uiDiff)
     {
         // If event is done or gameobject Challenge to Urok TRAP is not spawned, return
-        if ((m_pInstance && m_pInstance->GetData(TYPE_UROK_DOOMHOWL) == DONE) || !GetClosestGameObjectWithEntry(m_creature, GO_CHALLENGE_TO_UROK_TRAP, 200.f))
+        if ((m_pInstance && m_pInstance->GetData(TYPE_UROK_DOOMHOWL) == NOT_STARTED || m_pInstance->GetData(TYPE_UROK_DOOMHOWL) == DONE)/* || !GetClosestGameObjectWithEntry(m_creature, GO_CHALLENGE_TO_UROK_TRAP, 200.f)*/)
             return;
         
         // If summoning adds event is not started, start him :)
@@ -137,11 +213,8 @@ struct MANGOS_DLL_DECL boss_urok_doomhowlAI : public ScriptedAI
         
         if (EventTimer)
         {
-            if (EventTimer <= uiDiff)
-            {
-                EventTimer = 30000;
-                SpawnWaveOrBoss();
-            }
+            if (EventTimer <= uiDiff)            
+                SpawnWaveOrBoss();         
             else
                 EventTimer -= uiDiff;
         }
