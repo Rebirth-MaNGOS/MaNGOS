@@ -79,7 +79,7 @@ bool ChatHandler::HandleBagClearCommand(char* args)
                     Item* pItem = target->GetItemByPos( i, j );
                     if (pItem)
                     {
-                        target->RemoveItem(i, j, true);
+                        target->DestroyItem(i, j, true);
                         ++count;
                     }
                 }
@@ -91,7 +91,7 @@ bool ChatHandler::HandleBagClearCommand(char* args)
                     Item* pItem = target->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
                     if (pItem)
                     {
-                        target->RemoveItem(INVENTORY_SLOT_BAG_0, i, true);
+                        target->DestroyItem(INVENTORY_SLOT_BAG_0, i, true);
                         ++count;
                     }  
         }
