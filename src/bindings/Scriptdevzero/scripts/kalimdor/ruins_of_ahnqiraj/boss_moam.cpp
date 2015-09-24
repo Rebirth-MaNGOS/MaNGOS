@@ -39,7 +39,7 @@ enum eMoam
     SPELL_SUMMON_MANAFIEND_3 = 25683,
     SPELL_ENERGIZE           = 25685,
 
-	SPELL_IVUS_TELEPORT_VISUAL	= 21649,		// visual for mana fiend spawn
+	SPELL_IVUS_TELEPORT_VISUAL	= 16807, //21649,		// visual for mana fiend spawn, new spell simple teleport has better animation
 
     PHASE_ATTACKING          = 0,
     PHASE_ENERGIZING         = 1
