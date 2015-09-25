@@ -315,7 +315,7 @@ struct MANGOS_DLL_DECL mob_hivezara_larvaAI : public ScriptedAI
         ScriptedAI::AttackStart(pWho);
     }
 
-	void MoveInLineOfSight(Unit* /*pWho*/)
+	void MoveInLineOfSight(Unit* pWho)
     {
 		// don't attack anything during the Ayamiss encounter
 		if (m_pInstance)
@@ -325,9 +325,10 @@ struct MANGOS_DLL_DECL mob_hivezara_larvaAI : public ScriptedAI
 				return;
 			}
 		}
+		ScriptedAI::MoveInLineOfSight(pWho);
     }
 
-	void AttackStart(Unit* /*pVictim*/)
+	void AttackStart(Unit* pVictim)
     {
         // don't attack anything during the Ayamiss encounter
 		if (m_pInstance)
@@ -337,6 +338,7 @@ struct MANGOS_DLL_DECL mob_hivezara_larvaAI : public ScriptedAI
 				return;
 			}
 		}
+		ScriptedAI::AttackStart(pVictim);
     }
 
     void UpdateAI(const uint32 /*uiDiff*/)
