@@ -109,15 +109,16 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         if (m_pInstance)
             m_pInstance->SetData(TYPE_AYAMISS, IN_PROGRESS);
 
-        m_creature->SendMonsterMove(-9698.37f,1535.55f,35.44f, SPLINETYPE_NORMAL, SPLINEFLAG_FLYING, 3000);
+        m_creature->SendMonsterMove(-9698.37f,1535.55f,33.44f, SPLINETYPE_NORMAL, SPLINEFLAG_FLYING, 3000);
     }
 
 	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)		// only summon larva if a player got hit by paralyze
     {
         if (pSpell->Id == SPELL_PARALYZE && pTarget->GetTypeId() == TYPEID_PLAYER)
 		{
+			m_uiLarvaTargetGUID = pTarget->GetObjectGuid();	
 			uint32 i = urand(0,1);
-            m_creature->SummonCreature(NPC_HIVEZARA_LARVA, Larva[i].x, Larva[i].y, Larva[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);			
+            m_creature->SummonCreature(NPC_HIVEZARA_LARVA, Larva[i].x, Larva[i].y, Larva[i].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 20000);			
 		}
 	}
 
@@ -159,8 +160,10 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         switch(pSummoned->GetEntry())
         {
             case NPC_HIVEZARA_LARVA:
-                if (Unit* pLarvaTarget = m_creature->GetMap()->GetUnit(m_uiLarvaTargetGUID))
-                    pSummoned->AI()->AttackStart(pLarvaTarget);
+                /*if (Unit* pLarvaTarget = m_creature->GetMap()->GetUnit(m_uiLarvaTargetGUID))
+                    pSummoned->AI()->AttackStart(pLarvaTarget);*/
+				pSummoned->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+				pSummoned->GetMotionMaster()->MovePoint(1,-9701.27f, 1532.64f, 21.44f,true);
                 break;
             case NPC_HIVEZARA_SWARMER:
 			case NPC_HIVEZARA_SWARMER_1:
@@ -169,6 +172,21 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         }
 		pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
     }
+
+	void SummonedMovementInform(Creature* pSummoned, uint32 /*uiMotionType*/, uint32 uiPointId)
+    {
+		if (uiPointId == 1 && pSummoned->GetEntry() == NPC_HIVEZARA_LARVA)
+			pSummoned->GetMotionMaster()->MovePoint(2,-9716.18f, 1517.72f, 27.4677f,true);
+
+		if(uiPointId == 2 && pSummoned->GetEntry() == NPC_HIVEZARA_LARVA)
+		{
+			// Cast feed on target
+			if (Unit* pLarvaTarget = m_creature->GetMap()->GetUnit(m_uiLarvaTargetGUID))
+				if (pLarvaTarget && pSummoned->IsWithinDistInMap(pLarvaTarget, ATTACK_DISTANCE) && pLarvaTarget->HasAura(SPELL_PARALYZE))
+					pSummoned->CastSpell(pLarvaTarget, SPELL_FEED, true); 
+		}
+    }
+
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -186,7 +204,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         }
 
 		// Summon Swarmers
-        if (m_uiSwarmerTimer <= uiDiff)		// ever 3.5 sec spawn a swarmer
+        if (m_uiSwarmerTimer <= uiDiff)		// every 3.5 sec spawn a swarmer
         {
 			uint32 i = urand(0,2);
             m_creature->SummonCreature(aSwarmType[i], Swarmers[0].x+irand(-10,10), Swarmers[0].y+irand(-10,10), Swarmers[0].z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 600000);//let them be up for 10min or when boss dies/evade
@@ -215,14 +233,11 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
 
         // Paralyze and Summon Larva
         if (m_uiParalyzeTimer <= uiDiff)
-        {
+		{
             if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-            {
-                m_creature->CastSpell(pTarget, SPELL_PARALYZE, true);				
-				m_uiLarvaTargetGUID = pTarget->GetObjectGuid();				
-            }
+                m_creature->CastSpell(pTarget, SPELL_PARALYZE, true);
             m_uiParalyzeTimer = urand(15000,20000);
-        }
+		}
         else
             m_uiParalyzeTimer -= uiDiff;
 
@@ -277,30 +292,57 @@ struct MANGOS_DLL_DECL mob_hivezara_larvaAI : public ScriptedAI
 {
     mob_hivezara_larvaAI(Creature *pCreature) : ScriptedAI(pCreature)
     {
+		m_pInstance = ((instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData());
         Reset();
     }
-
-    ObjectGuid m_uiTargetGUID;
+	instance_ruins_of_ahnqiraj* m_pInstance;
 
     void Reset() 
     {
-		m_uiTargetGUID.Clear();
     }
 
     void Aggro(Unit* pWho)
     {
-		m_uiTargetGUID = pWho->GetObjectGuid();
+		// don't attack anything during the Ayamiss encounter
+        if (m_pInstance)
+        {
+            if (m_pInstance->GetData(TYPE_AYAMISS) == IN_PROGRESS)
+            {
+                return;
+            }
+        }
+
+        ScriptedAI::AttackStart(pWho);
+    }
+
+	void MoveInLineOfSight(Unit* /*pWho*/)
+    {
+		// don't attack anything during the Ayamiss encounter
+		if (m_pInstance)
+		{
+			if (m_pInstance->GetData(TYPE_AYAMISS) == IN_PROGRESS)
+			{
+				return;
+			}
+		}
+    }
+
+	void AttackStart(Unit* /*pVictim*/)
+    {
+        // don't attack anything during the Ayamiss encounter
+		if (m_pInstance)
+		{
+			if (m_pInstance->GetData(TYPE_AYAMISS) == IN_PROGRESS)
+			{
+				return;
+			}
+		}
     }
 
     void UpdateAI(const uint32 /*uiDiff*/)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
-        if (Unit* pTarget = m_creature->GetMap()->GetUnit(m_uiTargetGUID))
-            if (m_creature->IsWithinDistInMap(pTarget, ATTACK_DISTANCE))
-                if (m_creature->getVictim()->HasAura(SPELL_PARALYZE))
-                    m_creature->CastSpell(pTarget, SPELL_FEED, true);
 
         DoMeleeAttackIfReady();
     }
@@ -321,8 +363,6 @@ struct MANGOS_DLL_DECL mob_hivezara_swarmerAI : public ScriptedAI
 	void Reset()
 	{
 	}
-
-	//void MovementInform(uint32 /*uiMotiontype*/, uint32 uiPointId)		// maybe add so they sometimes go to wp 5 after wp 3 to create some variation
 
 	void MoveInLineOfSight(Unit* /*pWho*/)
     {
