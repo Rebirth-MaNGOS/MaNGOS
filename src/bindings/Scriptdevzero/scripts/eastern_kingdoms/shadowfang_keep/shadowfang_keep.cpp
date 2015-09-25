@@ -1010,6 +1010,131 @@ CreatureAI* GetAI_npc_deathstalker_vincent(Creature* pCreature)
     return new npc_deathstalker_vincentAI(pCreature);
 }
 
+/*######
+## boss_wolf_master_nandos
+######*/
+
+enum
+{
+	NPC_BLEAK_WORG				 = 3861,
+	NPC_SLAVERING_WORG			 = 3862,
+	NPC_LUPINE_HORROR			 = 3863,
+	NPC_WOLF_GUARD				 = 5058,
+
+    SPELL_CALL_BLEAK_WORG        = 7487,
+	SPELL_CALL_SLAVERING_WORG    = 7488,
+	SPELL_CALL_LUPINE_HORROR     = 7489,
+
+	YELL_PACK					 = -1720219
+};
+
+struct MANGOS_DLL_DECL boss_wolf_master_nandosAI : public ScriptedAI
+{
+  	boss_wolf_master_nandosAI(Creature* pCreature) : ScriptedAI(pCreature)
+  	{
+        m_pInstance = (instance_shadowfang_keep*)pCreature->GetInstanceData();
+		SpawnWorgs();
+		WorgCount = 0;
+        Reset();
+  	}
+
+  	instance_shadowfang_keep* m_pInstance;
+
+	bool m_bDid80Sum;
+	bool m_bDid79Sum;
+	bool m_bDid60Sum;
+	bool m_bCanYell;
+	int WorgCount;
+    void Reset()
+  	{
+		m_bDid80Sum = false;
+		m_bDid79Sum = false;
+		m_bDid60Sum = false;
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_NANDOS, NOT_STARTED);
+  	}
+
+	void SpawnWorgs()
+	{
+		m_creature->SummonCreature(NPC_BLEAK_WORG,-127.63f, 2153.28f, 155.762f, 2.16421f,TEMPSUMMON_DEAD_DESPAWN,60000,false);
+		m_creature->SummonCreature(NPC_SLAVERING_WORG,-139.407f, 2182.91f, 155.762f, 5.09636f,TEMPSUMMON_DEAD_DESPAWN,60000,false);
+		m_creature->SummonCreature(NPC_LUPINE_HORROR,-118.703f, 2173.42f, 155.762f, 3.35103f,TEMPSUMMON_DEAD_DESPAWN,60000,false);
+		m_creature->SummonCreature(NPC_WOLF_GUARD,-149.213f, 2163.18f, 155.762f, 0.10472f,TEMPSUMMON_DEAD_DESPAWN,60000,false);
+	}
+
+  	void Aggro(Unit*)
+  	{
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_NANDOS, IN_PROGRESS);
+  	}
+
+	void JustSummoned(Creature* pSummoned)
+    {
+        pSummoned->SetRespawnDelay(10);			// make sure they won't respawn
+    }
+
+  	void JustDied(Unit* /*pVictim*/)
+  	{
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_NANDOS, DONE);
+  	}
+
+	void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+		++WorgCount;
+		if(WorgCount >= 4 && m_bCanYell)
+		{
+			m_bCanYell = false;
+			HandleYell();
+		}
+    }
+
+	void HandleYell()
+	{
+		if(!m_creature->isInCombat() && m_creature->isAlive() && m_pInstance->GetData(TYPE_NANDOS) == NOT_STARTED)
+		{
+			DoScriptText(YELL_PACK,m_creature,NULL);
+			m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+			m_creature->GetMotionMaster()->MovePoint(1,-147.70f,2173.74f,155.67f,true);
+		}
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+  	{
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if(!m_bDid80Sum && HealthBelowPct(81))
+		{
+			int r = urand(0,1);
+			if(r == 0)
+				DoCastSpellIfCan(m_creature,SPELL_CALL_BLEAK_WORG,CAST_AURA_NOT_PRESENT);
+			m_bDid80Sum = true;
+		}
+		if(!m_bDid79Sum && HealthBelowPct(80))
+		{
+			int r = urand(0,1);
+			if(r == 0)
+				DoCastSpellIfCan(m_creature,SPELL_CALL_SLAVERING_WORG,CAST_AURA_NOT_PRESENT);
+			m_bDid79Sum = true;
+		}
+		if(!m_bDid60Sum && HealthBelowPct(61))
+		{
+			int b = urand(0,1);
+			if(b == 0)
+				DoCastSpellIfCan(m_creature,SPELL_CALL_LUPINE_HORROR,CAST_AURA_NOT_PRESENT);
+			m_bDid60Sum = true;
+		}
+
+        DoMeleeAttackIfReady();
+  	}
+};
+
+CreatureAI* GetAI_boss_wolf_master_nandos(Creature* pCreature)
+{
+	return new boss_wolf_master_nandosAI(pCreature);
+}
+
 void AddSC_shadowfang_keep()
 {
     Script* pNewscript;
@@ -1044,5 +1169,10 @@ void AddSC_shadowfang_keep()
     pNewscript = new Script;
     pNewscript->Name = "npc_deathstalker_vincent";
     pNewscript->GetAI = &GetAI_npc_deathstalker_vincent;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "boss_wolf_master_nandos";
+    pNewscript->GetAI = &GetAI_boss_wolf_master_nandos;
     pNewscript->RegisterSelf();
 }
