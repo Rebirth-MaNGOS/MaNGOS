@@ -197,7 +197,6 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
     uint32 m_uiPoisonBoltTimer;
     uint32 m_uiTrashTimer;
     uint32 m_uiConsumeTimer;
-    uint32 m_uiConsumeDamageTimer;
     
     ObjectGuid m_uiConsumeVictim;
 
@@ -211,7 +210,6 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
         m_uiPoisonBoltTimer = 10000;
         m_uiTrashTimer = 15000;
         m_uiConsumeTimer = urand(10000,30000);
-        m_uiConsumeDamageTimer = 1000;
 		if (m_creature->HasAura(SPELL_CONSUME_ROOT))
 			m_creature->RemoveAurasDueToSpell(SPELL_CONSUME_ROOT);
 		m_uiConsumeVictim.Clear();
@@ -268,14 +266,6 @@ struct MANGOS_DLL_DECL mob_flesh_hunterAI : public ScriptedAI
         if (Unit* pConsumeTarget = m_creature->GetMap()->GetUnit(m_uiConsumeVictim))
             if (pConsumeTarget->HasAura(SPELL_CONSUME))
             {
-                if (m_uiConsumeDamageTimer <= uiDiff)
-                {
-					//m_creature->DealDamage(pConsumeTarget, pConsumeTarget->GetMaxHealth()/10, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
-                    m_uiConsumeDamageTimer = 1000;
-                }
-                else
-                    m_uiConsumeDamageTimer -= uiDiff;
-
 				if (m_uiTurnTimer <= uiDiff)
 				{
 					if (m_bCanTurn)
@@ -360,12 +350,15 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
 
 	void JustDied(Unit* /*pKiller*/)
     {
+		float x, y, z;
+        m_creature->GetClosePoint(x, y, z, 1.0f, 2.0f);
 		// spawn a random obsidian
 		int Size = urand(0,1);
-		if (Size == 0)
-			m_creature->SummonGameObject(SMALL_OBSIDIAN_CHUNK,0, m_creature->GetPositionX()+urand(-3,3),m_creature->GetPositionY()+urand(-3,3), m_creature->GetPositionZ(), 0);
-		else if (Size == 1)
-			m_creature->SummonGameObject(LARGE_OBSIDIAN_CHUNK,0, m_creature->GetPositionX()+urand(-3,3),m_creature->GetPositionY()+urand(-3,3), m_creature->GetPositionZ(), 0);
+		if(GameObject* pChunk = m_creature->SummonGameObject((Size>0?SMALL_OBSIDIAN_CHUNK:LARGE_OBSIDIAN_CHUNK),0, x, y, z, 0,GO_STATE_ACTIVE))
+		{		
+			pChunk->SetGoState(GO_STATE_READY);
+			pChunk->SetLootState(GO_READY);	
+		}
     }
 
     void UpdateAI(const uint32 uiDiff)
