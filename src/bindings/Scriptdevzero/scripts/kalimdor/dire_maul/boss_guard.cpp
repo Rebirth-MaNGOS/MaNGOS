@@ -185,9 +185,9 @@ struct MANGOS_DLL_DECL boss_guardAI : public ScriptedAI
                         m_creature->GetMotionMaster()->MoveIdle();
                     }
                 }
-                else
-                    m_uiUpdateTimer -= uiDiff;
             }
+            else
+                m_uiUpdateTimer -= uiDiff;
 		}
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
