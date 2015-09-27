@@ -238,7 +238,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         return true;
 
     Traveller<T> traveller(owner);
-
+/*
     if (m_uiResendTimer <= time_diff)
     {
         if (i_path)
@@ -265,7 +265,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
     }
     else
         m_uiResendTimer -= time_diff;
-
+*/
     if (!i_destinationHolder.HasDestination())
         _setTargetLocation(owner);
     if (owner.IsStopped() && !i_destinationHolder.HasArrived())
