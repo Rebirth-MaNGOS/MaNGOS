@@ -7975,7 +7975,13 @@ bool Unit::SelectHostileTarget()
                     {
                         // Set a timeout of four seconds before a creature evades.
                         creature->SetUnreachableTimeout(4000);
+
                     }
+
+                    // Also try updating the chase movement by reinitialising it.
+                    // Done because when a player is flying and falling the position 
+                    // isn't updated when the player lands.
+                    creature->GetMotionMaster()->MoveChase(target);
 
                     return false;
                 } else if (inEvadeMode)
