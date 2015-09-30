@@ -990,3 +990,8 @@ MANGOS_DLL_SPEC bool IsHolidayActive( HolidayIds id )
 {
     return sGameEventMgr.IsActiveHoliday(id);
 }
+
+MANGOS_DLL_SPEC void StartGameEvent(uint16 id, bool overwrite, bool resume)
+{
+    sGameEventMgr.StartEvent(id, overwrite, resume);
+}

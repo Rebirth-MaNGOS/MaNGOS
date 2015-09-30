@@ -37,6 +37,7 @@ EndContentData */
 #include "escort_ai.h"
 #include "patrol_ai.h"
 #include "TemporarySummon.h"
+#include "GameEventMgr.h"
 
 /*###
 ## boss_abyssal_council
@@ -2981,7 +2982,13 @@ CreatureAI* GetAI_npc_caelestrasz(Creature* pCreature)
 
 enum GateSpawns
 {
-    COLOSSAL_ANUBISATH = 15743
+    COLOSSAL_ANUBISATH = 15743,
+    RAJAXX = 15341
+};
+
+enum RajaxxTalk
+{
+    SAY_COMPLETE_QUEST  = -1509017                       // Yell when realm complete quest 8743 for world event
 };
 
 enum AhnQirajDoor
@@ -2990,6 +2997,8 @@ enum AhnQirajDoor
     RUNES = 176148,
     ROOTS = 176147
 };
+
+static float rajaxx_gate_spawn[] = { -8122.f, 1525.f, 38.f, 0.035f };
 
 struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI 
 {
@@ -3005,7 +3014,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiWaveSpawnTimer = 0;
+        m_uiWaveSpawnTimer = 1800000;
         m_uiGateOpenStage = 0;
         m_uiGateOpenTimer = 10000;
     }
@@ -3016,7 +3025,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
         {
             for (short i = 0; i < 8; i++)
             {
-                Creature* pSummon = m_creature->SummonCreature(COLOSSAL_ANUBISATH, 
+                m_creature->SummonCreature(COLOSSAL_ANUBISATH, 
                         m_creature->GetPositionX() + 10.f * cosf(i * PI / 8.f),
                         m_creature->GetPositionY() + 10.f * sinf(i * PI / 8.f),
                         m_creature->GetPositionZ(),
@@ -3037,7 +3046,21 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
             {
                 switch (m_uiGateOpenStage)
                 {
-                case 1:
+                case 1: // Summon Rajaxx and make him yell.
+                    {
+                        Creature* pRajaxx = m_creature->SummonCreature(15341,
+                                rajaxx_gate_spawn[0], rajaxx_gate_spawn[1], rajaxx_gate_spawn[2],
+                                rajaxx_gate_spawn[3], TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 60000, true);
+
+                        if (pRajaxx)
+                        {
+                            pRajaxx->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                            DoScriptText(SAY_COMPLETE_QUEST, pRajaxx);
+                        }
+
+                        m_uiGateOpenTimer = 10000;
+                    }
+                case 2:
                     {
                         GameObject* pGo = m_creature->GetClosestGameObjectWithEntry(m_creature, RUNES, 40.f);
                         if (pGo)
@@ -3046,7 +3069,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
                         m_uiGateOpenTimer = 1000;
                         break;
                     }
-                case 2:
+                case 3:
                     {
                         GameObject* pGo = m_creature->GetClosestGameObjectWithEntry(m_creature, ROOTS, 40.f);
                         if (pGo)
@@ -3055,7 +3078,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
                         m_uiGateOpenTimer = 4000;
                         break;
                     }
-                case 3:
+                case 4:
                     {
                         GameObject* pGo = m_creature->GetClosestGameObjectWithEntry(m_creature, GATE, 40.f);
                         if (pGo)
@@ -3113,13 +3136,20 @@ bool GORewarded_scarab_gong(Player* pPlayer, GameObject* pGO, const Quest* pQues
 {
     if (pQuest->GetQuestId() == 8743)
     {
+        // Start the 10 hour war event.
+        StartGameEvent(54, true);
+
         Creature* pTrigger = pGO->GetClosestCreatureWithEntry(pGO, 17091, 150.f);
         if (pTrigger)
         {
+
             // Trigger the gate opening.
             npc_ahnqiraj_gate_triggerAI* pAI = dynamic_cast<npc_ahnqiraj_gate_triggerAI*>(pTrigger->AI());
             if (pAI)
+            {
                 pAI->m_uiGateOpenStage = 1;
+                pAI->m_uiGateOpenTimer = 10000;
+            }
         }
 
     }
