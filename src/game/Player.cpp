@@ -62,6 +62,7 @@
 #include "Mail.h"
 #include "WaypointMovementGenerator.h"
 #include "MoveMap.h"
+#include "IVMapManager.h"
 
 #include <G3D/Matrix3.h>
 #include <G3D/Vector3.h>
@@ -1226,16 +1227,17 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 float ground_z = GetMap()->GetTerrain()->GetHeight(x, y, MAX_HEIGHT);
                 float floor_z = GetMap()->GetTerrain()->GetHeight(x, y, z);
 
-                if(ground_z > z || floor_z > z)
+                if(fabs(z - floor_z) < fabs(ground_z - z))
                 {
-                    if(fabs(z - floor_z) < fabs(ground_z - z))
-                    {
+                    // Sanity check to see if we have a correct value. Also don't allow the
+                    // floor to be further away from the mob than 5 yd.
+                    if (floor_z != VMAP_INVALID_HEIGHT_VALUE && fabs(z - floor_z) < 5.f)
                         z = floor_z;
-                    }
-                    else
-                    {
+                }
+                else
+                {
+                    if (ground_z != VMAP_INVALID_HEIGHT_VALUE && fabs(z - ground_z) < 5.f)
                         z = ground_z;
-                    }
                 }
                
                 if(!m_movementInfo.HasMovementFlag(MOVEFLAG_FALLING))
