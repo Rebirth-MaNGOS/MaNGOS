@@ -59,7 +59,7 @@ static Loc Supp[]=
     {-483.92f,273.49f,-90.65f,6.276f}
 };
 
-static const uint32 aAvatarYell[] = {YELL_SHADE_OF_HAKKAR_1, 0,YELL_SHADE_OF_HAKKAR_2,0, YELL_SHADE_OF_HAKKAR_3, 0,YELL_SHADE_OF_HAKKAR_4};
+static const int aAvatarYell[] = {YELL_SHADE_OF_HAKKAR_1, 0,YELL_SHADE_OF_HAKKAR_2,0, YELL_SHADE_OF_HAKKAR_3, 0,YELL_SHADE_OF_HAKKAR_4};
 
 instance_sunken_temple::instance_sunken_temple(Map* pMap) : ScriptedInstance(pMap),
     m_bIsSerpentSummoning(false),
