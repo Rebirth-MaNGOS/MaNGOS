@@ -5429,11 +5429,15 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
 
                 if(fabs(fz - floor_z) < fabs(ground_z - fz))
                 {
-                    fz = floor_z;
+                    // Sanity check to see if we have a correct value. Also don't allow the
+                    // floor to be further away from the mob than 5 yd.
+                    if (floor_z != VMAP_INVALID_HEIGHT_VALUE && fabs(fz - floor_z) < 5.f)
+                        fz = floor_z;
                 }
                 else
                 {
-                    fz = ground_z;
+                    if (ground_z != VMAP_INVALID_HEIGHT_VALUE && fabs(fz - ground_z) < 5.f)
+                        fz = ground_z;
                 }
             }
 
@@ -5599,16 +5603,17 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
                             if(!unitTarget->IsInWater())
                             {
 
-                                if(ground_z > targetZ || floor_z > targetZ)
+                                if(fabs(targetZ - floor_z) < fabs(ground_z - targetZ))
                                 {
-                                    if(fabs(targetZ - floor_z) < fabs(ground_z - targetZ))
-                                    {
+                                    // Sanity check to see if we have a correct value. Also don't allow the
+                                    // floor to be further away from the mob than 5 yd.
+                                    if (floor_z != VMAP_INVALID_HEIGHT_VALUE && fabs(targetZ - floor_z) < 5.f)
                                         targetZ = floor_z;
-                                    }
-                                    else
-                                    {
+                                }
+                                else
+                                {
+                                    if (ground_z != VMAP_INVALID_HEIGHT_VALUE && fabs(targetZ - ground_z) < 5.f)
                                         targetZ = ground_z;
-                                    }
                                 }
 
                                 float chargeTimer = m_caster->GetDistance(unitTarget);
