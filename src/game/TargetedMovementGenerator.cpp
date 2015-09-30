@@ -109,12 +109,14 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 
                     if(fabs(z - floor_z) < fabs(ground_z - z))
                     {
-                        if (floor_z != VMAP_INVALID_HEIGHT_VALUE)
+                        // Sanity check to see if we have a correct value. Also don't allow the
+                        // floor to be further away from the mob than 20 yd.
+                        if (floor_z != VMAP_INVALID_HEIGHT_VALUE && fabs(z - floor_z) < 20.f)
                             z = floor_z;
                     }
                     else
                     {
-                        if (ground_z != VMAP_INVALID_HEIGHT_VALUE)
+                        if (ground_z != VMAP_INVALID_HEIGHT_VALUE && fabs(z - ground_z) < 20.f)
                             z = ground_z;
                     }
                    // float ground = 0;
