@@ -356,6 +356,7 @@ namespace VMAP
              * @return bool
              */
             bool readFile(const std::string& filename);
+            uint32 flags;
         protected:
             uint32 RootWMOID; /**< TODO */
             std::vector<GroupModel> groupModels; /**< TODO */

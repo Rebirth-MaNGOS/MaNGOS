@@ -23,7 +23,7 @@ set(EXECUTABLE_NAME "vmap-extractor")
 find_package(BZip2 REQUIRED)
 find_package(ZLIB REQUIRED)
 
-include_directories (${CMAKE_SOURCE_DIR}/dep/libmpq/)
+include_directories (${CMAKE_SOURCE_DIR}/../../dep/libmpq/)
 
 add_executable(${EXECUTABLE_NAME} 
   adtfile.cpp  
