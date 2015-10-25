@@ -1431,6 +1431,19 @@ void WorldObject::MonsterYellToZone(int32 textId, uint32 language, Unit* target)
             say_do(itr->getSource());
 }
 
+void WorldObject::MonsterEmoteToZone(int32 textId, uint32 language, Unit* target)
+{
+    MaNGOS::MonsterChatBuilder say_build(*this, CHAT_MSG_TEXT_EMOTE, textId, language, target);
+    MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
+
+    uint32 zoneid = GetZoneId();
+
+    Map::PlayerList const& pList = GetMap()->GetPlayers();
+    for(Map::PlayerList::const_iterator itr = pList.begin(); itr != pList.end(); ++itr)
+        if(itr->getSource()->GetZoneId()==zoneid)
+            say_do(itr->getSource());
+}
+
 void WorldObject::MonsterTextEmote(int32 textId, Unit* target, bool IsBossEmote)
 {
     float range = sWorld.getConfig(IsBossEmote ? CONFIG_FLOAT_LISTEN_RANGE_YELL : CONFIG_FLOAT_LISTEN_RANGE_TEXTEMOTE);
