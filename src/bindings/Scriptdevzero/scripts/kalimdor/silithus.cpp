@@ -2983,7 +2983,8 @@ CreatureAI* GetAI_npc_caelestrasz(Creature* pCreature)
 enum GateSpawns
 {
     COLOSSAL_ANUBISATH = 15743,
-    RAJAXX = 15341
+    RAJAXX = 15341,
+    QIRAJI_WARRIOR = 15387
 };
 
 enum RajaxxTalk
@@ -3014,7 +3015,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiWaveSpawnTimer = 1800000;
+        m_uiWaveSpawnTimer = 40000;
         m_uiGateOpenStage = 0;
         m_uiGateOpenTimer = 10000;
     }
@@ -3059,6 +3060,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
                         }
 
                         m_uiGateOpenTimer = 10000;
+                        break;
                     }
                 case 2:
                     {
@@ -3084,7 +3086,26 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
                         if (pGo)
                             pGo->SetGoState(GO_STATE_ACTIVE);
 
+                        m_uiGateOpenTimer = 8000;
+
                         break;
+                    }
+                case 5:
+                    {
+                        for (short i = 0; i < 8; i++)
+                        {
+                            m_creature->SummonCreature(QIRAJI_WARRIOR, 
+                                    m_creature->GetPositionX() + 10.f * cosf(i * PI / 4.f),
+                                    m_creature->GetPositionY() + 10.f * sinf(i * PI / 4.f),
+                                    m_creature->GetPositionZ() + 2.f,
+                                    0.f,
+                                    TEMPSUMMON_DEAD_DESPAWN,
+                                    0,
+                                    false);
+                        }
+
+                        m_uiGateOpenStage = 0;
+                        return;
                     }
                 }
 
