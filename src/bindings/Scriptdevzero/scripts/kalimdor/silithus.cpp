@@ -2992,6 +2992,9 @@ enum RajaxxTalk
     SAY_COMPLETE_QUEST  = -1509017                       // Yell when realm complete quest 8743 for world event
 };
 
+/* We move the gate when the event happens. Original coordinates below.
+ *  -8133.339844, 1525.13, 17.19
+ */
 enum AhnQirajDoor
 {
     GATE = 176146,
@@ -3086,7 +3089,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
                         if (pGo)
                             pGo->SetGoState(GO_STATE_ACTIVE);
 
-                        m_uiGateOpenTimer = 8000;
+                        m_uiGateOpenTimer = 10000;
 
                         break;
                     }
@@ -3102,6 +3105,37 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
                                     TEMPSUMMON_DEAD_DESPAWN,
                                     0,
                                     false);
+                        }
+
+                        GameObject* pRunes = m_creature->GetClosestGameObjectWithEntry(m_creature, RUNES, 40.f);
+                        GameObject* pRoots = m_creature->GetClosestGameObjectWithEntry(m_creature, ROOTS, 40.f);
+                        GameObject* pGate = m_creature->GetClosestGameObjectWithEntry(m_creature, GATE, 40.f);
+
+                        GameObject* items[] = { pRunes, pRoots, pGate };
+
+                        // Move the opened gate into the ground.
+                        for (int i = 0; i < 3; i++)
+                        {
+                            GameObject* obj = items[i];
+
+                            if (!obj)
+                                continue;
+
+                            m_creature->GetMap()->Remove(obj, false);
+
+                            float x = obj->GetPositionX();
+                            float y = obj->GetPositionY();
+                            float z = obj->GetPositionZ() - 50.f;
+
+                            obj->Relocate(x, y, z, obj->GetOrientation());
+                            obj->SetFloatValue(GAMEOBJECT_POS_X, x);
+                            obj->SetFloatValue(GAMEOBJECT_POS_Y, y);
+                            obj->SetFloatValue(GAMEOBJECT_POS_Z, z);
+
+                            m_creature->GetMap()->Add(obj);
+
+                            obj->SaveToDB();
+                            obj->Refresh();
                         }
 
                         m_uiGateOpenStage = 0;
