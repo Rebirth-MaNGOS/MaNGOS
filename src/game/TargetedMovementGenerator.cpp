@@ -252,7 +252,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
             i_path->getNextPosition(x, y, z);
 
             // Only send if we have more than 2 points left. This to avoid segfaults.
-            if (endIndex <= i_path->getFullPath().size() || i_path->getFullPath().size() > 2)
+            if (endIndex <= i_path->getFullPath().size() && i_path->getFullPath().size() > 2)
             {
 
                 // dist to next node + world-unit length of the path
