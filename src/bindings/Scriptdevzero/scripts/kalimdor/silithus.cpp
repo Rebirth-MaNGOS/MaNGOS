@@ -38,6 +38,9 @@ EndContentData */
 #include "patrol_ai.h"
 #include "TemporarySummon.h"
 #include "GameEventMgr.h"
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 /*###
 ## boss_abyssal_council
@@ -3197,6 +3200,19 @@ bool GORewarded_scarab_gong(Player* pPlayer, GameObject* pGO, const Quest* pQues
 
         // Start the 10 hour war event.
         StartGameEvent(54, true);
+
+        // Update the start and end times for the 10 hour war to make it survive a server restart.
+        std::stringstream start_ss, end_ss;
+
+        std::time_t start = std::time(nullptr);
+        std::tm* start_time = std::localtime(&start);
+        start_ss << std::put_time(start_time, "%F %T");
+
+        std::time_t end = std::time(nullptr) + 36000;
+        std::tm* end_time = std::localtime(&end);
+        end_ss << std::put_time(end_time, "%F %T");
+
+        WorldDatabase.PExecute("UPDATE game_event SET start_time = '%s', end_time = '%s' WHERE entry = 54", start_ss.str().c_str(), end_ss.str().c_str());
 
         Creature* pTrigger = pGO->GetClosestCreatureWithEntry(pGO, 17091, 150.f);
         if (pTrigger)
