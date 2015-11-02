@@ -308,4 +308,5 @@ class MANGOS_DLL_SPEC Database
         std::string m_logsDir;
         uint32 m_pingIntervallms;
 };
+
 #endif

@@ -651,3 +651,4 @@ void Database::TransHelper::reset()
         m_pTrans = NULL;
     }
 }
+

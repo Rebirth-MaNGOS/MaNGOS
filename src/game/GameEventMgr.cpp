@@ -1000,3 +1000,10 @@ MANGOS_DLL_SPEC bool IsGameEventActive(uint16 id)
 {
     return sGameEventMgr.IsActiveEvent(id);
 }
+
+MANGOS_DLL_SPEC void UpdateEventDatabaseStartEnd(uint16 id, const char* start, const char* end)
+{
+    WorldDatabase.PExecute("UPDATE game_event SET start_time = '%s', end_time = '%s' WHERE entry = '%u'", 
+            start, end, id);
+}
+

@@ -3212,7 +3212,7 @@ bool GORewarded_scarab_gong(Player* pPlayer, GameObject* pGO, const Quest* pQues
         std::tm* end_time = std::localtime(&end);
         end_ss << std::put_time(end_time, "%F %T");
 
-        WorldDatabase.PExecute("UPDATE game_event SET start_time = '%s', end_time = '%s' WHERE entry = 54", start_ss.str().c_str(), end_ss.str().c_str());
+        UpdateEventDatabaseStartEnd(54, start_ss.str().c_str(), end_ss.str().c_str());
 
         Creature* pTrigger = pGO->GetClosestCreatureWithEntry(pGO, 17091, 150.f);
         if (pTrigger)
