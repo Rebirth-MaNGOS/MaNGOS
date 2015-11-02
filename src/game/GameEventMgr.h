@@ -132,5 +132,6 @@ class GameEventMgr
 
 MANGOS_DLL_SPEC bool IsHolidayActive(HolidayIds id);
 MANGOS_DLL_SPEC void StartGameEvent(uint16 id, bool overwrite = false, bool resume = false);
+MANGOS_DLL_SPEC bool IsGameEventActive(uint16 id);
 
 #endif

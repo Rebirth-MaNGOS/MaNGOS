@@ -3157,6 +3157,10 @@ bool GORewarded_scarab_gong(Player* pPlayer, GameObject* pGO, const Quest* pQues
 {
     if (pQuest->GetQuestId() == 8743)
     {
+        // Only start the 10 hour war once.
+        if (IsGameEventActive(54))
+            return false;
+
         // Start the 10 hour war event.
         StartGameEvent(54, true);
 
