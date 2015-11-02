@@ -1373,7 +1373,7 @@ WorldPersistentState* WorldMap::GetPersistanceState() const
 
 DungeonMap::DungeonMap(uint32 id, time_t expiry, uint32 InstanceId)
     : Map(id, expiry, InstanceId),
-      m_resetAfterUnload(false), m_unloadWhenEmpty(false)
+      m_resetAfterUnload(false), m_unloadWhenEmpty(false), m_isLoaded(false)
 {
     MANGOS_ASSERT(i_mapEntry->IsDungeon());
 
@@ -1383,30 +1383,6 @@ DungeonMap::DungeonMap(uint32 id, time_t expiry, uint32 InstanceId)
     // the timer is started by default, and stopped when the first player joins
     // this make sure it gets unloaded if for some reason no player joins
     m_unloadTimer = std::max(sWorld.getConfig(CONFIG_UINT32_INSTANCE_UNLOAD_DELAY), (uint32)MIN_UNLOAD_DELAY);
-
-    // Load all grids in the instance. Using parallel_for to speed it up.
-    QueryResult* result = WorldDatabase.PQuery("SELECT position_x, position_y FROM creature WHERE map = %u", id);
-    if (!result)
-        return;
-
-    // TODO: Move the loading of entire instances to some other place.
-    // It seems loading all creatures in the contstructor is causing mobs
-    // to not get their instance pointer.
-/*
-    do
-    {
-        Field* fields = result->Fetch();
-
-        float x = fields[0].GetFloat();
-        float y = fields[1].GetFloat();
-
-        CellPair pair(x, y);
-        Cell cell(pair);
-        LoadGrid(cell);
-    } while (result->NextRow());
-*/
-
-    delete result;
 }
 
 DungeonMap::~DungeonMap()
@@ -1569,6 +1545,32 @@ bool DungeonMap::Add(Player *player)
 
 void DungeonMap::Update(const uint32& t_diff)
 {
+    // Load the entire instance if it hasn't been loaded yet.
+    if (!m_isLoaded)
+    {
+        QueryResult* result = WorldDatabase.PQuery("SELECT position_x, position_y"\
+                                                   " FROM creature WHERE map = %u", 
+                                                   GetId());
+        if (result)
+        {
+            do
+            {
+                Field* fields = result->Fetch();
+
+                float x = fields[0].GetFloat();
+                float y = fields[1].GetFloat();
+
+                CellPair pair(x, y);
+                Cell cell(pair);
+                LoadGrid(cell);
+            } while (result->NextRow());
+
+            delete result;
+        }
+
+        m_isLoaded = true;
+    }
+
     Map::Update(t_diff);
 }
 

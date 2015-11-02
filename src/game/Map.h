@@ -437,6 +437,7 @@ public:
 private:
     bool m_resetAfterUnload;
     bool m_unloadWhenEmpty;
+    bool m_isLoaded;
 };
 
 class MANGOS_DLL_SPEC BattleGroundMap : public Map
