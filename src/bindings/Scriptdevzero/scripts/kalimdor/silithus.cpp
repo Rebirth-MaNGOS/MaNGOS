@@ -38,6 +38,7 @@ EndContentData */
 #include "patrol_ai.h"
 #include "TemporarySummon.h"
 #include "GameEventMgr.h"
+#include "EventResourceMgr.h"
 #include <ctime>
 #include <iomanip>
 #include <sstream>
@@ -3234,6 +3235,12 @@ bool GORewarded_scarab_gong(Player* pPlayer, GameObject* pGO, const Quest* pQues
 bool GOUse_scarab_gong(Player* pPlayer, GameObject* pGO)
 {
     if (EventHasStartEndSet(54) && !IsGameEventActive(54))
+        return true;
+
+    // Make sure that the gong can only be struck
+    // if the five day event of reducing the resources
+    // has happened.
+    if (IsEventCompleted(1) && GetResourceCount(1, 0) > 800)
         return true;
 
     return false;
