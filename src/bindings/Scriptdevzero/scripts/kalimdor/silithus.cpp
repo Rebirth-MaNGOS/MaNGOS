@@ -3124,7 +3124,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
                             if (!obj)
                                 continue;
 
-                            m_creature->GetMap()->Remove(obj, false);
+                            RemoveGameObjectFromMap(m_creature->GetMap(), obj);
 
                             float x = obj->GetPositionX();
                             float y = obj->GetPositionY();
@@ -3135,7 +3135,7 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_gate_triggerAI : public ScriptedAI
                             obj->SetFloatValue(GAMEOBJECT_POS_Y, y);
                             obj->SetFloatValue(GAMEOBJECT_POS_Z, z);
 
-                            m_creature->GetMap()->Add(obj);
+                            AddGameObjectToMap(m_creature->GetMap(), obj);
 
                             obj->SaveToDB();
                             obj->Refresh();

@@ -485,4 +485,7 @@ Map::Visit(const Cell& cell, TypeContainerVisitor<T, CONTAINER> &visitor)
         getNGrid(x, y)->Visit(cell_x, cell_y, visitor);
     }
 }
+
+MANGOS_DLL_SPEC void RemoveGameObjectFromMap(Map* map, GameObject* go);
+MANGOS_DLL_SPEC void AddGameObjectToMap(Map* map, GameObject* go);
 #endif

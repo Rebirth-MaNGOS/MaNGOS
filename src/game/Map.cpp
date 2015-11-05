@@ -3436,3 +3436,13 @@ void Map::PlayDirectSoundToMap(uint32 soundId)
     for (PlayerList::const_iterator itr = pList.begin(); itr != pList.end(); ++itr)
         itr->getSource()->SendDirectMessage(&data);
 }
+
+MANGOS_DLL_SPEC void RemoveGameObjectFromMap(Map* map, GameObject* go)
+{
+    map->Remove(go, false);
+}
+
+MANGOS_DLL_SPEC void AddGameObjectToMap(Map* map, GameObject* go)
+{
+    map->Add(go);
+}
