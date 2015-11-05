@@ -3231,6 +3231,14 @@ bool GORewarded_scarab_gong(Player* pPlayer, GameObject* pGO, const Quest* pQues
     return false;
 }
 
+bool GOUse_scarab_gong(Player* pPlayer, GameObject* pGO)
+{
+    if (EventHasStartEndSet(54) && !IsGameEventActive(54))
+        return true;
+
+    return false;
+}
+
 /*####
 # npc_beetix_ficklespragg
 ####*/
@@ -3700,6 +3708,7 @@ void AddSC_silithus()
 
     pNewscript = new Script();
     pNewscript->Name = "go_scarab_gong";
+    pNewscript->pGOUse = &GOUse_scarab_gong;
     pNewscript->pQuestRewardedGO = &GORewarded_scarab_gong;
     pNewscript->RegisterSelf();
 

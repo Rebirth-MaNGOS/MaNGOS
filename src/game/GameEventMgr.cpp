@@ -1007,3 +1007,30 @@ MANGOS_DLL_SPEC void UpdateEventDatabaseStartEnd(uint16 id, const char* start, c
             start, end, id);
 }
 
+MANGOS_DLL_SPEC bool EventHasStartEndSet(uint16 id)
+{
+    std::string start_time, end_time;
+
+    QueryResult* result = WorldDatabase.PQuery("SELECT start_time, end_time FROM"\
+                                               " game_event WHERE entry = '%u'",
+                                               id);
+
+    if (result)
+    {
+        Field* fields = result->Fetch();
+
+        start_time = fields[0].GetCppString();
+        end_time = fields[1].GetCppString();
+
+        delete result;
+    }
+
+
+    if (start_time.find("0000") != std::string::npos &&
+        end_time.find("0000") != std::string::npos)
+    {
+        return false;
+    }
+
+    return true;
+}
