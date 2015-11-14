@@ -93,7 +93,8 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
 	void JustSummoned(Creature* pSummoned)
     {
 		if (pSummoned->GetEntry() == NPC_MANA_FIEND)
-			pSummoned->CastSpell(pSummoned,SPELL_IVUS_TELEPORT_VISUAL,true);			
+			pSummoned->CastSpell(pSummoned,SPELL_IVUS_TELEPORT_VISUAL,true);	
+		pSummoned->SetRespawnEnabled(false);
 	}
 
 	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
