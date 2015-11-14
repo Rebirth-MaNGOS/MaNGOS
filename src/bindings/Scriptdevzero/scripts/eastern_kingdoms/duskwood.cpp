@@ -550,10 +550,14 @@ struct MANGOS_DLL_DECL mob_commander_felstromAI : public ScriptedAI
 	}
 };
 
-
 CreatureAI* GetAI_mob_twilight_corrupter(Creature* pCreature)
 {
     return new mob_twilight_corrupter(pCreature);
+}
+
+CreatureAI* GetAI_mob_commander_felstrom(Creature* pCreature)
+{
+    return new mob_commander_felstromAI(pCreature);
 }
 
 bool AreaTrigger_at_Twilight_Grove(Player* pPlayer, AreaTriggerEntry const* pAt)
@@ -569,11 +573,6 @@ bool AreaTrigger_at_Twilight_Grove(Player* pPlayer, AreaTriggerEntry const* pAt)
         }
     }
     return false;
-}
-
-CreatureAI* GetAI_mob_commander_felstrom(Creature* pCreature)
-{
-    return new mob_commander_felstromAI(pCreature);
 }
 
 void AddSC_duskwood()
