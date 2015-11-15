@@ -465,7 +465,8 @@ struct MANGOS_DLL_DECL npc_thersa_windsongAI : public ScriptedAI
         m_uiPlayerGUID = pPlayerGUID;
 
 		Creature* pCuely = GetClosestCreatureWithEntry(m_creature, NPC_CHEMIST_CUELY, 15.0f);
-		pCuely->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+		if(pCuely)
+			pCuely->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
 		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
 		
 		if (uiQuestId == 3569)
@@ -498,12 +499,14 @@ struct MANGOS_DLL_DECL npc_thersa_windsongAI : public ScriptedAI
 						m_uiSpeechTimer = 3000;
                         break;
 					case 3:
-						pCuely->HandleEmote(EMOTE_ONESHOT_LAUGH);
+						if(pCuely)
+							pCuely->HandleEmote(EMOTE_ONESHOT_LAUGH);
 						m_uiSpeechTimer = 3000;
                         break;
 					case 4:						
 						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
-						pCuely->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						if(pCuely)
+							pCuely->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
 						m_bOutro3569 = false;
 						// end the event after flags are set
 						m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);						
