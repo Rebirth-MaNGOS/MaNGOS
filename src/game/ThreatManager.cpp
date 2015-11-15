@@ -504,7 +504,8 @@ void ThreatManager::tauntApply(Unit* pTaunter)
             // Ok, temp threat is unused
             if(ref->getTempThreatModifyer() == 0.0f)
             {
-                if(Unit* pCurrentVictim = victRef->getTarget())
+				ref->setTempThreat(getCurrentVictim()->getThreat());
+              /*if(Unit* pCurrentVictim = victRef->getTarget())
                 {
                     Creature* pCreature  = dynamic_cast<Creature*>(getOwner());
 
@@ -512,7 +513,7 @@ void ThreatManager::tauntApply(Unit* pTaunter)
                         ref->setTempThreat(victRef->getThreat() * 1.3);
                     else
                         ref->setTempThreat(victRef->getThreat() * 1.1);
-                }
+                }*/
             }
         }
     }
