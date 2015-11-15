@@ -142,6 +142,99 @@ bool GossipSelect_npc_duke_hydraxis(Player* pPlayer, Creature* pCreature, uint32
 ## npc_loramus_thalipedes
 ######*/
 
+enum eLoraums
+{
+	QUEST_ID_BREAKING_THE_WARD = 3508,
+	SPELL_ENLIGHTENMENT		   = 12655
+};
+
+struct MANGOS_DLL_DECL npc_loramus_thalipedesAI : public ScriptedAI
+{
+    npc_loramus_thalipedesAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bQuest3508;
+
+	ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+	{
+		m_bQuest3508 = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+		m_uiPlayerGUID.Clear();
+	}
+
+	void StartOutro(ObjectGuid pPlayerGUID, uint32 uiQuestId = 0)
+	{		
+		if (uiQuestId == 3508)
+		{
+			if (!pPlayerGUID)
+				return;
+
+			m_uiPlayerGUID = pPlayerGUID;
+			m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+
+			m_bQuest3508 = true; 
+			m_uiSpeechTimer = 2000;
+			m_uiSpeechStep = 1;
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bQuest3508)							// handle RP for quest 3508
+		{
+			if(!m_uiSpeechStep)
+				return;
+		
+			if(m_uiSpeechTimer <= uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {					
+                    case 1:
+						m_creature->CastSpell(m_creature,SPELL_ENLIGHTENMENT,false);
+						m_uiSpeechTimer = 6000;
+                        break;
+					case 2:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bQuest3508 = false;
+						break;
+					/*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_loramus_thalipedes(Creature* pCreature)
+{
+    return new npc_loramus_thalipedesAI(pCreature);
+}
+
+bool QuestAccept_npc_loramus_thalipedes(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_BREAKING_THE_WARD)
+    {
+		if (npc_loramus_thalipedesAI* pLoramusAI = dynamic_cast<npc_loramus_thalipedesAI*>(pCreature->AI()))
+			pLoramusAI->StartOutro(pPlayer->GetObjectGuid(), 3508);
+	}
+	return true;
+}
+
 bool GossipHello_npc_loramus_thalipedes(Player* pPlayer, Creature* pCreature)
 {
     if (pCreature->isQuestGiver())
@@ -636,6 +729,8 @@ void AddSC_azshara()
 
     pNewscript = new Script;
     pNewscript->Name = "npc_loramus_thalipedes";
+    pNewscript->GetAI = &GetAI_npc_loramus_thalipedes;
+    pNewscript->pQuestAcceptNPC = &QuestAccept_npc_loramus_thalipedes;
     pNewscript->pGossipHello = &GossipHello_npc_loramus_thalipedes;
     pNewscript->pGossipSelect = &GossipSelect_npc_loramus_thalipedes;
     pNewscript->RegisterSelf();
