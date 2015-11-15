@@ -71,9 +71,11 @@ bool QuestRewarded_go_broken_trap(Player* pPlayer, GameObject* pGo, const Quest*
     if (pQuest->GetQuestId() == QUEST_A_BROKEN_TRAP)
     {
         pPlayer->CLOSE_GOSSIP_MENU();
-        //pPlayer->CastSpell(pPlayer, SPELL_TRAP, true);
-		pGo->SetGoState(GO_STATE_ACTIVE);
-		pGo->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND + GO_FLAG_NO_INTERACT);
+
+		if(GameObject* pTrap = pPlayer->SummonGameObject(179512, 36000,pGo->GetPositionX(),pGo->GetPositionY(),pGo->GetPositionZ(),0,GO_STATE_READY,0))
+			pTrap->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND + GO_FLAG_NO_INTERACT);
+		pGo->RemoveFromWorld();
+		pGo->UpdateVisibilityAndView();
     }
     return true;
 }
@@ -750,8 +752,12 @@ struct MANGOS_DLL_DECL boss_mushgogAI : public ScriptedAI
 			int SpawnPos = urand(0,6);		// let the herb be up for 7h maximum, so when the next ones spawn there's no herbs up already
 			if(GameObject* pHerb = m_creature->SummonGameObject(aHerbType[urand(0,2)],25200000, HerbSpawn[SpawnPos+urand(0,1)].x,HerbSpawn[SpawnPos+urand(0,1)].y,HerbSpawn[SpawnPos].z,0,GO_STATE_READY,0.f))
 			{
-				if (pHerb->getLootState() != GO_NOT_READY)
-					pHerb->SetLootState(GO_NOT_READY);			
+				if (pHerb)
+				{
+					pHerb->SetGoState(GO_STATE_READY);
+					pHerb->SetLootState(GO_READY);
+					pHerb->SetOwnerGuid(ObjectGuid());
+				}
 			}
 		}
 	}

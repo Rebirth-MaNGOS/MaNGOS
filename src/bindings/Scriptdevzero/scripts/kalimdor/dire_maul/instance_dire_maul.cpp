@@ -242,6 +242,7 @@ void instance_dire_maul::OnObjectCreate(GameObject* pGo)
             }
             break;
 		case GO_BROKEN_TRAP:
+		case GO_FIXED_TRAP:
         case GO_THE_PRINCES_CHEST:
             break;
 		default:
@@ -339,9 +340,10 @@ void instance_dire_maul::SetData(uint32 uiType, uint32 uiData)
                     pChorush->InterruptNonMeleeSpells(false);
                     pChorush->AI()->ResetToHome();
 
-                    if (Creature* pMizzle = pChorush->SummonCreature(NPC_MIZZLE_THE_CRAFTY, 839.83f, 549.14f, 34.26f, 4.32f, TEMPSUMMON_DEAD_DESPAWN, 10000))
+                    if (Creature* pMizzle = pChorush->SummonCreature(NPC_MIZZLE_THE_CRAFTY, 731.14f, 481.14f, 28.18f, 0.016f, TEMPSUMMON_DEAD_DESPAWN, 10000))
                     {
-                        pMizzle->setFaction(FACTION_FRIENDLY);
+                        pMizzle->setFaction(FACTION_FRIENDLY);	
+						// He should be running from spawn and then walk at point 0, can't get it to work. Walk all the way for now
                         pMizzle->GetMotionMaster()->MovePoint(0, 818.92f, 481.95f, 37.32f);
                         CreatureCreatePos pos(pMizzle->GetMap(), 818.92f, 481.95f, 37.32f, 4.32f);
                         pMizzle->SetSummonPoint(pos);

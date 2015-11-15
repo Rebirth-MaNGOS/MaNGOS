@@ -16,7 +16,7 @@
 
 /* ScriptData
 SDName: Boss Guard Moldar
-SD%Complete: 90
+SD%Complete: 100
 SDComment:
 SDCategory: Dire Maul
 EndScriptData */
@@ -38,7 +38,6 @@ enum Gossips
 
 enum Spells
 {
-    SPELL_FREEZING_TRAP_EFFECT  = 14309,
     SPELL_FRENZY                = 8269,
     SPELL_KNOCK_AWAY            = 10101,
     SPELL_SHIELD_BASH           = 11972,
@@ -54,7 +53,6 @@ struct MANGOS_DLL_DECL boss_guardAI : public ScriptedAI
     boss_guardAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (instance_dire_maul*)pCreature->GetInstanceData();
-		m_bEvade = false;
 		m_bFrozen = false;
         Reset();
     }
@@ -62,7 +60,6 @@ struct MANGOS_DLL_DECL boss_guardAI : public ScriptedAI
     instance_dire_maul* m_pInstance;
 
     bool m_bCalled;
-    bool m_bEvade;
 	bool m_bFrozen;
 
     uint32 m_uiEncounter;
@@ -96,16 +93,6 @@ struct MANGOS_DLL_DECL boss_guardAI : public ScriptedAI
                 m_uiEncounter = TYPE_GUARD_SLIPKIK;
                 break;
         }
-
-		//if (m_bEvade && m_creature->GetEntry() == TYPE_GUARD_SLIPKIK)
-		//{
-		//	m_bEvade = false;
-		//	m_creature->SetOwnerGuid(ObjectGuid());
-		//	int32 bp1 = 1000000;
-		//	int32 bp2 = 1000000;
-		//	int32 bp3 = 1000000;
-		//	m_creature->CastCustomSpell(m_creature,27619,&bp1,&bp2,&bp3,false);
-		//}
     }
 
     void JustReachedHome()
@@ -127,40 +114,8 @@ struct MANGOS_DLL_DECL boss_guardAI : public ScriptedAI
             m_pInstance->SetData(m_uiEncounter, DONE);
     }
 
-   // void SpellHit(Unit* pCaster, const SpellEntry* pSpell)
-   // {
-   //     if (m_creature->GetEntry() == NPC_GUARD_SLIPKIK && pSpell->Id == SPELL_FREEZING_TRAP_EFFECT)
-   //     {
-   //         m_bEvade = true;
-   //         //m_uiEvadeTimer = 2000;
-			//m_creature->SetOwnerGuid(pCaster->GetObjectGuid());
-			//m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-			//m_creature->SetMaxPower(POWER_MANA,5000);
-			//m_creature->SetPower(POWER_MANA,5000);
-			//ResetToHome();
-			//GameObject* trap = m_pInstance->GetSingleGameObjectFromStorage(GO_BROKEN_TRAP);
-			//if (trap && trap->isSpawned())
-			//{
-			//	trap->SetGoState(GO_STATE_ACTIVE);
-			//	trap->SetLootState(GO_JUST_DEACTIVATED);
-			//}
-   //     }
-   // }
-
     void UpdateAI(const uint32 uiDiff)
     {
-    //    if (m_bEvade)
-    //        if (m_uiEvadeTimer <= uiDiff)
-    //        {
-    //            //m_creature->AI()->ResetToHome();
-				//int32 bp = 1000000;
-				//m_creature->SetOwnerGuid(ObjectGuid());
-				//m_creature->CastCustomSpell(m_creature, 27619, &bp, NULL, NULL, true);
-    //            m_bEvade = false;
-    //        }
-    //        else
-    //            m_uiEvadeTimer -= uiDiff;
-
 		if (m_uiEncounter == TYPE_GUARD_SLIPKIK && !m_bFrozen)
 		{
 			if (m_uiUpdateTimer <= uiDiff)
@@ -168,11 +123,13 @@ struct MANGOS_DLL_DECL boss_guardAI : public ScriptedAI
                 if (m_pInstance)
                 {
                     m_uiUpdateTimer = 500;
-                    GameObject* trap = m_pInstance->GetSingleGameObjectFromStorage(GO_BROKEN_TRAP);
-                    if (trap && trap->HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_INTERACT_COND) && m_creature->GetDistance(trap) < 6.0f)
+                    GameObject* trap = m_pInstance->GetSingleGameObjectFromStorage(GO_FIXED_TRAP);
+                    if (trap && trap->HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_INTERACT_COND) && m_creature->GetDistance(trap) < 3.0f)
                     {
-                        m_bFrozen = true;
-
+						trap->SetGoState(GO_STATE_ACTIVE);
+						trap->SetLootState(GO_JUST_DEACTIVATED);
+						
+						// probably wouldn't need all these but oh well
                         m_creature->RemoveAllAuras();
                         m_creature->DeleteThreatList();
                         m_creature->CombatStop(true);
@@ -183,6 +140,10 @@ struct MANGOS_DLL_DECL boss_guardAI : public ScriptedAI
                         m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
                         m_creature->addUnitState(UNIT_STAT_ROOT);
                         m_creature->GetMotionMaster()->MoveIdle();
+
+						// cast spell last so we won't remove the aura
+						m_creature->CastSpell(m_creature,22856,true);
+                        m_bFrozen = true;
                     }
                 }
             }
