@@ -316,6 +316,230 @@ bool OnQuestRewarded_npc_bethor_iceshard(Player* pPlayer, Creature* pCreature, Q
 	return true;
 }
 
+/*####
+# npc_chemist_cuely
+####*/
+
+enum eCuley
+{
+	QUEST_ID_SEEPING_CORRUPTION_1	= 3568,
+	SAY_CULEY				= -1720232,
+};
+
+struct MANGOS_DLL_DECL npc_chemist_cuelyAI : public ScriptedAI
+{
+    npc_chemist_cuelyAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+	bool m_bOutro3568;
+	ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+	{
+		m_bOutro3568 = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+		m_uiPlayerGUID.Clear();
+	}
+
+	void StartOutro(ObjectGuid pPlayerGUID, uint32 uiQuestId = 0)
+	{		
+		if (!pPlayerGUID)
+            return;
+
+        m_uiPlayerGUID = pPlayerGUID;
+
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+		
+		if (uiQuestId == 3568)
+		{
+			m_bOutro3568 = true; 
+			m_uiSpeechTimer = 2000;
+			m_uiSpeechStep = 1;
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro3568)							// handle RP at quest end 3568
+		{
+			if(!m_uiSpeechStep)
+				return;
+		
+			if(m_uiSpeechTimer <= uiDiff)
+            {				
+                switch(m_uiSpeechStep)
+                {					
+                    case 1:
+						m_creature->HandleEmoteState(EMOTE_STATE_USESTANDING);
+						m_uiSpeechTimer = 6000;
+                        break;
+					case 2:
+						m_creature->HandleEmoteState(EMOTE_STATE_NONE);
+						m_uiSpeechTimer = 2000;
+                        break;
+					case 3:
+						DoScriptText(SAY_CULEY,m_creature,NULL);
+						m_uiSpeechTimer = 2000;
+                        break;
+					case 4:
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro3568 = false;
+						break;
+					/*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_chemist_cuely(Creature* pCreature)
+{
+    return new npc_chemist_cuelyAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_chemist_cuely(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_SEEPING_CORRUPTION_1)
+    {
+		if (npc_chemist_cuelyAI* pCuleyAI = dynamic_cast<npc_chemist_cuelyAI*>(pCreature->AI()))
+			pCuleyAI->StartOutro(pPlayer->GetObjectGuid(), 3568);
+	}
+	return true;
+}
+
+/*####
+# npc_chemist_cuely
+####*/
+
+enum eThersa
+{
+	QUEST_ID_SEEPING_CORRUPTION_2	= 3569,
+	SPELL_DRINK_DISEASE_BOTTLE		= 6355,
+
+	SAY_THERSA				= -1720233,
+	NPC_CHEMIST_CUELY		= 8390
+};
+
+struct MANGOS_DLL_DECL npc_thersa_windsongAI : public ScriptedAI
+{
+    npc_thersa_windsongAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		Reset(); 
+	}
+
+	uint8 m_uiSpeechStep;
+	uint32 m_uiSpeechTimer;
+
+	bool m_bOutro3569;
+
+	ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+	{
+		m_bOutro3569 = false;
+		m_uiSpeechStep = 1;
+		m_uiSpeechTimer = 0;
+		m_uiPlayerGUID.Clear();
+	}
+
+	void StartOutro(ObjectGuid pPlayerGUID, uint32 uiQuestId = 0)
+	{		
+		if (!pPlayerGUID)
+            return;
+
+        m_uiPlayerGUID = pPlayerGUID;
+
+		Creature* pCuely = GetClosestCreatureWithEntry(m_creature, NPC_CHEMIST_CUELY, 15.0f);
+		pCuely->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+		m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+		
+		if (uiQuestId == 3569)
+		{
+			m_bOutro3569 = true; 
+			m_uiSpeechTimer = 1000;
+			m_uiSpeechStep = 1;
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiSpeechTimer && m_bOutro3569)							// handle RP at quest end 3569
+		{
+			if(!m_uiSpeechStep)
+				return;
+		
+			if(m_uiSpeechTimer <= uiDiff)
+            {
+				Creature* pCuely = GetClosestCreatureWithEntry(m_creature, NPC_CHEMIST_CUELY, 15.0f);
+                switch(m_uiSpeechStep)
+                {					
+                    case 1:
+						
+						m_creature->CastSpell(m_creature, SPELL_DRINK_DISEASE_BOTTLE, false);
+						m_uiSpeechTimer = 4000;
+                        break;
+					case 2:
+						DoScriptText(SAY_THERSA,m_creature,NULL);
+						m_uiSpeechTimer = 3000;
+                        break;
+					case 3:
+						pCuely->HandleEmote(EMOTE_ONESHOT_LAUGH);
+						m_uiSpeechTimer = 3000;
+                        break;
+					case 4:						
+						m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						pCuely->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+						m_bOutro3569 = false;
+						// end the event after flags are set
+						m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);						
+						break;
+					/*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+		}
+
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_thersa_windsong(Creature* pCreature)
+{
+    return new npc_thersa_windsongAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_thersa_windsong(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+	if (pQuest->GetQuestId() == QUEST_ID_SEEPING_CORRUPTION_2)
+    {
+		if (npc_thersa_windsongAI* pThersaAI = dynamic_cast<npc_thersa_windsongAI*>(pCreature->AI()))
+			pThersaAI->StartOutro(pPlayer->GetObjectGuid(), 3569);
+	}
+	return true;
+}
+
 /*######
 ## AddSC
 ######*/
@@ -340,5 +564,17 @@ void AddSC_undercity()
     pNewscript->Name = "npc_bethor_iceshard";
     pNewscript->GetAI = &GetAI_npc_bethor_iceshard;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_bethor_iceshard;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_chemist_cuely";
+    pNewscript->GetAI = &GetAI_npc_chemist_cuely;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_chemist_cuely;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_thersa_windsong";
+    pNewscript->GetAI = &GetAI_npc_thersa_windsong;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_thersa_windsong;
     pNewscript->RegisterSelf();
 }
