@@ -1,3 +1,4 @@
+#include "precompiled.h"
 #include "sc_creature.h"
 #include "../ScriptMgr.h"
 #include "Player.h"
