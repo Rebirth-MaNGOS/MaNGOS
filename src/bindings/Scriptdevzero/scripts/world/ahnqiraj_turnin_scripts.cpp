@@ -2,6 +2,10 @@
 #include "sc_creature.h"
 #include "ahnqiraj_turnin_defines.h"
 #include "EventResourceMgr.h"
+#include "GameEventMgr.h"
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 // This macro creates a wrapper that calls the QuestRewarded_ahnqiraj_turnin function
 // with the specified quests and resources. This to avoid having to rewrite the handling
@@ -33,7 +37,10 @@ bool QuestRewarded_ahnqiraj_turnin(Player* /*pPlayer*/, Creature* pCreature, con
             // Add to the resource counter and remove the quest giver flag if the 
             // maximum amount of resources has been reached.
             if (!AddResourceCount(EVENT_ID, resource, resourceCount))
+            {
                 pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+            }
         }
     }
     return false;
@@ -107,7 +114,10 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_turninAI : public ScriptedAI
     npc_ahnqiraj_turninAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         if (IsEventCompleted(EVENT_ID) || GetResourceCount(EVENT_ID, RESOURCE) >= GetFullResourceCount(EVENT_ID, RESOURCE))
+        {
             m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+            m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+        }
     }
 
     void Reset() {}
@@ -147,6 +157,27 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_resource_reducing_triggerAI : public Scripte
     {
         if (!IsEventCompleted(EVENT_ID))
             return;
+
+        // Check if we should spawn the troops in CH.
+        if (GetResourceCount(1, 0) < 800 &&
+            !IsGameEventActive(55) && !EventHasStartEndSet(55))
+        {
+
+            // Update the start and end times for the 10 hour war to make it survive a server restart.
+            std::stringstream start_ss, end_ss;
+
+            std::time_t start = std::time(nullptr);
+            std::tm* start_time = std::localtime(&start);
+            start_ss << std::put_time(start_time, "%F %T");
+
+            std::time_t end = std::time(nullptr) + 15552000;
+            std::tm* end_time = std::localtime(&end);
+            end_ss << std::put_time(end_time, "%F %T");
+
+            UpdateEventDatabaseStartEnd(55, start_ss.str().c_str(), end_ss.str().c_str());
+
+            StartGameEvent(55, true);
+        }
 
         if (m_uiReducingTimer <= uiDiff)
         {
