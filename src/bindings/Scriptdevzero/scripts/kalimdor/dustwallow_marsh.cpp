@@ -1326,7 +1326,7 @@ struct MANGOS_DLL_DECL boss_doctor_weavil : public ScriptedAI
     void Reset()
     {   
         m_uiMindShatterTimer = urand(5000, 15000);
-        m_uiMindControlTimer = urand(15000, 18000);
+        m_uiMindControlTimer = 15000;
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -1350,7 +1350,7 @@ struct MANGOS_DLL_DECL boss_doctor_weavil : public ScriptedAI
         {
             if(m_uiMindControlTimer <= uiDiff)
             {
-                m_uiMindControlTimer = urand(35000, 50000);
+                m_uiMindControlTimer = urand(90000, 120000);
 
                 const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
 
