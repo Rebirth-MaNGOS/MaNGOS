@@ -1311,7 +1311,7 @@ bool OnQuestRewarded_npc_krog(Player* pPlayer, Creature* pCreature, Quest const*
 enum doctor_weavil
 {
     SPELL_MIND_SHATTER = 25774,
-    SPELL_CREATURE_OF_NIGHTMARE = 25806,
+    SPELL_CREATURE_OF_NIGHTMARE = 25772,
 };
 
 struct MANGOS_DLL_DECL boss_doctor_weavil : public ScriptedAI
@@ -1326,7 +1326,7 @@ struct MANGOS_DLL_DECL boss_doctor_weavil : public ScriptedAI
     void Reset()
     {   
         m_uiMindShatterTimer = urand(5000, 15000);
-        m_uiMindControlTimer = urand(35000, 50000);
+        m_uiMindControlTimer = urand(15000, 18000);
     }
 
     void UpdateAI(const uint32 uiDiff)
