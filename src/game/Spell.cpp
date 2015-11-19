@@ -6619,11 +6619,14 @@ SpellCastResult Spell::CheckItems()
         {
             if (!m_IsTriggeredSpell && m_spellInfo->EffectItemType[i])
             {
+                Player* p_target = dynamic_cast<Player*>(m_targets.getUnitTarget());
+                Player* check_target = p_target ? p_target : p_caster;
+
                 ItemPosCountVec dest;
-                InventoryResult msg = p_caster->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, m_spellInfo->EffectItemType[i], 1 );
+                InventoryResult msg = check_target->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, m_spellInfo->EffectItemType[i], 1 );
                 if (msg != EQUIP_ERR_OK )
                 {
-                    p_caster->SendEquipError( msg, NULL, NULL, m_spellInfo->EffectItemType[i] );
+                    check_target->SendEquipError( msg, NULL, NULL, m_spellInfo->EffectItemType[i] );
                     return SPELL_FAILED_DONT_REPORT;
                 }
             }
