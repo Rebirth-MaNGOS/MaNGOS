@@ -1339,7 +1339,7 @@ struct MANGOS_DLL_DECL boss_doctor_weavil : public ScriptedAI
         {
             if(m_uiMindShatterTimer <= uiDiff)
             {
-                m_uiMindShatterTimer = urand(5000, 15000);
+                m_uiMindShatterTimer = urand(10000, 15000);
                 DoCast(m_creature, SPELL_MIND_SHATTER, true);
             }
             else
