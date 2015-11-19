@@ -29,6 +29,7 @@ extern void AddSC_hallows_end();
 
 // Ahn'Qiraj gate event
 extern void AddSC_gate_turnin_scripts();
+extern void AddSC_ambassadors();
 
 //eastern kingdoms
 extern void AddSC_alterac_valley();                         // alterac valley
@@ -321,6 +322,7 @@ void AddScripts()
 
     // Ahn'Qiraj gate event
     AddSC_gate_turnin_scripts();
+    AddSC_ambassadors();
 
     //eastern kingdoms
     AddSC_alterac_valley();                                 //alterac valley
