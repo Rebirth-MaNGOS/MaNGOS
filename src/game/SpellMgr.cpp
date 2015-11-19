@@ -351,6 +351,7 @@ bool IsNoStackAuraDueToAura(uint32 spellId_1, uint32 spellId_2)
         (spellInfo_1->Id == 17628  && spellInfo_2->Id == 11390))
         return false;
 
+
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
     {
         for (int32 j = 0; j < MAX_EFFECT_INDEX; ++j)
@@ -549,7 +550,7 @@ bool IsSingleFromSpellSpecificPerTargetPerCaster(SpellSpecific spellSpec1,SpellS
         case SPELL_STING:
         case SPELL_CURSE:
         case SPELL_ASPECT:
-        case SPELL_JUDGEMENT:
+        //case SPELL_JUDGEMENT: // Judgement's should be handled explicitly in the SpellNoStackDueToSpell function.
             return spellSpec1==spellSpec2;
         default:
             return false;
@@ -2268,6 +2269,15 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     // *Band of Eternal Champion and Seal of Command(multi-family check)
                     if (spellId_1 == 35081 && spellInfo_2->SpellIconID==561 && spellInfo_2->SpellVisual==7992)
                         return false;
+
+                    // Judgement of the Crusader should not stack with itself.
+                    std::string spellName1(*spellInfo_1->SpellName);
+                    std::string spellName2(*spellInfo_2->SpellName);
+                    if (spellName1.find("Crusader") != std::string::npos &&
+                        spellName2.find("Crusader") != std::string::npos)
+                        return true;
+
+                    sLog.outBasic("Kollar skitn!");
 
                     break;
                 }
