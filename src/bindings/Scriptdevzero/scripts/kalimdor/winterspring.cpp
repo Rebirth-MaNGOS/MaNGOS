@@ -730,13 +730,13 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
             
                 if(doctorW)
                 {
-                    doctorW->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                    doctorW->SetSplineFlags(SPLINEFLAG_WALKMODE);
                     doctorW->setFaction(35);
                     doctorW->CombatStop();
                     doctorW->GetMotionMaster()->MovePoint(0, aFlyingMachine[3].m_fX, aFlyingMachine[3].m_fY, aFlyingMachine[3].m_fZ, true);
                     doctorW->SetRespawnEnabled(false);
                     doctor = doctorW->GetObjectGuid();
-                    m_uiDoctorSpeakTimer = 6000;
+                    m_uiDoctorSpeakTimer = 14000;
                 }
             }
             else
@@ -758,19 +758,30 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
                             doctorW->SetFacingToObject(pPlayer);
 
                         doctorW->MonsterSay("No hello for your old friend, Narain? Who were you expecting???", LANG_UNIVERSAL);
+                        doctorW->HandleEmote(EMOTE_ONESHOT_TALK);
+                        
                         m_uiDoctorSpeakTimer = 5000;
                         break;
                     case 2:
-                        doctorW->MonsterSay("So... You thought you could fool me, did you? The greatest criminal mastermind Azeroth has ever known???", LANG_UNIVERSAL); 
-                        m_uiDoctorSpeakTimer = 5000;
+                        doctorW->GenericTextEmote("Doctor Weavil eyes you suspiciously.", false);
+                        m_uiDoctorSpeakTimer = 3000;
                         break;
                     case 3:
-                        if(Unit *pPlayer = m_creature->GetMap()->GetUnit(m_creature->GetOwnerGuid()))
-                            doctorW->MonsterSay(std::string("I see right through your disguise, " + std::string(pPlayer->GetName()) + ". Number Two! Number Two kill!").c_str(), LANG_UNIVERSAL); 
-
-                        m_uiDoctorSpeakTimer = 5000;
+                        doctorW->MonsterSay("So... You thought you could fool me, did you? The greatest criminal mastermind Azeroth has ever known???", LANG_UNIVERSAL); 
+                        doctorW->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiDoctorSpeakTimer = 7000;
                         break;
                     case 4:
+                        if(Unit *pPlayer = m_creature->GetMap()->GetUnit(m_creature->GetOwnerGuid()))
+                        {
+                            doctorW->MonsterSay(std::string("I see right through your disguise, " + std::string(pPlayer->GetName()) + ". Number Two! Number Two kill!").c_str(), LANG_UNIVERSAL);
+                            doctorW->HandleEmote(EMOTE_ONESHOT_SHOUT);
+                            doctorW->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                        }
+
+                        m_uiDoctorSpeakTimer = 6000;
+                        break;
+                    case 5:
                     {
                         Creature *numberTwoApe = m_creature->SummonCreature(MOB_NUMBER_TWO, aFlyingMachine[2].m_fX, aFlyingMachine[2].m_fY, aFlyingMachine[2].m_fZ, 4.0f, TEMPSUMMON_CORPSE_DESPAWN, 60000);
 
@@ -779,17 +790,22 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
                             numberTwoApe->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
 
                             if(Unit *pPlayer = m_creature->GetMap()->GetUnit(m_creature->GetOwnerGuid()))
-                                numberTwoApe->GetMotionMaster()->MoveChase(pPlayer);
+                            {
+                                numberTwoApe->AI()->AttackStart(pPlayer);//>GetMotionMaster()->MoveChase(pPlayer);
+                              //  numberTwoApe->SetInCombatWith(pPlayer);
+                            }
                             else
                                 numberTwoApe->GetMotionMaster()->MovePoint(0, aFlyingMachine[3].m_fX, aFlyingMachine[3].m_fY, aFlyingMachine[3].m_fZ, true);
+
                             numberTwo = numberTwoApe->GetObjectGuid();
+                            numberTwoApe->MonsterSay("Kill!", LANG_UNIVERSAL);
                         }
 
                         doctorW->GetMotionMaster()->MoveChase(m_creature, 0, 0);
                         m_uiDoctorSpeakTimer = 5000;
                         break;
                     }                
-                    case 5:
+                    case 6:
                         doctorW->ForcedDespawn();
                         m_nextMoveTimer = 2000;
                         m_uiDoctorSpeakTimer = 0;
