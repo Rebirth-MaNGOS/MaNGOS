@@ -667,6 +667,7 @@ bool GossipSelect_npc_azuregos_spirit(Player* pPlayer, Creature* pCreature, uint
 enum maws
 {
     SPELL_FRENZY                = 28371,
+	SPELL_THRASH				= 3391,
 };
 
 struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
@@ -676,11 +677,19 @@ struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
     }
 
     uint32 m_uiFrenzyTimer;
+	uint32 m_uiThrashTimer;
 
     void Reset()
     {   
         m_uiFrenzyTimer = 25000;
+		m_uiThrashTimer = 15000;
     }
+
+	void SpellHit(Unit* pCaster, SpellEntry const* pSpell) // emote if he enrages
+    {
+        if (pSpell->Id == SPELL_FRENZY)
+			m_creature->GenericTextEmote("Maws goes into a killing frenzy!", NULL, false);
+	}
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -702,6 +711,14 @@ struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
             else
                 m_uiFrenzyTimer -= uiDiff;
         }
+
+		if(m_uiThrashTimer <= uiDiff)
+        {            
+            DoCast(m_creature, SPELL_THRASH, true);
+			m_uiThrashTimer = urand(25000,35000);
+        }
+        else
+            m_uiThrashTimer -= uiDiff;
 
         DoMeleeAttackIfReady();
     }
