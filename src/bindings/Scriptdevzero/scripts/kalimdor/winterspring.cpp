@@ -783,7 +783,7 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
                         break;
                     case 5:
                     {
-                        Creature *numberTwoApe = m_creature->SummonCreature(MOB_NUMBER_TWO, aFlyingMachine[2].m_fX, aFlyingMachine[2].m_fY, aFlyingMachine[2].m_fZ, 4.0f, TEMPSUMMON_CORPSE_DESPAWN, 60000);
+                        Creature *numberTwoApe = m_creature->SummonCreature(MOB_NUMBER_TWO, aFlyingMachine[2].m_fX, aFlyingMachine[2].m_fY, aFlyingMachine[2].m_fZ, 4.0f, TEMPSUMMON_DEAD_DESPAWN, 60000);
 
                         if(numberTwoApe)
                         {
