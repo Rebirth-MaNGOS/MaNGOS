@@ -4311,6 +4311,9 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
     pGameObj->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
     pGameObj->SetSpellId(m_spellInfo->Id);
 
+    if(gameobject_id == 500) // Spell Place Loot - AQ quest chain.
+        pGameObj->SetRespawnTime(25);
+
     // Wild object not have owner and check clickable by players
     map->Add(pGameObj);
 

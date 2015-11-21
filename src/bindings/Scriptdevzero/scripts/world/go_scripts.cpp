@@ -37,6 +37,7 @@ go_lard_picnic_basket
 EndContentData */
 
 #include "precompiled.h"
+#include "Language.h"
 
 /*######
 ## go_redpaths_shield_and_davils_libram
@@ -324,6 +325,104 @@ bool GOUse_go_chromaggus_lever(Player* pPlayer, GameObject* pGo)
 	return false;
 }
 
+/*######
+## go_draconic_for_dummies_book
+#####*/
+
+bool GOUse_go_draconic_for_dummies_book(Player* pPlayer, GameObject* pGo)
+{
+    if(pPlayer)
+    {
+        if(pPlayer->IsActiveQuest(8620))/*>HasQuest(8620)*/
+        {
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "<Take this book for the good of Azeroth!>", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+        }
+        pPlayer->SEND_GOSSIP_MENU(1212, pGo->GetObjectGuid());
+	}
+	return true;
+}
+
+bool pGossipHelloGO_go_draconic_for_dummies_book(Player* pPlayer, GameObject* pGo)
+{
+    uint32 m_itemId;
+
+    switch(pGo->GetEntry())
+    {
+        case 180665:
+            m_itemId = 21107;
+            break;
+        case 180666:
+            m_itemId = 21106;
+            break;
+        case 180667:
+            m_itemId = 21109;
+            break;
+    }
+
+    if(pPlayer)
+    {
+        if(pPlayer->IsActiveQuest(8620) && !pPlayer->HasItemCount(m_itemId, 1, true))
+        {
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "<Take this book for the good of Azeroth!>", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+        }
+        pPlayer->SEND_GOSSIP_MENU(1212, pGo->GetObjectGuid());
+	}
+	return true;
+}
+
+void GiveDummyToPlayer(uint32 itemID, Player* pPlayer)
+{
+    ItemPosCountVec dest;
+    if (pPlayer->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemID, 1) == EQUIP_ERR_OK)
+    {
+        Item* item = pPlayer->StoreNewItem( dest, itemID, true, Item::GenerateItemRandomPropertyId(itemID));
+        pPlayer->SendNewItem(item, 1, true, false);
+    }
+    else
+    {
+        pPlayer->GetSession()->SendNotification("That item is unique.");
+        pPlayer->CLOSE_GOSSIP_MENU();
+    }
+}
+
+bool GossipSelect_go_draconic_for_dummies_book(Player* pPlayer, GameObject* pGo, uint32 /*uiSender*/, uint32 uiAction)
+{
+    if(pPlayer && pGo)
+    {
+        switch(uiAction)
+        {
+            case GOSSIP_ACTION_INFO_DEF+1:
+                {
+                uint32 m_goEntry = pGo->GetEntry();
+                switch(m_goEntry)
+                    {
+                        case 180665:
+                            {
+                            GiveDummyToPlayer(21107, pPlayer);
+                            break;
+                            }
+                        case 180666:
+                            {
+                            GiveDummyToPlayer(21106, pPlayer);
+                            break;
+                            }
+                        case 180667:
+                            {
+                            GiveDummyToPlayer(21109, pPlayer);
+                            break;
+                            }
+                        default:
+                            break;
+                    }
+                }
+                
+                break;
+        }
+    }
+    pPlayer->CLOSE_GOSSIP_MENU();
+    return true;
+}
+
 void AddSC_go_scripts()
 {
     Script* pNewscript;
@@ -393,6 +492,12 @@ void AddSC_go_scripts()
 	pNewscript = new Script;
     pNewscript->Name = "go_chromaggus_lever";
     pNewscript->pGOUse = &GOUse_go_chromaggus_lever;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "go_draconic_for_dummies_book";
+    pNewscript->pGossipHelloGO = &pGossipHelloGO_go_draconic_for_dummies_book;
+    pNewscript->pGossipSelectGO = &GossipSelect_go_draconic_for_dummies_book;
     pNewscript->RegisterSelf();
 
 }
