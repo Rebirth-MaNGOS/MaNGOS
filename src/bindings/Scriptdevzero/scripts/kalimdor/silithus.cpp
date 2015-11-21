@@ -39,6 +39,7 @@ EndContentData */
 #include "TemporarySummon.h"
 #include "GameEventMgr.h"
 #include "EventResourceMgr.h"
+#include "Language.h"
 #include <ctime>
 #include <iomanip>
 #include <sstream>
@@ -3242,6 +3243,10 @@ bool GORewarded_scarab_gong(Player* pPlayer, GameObject* pGO, const Quest* pQues
             }
         }
 
+        // Announce the Scarab Lord server wide.
+        std::stringstream title_ss;
+        title_ss << pPlayer->GetName() << ", Champion of the Bronze Dragonflight has rung the Scarab Gong. The ancient gates of Ahn'Qiraj open, revealing the horrors of a forgotten war...";
+        SendServerWideEmote(title_ss.str().c_str());
     }
     return false;
 }
