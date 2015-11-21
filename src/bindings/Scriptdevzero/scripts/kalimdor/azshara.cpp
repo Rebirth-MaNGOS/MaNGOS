@@ -682,6 +682,12 @@ struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
         m_uiFrenzyTimer = 25000;
     }
 
+	void SpellHit(Unit* pCaster, SpellEntry const* pSpell) // emote if he enrages
+    {
+        if (pSpell->Id == SPELL_FRENZY)
+			m_creature->GenericTextEmote("Maws goes into a killing frenzy!", NULL, false);
+	}
+
     void UpdateAI(const uint32 uiDiff)
     {
         
