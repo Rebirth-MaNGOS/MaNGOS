@@ -711,6 +711,8 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
         return false;
     case 19451: // Magmadar's Frenzy should be a positive effect.
         return true;
+	case 20545: // Lord Lakmaeran - Lightning Shield should be a positive effect. 
+		return true;
     case 21153: // The Bonereaver's Edge effect should be positive.
         return true;
 	case 23260: // Klinfran the Crazed's Entropic Sting is not a positive effect.
