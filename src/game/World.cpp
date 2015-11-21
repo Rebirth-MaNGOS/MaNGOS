@@ -2181,3 +2181,8 @@ bool World::configNoReload(bool reload, eConfigBoolValues index, char const* fie
 
     return false;
 }
+
+void MANGOS_DLL_SPEC SendServerWideEmote(const char* message)
+{
+    sWorld.SendWorldText(LANG_SERVER_WIDE_EMOTE, message);
+}

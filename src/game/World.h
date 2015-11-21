@@ -639,6 +639,8 @@ class World
 
 extern uint32 realmID;
 
+void MANGOS_DLL_SPEC SendServerWideEmote(const char* message);
+
 #define sWorld MaNGOS::Singleton<World>::Instance()
 #endif
 /// @}
