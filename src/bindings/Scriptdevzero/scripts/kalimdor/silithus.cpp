@@ -2870,6 +2870,20 @@ CreatureAI* GetAI_npc_anachronos_trigger(Creature* pCreature)
     return new npc_anachronos_triggerAI(pCreature);
 }
 
+struct MANGOS_DLL_DECL npc_anachronos_the_ancient_rpAI : public ScriptedAI
+{
+    npc_anachronos_the_ancient_rpAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {}
+
+    void Reset() {}
+    void UpdateAI(const uint32 uiDiff) {}
+};
+
+CreatureAI* GetAI_npc_anachronos_the_ancient_rp(Creature* pCreature)
+{
+    return new npc_anachronos_the_ancient_rpAI(pCreature);
+}
+
 bool QuestAccept_crystalline_tear(Player* pPlayer, GameObject* pGO, const Quest* pQuest)
 {
     if (pQuest->GetQuestId() == Q_A_PAWN_ON_THE_ETERNAL_BOARD)
@@ -3686,6 +3700,11 @@ void AddSC_silithus()
     pNewscript = new Script;
     pNewscript->Name = "npc_anachronos_trigger";
     pNewscript->GetAI = &GetAI_npc_anachronos_trigger;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_anachronos_rp";
+    pNewscript->GetAI = &GetAI_npc_anachronos_the_ancient_rp;
     pNewscript->RegisterSelf();
     
     pNewscript = new Script;
