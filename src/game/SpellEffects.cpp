@@ -2997,23 +2997,42 @@ void Spell::EffectDispel(SpellEffectIndex eff_idx)
     for(Unit::SpellAuraHolderMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
     {
         SpellAuraHolder *holder = itr->second;
-        if ((1<<holder->GetSpellProto()->Dispel) & dispelMask)
+        const SpellEntry* proto = holder->GetSpellProto();
+
+        if ((1<<proto->Dispel) & dispelMask)
         {
-            if(holder->GetSpellProto()->Dispel == DISPEL_MAGIC)
+            if(proto->Dispel == DISPEL_MAGIC)
             {
                 bool positive = true;
                 if (!holder->IsPositive())
                     positive = false;
 
+
                 // Do not dispel the dummy aura for mages' Combustion.
-                if (holder->GetSpellProto()->Id == 11129)
+                if (proto->Id == 11129)
                     continue;
 
                 // do not remove positive auras if friendly target
                 //               negative auras if non-friendly target
                 if (positive == unitTarget->IsFriendlyTo(m_caster))
                     continue;
+
             }
+
+            // Don't allow reflection spells to be dispelled.
+            bool found = false;
+            for (short i = 0; i < MAX_EFFECT_INDEX; i++)
+            {
+                if (proto->EffectApplyAuraName[i] == SPELL_AURA_REFLECT_SPELLS)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found)
+                continue;
+
             dispel_list.push_back(std::pair<SpellAuraHolder* ,uint32>(holder, holder->GetStackAmount()));
         }
     }

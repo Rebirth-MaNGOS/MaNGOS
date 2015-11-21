@@ -83,15 +83,15 @@ namespace MaNGOS
     //    LIQUID_MAP_UNDER_WATER  = 0x00000008
     //};
 
-    #define MAP_LIQUID_TYPE_NO_WATER    0
-    #define MAP_LIQUID_TYPE_WATER       1
-    #define MAP_LIQUID_TYPE_OCEAN       18
-    #define MAP_LIQUID_TYPE_MAGMA       3
-    #define MAP_LIQUID_TYPE_SLIME       21
+    #define MAP_LIQUID_TYPE_NO_WATER    0x00
+    #define MAP_LIQUID_TYPE_WATER       0x08
+    #define MAP_LIQUID_TYPE_OCEAN       0x02
+    #define MAP_LIQUID_TYPE_MAGMA       0x03
+    #define MAP_LIQUID_TYPE_SLIME       0x04
 
     #define MAP_ALL_LIQUIDS   (MAP_LIQUID_TYPE_WATER | MAP_LIQUID_TYPE_OCEAN | MAP_LIQUID_TYPE_MAGMA | MAP_LIQUID_TYPE_SLIME)
 
-    #define MAP_LIQUID_TYPE_DARK_WATER  0x10
+    #define MAP_LIQUID_TYPE_DARK_WATER  0x12
     #define MAP_LIQUID_TYPE_WMO_WATER   0x20
 
     //struct GridMapLiquidData

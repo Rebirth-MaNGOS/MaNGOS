@@ -823,6 +823,33 @@ bool GossipSelect_npc_anachronos(Player* pPlayer, Creature* pCreature, uint32 /*
     return true;
 }
 
+bool GossipHello_npc_meridith_the_mermaiden(Player* pPlayer, Creature* pCreature)
+{
+    if (pPlayer->GetQuestRewardStatus(8599))
+    {
+        pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "That would be wonderful! Thank you, Meridith.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+        pPlayer->SEND_GOSSIP_MENU(7917, pCreature->GetObjectGuid());
+    }
+    else
+        pPlayer->SEND_GOSSIP_MENU(7916, pCreature->GetObjectGuid());
+
+
+    return true;
+}
+
+bool GossipSelect_npc_meridith_the_mermaiden(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+{
+    switch (uiAction)
+    {
+        case GOSSIP_ACTION_INFO_DEF + 1:
+            pCreature->MonsterSay("Lovely song, isn't it?", LANG_UNIVERSAL, pPlayer);
+            pCreature->CastSpell(pPlayer, 25678, false);
+            pPlayer->CLOSE_GOSSIP_MENU();
+    }
+
+    return true;
+}
+
 void AddSC_tanaris()
 {
     Script* pNewscript;
@@ -873,5 +900,11 @@ void AddSC_tanaris()
     pNewscript->Name = "npc_anachronos";
     pNewscript->pGossipHello =  &GossipHello_npc_anachronos;
     pNewscript->pGossipSelect = &GossipSelect_npc_anachronos;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_meridith_the_mermaiden";
+    pNewscript->pGossipHello = &GossipHello_npc_meridith_the_mermaiden;
+    pNewscript->pGossipSelect = &GossipSelect_npc_meridith_the_mermaiden;
     pNewscript->RegisterSelf();
 }
