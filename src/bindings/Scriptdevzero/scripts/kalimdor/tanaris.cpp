@@ -735,45 +735,49 @@ bool GossipHello_npc_narain_soothfancy(Player* pPlayer, Creature* pCreature)
     if (pCreature->isQuestGiver())
         pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
 
-    if (pPlayer->GetQuestStatus(2954) == QUEST_STATUS_INCOMPLETE)
+    /*if (pPlayer->GetQuestStatus(2954) == QUEST_STATUS_INCOMPLETE)
         pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
-
-    pPlayer->SEND_GOSSIP_MENU(1674, pCreature->GetObjectGuid());
+	
+	pPlayer->SEND_GOSSIP_MENU(1674, pCreature->GetObjectGuid());*/
+	if (pPlayer->GetQuestStatus(8620) == QUEST_STATUS_INCOMPLETE)
+        pPlayer->SEND_GOSSIP_MENU(11811, pCreature->GetObjectGuid());
+    else
+        pPlayer->SEND_GOSSIP_MENU(7902, pCreature->GetObjectGuid());
 
     return true;
 }
 
-bool GossipSelect_npc_narain_soothfancy(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
-{
-    switch(uiAction)
-    {
-        case GOSSIP_ACTION_INFO_DEF:
-            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
-            pPlayer->SEND_GOSSIP_MENU(1675, pCreature->GetObjectGuid());
-            break;
-        case GOSSIP_ACTION_INFO_DEF+1:
-            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_3, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
-            pPlayer->SEND_GOSSIP_MENU(1676, pCreature->GetObjectGuid());
-            break;
-        case GOSSIP_ACTION_INFO_DEF+2:
-            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_4, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+3);
-            pPlayer->SEND_GOSSIP_MENU(1677, pCreature->GetObjectGuid());
-            break;
-        case GOSSIP_ACTION_INFO_DEF+3:
-            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_5, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+4);
-            pPlayer->SEND_GOSSIP_MENU(1678, pCreature->GetObjectGuid());
-            break;
-        case GOSSIP_ACTION_INFO_DEF+4:
-            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_6, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+5);
-            pPlayer->SEND_GOSSIP_MENU(1679, pCreature->GetObjectGuid());
-            break;
-        case GOSSIP_ACTION_INFO_DEF+5:
-            pPlayer->CLOSE_GOSSIP_MENU();
-            pPlayer->AreaExploredOrEventHappens(2954);
-            break;
-    }
-    return true;
-}
+//bool GossipSelect_npc_narain_soothfancy(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+//{
+//    switch(uiAction)
+//    {
+//        case GOSSIP_ACTION_INFO_DEF:
+//            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+//            pPlayer->SEND_GOSSIP_MENU(1675, pCreature->GetObjectGuid());
+//            break;
+//        case GOSSIP_ACTION_INFO_DEF+1:
+//            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_3, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
+//            pPlayer->SEND_GOSSIP_MENU(1676, pCreature->GetObjectGuid());
+//            break;
+//        case GOSSIP_ACTION_INFO_DEF+2:
+//            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_4, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+3);
+//            pPlayer->SEND_GOSSIP_MENU(1677, pCreature->GetObjectGuid());
+//            break;
+//        case GOSSIP_ACTION_INFO_DEF+3:
+//            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_5, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+4);
+//            pPlayer->SEND_GOSSIP_MENU(1678, pCreature->GetObjectGuid());
+//            break;
+//        case GOSSIP_ACTION_INFO_DEF+4:
+//            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_NORGANNON_6, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+5);
+//            pPlayer->SEND_GOSSIP_MENU(1679, pCreature->GetObjectGuid());
+//            break;
+//        case GOSSIP_ACTION_INFO_DEF+5:
+//            pPlayer->CLOSE_GOSSIP_MENU();
+//            pPlayer->AreaExploredOrEventHappens(2954);
+//            break;
+//    }
+//    return true;
+//}
 
 void GiveScepterToPlayer(uint32 itemID, Player* player)
 {
@@ -907,4 +911,9 @@ void AddSC_tanaris()
     pNewscript->pGossipHello = &GossipHello_npc_meridith_the_mermaiden;
     pNewscript->pGossipSelect = &GossipSelect_npc_meridith_the_mermaiden;
     pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_narain_soothfancy";
+    pNewscript->pGossipHello = &GossipHello_npc_narain_soothfancy;
+    pNewscript->RegisterSelf();	
 }
