@@ -668,6 +668,7 @@ enum maws
 {
     SPELL_FRENZY                = 28371,
 	SPELL_THRASH				= 3391,
+	SPELL_DARK_WATER			= 25743,
 };
 
 struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
@@ -678,11 +679,13 @@ struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
 
     uint32 m_uiFrenzyTimer;
 	uint32 m_uiThrashTimer;
+	uint32 m_uiDarkWaterTimer;
 
     void Reset()
     {   
         m_uiFrenzyTimer = 25000;
 		m_uiThrashTimer = 15000;
+		m_uiDarkWaterTimer = 5000;
     }
 
 	void SpellHit(Unit* pCaster, SpellEntry const* pSpell) // emote if he enrages
@@ -692,8 +695,7 @@ struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
 	}
 
     void UpdateAI(const uint32 uiDiff)
-    {
-        
+    {        
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
@@ -719,6 +721,16 @@ struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
         }
         else
             m_uiThrashTimer -= uiDiff;
+
+		if(m_uiDarkWaterTimer <= uiDiff)
+        {            
+			Unit* pTarget = m_creature->getVictim();
+			if(pTarget && m_creature->GetHealthPercent() <= 20.0f)
+				DoCast(pTarget, SPELL_DARK_WATER, true);
+			m_uiDarkWaterTimer = urand(15000,22000);
+        }
+        else
+            m_uiDarkWaterTimer -= uiDiff;
 
         DoMeleeAttackIfReady();
     }
