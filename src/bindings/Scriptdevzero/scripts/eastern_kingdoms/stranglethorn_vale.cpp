@@ -1073,6 +1073,81 @@ bool OnQuestRewarded_npc_nimboya(Player* pPlayer, Creature* pCreature, Quest con
 	return true;
 }
 
+/*####
+# npc_private_merle
+####*/
+
+enum eMerle
+{
+	NPC_PLAGUE_SPREADER = 604
+};
+
+struct Loc
+{
+    float x, y, z;
+};
+
+static Loc UDSpawn[]=
+{
+    {-11306.33f,-372.53f,65.40f},
+	{-11310.26f,-371.38f,65.40f},
+	{-11309.22f,-367.53f,65.40f}
+};
+
+struct MANGOS_DLL_DECL npc_private_merleAI : public ScriptedAI
+{
+    npc_private_merleAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{ 
+		m_creature->SetFactionTemporary(32,TEMPFACTION_RESTORE_RESPAWN);
+		m_creature->SetRespawnEnabled(false);
+		Reset(); 
+	}
+
+    void Reset()
+	{
+		if (!m_creature->isActiveObject() && m_creature->isAlive())
+            m_creature->SetActiveObjectState(true);
+	}
+
+	void JustSummoned(Creature* pSummoned)
+    {
+		pSummoned->SetFactionTemporary(34,TEMPFACTION_RESTORE_RESPAWN);
+		pSummoned->AI()->AttackStart(m_creature);
+		pSummoned->SetRespawnEnabled(false);			// make sure they won't respawn
+    }
+
+	void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId)
+    {
+        switch(uiPointId)
+        {
+        case 3:
+			m_creature->MonsterSay("Curse you! One day, vengeance will be mine!", LANG_COMMON, NULL);
+			m_creature->HandleEmote(EMOTE_ONESHOT_EXCLAMATION);
+            break;
+        case 41:
+			for(uint8 i = 0; i < 3; ++i)
+				Creature* pZombie = m_creature->SummonCreature(NPC_PLAGUE_SPREADER, UDSpawn[i].x, UDSpawn[i].y, UDSpawn[i].z, 3.45f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 5000);
+            break;
+        case 43:
+            m_creature->ForcedDespawn();
+            break;
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_private_merle(Creature* pCreature)
+{
+    return new npc_private_merleAI(pCreature);
+}
+
 void AddSC_stranglethorn_vale()
 {
     Script* pNewscript;
@@ -1129,5 +1204,10 @@ void AddSC_stranglethorn_vale()
     pNewscript->Name = "npc_nimboya";
     pNewscript->GetAI = &GetAI_npc_nimboya;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_nimboya;
+    pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+    pNewscript->Name = "npc_private_merle";
+    pNewscript->GetAI = &GetAI_npc_private_merle;
     pNewscript->RegisterSelf();
 }
