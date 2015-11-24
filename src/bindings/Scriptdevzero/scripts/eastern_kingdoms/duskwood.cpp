@@ -504,8 +504,8 @@ struct MANGOS_DLL_DECL mob_twilight_corrupter : public ScriptedAI
             else
                 m_uinightmare_timer -= uiDiff;
         }
-    }
-
+		DoMeleeAttackIfReady();
+    }	
 };
 
 /*######
