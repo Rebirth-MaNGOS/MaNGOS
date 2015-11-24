@@ -479,6 +479,9 @@ struct MANGOS_DLL_DECL mob_twilight_corrupter : public ScriptedAI
 
 	void UpdateAI(const uint32 uiDiff)
     {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
         if(m_uicorruption_timer)
         {
             if(m_uicorruption_timer <= uiDiff)
@@ -496,8 +499,8 @@ struct MANGOS_DLL_DECL mob_twilight_corrupter : public ScriptedAI
         {
             if(m_uinightmare_timer <= uiDiff)
             {
-                if(Unit *pVictim = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                    DoCastSpellIfCan(pVictim, CREATURE_OF_NIGHTMARE);
+                //if(Unit *pVictim = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    //DoCastSpellIfCan(pVictim, CREATURE_OF_NIGHTMARE);
 
                 m_uinightmare_timer = urand(20000, 30000);
             }
