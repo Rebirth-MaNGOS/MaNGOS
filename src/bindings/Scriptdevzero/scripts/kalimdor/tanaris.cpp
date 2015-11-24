@@ -779,6 +779,42 @@ bool GossipHello_npc_narain_soothfancy(Player* pPlayer, Creature* pCreature)
 //    return true;
 //}
 
+/*######
+## npc_anachronos
+######*/
+
+struct MANGOS_DLL_DECL npc_anachronosAI : public ScriptedAI
+{
+    npc_anachronosAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+
+	bool m_bDidDespawn;
+
+    void Reset()
+    {
+		m_bDidDespawn = false;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		if(HealthBelowPct(21) && !m_bDidDespawn)
+		{
+			m_creature->MonsterSay("A terrible and costly mistake you have made. It is not my time, mortals.", LANG_UNIVERSAL, NULL);
+			m_creature->ForcedDespawn(1000);
+			m_bDidDespawn = true;
+		}
+
+		DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_anachronos(Creature* pCreature)
+{
+    return new npc_anachronosAI(pCreature);
+}
+
 void GiveScepterToPlayer(uint32 itemID, Player* player)
 {
     ItemPosCountVec dest;
@@ -902,6 +938,7 @@ void AddSC_tanaris()
 
     pNewscript = new Script;
     pNewscript->Name = "npc_anachronos";
+	pNewscript->GetAI = &GetAI_npc_anachronos;
     pNewscript->pGossipHello =  &GossipHello_npc_anachronos;
     pNewscript->pGossipSelect = &GossipSelect_npc_anachronos;
     pNewscript->RegisterSelf();
