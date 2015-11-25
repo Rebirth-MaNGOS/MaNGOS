@@ -3629,6 +3629,42 @@ CreatureAI* GetAI_boss_prince_thunderaan(Creature* pCreature)
     return new boss_prince_thunderaanAI(pCreature);
 }
 
+struct MANGOS_DLL_DECL npc_jonathan_the_revelatorAI : public ScriptedAI
+{
+    npc_jonathan_the_revelatorAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_bWarIsDone = false;
+        m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+    }
+
+    bool m_bWarIsDone;
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        // If the 10 hour war is done Jonathan should offer his quest.
+        if (!m_bWarIsDone && EventHasStartEndSet(54) && !IsGameEventActive(54))
+        {
+            m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+
+            m_bWarIsDone = true;
+        }
+
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_jonathan_the_revelator(Creature* pCreature)
+{
+    return new npc_jonathan_the_revelatorAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -3758,5 +3794,10 @@ void AddSC_silithus()
 	pNewscript = new Script;
     pNewscript->Name = "boss_prince_thunderaan";
     pNewscript->GetAI = &GetAI_boss_prince_thunderaan;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_jonathan_the_revelator";
+    pNewscript->GetAI = &GetAI_jonathan_the_revelator;
     pNewscript->RegisterSelf();
 }
