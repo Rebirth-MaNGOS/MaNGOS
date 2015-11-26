@@ -46,7 +46,12 @@ bool AreaTrigger_at_shade_of_eranikus(Player* pPlayer, AreaTriggerEntry const* /
         {
             if (pInstance->GetData(TYPE_MALFURION) != DONE)
             {
-                pPlayer->SummonCreature(NPC_MALFURION, -639.378723f, -4.238533f, -90.835098f, 2.724664f, TEMPSUMMON_DEAD_DESPAWN, 0);
+                if(Creature* pMalfurion = pPlayer->SummonCreature(NPC_MALFURION, -660.58f, -16.39f, -90.535098f, 1.51f, TEMPSUMMON_DEAD_DESPAWN, 0))
+				{
+					pMalfurion->SendHover(true);
+					pMalfurion->SetHover(true);
+					pMalfurion->UpdateVisibilityAndView();
+				}
                 pInstance->SetData(TYPE_MALFURION, DONE);
             }
         }
@@ -65,6 +70,8 @@ enum eMalfurion
     SAY_MALFURION2                = -1109002,
     SAY_MALFURION3                = -1109003,
     SAY_MALFURION4                = -1109004,
+
+	SPELL_SPAWN	                  = 17321,
 
     MAX_MALFURION_TEMPLE_SPEECHES = 6
 };
@@ -95,23 +102,26 @@ struct MANGOS_DLL_DECL npc_malfurionAI : public ScriptedAI
                     {
                         case 0:
                             DoScriptText(EMOTE_MALFURION1, m_creature);
-                            m_uiSayTimer = 1500;
+							m_creature->CastSpell(m_creature, SPELL_SPAWN, true);
+                            m_uiSayTimer = 4000;							
                             break;
                         case 1:
+							// turn towards the player
                             m_creature->HandleEmote(EMOTE_ONESHOT_BOW);
-                            m_uiSayTimer = 2000;
+							m_creature->GenericTextEmote("Malfurion Stormrage bows.", NULL, false);
+                            m_uiSayTimer = 3000;
                             break;
                         case 2:
                             DoScriptText(SAY_MALFURION1, m_creature);
-                            m_uiSayTimer = 1000;
+                            m_uiSayTimer = 12000;
                             break;
                         case 3:
                             DoScriptText(SAY_MALFURION2, m_creature);
-                            m_uiSayTimer = 1000;
+                            m_uiSayTimer = 13000;
                             break;
                         case 4:
                             DoScriptText(SAY_MALFURION3, m_creature);
-                            m_uiSayTimer = 2000;
+                            m_uiSayTimer = 11000;
                             break;
                         case 5:
                             DoScriptText(SAY_MALFURION4, m_creature);
