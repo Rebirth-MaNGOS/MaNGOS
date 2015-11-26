@@ -83,6 +83,7 @@ void instance_blackwing_lair::Initialize()
 
     m_uiNefariusScepterSpeechTimer = 0;
     m_uiNefariusScepterSpeechCounter = 0;
+	m_uiFiveHourEventTimer = 0;
     m_FiveHourEvent = false;
 }
 
@@ -655,6 +656,17 @@ void instance_blackwing_lair::Update(uint32 uiDiff)
         else
             m_uiNefariusScepterSpeechTimer -= uiDiff;
     }
+
+	if(m_FiveHourEvent)
+	{
+		if (m_uiFiveHourEventTimer <= uiDiff)
+        {
+			m_FiveHourEvent = false;
+            m_uiFiveHourEventTimer = 0;
+        }
+        else
+            m_uiFiveHourEventTimer -= uiDiff;
+	}
 }
 
 

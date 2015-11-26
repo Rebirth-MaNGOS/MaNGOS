@@ -485,6 +485,7 @@ bool QuestAccept_boss_vaelastrasz(Player* pPlayer, Creature* pCreature, const Qu
         {
             bwlInstance->m_uiNefariusScepterSpeechTimer = urand(3600000, 5400000);
             bwlInstance->m_FiveHourEvent = true;
+			bwlInstance->m_uiFiveHourEventTimer = 5 * HOUR * IN_MILLISECONDS;
 
             Creature *pNef = bwlInstance->GetSingleCreatureFromStorage(10162);
 

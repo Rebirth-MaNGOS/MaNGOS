@@ -144,6 +144,7 @@ public:
 
     uint32 m_uiNefariusScepterSpeechTimer;
     uint32 m_uiNefariusScepterSpeechCounter;
+	uint32 m_uiFiveHourEventTimer;
     bool m_FiveHourEvent;
 
 private:
