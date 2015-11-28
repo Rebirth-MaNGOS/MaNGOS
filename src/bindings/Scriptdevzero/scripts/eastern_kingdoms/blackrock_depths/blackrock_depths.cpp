@@ -1420,6 +1420,41 @@ bool AreaTrigger_at_ring_of_law(Player* pPlayer, AreaTriggerEntry const* /*pAt*/
 }
 
 /*######
+## at_shadowforge_city_bridge
+######*/
+
+bool AreaTrigger_at_shadowforge_city_bridge(Player* pPlayer, AreaTriggerEntry const* /*pAt*/)
+{
+    if (instance_blackrock_depths* m_pInstance = (instance_blackrock_depths*)pPlayer->GetInstanceData())
+    {
+        if (m_pInstance && !m_pInstance->m_bBridgeEventDone)
+        {
+            if(Creature* pFirstGuard = pPlayer->SummonCreature(NPC_ANVILRAGE_GUARDSMAN, 656.26f, -282.98f, -43.21f, 0.08f, TEMPSUMMON_DEAD_DESPAWN, 0))
+			{
+				pFirstGuard->MonsterYell("You can't hide from us. Prepare to burn!", LANG_UNIVERSAL, pPlayer);
+				pFirstGuard->HandleEmote(EMOTE_ONESHOT_EXCLAMATION);
+				pFirstGuard->GetMotionMaster()->MovePoint(0, 685.01f, -283.09f, -43.24f, true);
+
+				// on evade they should stand on the bridge and not where spawned
+				CreatureCreatePos pos(pFirstGuard->GetMap(), 685.01f, -283.09f, -43.24f, 0.f);
+				pFirstGuard->SetSummonPoint(pos);
+			}
+
+			if(Creature* pSecondGuard = pPlayer->SummonCreature(NPC_ANVILRAGE_GUARDSMAN, 725.79f, -276.72f, -42.85f, 3.22f, TEMPSUMMON_DEAD_DESPAWN, 0))
+			{
+				pSecondGuard->GetMotionMaster()->MovePoint(0, 693.13f, -275.70f, -43.19f, true);
+
+				// on evade they should stand on the bridge and not where spawned
+				CreatureCreatePos pos(pSecondGuard->GetMap(),693.13f, -275.70f, -43.19f, 0.f);
+				pSecondGuard->SetSummonPoint(pos);
+			}
+			m_pInstance->m_bBridgeEventDone = true;
+        }
+    }
+    return false;
+}
+
+/*######
 ## npc_grimstone
 ######*/
 
@@ -2430,6 +2465,11 @@ void AddSC_blackrock_depths()
     pNewScript = new Script;
     pNewScript->Name = "at_ring_of_law";
     pNewScript->pAreaTrigger = &AreaTrigger_at_ring_of_law;
+    pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "at_shadowforge_city_bridge";
+    pNewScript->pAreaTrigger = &AreaTrigger_at_shadowforge_city_bridge;
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;

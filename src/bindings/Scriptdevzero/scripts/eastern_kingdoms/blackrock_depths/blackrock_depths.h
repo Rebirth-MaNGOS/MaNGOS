@@ -217,6 +217,8 @@ public:
     void DoOpenBarDoor();
     void DoOpenToumbEntrance();
 
+	bool m_bBridgeEventDone;
+
     GameObject* GetClosestRelicCoffer(GameObject* pObj);
 
 protected:

@@ -57,6 +57,8 @@ void instance_blackrock_depths::Initialize()
 
     m_bRelicCoffersRemoved = false;
 
+	m_bBridgeEventDone = false;
+
     m_uiOpenCofferDoors = 0;
     m_goSecretSafe = 0;
 }
