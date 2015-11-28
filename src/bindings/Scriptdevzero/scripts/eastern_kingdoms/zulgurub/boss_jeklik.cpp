@@ -500,7 +500,7 @@ struct MANGOS_DLL_DECL mob_gurubashi_bat_riderAI : public ScriptedAI
             uiDamage = 0;
             //DoCastSpellIfCan(m_creature, SPELL_THROW_LIQUID_FIRE__);
             DoCastSpellIfCan(m_creature, SPELL_UNSTABLE_CONCOTION, CAST_FORCE_CAST);
-			m_creature->GenericTextEmote("Gurubashi Bat Rider fully engulfs in flame and maddened look appears in his eyes!", NULL,false);
+			m_creature->GenericTextEmote("Gurubashi Bat Rider fully engulfs in flame and a maddened look appears in his eyes!", NULL,false);
 			SetCombatMovement(false);
         }
     }
