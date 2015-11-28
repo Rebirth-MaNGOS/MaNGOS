@@ -480,7 +480,7 @@ struct MANGOS_DLL_DECL mob_gurubashi_bat_riderAI : public ScriptedAI
     {
         bInfectedBiteCasted = false;
         bExploded = false;
-
+		SetCombatMovement(true);
         m_uiBattleCommandTimer = 8000;
         m_uiInfectedBiteTimer = 6500;
         m_uiThrashTimer = 6000;
@@ -493,20 +493,16 @@ struct MANGOS_DLL_DECL mob_gurubashi_bat_riderAI : public ScriptedAI
 
     void DamageTaken(Unit* /*pDoneBy*/, uint32 &uiDamage)
     {
-        // If new health is 50 percent or lesser, cast explode
-        if (!bExploded && ( (uiDamage >= m_creature->GetHealth() ) || (HealthBelowPct(50)) ))
+        // If new health is 40 percent or lesser, cast explode
+        if (!bExploded && ( (uiDamage >= m_creature->GetHealth() ) || (HealthBelowPct(40)) ))
         {
             bExploded = true;
             uiDamage = 0;
             //DoCastSpellIfCan(m_creature, SPELL_THROW_LIQUID_FIRE__);
             DoCastSpellIfCan(m_creature, SPELL_UNSTABLE_CONCOTION, CAST_FORCE_CAST);
+			m_creature->GenericTextEmote("Gurubashi Bat Rider fully engulfs in flame and maddened look appears in his eyes!", NULL,false);
+			SetCombatMovement(false);
         }
-    }
-
-    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
-    {
-        if (pSpell->Id == SPELL_THROW_LIQUID_FIRE__)
-            pTarget->CastSpell(pTarget, SPELL_SUMMON_LIQUID_FIRE, true);
     }
 
     void UpdateAI (const uint32 uiDiff)
