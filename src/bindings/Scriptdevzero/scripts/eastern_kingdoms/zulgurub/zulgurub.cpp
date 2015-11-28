@@ -57,7 +57,6 @@ enum
 {
 	SPELL_INTOXICATING_VENOM	= 24596,
 	SPELL_SLOWING_POISON		= 7992,
-	NPC_RAZZASHI_SKITTERER		= 14880,
 };
 
 struct MANGOS_DLL_DECL mob_razzashi_venombroodAI : public ScriptedAI
@@ -72,34 +71,13 @@ struct MANGOS_DLL_DECL mob_razzashi_venombroodAI : public ScriptedAI
 
     uint32 m_uiVenomTimer;
 	uint32 m_uiPoisonTimer;
-	uint32 m_uiSummonCount;
 
     void Reset()
     {
         m_uiVenomTimer = urand(5000,15000);
-		m_uiPoisonTimer = 0;
-		m_uiSummonCount = 0;
+		m_uiPoisonTimer = urand(1000,3000);
     }
 
-	void JustSummoned(Creature* pSummoned)	
-    {
-        ++m_uiSummonCount;
-	}
-
-	void JustDied(Unit* /*pKiller*/)			// Spawn adds on death
-    {
-		if (m_uiSummonCount < 5)	// max 5 Spiders
-        {
-		float fX, fY, fZ;
-            m_creature->GetPosition(fX, fY, fZ);
-			for(uint8 i = 0; i < 5; ++i)
-                    if (Creature* pSkitterer = m_creature->SummonCreature(NPC_RAZZASHI_SKITTERER, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
-					{
-						pSkitterer->AI()->AttackStart(m_creature->getVictim());
-						pSkitterer->SetRespawnDelay(-10);				// to stop them from randomly respawning
-					}
-		}
-	}
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -131,6 +109,78 @@ struct MANGOS_DLL_DECL mob_razzashi_venombroodAI : public ScriptedAI
 CreatureAI* GetAI_razzashi_venombrood(Creature* pCreature)
 {
     return new mob_razzashi_venombroodAI(pCreature);
+}
+
+/*######
+##  mob_razzashi_broodwidow
+######*/
+
+enum
+{
+	SPELL_WEB_SPIN				= 24600,
+	NPC_RAZZASHI_SKITTERER		= 14880
+};
+
+struct MANGOS_DLL_DECL mob_razzashi_broodwidowAI : public ScriptedAI
+{
+    mob_razzashi_broodwidowAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_pInstance = (instance_zulgurub*)pCreature->GetInstanceData();
+		Reset();
+    }
+
+    instance_zulgurub* m_pInstance;
+
+	uint32 m_uiWebSpinTimer;
+	uint8 m_uiSummonCount;
+
+    void Reset()
+    {
+		m_uiWebSpinTimer = urand(10000,20000);
+		m_uiSummonCount = 0;
+    }
+
+	void JustSummoned(Creature* pSummoned)	
+    {
+        ++m_uiSummonCount;
+	}
+
+	void JustDied(Unit* /*pKiller*/)			// Spawn adds on death
+    {
+		if (m_uiSummonCount < 5)	// max 5 Spiders
+        {
+			float fX, fY, fZ;
+            m_creature->GetPosition(fX, fY, fZ);
+			for(uint8 i = 0; i < 5; ++i)
+                    if (Creature* pSkitterer = m_creature->SummonCreature(NPC_RAZZASHI_SKITTERER, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_DEAD_DESPAWN, 0))
+					{
+						pSkitterer->AI()->AttackStart(m_creature->getVictim());
+						pSkitterer->SetRespawnDelay(-10);				// to stop them from randomly respawning
+					}
+		}
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		// Web Spin
+        if (m_uiWebSpinTimer <= uiDiff)
+        {
+			DoCastSpellIfCan(m_creature->getVictim(), SPELL_WEB_SPIN, CAST_AURA_NOT_PRESENT);
+            m_uiWebSpinTimer = urand(20000,30000);
+        }
+        else
+            m_uiWebSpinTimer -= uiDiff;
+
+		DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_razzashi_broodwidow(Creature* pCreature)
+{
+    return new mob_razzashi_broodwidowAI(pCreature);
 }
 
 /*######
@@ -564,6 +614,129 @@ bool GOUse_go_jinxed_hoodoo_pile(Player* pPlayer, GameObject* pGo)
 }
 
 /*######
+## npc_hakkari_witch_doctor
+######*/
+
+enum eWitchDoctor
+{
+	SPELL_SHRINK = 24054,
+	SPELL_RELEASE_TOADS = 24058,
+	SPELL_HEX = 24053,
+	SPELL_SHADOW_SHOCK = 17289,
+	SPELL_TOAD_EXPLODE = 24063,
+	// used to kill toads
+	SPELL_DISEASE_CLOUD = 24063,
+	NPC_JUNGLE_TOAD = 15010
+};
+
+struct MANGOS_DLL_DECL npc_hakkari_witch_doctorAI : public ScriptedAI
+{
+    npc_hakkari_witch_doctorAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiExplodeToadTimer;
+	uint32 m_uiHexTimer;
+	uint32 m_uiReleaseToadsTimer;
+	uint32 m_uiShadowShockTimer;
+	uint32 m_uiShrinkTimer;
+	uint32 m_uiSuspendTimer;
+
+	bool m_bDidExplode;
+
+    void Reset()
+    {
+		m_uiExplodeToadTimer = 5000;
+		m_uiHexTimer = urand(3000,5000);
+		m_uiReleaseToadsTimer = urand(6000,10000);
+		m_uiShadowShockTimer = urand(1000,2000);
+		m_uiShrinkTimer = urand(10000,15000);
+		m_uiSuspendTimer = 0;
+		m_bDidExplode = false;
+    }
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == 24062 && pTarget->GetEntry() == NPC_JUNGLE_TOAD)
+			if (!m_bDidExplode)
+			{
+				pTarget->CastSpell(pTarget, SPELL_DISEASE_CLOUD, true);
+				m_bDidExplode = true;
+			}
+    }
+
+	void JustSummoned(Creature* pSummoned)
+    {
+		float x, y, z;
+        pSummoned->GetClosePoint(x, y, z, 1.0f, 2.0f);
+        pSummoned->GetMotionMaster()->MovePoint(1,x+urand(-20,20),y+urand(-20,20),z);		// move a bit further than the usual movement
+    }
+
+	void SummonedMovementInform(Creature* pSummoned, uint32 uiMotionType, uint32 uiPointId)
+    {
+        if(uiPointId == 1)		// stay where they moved
+        {
+            float x, y, z;
+			pSummoned->GetClosePoint(x, y, z, 1.0f, 2.0f);
+			CreatureCreatePos pos(pSummoned->GetMap(), x, y, z, 0.f);
+			pSummoned->SetSummonPoint(pos);
+        }
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+		// Release Toads
+        if (m_uiReleaseToadsTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature, SPELL_RELEASE_TOADS);
+			m_bDidExplode = false;
+            m_uiReleaseToadsTimer = urand(15000,20000);
+        }
+        else
+            m_uiReleaseToadsTimer -= uiDiff;
+
+        // Hex
+        if (m_uiHexTimer <= uiDiff)
+        {
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+            DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_HEX);
+            m_uiHexTimer = urand(3000, 7000);
+        }
+        else
+            m_uiHexTimer -= uiDiff;
+
+		// Shadow Shock
+        if (m_uiShadowShockTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_SHADOW_SHOCK);
+            m_uiShadowShockTimer = urand(5000,7000);
+        }
+        else
+            m_uiShadowShockTimer -= uiDiff;
+
+		// Shrink
+        if (m_uiShrinkTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_SHRINK);
+            m_uiShrinkTimer = 120000;
+        }
+        else
+            m_uiShrinkTimer -= uiDiff;
+
+		DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_hakkari_witch_doctor(Creature* pCreature)
+{
+    return new npc_hakkari_witch_doctorAI(pCreature);
+}
+
+/*######
 ## AddSC
 ######*/
 
@@ -579,6 +752,11 @@ void AddSC_zulgurub()
 	pNewScript = new Script;
     pNewScript->Name = "mob_razzashi_venombrood";
     pNewScript->GetAI = GetAI_razzashi_venombrood;
+    pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "mob_razzashi_broodwidow";
+    pNewScript->GetAI = GetAI_mob_razzashi_broodwidow;
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;
@@ -605,4 +783,9 @@ void AddSC_zulgurub()
     pNewScript->Name = "go_jinxed_hoodoo_pile";
     pNewScript->pGOUse = &GOUse_go_jinxed_hoodoo_pile;
     pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+	pNewScript->Name = "npc_hakkari_witch_doctor";
+	pNewScript->GetAI = GetAI_npc_hakkari_witch_doctor;
+	pNewScript->RegisterSelf();
 }
