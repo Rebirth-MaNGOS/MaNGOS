@@ -75,6 +75,7 @@ enum Misc
     FACTION_FRIENDLY                = 35,
     SAY_HAKKAR_MINION_DESTROY       = -1309024,         // Yell when player steps into ZG instance
     SAY_HAKKAR_PROTECT_ALTAR        = -1309025,         // Yell when player steps on Altar of Blood
+	SPELL_RED_LIGHTNING				= 24240				// Used for all EoM bosses on spawn
 };
 
 struct Loc

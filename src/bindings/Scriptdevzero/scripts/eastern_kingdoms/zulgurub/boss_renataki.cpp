@@ -44,12 +44,14 @@ struct MANGOS_DLL_DECL boss_renatakiAI : public ScriptedAI
     boss_renatakiAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_uiDefaultDisplayId = m_creature->GetDisplayId();
+		m_bSpawnLightning = false;
         Reset();
     }
 
     bool m_bAmbushed;
     bool m_bInvisible;
     bool m_bEnraged;
+	bool m_bSpawnLightning;
 
     ObjectGuid m_uiAmbushTargetGUID;
 
@@ -130,6 +132,11 @@ struct MANGOS_DLL_DECL boss_renatakiAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+		if (!m_bSpawnLightning)
+		{
+			m_creature->CastSpell(m_creature, SPELL_RED_LIGHTNING, true);
+			m_bSpawnLightning = true;
+		}
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 

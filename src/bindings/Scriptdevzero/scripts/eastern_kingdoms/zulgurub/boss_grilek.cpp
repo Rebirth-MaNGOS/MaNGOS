@@ -33,11 +33,16 @@ enum eGrilek
 
 struct MANGOS_DLL_DECL boss_grilekAI : public ScriptedAI
 {
-    boss_grilekAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    boss_grilekAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{
+		m_bSpawnLightning = false;		
+		Reset();
+	}
 
     uint32 m_uiAvatarTimer;
     uint32 m_uiEntanglingRootsTimer;
     uint32 m_uiGroundTremorTimer;
+	bool m_bSpawnLightning;
 
     void Reset()
     {
@@ -48,6 +53,11 @@ struct MANGOS_DLL_DECL boss_grilekAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+		if (!m_bSpawnLightning)
+		{
+			m_creature->CastSpell(m_creature, SPELL_RED_LIGHTNING, true);
+			m_bSpawnLightning = true;
+		}
         // Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;

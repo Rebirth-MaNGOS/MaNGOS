@@ -40,11 +40,16 @@ enum eHazzarah
 
 struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
 {
-    boss_hazzarahAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    boss_hazzarahAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{
+		m_bSpawnLightning = false;
+		Reset();
+	}
 
     uint32 m_uiManaBurnTimer;
     uint32 m_uiSleepTimer;
     uint32 m_uiIllusionsTimer;
+	bool m_bSpawnLightning;
 
     void Reset()
     {
@@ -55,6 +60,12 @@ struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+		if (!m_bSpawnLightning)
+		{
+			m_creature->CastSpell(m_creature, SPELL_RED_LIGHTNING, true);
+			m_bSpawnLightning = true;
+		}
+
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 

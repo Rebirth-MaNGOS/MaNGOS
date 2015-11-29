@@ -36,13 +36,18 @@ enum eWushoolay
 
 struct MANGOS_DLL_DECL boss_wushoolayAI : public ScriptedAI
 {
-    boss_wushoolayAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    boss_wushoolayAI(Creature* pCreature) : ScriptedAI(pCreature) 
+	{
+		m_bSpawnLightning = false;
+		Reset();
+	}
 
     uint32 m_uiChainLightningTimer;
     uint32 m_uiHurricaneTimer;
     uint32 m_uiPoisonAuraTimer;
     //uint32 m_uiForkedLightningTimer;
     //uint32 m_uiLightningCloudTimer;
+	bool m_bSpawnLightning;
     
     void Reset()
     {
@@ -55,6 +60,12 @@ struct MANGOS_DLL_DECL boss_wushoolayAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+		if (!m_bSpawnLightning)
+		{
+			m_creature->CastSpell(m_creature, SPELL_RED_LIGHTNING, true);
+			m_bSpawnLightning = true;
+		}
+
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 

@@ -737,6 +737,198 @@ CreatureAI* GetAI_npc_hakkari_witch_doctor(Creature* pCreature)
 }
 
 /*######
+## npc_edge_of_madness_lightning
+######*/
+
+struct MANGOS_DLL_DECL npc_edge_of_madness_lightningAI : public ScriptedAI
+{
+    npc_edge_of_madness_lightningAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+		m_uiEventTimer = 1000;
+		m_uiPhase = 0;
+		
+        Reset();
+    }
+
+	uint8 m_uiPhase;
+	uint32 m_uiEventTimer;
+	std::list<GameObject*> m_lLightningsGroup1;
+	std::list<GameObject*> m_lLightningsGroup2;
+	std::list<GameObject*> m_lLightningsGroup3;
+	std::list<GameObject*> m_lLightningsGroup4;
+	std::list<GameObject*> m_lLightningsGroup5;
+	std::list<GameObject*> m_lLightningsGroup6;
+
+    void Reset()
+    {
+    }
+
+	void HandleLightningGroups(int Group = 0)
+	{
+		if (Group == 1)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup1, m_creature, 180252, 50.f);
+			if (!m_lLightningsGroup1.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup1.begin(); itr != m_lLightningsGroup1.end(); ++itr)
+				{
+					GameObject* pLightningsGroup1 = *itr;
+					if (pLightningsGroup1)
+						pLightningsGroup1->SendGameObjectCustomAnim(pLightningsGroup1->GetObjectGuid());
+				}
+			}
+		}
+		if (Group == 2)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup2, m_creature, 183356, 50.f);
+			if (!m_lLightningsGroup2.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup2.begin(); itr != m_lLightningsGroup2.end(); ++itr)
+				{
+					GameObject* pLightningsGroup2 = *itr;
+					if (pLightningsGroup2)
+						pLightningsGroup2->SendGameObjectCustomAnim(pLightningsGroup2->GetObjectGuid());
+				}
+			}
+		}
+		if (Group == 3)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup3, m_creature, 1802520, 50.f);
+			if (!m_lLightningsGroup3.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup3.begin(); itr != m_lLightningsGroup3.end(); ++itr)
+				{
+					GameObject* pLightningsGroup3 = *itr;
+					if (pLightningsGroup3)
+						pLightningsGroup3->SendGameObjectCustomAnim(pLightningsGroup3->GetObjectGuid());
+				}
+			}
+		}
+		if (Group == 4)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup4, m_creature, 1802521, 50.f);
+			if (!m_lLightningsGroup4.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup4.begin(); itr != m_lLightningsGroup4.end(); ++itr)
+				{
+					GameObject* pLightningsGroup4 = *itr;
+					if (pLightningsGroup4)
+						pLightningsGroup4->SendGameObjectCustomAnim(pLightningsGroup4->GetObjectGuid());
+				}
+			}
+		}
+		if (Group == 5)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup5, m_creature, 1802522, 50.f);
+			if (!m_lLightningsGroup5.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup5.begin(); itr != m_lLightningsGroup5.end(); ++itr)
+				{
+					GameObject* pLightningsGroup5 = *itr;
+					if (pLightningsGroup5)
+						pLightningsGroup5->SendGameObjectCustomAnim(pLightningsGroup5->GetObjectGuid());
+				}
+			}
+		}
+		if (Group == 6)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup6, m_creature, 1833560, 50.f);
+			if (!m_lLightningsGroup6.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup6.begin(); itr != m_lLightningsGroup6.end(); ++itr)
+				{
+					GameObject* pLightningsGroup6 = *itr;
+					if (pLightningsGroup6)
+						pLightningsGroup6->SendGameObjectCustomAnim(pLightningsGroup6->GetObjectGuid());
+				}
+			}
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiEventTimer)
+		{
+			if (m_uiEventTimer <= uiDiff)
+			{
+				switch (m_uiPhase)
+				{
+					case 0:						
+						m_uiEventTimer = 1500;
+						break;
+					case 1:
+						HandleLightningGroups(1);
+						m_uiEventTimer = 4000;
+						break;
+					case 2:
+						HandleLightningGroups(2);
+						m_uiEventTimer = 3000;
+						break;
+					case 3:
+						HandleLightningGroups(3);
+						m_uiEventTimer = 4000;
+						break;
+					case 4:
+						HandleLightningGroups(1);
+						m_uiEventTimer = 2000;
+						break;
+					case 5:
+						HandleLightningGroups(5);
+						m_uiEventTimer = 500;
+						break;
+					case 6:
+						HandleLightningGroups(6);
+						m_uiEventTimer = 500;
+						break;
+					case 7:
+						HandleLightningGroups(1);
+						m_uiEventTimer = 2000;
+						break;
+					case 8:
+						HandleLightningGroups(2);
+						m_uiEventTimer = 1000;
+						break;
+					case 9:
+						HandleLightningGroups(1);
+						m_uiEventTimer = 1000;
+						break;
+					case 10:
+						HandleLightningGroups(4);
+						m_uiEventTimer = 1000;
+						break;			
+					case 11:
+						HandleLightningGroups(4);
+						m_uiEventTimer = 3000;
+						break;	
+					case 12:
+						HandleLightningGroups(2);
+						m_uiEventTimer = 4000;
+						break;
+					case 13:
+						HandleLightningGroups(1);
+						m_uiEventTimer = 5000;
+						break;
+					case 14:
+						m_creature->ForcedDespawn();
+						m_uiEventTimer = 0;
+						break;
+				}
+			++m_uiPhase;
+			}
+			else
+				m_uiEventTimer -= uiDiff;
+		}			
+		else
+			return;
+	}
+};
+
+CreatureAI* GetAI_npc_edge_of_madness_lightning(Creature* pCreature)
+{
+    return new npc_edge_of_madness_lightningAI(pCreature);
+}
+
+/*######
 ## AddSC
 ######*/
 
@@ -787,5 +979,10 @@ void AddSC_zulgurub()
 	pNewScript = new Script;
 	pNewScript->Name = "npc_hakkari_witch_doctor";
 	pNewScript->GetAI = GetAI_npc_hakkari_witch_doctor;
+	pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+	pNewScript->Name = "npc_edge_of_madness_lightning";
+	pNewScript->GetAI = GetAI_npc_edge_of_madness_lightning;
 	pNewScript->RegisterSelf();
 }
