@@ -32,6 +32,7 @@ EndContentData */
 #include "escort_ai.h"
 #include "follower_ai.h"
 #include "Language.h"
+#include "World.h"
 
 /*######
 ## mobs_spitelashes
@@ -694,6 +695,12 @@ struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
 			m_creature->GenericTextEmote("Maws goes into a killing frenzy!", NULL, false);
 	}
 
+	void JustDied(Unit* /*pKiller*/)
+	{
+		// Announce the death of Maws server wide.
+        SendServerWideEmote("The beast returns from whence it came. The wrath of Neptulon has subsided.");
+	}
+
     void UpdateAI(const uint32 uiDiff)
     {        
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -741,6 +748,144 @@ CreatureAI* GetAI_boss_maws(Creature* pCreature)
     return new boss_maws(pCreature);
 }
 
+/*######
+## npc_maws_lightning_dummy
+######*/
+
+struct MANGOS_DLL_DECL npc_maws_lightning_dummyAI : public ScriptedAI
+{
+    npc_maws_lightning_dummyAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+		m_uiEventTimer = 1000;
+		// keep the dummy around for 15 min doing lightning
+		m_uiDespawnTimer = 900000;
+        Reset();
+    }
+
+	uint32 m_uiDespawnTimer;
+	uint32 m_uiEventTimer;
+	std::list<GameObject*> m_lLightningsGroup1;
+	std::list<GameObject*> m_lLightningsGroup2;
+	std::list<GameObject*> m_lLightningsGroup3;
+	std::list<GameObject*> m_lLightningsGroup4;
+	std::list<GameObject*> m_lLightningsGroup5;
+	std::list<GameObject*> m_lLightningsGroup6;
+
+    void Reset()
+    {
+    }
+
+	void HandleLightningGroups(int Group = 0)
+	{
+		Group = urand(1,6);
+		if (Group == 1)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup1, m_creature, 180252, 200.f);
+			if (!m_lLightningsGroup1.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup1.begin(); itr != m_lLightningsGroup1.end(); ++itr)
+				{
+					GameObject* pLightningsGroup1 = *itr;
+					if (pLightningsGroup1)
+						pLightningsGroup1->SendGameObjectCustomAnim(pLightningsGroup1->GetObjectGuid());
+				}
+			}
+		}
+		if (Group == 2)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup2, m_creature, 183356, 200.f);
+			if (!m_lLightningsGroup2.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup2.begin(); itr != m_lLightningsGroup2.end(); ++itr)
+				{
+					GameObject* pLightningsGroup2 = *itr;
+					if (pLightningsGroup2)
+						pLightningsGroup2->SendGameObjectCustomAnim(pLightningsGroup2->GetObjectGuid());
+				}
+			}
+		}
+		if (Group == 3)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup3, m_creature, 1802520, 200.f);
+			if (!m_lLightningsGroup3.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup3.begin(); itr != m_lLightningsGroup3.end(); ++itr)
+				{
+					GameObject* pLightningsGroup3 = *itr;
+					if (pLightningsGroup3)
+						pLightningsGroup3->SendGameObjectCustomAnim(pLightningsGroup3->GetObjectGuid());
+				}
+			}
+		}
+		if (Group == 4)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup4, m_creature, 1802521, 200.f);
+			if (!m_lLightningsGroup4.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup4.begin(); itr != m_lLightningsGroup4.end(); ++itr)
+				{
+					GameObject* pLightningsGroup4 = *itr;
+					if (pLightningsGroup4)
+						pLightningsGroup4->SendGameObjectCustomAnim(pLightningsGroup4->GetObjectGuid());
+				}
+			}
+		}
+		if (Group == 5)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup5, m_creature, 1802522, 200.f);
+			if (!m_lLightningsGroup5.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup5.begin(); itr != m_lLightningsGroup5.end(); ++itr)
+				{
+					GameObject* pLightningsGroup5 = *itr;
+					if (pLightningsGroup5)
+						pLightningsGroup5->SendGameObjectCustomAnim(pLightningsGroup5->GetObjectGuid());
+				}
+			}
+		}
+		if (Group == 6)
+		{
+			GetGameObjectListWithEntryInGrid(m_lLightningsGroup6, m_creature, 1833560, 200.f);
+			if (!m_lLightningsGroup6.empty())
+			{
+				for (std::list<GameObject*>::iterator itr = m_lLightningsGroup6.begin(); itr != m_lLightningsGroup6.end(); ++itr)
+				{
+					GameObject* pLightningsGroup6 = *itr;
+					if (pLightningsGroup6)
+						pLightningsGroup6->SendGameObjectCustomAnim(pLightningsGroup6->GetObjectGuid());
+				}
+			}
+		}
+	}
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (m_uiDespawnTimer)
+		{
+			if (m_uiDespawnTimer <= uiDiff)
+				m_creature->ForcedDespawn();				
+			else
+				m_uiDespawnTimer -= uiDiff;
+		}	
+
+		if (m_uiEventTimer)
+		{
+			if (m_uiEventTimer <= uiDiff)
+			{	
+				HandleLightningGroups(0);
+				m_uiEventTimer = urand(10000,25000);					
+			}
+			else
+				m_uiEventTimer -= uiDiff;
+		}			
+	}
+};
+
+CreatureAI* GetAI_npc_maws_lightning_dummy(Creature* pCreature)
+{
+    return new npc_maws_lightning_dummyAI(pCreature);
+}
+
 void AddSC_azshara()
 {
     Script* pNewscript;
@@ -784,5 +929,10 @@ void AddSC_azshara()
 	pNewscript = new Script;
 	pNewscript->Name = "boss_maws";
 	pNewscript->GetAI = &GetAI_boss_maws;
+	pNewscript->RegisterSelf();
+
+	pNewscript = new Script;
+	pNewscript->Name = "npc_maws_lightning_dummy";
+	pNewscript->GetAI = &GetAI_npc_maws_lightning_dummy;
 	pNewscript->RegisterSelf();
 }
