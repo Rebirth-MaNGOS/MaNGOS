@@ -626,7 +626,9 @@ enum eWitchDoctor
 	SPELL_TOAD_EXPLODE = 24063,
 	// used to kill toads
 	SPELL_DISEASE_CLOUD = 24063,
-	NPC_JUNGLE_TOAD = 15010
+	NPC_JUNGLE_TOAD = 15010,
+
+	NPC_VOODOO_SPIRIT = 15009
 };
 
 struct MANGOS_DLL_DECL npc_hakkari_witch_doctorAI : public ScriptedAI
@@ -654,6 +656,13 @@ struct MANGOS_DLL_DECL npc_hakkari_witch_doctorAI : public ScriptedAI
 		m_uiShrinkTimer = urand(10000,15000);
 		m_uiSuspendTimer = 0;
 		m_bDidExplode = false;
+    }
+	
+	void JustDied(Unit* pKiller)
+    {
+		// spawn a spirit on death and cast spirit burst
+        if(Creature* pSpirit = m_creature->SummonCreature(NPC_VOODOO_SPIRIT, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN, 6000, false))	
+			pSpirit->CastSpell(pSpirit, 24051, true);
     }
 
 	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
