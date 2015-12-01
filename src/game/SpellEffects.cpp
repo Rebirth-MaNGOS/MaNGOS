@@ -2200,13 +2200,9 @@ void Spell::EffectSendEvent(SpellEffectIndex eff_idx)
 
     if(m_spellInfo->Id == 25783 && m_caster)
     {
-        Creature *pMaws = m_caster->SummonCreature(15571, 3507.87f, -6554.89f, -3.93f, 2.80f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
-
-        if(pMaws)
-        {
-            pMaws->AI()->AttackStart(m_caster);
-            pMaws->SetSplineFlags(SPLINEFLAG_FLYING);
-        }
+		// Spawn Maws and the lightning dummy
+		m_caster->SummonCreature(15571, 3428.1f, -6505.45f, -7.74f, 4.64501f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 900000);
+		m_caster->SummonCreature(800481, 3483.f, -6692.79f, -2.43f, 0.8f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 900000);
 
         return;
     }
