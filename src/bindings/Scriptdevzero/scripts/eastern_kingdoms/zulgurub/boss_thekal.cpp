@@ -65,6 +65,7 @@ struct MANGOS_DLL_DECL boss_thekalAI : public ScriptedAI
 
     bool m_bFakingDeath;
     bool m_bPhaseTwo;
+	bool m_bTransition;
 
     uint32 m_uiChargeTimer;
     uint32 m_uiForcePunchTimer;
@@ -73,12 +74,15 @@ struct MANGOS_DLL_DECL boss_thekalAI : public ScriptedAI
     uint32 m_uiSilenceTimer;
     uint32 m_uiSpeedSlashTimer;
     uint32 m_uiSummonTigersTimer;
+	uint32 m_uiTransitionTimer;
 
     void Reset()
     {
         m_bFakingDeath = false;
         m_bPhaseTwo = false;
+		m_bTransition = false;
 
+		m_uiTransitionTimer = 0;
         m_uiChargeTimer = 15000;
         m_uiForcePunchTimer = 8000;
         m_uiFrenzyTimer = 30000;
@@ -92,6 +96,11 @@ struct MANGOS_DLL_DECL boss_thekalAI : public ScriptedAI
         m_creature->SetStandState(UNIT_STAND_STATE_STAND);
         m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
         m_creature->SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
+		// reset melee dmg
+		const CreatureInfo* cinfo = m_creature->GetCreatureInfo();
+		m_creature->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, (cinfo->mindmg));
+		m_creature->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, (cinfo->maxdmg));
+		m_creature->UpdateDamagePhysical(BASE_ATTACK);
     }
 
     void JustReachedHome()
@@ -164,28 +173,44 @@ struct MANGOS_DLL_DECL boss_thekalAI : public ScriptedAI
         {
             if (m_pInstance && m_pInstance->GetData(TYPE_THEKAL) == SPECIAL)
             {
-                m_bFakingDeath = false;
-                m_bPhaseTwo = true;
+				if(!m_bTransition)
+				{
+					m_uiTransitionTimer = 4000;
+					// we want the heal animation as he rises
+                	m_creature->CastSpell(m_creature, SPELL_GREAT_HEAL,true);				
+					m_creature->SetStandState(UNIT_STAND_STATE_STAND);					
 
-                m_creature->clearUnitState(UNIT_STAT_CAN_NOT_MOVE);
-                m_creature->SetStandState(UNIT_STAND_STATE_STAND);
-                m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
-                DoCastSpellIfCan(m_creature, SPELL_THEKAL_TRANSFORM, CAST_TRIGGERED + CAST_FORCE_TARGET_SELF);
+					DoScriptText(SAY_TRANSFORM, m_creature);
+					m_bTransition = true;
+				}
+				if (m_uiTransitionTimer <= uiDiff)
+				{
+					m_creature->clearUnitState(UNIT_STAT_CAN_NOT_MOVE);
+					m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
 
-                m_creature->SetHealth(m_creature->GetMaxHealth());
-                m_creature->SetFloatValue(OBJECT_FIELD_SCALE_X, 3.0f);
-                const CreatureInfo* cinfo = m_creature->GetCreatureInfo();
-                m_creature->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, (cinfo->mindmg +((cinfo->mindmg/100) * 40)));
-                m_creature->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, (cinfo->maxdmg +((cinfo->maxdmg/100) * 40)));
-                m_creature->UpdateDamagePhysical(BASE_ATTACK);
+					m_bFakingDeath = false;
+					m_bPhaseTwo = true;
 
-                DoResetThreat();
-                DoScriptText(SAY_TRANSFORM, m_creature);
+					DoCastSpellIfCan(m_creature, SPELL_THEKAL_TRANSFORM, CAST_TRIGGERED + CAST_FORCE_TARGET_SELF);
 
-                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                    m_creature->AI()->AttackStart(pTarget);
-                else
-                    m_creature->SetInCombatWithZone();
+					m_creature->SetHealth(m_creature->GetMaxHealth());
+					m_creature->SetFloatValue(OBJECT_FIELD_SCALE_X, 3.0f);
+					const CreatureInfo* cinfo = m_creature->GetCreatureInfo();
+					m_creature->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, (cinfo->mindmg +((cinfo->mindmg/100) * 40)));
+					m_creature->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, (cinfo->maxdmg +((cinfo->maxdmg/100) * 40)));
+					m_creature->UpdateDamagePhysical(BASE_ATTACK);
+
+					DoResetThreat();					
+
+					if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+						m_creature->AI()->AttackStart(pTarget);
+					else
+						m_creature->SetInCombatWithZone();
+				}
+				else
+					m_uiTransitionTimer -= uiDiff;
+				if(m_bTransition)
+					return;
             }
         }
 
@@ -219,7 +244,6 @@ struct MANGOS_DLL_DECL boss_thekalAI : public ScriptedAI
             {
                 if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
                     DoCastSpellIfCan(pTarget, SPELL_CHARGE);
-
                 m_uiChargeTimer = urand(15000, 22000);
             }
             else
