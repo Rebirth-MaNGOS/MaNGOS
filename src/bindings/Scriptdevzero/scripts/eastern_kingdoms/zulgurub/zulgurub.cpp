@@ -643,7 +643,6 @@ struct MANGOS_DLL_DECL npc_hakkari_witch_doctorAI : public ScriptedAI
 	uint32 m_uiReleaseToadsTimer;
 	uint32 m_uiShadowShockTimer;
 	uint32 m_uiShrinkTimer;
-	uint32 m_uiSuspendTimer;
 
 	bool m_bDidExplode;
 
@@ -654,7 +653,6 @@ struct MANGOS_DLL_DECL npc_hakkari_witch_doctorAI : public ScriptedAI
 		m_uiReleaseToadsTimer = urand(6000,10000);
 		m_uiShadowShockTimer = urand(1000,2000);
 		m_uiShrinkTimer = urand(10000,15000);
-		m_uiSuspendTimer = 0;
 		m_bDidExplode = false;
     }
 	
@@ -938,6 +936,96 @@ CreatureAI* GetAI_npc_edge_of_madness_lightning(Creature* pCreature)
 }
 
 /*######
+## npc_voodoo_slave
+######*/
+
+enum eVoodooSlave
+{
+	SPELL_RAIN_OF_FIRE = 24669,
+	SPELL_INFERNO = 24670,
+
+	NPC_INFERNAL = 89
+};
+
+struct MANGOS_DLL_DECL npc_voodoo_slaveAI : public ScriptedAI
+{
+    npc_voodoo_slaveAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+	uint32 m_uiInfernoTimer;
+	uint32 m_uiRainOfFireTimer;
+	bool m_bSecondInfernal;
+
+    void Reset()
+    {
+		m_uiInfernoTimer = urand(2000, 5000);
+		m_uiRainOfFireTimer = urand(10000, 15000);
+		m_bSecondInfernal = false;
+    }
+	
+	void JustSummoned(Creature* pSummoned)
+    {
+		pSummoned->SetRespawnEnabled(false);
+		// the first one that is summoned is by the spell and it bugs out, so despawn and make a new one
+		if(pSummoned->GetEntry() == NPC_INFERNAL && !m_bSecondInfernal)
+		{
+			pSummoned->ForcedDespawn();
+			m_bSecondInfernal = true;			
+		}
+    }
+
+	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_INFERNO && pTarget)
+        {
+            if(Creature* pInfernal = m_creature->SummonCreature(NPC_INFERNAL,pTarget->GetPositionX(),pTarget->GetPositionY(),pTarget->GetPositionZ(),0,TEMPSUMMON_TIMED_DESPAWN,300000,false))
+			{
+				pInfernal->setFaction(m_creature->getFaction());
+				pInfernal->SetLevel(60);
+				pInfernal->SetOwnerGuid(m_creature->GetGUID());
+				pInfernal->AI()->AttackStart(pTarget);
+			}
+        }
+    }
+
+	void UpdateAI(const uint32 uiDiff)
+    {
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // Inferno
+        if (m_uiInfernoTimer <= uiDiff)
+        {
+			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+			if(pTarget && pTarget->GetTypeId() == TYPEID_PLAYER)
+				DoCastSpellIfCan(pTarget, SPELL_INFERNO);
+			m_uiInfernoTimer = 320000;
+        }
+        else
+            m_uiInfernoTimer -= uiDiff;
+
+		// Rain of Fire
+        if (m_uiRainOfFireTimer <= uiDiff)
+        {
+            Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+			DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_RAIN_OF_FIRE);
+            m_uiRainOfFireTimer = urand(20000, 30000);
+        }
+        else
+            m_uiRainOfFireTimer -= uiDiff;
+
+		DoMeleeAttackIfReady();
+	}
+};
+
+CreatureAI* GetAI_npc_voodoo_slave(Creature* pCreature)
+{
+    return new npc_voodoo_slaveAI(pCreature);
+}
+
+/*######
 ## AddSC
 ######*/
 
@@ -993,5 +1081,10 @@ void AddSC_zulgurub()
 	pNewScript = new Script;
 	pNewScript->Name = "npc_edge_of_madness_lightning";
 	pNewScript->GetAI = GetAI_npc_edge_of_madness_lightning;
+	pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+	pNewScript->Name = "npc_voodoo_slave";
+	pNewScript->GetAI = GetAI_npc_voodoo_slave;
 	pNewScript->RegisterSelf();
 }
