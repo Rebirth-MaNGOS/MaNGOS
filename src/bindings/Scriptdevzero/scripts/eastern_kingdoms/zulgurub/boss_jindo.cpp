@@ -62,8 +62,8 @@ struct MANGOS_DLL_DECL boss_jindoAI : public ScriptedAI
     uint32 m_uiDelusionsTimer;
     uint32 m_uiTeleportTimer;
     uint8 m_uiCurseCounter;
-    Unit* m_hexedTarget;
-    uint32 m_uiHexSaveTimer;
+    /*Unit* m_hexedTarget;
+    uint32 m_uiHexSaveTimer;*/
 
     void Reset()
     {
@@ -73,8 +73,8 @@ struct MANGOS_DLL_DECL boss_jindoAI : public ScriptedAI
         m_uiHexTimer = 8000;
         m_uiDelusionsTimer = 10000;
         m_uiTeleportTimer = 5000;
-        m_hexedTarget = NULL;
-        m_uiHexSaveTimer = 1000;
+        /*m_hexedTarget = NULL;
+        m_uiHexSaveTimer = 1000;*/
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -107,7 +107,7 @@ struct MANGOS_DLL_DECL boss_jindoAI : public ScriptedAI
             m_uiHealingWardTimer -= uiDiff;
 
         // If the player has the curse dispelled within one second all aggro is restored.
-        if (m_hexedTarget)
+        /*if (m_hexedTarget)
         {
             if (m_uiHexSaveTimer <= uiDiff)
             {
@@ -128,7 +128,7 @@ struct MANGOS_DLL_DECL boss_jindoAI : public ScriptedAI
             else
                 m_uiHexSaveTimer -= uiDiff;
 
-        }
+        }*/
 
         // Hex
         if (m_uiHexTimer <= uiDiff)
@@ -137,10 +137,10 @@ struct MANGOS_DLL_DECL boss_jindoAI : public ScriptedAI
             {
                 m_creature->CastSpell(pTarget, SPELL_HEX, true);
 
-                if (m_creature->getThreatManager().getThreat(pTarget))
+               /* if (m_creature->getThreatManager().getThreat(pTarget))
                     m_creature->getThreatManager().modifyThreatPercent(pTarget,-80);
 
-                m_hexedTarget = pTarget;
+                m_hexedTarget = pTarget;*/
             }
 
             m_uiHexTimer = urand(12000,16000); // 12000, 20000
@@ -183,20 +183,19 @@ struct MANGOS_DLL_DECL boss_jindoAI : public ScriptedAI
             if (pTarget && pTarget->GetTypeId() == TYPEID_PLAYER)
             {
                 //DoCastSpellIfCan(pTarget, SPELL_BANISH);
-                DoTeleportPlayer(pTarget, -11583.7783f, -1249.4278f, 77.5471f, 4.745f);
+                DoTeleportPlayer(pTarget, -11583.7783f, -1249.4278f, 90.5471f, 4.745f);
 
                 HostileReference const* top_aggro_reference = *(m_creature->getThreatManager().getThreatList().begin());
                 if(top_aggro_reference)
                     if (m_creature->getThreatManager().getThreat(pTarget) && top_aggro_reference->getTarget() != pTarget)
                         m_creature->getThreatManager().modifyThreatPercent(pTarget,-100);
 
-                //float fX, fY, fZ;
-                //pTarget->GetPosition(fX, fY, fZ);
+                // no attack start since they'll attack the player mid air
                 for(uint32 i = 0; i < 9; ++i)
-                {
-                    if (Creature* Skeleton = m_creature->SummonCreature(NPC_SACRIFICED_TROLL, -11583.7783f + irand(-4,4), -1249.4278f + irand(-4,4), 77.5471f, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000))
-                        Skeleton->AI()->AttackStart(pTarget);
-                }
+				{
+					if(Creature* pSkeleton = m_creature->SummonCreature(NPC_SACRIFICED_TROLL, -11583.7783f + irand(-5,5), -1249.4278f + irand(-5,5), 77.5471f, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000))
+						pSkeleton->HandleEmoteState(EMOTE_STATE_DANCE);
+				}
             }
             m_uiTeleportTimer = urand(22000,26000);
         }
@@ -227,7 +226,6 @@ struct MANGOS_DLL_DECL mob_healing_wardAI : public Scripted_NoMovementAI
     void Reset()
     {
         m_uiHealTimer = 2000;
-        //m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -260,7 +258,6 @@ struct MANGOS_DLL_DECL mob_brain_wash_totemAI : public Scripted_NoMovementAI
     mob_brain_wash_totemAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature)
     {
         m_pInstance = (instance_zulgurub*)pCreature->GetInstanceData();
-        //SetCombatMovement(false);
         bSpellCasted = false;
         Reset();
     }
@@ -271,7 +268,6 @@ struct MANGOS_DLL_DECL mob_brain_wash_totemAI : public Scripted_NoMovementAI
 
     void Reset()
     {
-        //m_creature->addUnitState(UNIT_STAT_CAN_NOT_MOVE);
     }
 
     void DamageTaken(Unit *, uint32&)
@@ -320,6 +316,7 @@ struct MANGOS_DLL_DECL mob_shade_of_jindoAI : public ScriptedAI
     mob_shade_of_jindoAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (instance_zulgurub*)pCreature->GetInstanceData();
+		m_creature->SetAOEImmunity(true);
         Reset();
     }
 
