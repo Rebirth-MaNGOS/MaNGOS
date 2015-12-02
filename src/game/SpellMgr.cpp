@@ -696,13 +696,14 @@ bool IsBinaryEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
 	}
 }
 
-
 bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
 {
     switch (spellproto->Id)
     {
     case 12042: // Arcane power should be a positive effect.
         return true;
+	case 12613: // Dark Iron Taskmaster Death should be a positive effect.
+		return true;
 	case 16713:	// Ghostly is not a positive effect.
 		return false;
 	case 17246: // Baroness Anastari's Possess is not a positive effect.
