@@ -1648,10 +1648,27 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         player->SetMover(eye_of_kilrogg);
                     }
                 }
+                break;
+            }	
+			case 11403:		// Elixir of Dream Vision
+				{
+                // For the Dream Vision
+                Player* player = dynamic_cast<Player*>(GetCaster());
 
+                if (player)
+                {
+                    Pet* dream_vision = player->FindGuardianWithEntry(7863);
+                    if (dream_vision)
+                    {
+						// Levitate so it appears the vision has water walking and slowfall and can't jump
+						dream_vision->CastSpell(dream_vision, 1706, true);
+                        player->GetCamera().SetView(dream_vision);
+                        player->SetClientControl(dream_vision, 1);
+                        player->SetMover(dream_vision);
+                    }
+                }
                 break;
             }
-
             case 7057:                              // Haunting Spirits
                 // expected to tick with 30 sec period (tick part see in Aura::PeriodicTick)
                 m_isPeriodic = true;
@@ -1878,6 +1895,26 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 caster->CastSpell(caster, 10254, true);
             }
             return;
+        }
+		case 11403:  // Elixir of Dream Vision
+        {
+            // For the Dream Vision
+            Player* player = dynamic_cast<Player*>(GetCaster());
+
+            if (player)
+            {
+			  player->GetCamera().SetView(player);
+			  player->SetClientControl(player, 1);
+			  player->SetMover(player);
+		  
+			  Pet* dream_vision = player->FindGuardianWithEntry(7863);
+			  if (dream_vision)
+			  {
+				  player->RemoveGuardian(dream_vision);
+				  dream_vision->DealDamage(dream_vision, dream_vision->GetHealth(), nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, false);
+			  }
+            }
+            break;
         }
         case 12479:                                     // Hex of Jammal'an
             target->CastSpell(target, 12480, true, NULL, this);
