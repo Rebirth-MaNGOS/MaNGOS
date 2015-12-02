@@ -825,6 +825,58 @@ bool QuestRewarded_go_wooden_outhouse(Player* pPlayer, GameObject* pGo, const Qu
 	return true;
 }
 
+/*####
+# mob_dark_iron_taskmaster
+####*/
+
+enum eTaskmaster
+{
+	SPELL_BATTLE_COMMAND		= 5115,
+	SPELL_TASKMASTER_DEATH		= 12613
+};
+
+struct MANGOS_DLL_DECL mob_dark_iron_taskmasterAI : public ScriptedAI
+{
+    mob_dark_iron_taskmasterAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiBattleCommandTimer;
+
+    void Reset()
+    {
+        m_uiBattleCommandTimer = urand(1000, 3000);
+    }
+
+	void JustDied(Unit* pKiller)			// cast spell on slaves when taskmaster dies
+    {
+		m_creature->CastSpell(m_creature, SPELL_TASKMASTER_DEATH, true);
+	}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // Battle Command
+        if (m_uiBattleCommandTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature, SPELL_BATTLE_COMMAND);
+            m_uiBattleCommandTimer = urand(10000,15000);
+        }
+        else
+            m_uiBattleCommandTimer -= uiDiff;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_dark_iron_taskmaster(Creature* pCreature)
+{
+    return new mob_dark_iron_taskmasterAI(pCreature);
+}
+
 /*######
 ##
 ######*/
@@ -880,5 +932,10 @@ void AddSC_searing_gorge()
 	pNewScript = new Script;
     pNewScript->Name = "go_wooden_outhouse";
     pNewScript->pQuestRewardedGO = &QuestRewarded_go_wooden_outhouse;
+    pNewScript->RegisterSelf();
+
+	pNewScript = new Script;
+    pNewScript->Name = "mob_dark_iron_taskmaster";
+    pNewScript->GetAI = &GetAI_mob_dark_iron_taskmaster;
     pNewScript->RegisterSelf();
 }
