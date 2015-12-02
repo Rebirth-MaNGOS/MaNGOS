@@ -943,6 +943,8 @@ enum eVoodooSlave
 {
 	SPELL_RAIN_OF_FIRE = 24669,
 	SPELL_INFERNO = 24670,
+	SPELL_SHADOW_BOLT = 12739,
+	SPELL_CURSE_OF_SHADOW = 17937,
 
 	NPC_INFERNAL = 89
 };
@@ -956,12 +958,16 @@ struct MANGOS_DLL_DECL npc_voodoo_slaveAI : public ScriptedAI
 
 	uint32 m_uiInfernoTimer;
 	uint32 m_uiRainOfFireTimer;
+	uint32 m_uiShadowBoltTimer;
+	uint32 m_uiCurseOfShadowTimer;
 	bool m_bSecondInfernal;
 
     void Reset()
     {
-		m_uiInfernoTimer = urand(2000, 5000);
-		m_uiRainOfFireTimer = urand(10000, 15000);
+		m_uiShadowBoltTimer = urand(1000, 3000);
+		m_uiCurseOfShadowTimer = 800;
+		m_uiInfernoTimer = urand(4000, 9000);
+		m_uiRainOfFireTimer = urand(10000, 20000);
 		m_bSecondInfernal = false;
     }
 	
@@ -1000,7 +1006,7 @@ struct MANGOS_DLL_DECL npc_voodoo_slaveAI : public ScriptedAI
         {
 			Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
 			if(pTarget && pTarget->GetTypeId() == TYPEID_PLAYER)
-				DoCastSpellIfCan(pTarget, SPELL_INFERNO);
+				DoCastSpellIfCan(pTarget, SPELL_INFERNO, CAST_INTERRUPT_PREVIOUS);
 			m_uiInfernoTimer = 320000;
         }
         else
@@ -1010,11 +1016,29 @@ struct MANGOS_DLL_DECL npc_voodoo_slaveAI : public ScriptedAI
         if (m_uiRainOfFireTimer <= uiDiff)
         {
             Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-			DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_RAIN_OF_FIRE);
-            m_uiRainOfFireTimer = urand(20000, 30000);
+			DoCastSpellIfCan(pTarget ? pTarget : m_creature->getVictim(), SPELL_RAIN_OF_FIRE, CAST_INTERRUPT_PREVIOUS);
+            m_uiRainOfFireTimer = urand(25000, 35000);
         }
         else
             m_uiRainOfFireTimer -= uiDiff;
+
+		// Shadow bolt
+        if (m_uiShadowBoltTimer <= uiDiff)
+        {
+			DoCastSpellIfCan(m_creature->getVictim(), SPELL_SHADOW_BOLT);
+            m_uiShadowBoltTimer = urand(2000, 3000);
+        }
+        else
+            m_uiShadowBoltTimer -= uiDiff;
+
+		// Curse of Shadow
+        if (m_uiCurseOfShadowTimer <= uiDiff)
+        {
+			DoCastSpellIfCan(m_creature->getVictim(), SPELL_CURSE_OF_SHADOW, CAST_AURA_NOT_PRESENT);
+            m_uiCurseOfShadowTimer = urand(20000, 30000);
+        }
+        else
+            m_uiCurseOfShadowTimer -= uiDiff;
 
 		DoMeleeAttackIfReady();
 	}
