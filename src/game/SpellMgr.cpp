@@ -4187,7 +4187,7 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
         {
             // Freezing trap
             if (spellproto->SpellFamilyFlags & UI64LIT(0x00000000008))
-                return DIMINISHING_SCATTER;
+                return DIMINISHING_INCAPACITATE;
             // Scattershot
             if (spellproto->SpellFamilyFlags & UI64LIT(0x00000040000))
                 return DIMINISHING_SCATTER;
