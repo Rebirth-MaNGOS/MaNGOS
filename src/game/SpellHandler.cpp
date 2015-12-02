@@ -310,6 +310,10 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     uint32 spellId;
     recvPacket >> spellId;
 
+	// Dream Vision aura should be removed when starting to cast something else
+	if(_player->HasAura(11403))
+		_player->RemoveAurasDueToSpell(11403);
+
     // ignore for remote control state (for player case)
     Unit* mover = _player->GetMover();
     if (mover != _player && mover->GetTypeId()==TYPEID_PLAYER)
