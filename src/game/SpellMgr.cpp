@@ -550,7 +550,7 @@ bool IsSingleFromSpellSpecificPerTargetPerCaster(SpellSpecific spellSpec1,SpellS
         case SPELL_STING:
         case SPELL_CURSE:
         case SPELL_ASPECT:
-        //case SPELL_JUDGEMENT: // Judgement's should be handled explicitly in the SpellNoStackDueToSpell function.
+        case SPELL_JUDGEMENT: 
             return spellSpec1==spellSpec2;
         default:
             return false;
@@ -2273,15 +2273,6 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     if (spellId_1 == 35081 && spellInfo_2->SpellIconID==561 && spellInfo_2->SpellVisual==7992)
                         return false;
 
-                    // Judgement of the Crusader should not stack with itself.
-                    std::string spellName1(*spellInfo_1->SpellName);
-                    std::string spellName2(*spellInfo_2->SpellName);
-                    if (spellName1.find("Crusader") != std::string::npos &&
-                        spellName2.find("Crusader") != std::string::npos)
-                        return true;
-
-                    sLog.outBasic("Kollar skitn!");
-
                     break;
                 }
             }
@@ -2294,17 +2285,17 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             {
                 // Blizzard & Chilled (and some other stacked with blizzard spells
                 if (((spellInfo_1->SpellFamilyFlags & UI64LIT(0x80)) && (spellInfo_2->SpellFamilyFlags & UI64LIT(0x100000))) ||
-                    ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x80)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x100000))))
+                        ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x80)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x100000))))
                     return false;
 
                 // Blink & Improved Blink
                 if (((spellInfo_1->SpellFamilyFlags & UI64LIT(0x0000000000010000)) && (spellInfo_2->SpellVisual == 72 && spellInfo_2->SpellIconID == 1499)) ||
-                    ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x0000000000010000)) && (spellInfo_1->SpellVisual == 72 && spellInfo_1->SpellIconID == 1499)))
+                        ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x0000000000010000)) && (spellInfo_1->SpellVisual == 72 && spellInfo_1->SpellIconID == 1499)))
                     return false;
 
                 // Fireball & Pyroblast (Dots)
                 if (((spellInfo_1->SpellFamilyFlags & UI64LIT(0x1)) && (spellInfo_2->SpellFamilyFlags & UI64LIT(0x400000))) ||
-                    ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x1)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x400000))))
+                        ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x1)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x400000))))
                     return false;
             }
             // Detect Invisibility and Mana Shield (multi-family check)
@@ -2318,7 +2309,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             // Arcane Intellect and Insight
             if (spellInfo_1->SpellIconID == 125 && spellInfo_2->Id == 18820)
                 return false;
-            
+
             // Arcane Missiles should not overwrite Arcane Missiles
             if (spellInfo_1->SpellIconID == 225 && spellInfo_2->SpellIconID == 225)
                 return false;
@@ -2557,6 +2548,29 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             // *Seal of Command and Band of Eternal Champion (multi-family check)
             if (spellInfo_1->SpellIconID==561 && spellInfo_1->SpellVisual==7992 && spellId_2 == 35081)
                 return false;
+
+            if (!IsPositiveSpell(spellInfo_1) && !IsPositiveSpell(spellInfo_2))
+            {
+                // For stacking of the different Judgements.
+                std::string spellName1(*spellInfo_1->SpellName);
+                std::string spellName2(*spellInfo_2->SpellName);
+                if (spellName1.find("Wisdom") != std::string::npos && 
+                    spellName2.find("Light") != std::string::npos)
+                    return false;
+
+                if (spellName1.find("Crusader") != std::string::npos && 
+                    spellName2.find("Crusader") != std::string::npos)
+                    return true;
+
+                if (spellName1.find("Wisdom") != std::string::npos && 
+                    spellName2.find("Wisdom") != std::string::npos)
+                    return true;
+
+                if (spellName1.find("Light") != std::string::npos && 
+                    spellName2.find("Light") != std::string::npos)
+                    return true;
+            }
+
             break;
         case SPELLFAMILY_SHAMAN:
             if (spellInfo_2->SpellFamilyName == SPELLFAMILY_SHAMAN)

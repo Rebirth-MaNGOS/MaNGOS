@@ -4243,7 +4243,8 @@ bool Unit::RemoveNoStackAurasDueToAuraHolder(SpellAuraHolder *holder)
         }
 
         // non single (per caster) per target spell specific (possible single spell per target at caster)
-        if( !is_spellSpecPerTargetPerCaster && !is_spellSpecPerTarget && (
+        std::string spellName = std::string(*spellProto->SpellName);
+        if( (!is_spellSpecPerTargetPerCaster || spellName.find("Judgement of") != std::string::npos) && !is_spellSpecPerTarget && (
                     ( sSpellMgr.IsRankSpellDueToSpell(spellProto, i_spellId) && (*i).second->GetCasterGuid() == holder->GetCasterGuid())
                     || sSpellMgr.IsNoStackSpellDueToSpell(spellId, i_spellId) ) )
         {
