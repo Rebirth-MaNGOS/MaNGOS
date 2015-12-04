@@ -26,6 +26,7 @@ extern void AddSC_npcs_special();
 extern void AddSC_dungeon_set2();
 extern void AddSC_engineering();
 extern void AddSC_hallows_end();
+extern void AddSC_elemental_invasions();
 
 // Ahn'Qiraj gate event
 extern void AddSC_gate_turnin_scripts();
@@ -319,6 +320,7 @@ void AddScripts()
 	AddSC_dungeon_set2();
 	AddSC_engineering();
 	AddSC_hallows_end();
+	AddSC_elemental_invasions();
 
     // Ahn'Qiraj gate event
     AddSC_gate_turnin_scripts();
