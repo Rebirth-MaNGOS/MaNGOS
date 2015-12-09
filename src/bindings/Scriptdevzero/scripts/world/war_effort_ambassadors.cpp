@@ -4,6 +4,15 @@
 #include "Player.h"
 #include <sstream>
 
+/*
+ Gossip ID saying "The horde", in order 0, 25, 50, 75, 100% complete
+ 102,103,104,105,106
+ */
+
+/*
+ Gossip ID saying "The alliance", in order 0, 25, 50, 75, 100% complete
+ 107,108,109,110,111
+ */
 
 struct MANGOS_DLL_DECL general_zogAI : public ScriptedAI
 {
