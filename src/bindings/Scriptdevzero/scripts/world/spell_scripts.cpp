@@ -119,6 +119,37 @@ CreatureAI* GetAI_npc_eye_of_kilrogg(Creature* pCreature)
 	return new npc_eye_of_kilroggAI(pCreature);
 }
 
+struct MANGOS_DLL_DECL npc_dream_visionAI : public ScriptedAI
+{
+    npc_dream_visionAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        SetCombatMovement(false);
+        Reset(); 
+    }
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 /*uiDiff*/)
+    {
+    }
+
+    void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/)
+    {
+        Unit* owner = m_creature->GetOwner();
+        if (owner)
+        {
+            owner->RemoveAura(11403, SpellEffectIndex::EFFECT_INDEX_1);
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_dream_vision(Creature* pCreature)
+{
+    return new npc_dream_visionAI(pCreature);
+}
+
 void AddSC_spell_scripts()
 {
 	Script* pNewScript;
@@ -132,4 +163,9 @@ void AddSC_spell_scripts()
 	pNewScript->Name = "npc_eye_of_kilrogg";
 	pNewScript->GetAI = &GetAI_npc_eye_of_kilrogg;
 	pNewScript->RegisterSelf();
+    
+    pNewScript = new Script;
+    pNewScript->Name = "npc_dream_vision";
+    pNewScript->GetAI = &GetAI_npc_dream_vision;
+    pNewScript->RegisterSelf();
 }
