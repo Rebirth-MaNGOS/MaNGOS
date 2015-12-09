@@ -4225,6 +4225,12 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
 				return DIMINISHING_INCAPACITATE;
             break;
         }
+        case SPELLFAMILY_SHAMAN:
+        {   // Frost shock should have diminishing
+            if (spellproto->Id == 8056 || spellproto->Id == 8058 || spellproto->Id == 10472 || spellproto->Id == 10473)
+                return DIMINISHING_CONTROL_ROOT;
+            break;
+        }
         case SPELLFAMILY_GENERIC:
         {
             //All bomb/grenade type items should share the controlled stun DR - most of them are already stuns
