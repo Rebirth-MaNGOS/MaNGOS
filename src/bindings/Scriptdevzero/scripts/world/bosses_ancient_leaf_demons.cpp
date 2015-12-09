@@ -362,7 +362,7 @@ struct MANGOS_DLL_DECL boss_klinfran_the_crazedAI : public bosses_ancient_leaf_d
 		return true;
     }
 
-	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)							// remove enrage with scorpidsting
+	void SpellHit(Unit* /*pCaster*/, SpellEntry const* pSpell)							// remove enrage with scorpidsting
     {
         if (pSpell->Id == SPELL_SCORPIDSTING)
         {
@@ -470,7 +470,7 @@ struct MANGOS_DLL_DECL boss_solenor_the_slayerAI : public bosses_ancient_leaf_de
 		m_uiCanCastTimer = 0;
     }
 
-	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)							// freeze at place if wingclip
+	void SpellHit(Unit* /*pCaster*/, SpellEntry const* pSpell)							// freeze at place if wingclip
     {
         if (pSpell->Id == SPELL_WINGCLIP)
         {
@@ -655,7 +655,7 @@ struct MANGOS_DLL_DECL boss_artorius_the_doombringerAI : public bosses_ancient_l
 		return true;
 	}
 
-	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)							// serpentsting should stack an invisible debuff that makes serpentsting do lots of damage
+	void SpellHit(Unit* /*pCaster*/, SpellEntry const* pSpell)							// serpentsting should stack an invisible debuff that makes serpentsting do lots of damage
     {
         if (pSpell->Id == SPELL_SERPENTSTING_R9 || pSpell->Id == SPELL_SERPENTSTING_R8)
         {
@@ -752,7 +752,7 @@ struct MANGOS_DLL_DECL boss_simone_the_seductressAI : public bosses_ancient_leaf
 		m_bisSilence = false;
     }
 
-	void JustSummoned(Creature* pSummoned)	
+	void JustSummoned(Creature* /*pSummoned*/)	
     {
 		++m_uiSummonCount;
 	}
@@ -797,37 +797,30 @@ struct MANGOS_DLL_DECL boss_simone_the_seductressAI : public bosses_ancient_leaf
     {
 		if (m_creature->HasAura(SPELL_VIPERSTING))			// if hit by viper sting, do not cast any spells
 		{
+            m_creature->InterruptNonMeleeSpells(false);
 			m_bisSilence = true;
 		}
 		else
 			m_bisSilence = false;
-
-		if (m_uiChainLightningTimer <= uiDiff)
+        
+        if (!m_bisSilence)
         {
-			if (!m_bisSilence)
-			{
-            DoCastSpellIfCan(m_creature->getVictim(), SPELL_CHAIN_LIGHTNING);
-			m_uiChainLightningTimer = urand(6000, 16000);
-			}
-			else
-				m_uiChainLightningTimer = urand(6000, 16000);
-        }
-        else
-            m_uiChainLightningTimer -= uiDiff;
+            if (m_uiChainLightningTimer <= uiDiff)
+            {
+                DoCastSpellIfCan(m_creature->getVictim(), SPELL_CHAIN_LIGHTNING);
+                m_uiChainLightningTimer = urand(6000, 16000);
+            }
+            else
+                m_uiChainLightningTimer -= uiDiff;
 
-		if (m_uiSeductressKissTimer <= uiDiff)
-        {
-			if (!m_bisSilence)
-			{
-				DoCastSpellIfCan(m_creature->getVictim(), SPELL_TEMPTRESS_KISS, CAST_AURA_NOT_PRESENT);
-				m_uiSeductressKissTimer = 5000;
-			}
-			else
-				m_uiSeductressKissTimer = 5000;
+            if (m_uiSeductressKissTimer <= uiDiff)
+            {
+                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_TEMPTRESS_KISS, CAST_AURA_NOT_PRESENT);
+                    m_uiSeductressKissTimer = 5000;
+            }
+            else
+                m_uiSeductressKissTimer -= uiDiff;
         }
-        else
-            m_uiSeductressKissTimer -= uiDiff;
-
 		return true;
 	}
 };
