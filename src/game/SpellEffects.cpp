@@ -990,8 +990,8 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             QueryResult* result1 = WorldDatabase.PQuery("SELECT * FROM player_levelstats WHERE `race` = %u AND `class` = %u AND `level` = %u", race, Class, lvl);
             if (!result1)
             {
-            sLog.outString(">> Found nothing in player_levelstats for the race, class and level combination.");
-            sLog.outString();
+                sLog.outString(">> Found nothing in player_levelstats for the race, class and level combination.");
+                sLog.outString();
             }
             else
             {              
