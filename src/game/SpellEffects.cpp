@@ -976,12 +976,42 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
         case 20572:                                 // Blood Fury
         {
             if(m_caster->GetTypeId() != TYPEID_PLAYER)
-                return;
-
+                return;       
+            
+            // healing debuff
             m_caster->CastSpell(m_caster, 23230, true);
+                       
+            // some info that determines how much ap the player should gain
+            uint8 race = m_caster->getRace();
+            uint8 Class = m_caster->getClass();
+            uint8 lvl = m_caster->getLevel();
+            
+            // get base stats from DB so we know how much AP to Add
+            QueryResult* result1 = WorldDatabase.PQuery("SELECT * FROM player_levelstats WHERE `race` = %u AND `class` = %u AND `level` = %u", race, Class, lvl);
+            if (!result1)
+            {
+            sLog.outString(">> Found nothing in player_levelstats for the race, class and level combination.");
+            sLog.outString();
+            }
+            else
+            {              
+                Field* fields = result1->Fetch();
 
-            damage = uint32(damage * (m_caster->GetTotalAttackPowerValue(BASE_ATTACK)) / 100);
-            m_caster->CastCustomSpell(m_caster, 23234, &damage, NULL, NULL, true, NULL);
+                uint32 str = fields[3].GetUInt32();
+                uint32 agi = fields[4].GetUInt32();
+                float base_ap = 0;
+     
+                if(m_caster->getClass() == CLASS_HUNTER || m_caster->getClass() == CLASS_ROGUE)
+                    base_ap = ((lvl*2.f) + (str + agi) - 20.f);
+                else
+                    base_ap = ((lvl*3.f) + (str*2.f) - 20.f);
+                
+                // should be 25% of base AP
+                damage = uint32((base_ap * damage) / 100);
+                m_caster->CastCustomSpell(m_caster, 23234, &damage, NULL, NULL, true, NULL);  
+            }
+                                   
+            delete result1;
             return;
         }
         case 17770:                                 // Wolfshead Helm Energy
