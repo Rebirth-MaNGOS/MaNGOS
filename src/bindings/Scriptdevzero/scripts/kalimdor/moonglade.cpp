@@ -482,13 +482,15 @@ struct SpawnLocation
     float m_fX, m_fY, m_fZ;
 };
 
-static const SpawnLocation aEranikusShades[7] =
+static const SpawnLocation aEranikusShades[9] =
 {
     {7883.7f, -2581.3f, 486.95f},                       // Shade spawn location 1
     {7888.2f, -2560.0f, 486.92f},                       // Shade spawn location 2
     {7896.87f, -2573.236f, 487.75f},                    // Shade spawn location 3
     {7885.69f, -2569.0f, 486.96f},                      // Shade spawn location 4
     {7909.58f, -2559.56f, 487.73f},                     // Shade spawn location 5
+    {7883.14f, -2500.55f, 489.30f},
+    {7981.89f, -2576.48f, 493.05f},
     {7924.96f, -2573.28f, 499.63f},                     // Hover spot
     {7899.9f, -2565.54f, 487.89f},                      // Eranikus landing spot                  
 };
@@ -610,8 +612,9 @@ struct MANGOS_DLL_DECL boss_eranikus_tyrant_of_the_dream : public ScriptedAI
                 if(m_uiPhantasmCounter == 0)
                 {
                     DoScriptText(ERANIKUS_AQ_YELL_6, m_creature);
-                    m_uiLanding_timer = 1000;
+                    m_uiLanding_timer = 1500;
                     m_uiSummonTimer = 10000;
+                    m_creature->MonsterMove(7926.31f, -2573.72f, 489.64, 1000);
                     firstSummon = false;
                 }
             }
@@ -931,7 +934,7 @@ struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
 
     void Reset()
     {
-        m_uiShadowVolleyTimer = urand(5000, 20000);
+        m_uiShadowVolleyTimer = urand(1000, 2000);
         eranikus = m_creature->GetOwnerGuid();
         m_creature->SetRespawnEnabled(false);
     }
@@ -960,7 +963,7 @@ struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
         {
             if(m_uiShadowVolleyTimer <= uiDiff)
             {
-                m_uiShadowVolleyTimer = urand(5000, 20000);
+                m_uiShadowVolleyTimer = urand(1000, 2000);
 
                 DoCast(m_creature, SPELL_SHADOWBOLT_VOLLEY, true);
             }
@@ -1084,6 +1087,8 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
         {
             return;
         }
+
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP);
 
         m_uiEventPhase = 0;
         m_uiEventTimer = 0;
