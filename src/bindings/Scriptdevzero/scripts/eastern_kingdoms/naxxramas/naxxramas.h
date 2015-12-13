@@ -117,6 +117,11 @@ struct GothTrigger
     bool bIsAnchorHigh;
 };
 
+struct Loc
+{
+    float x, y, z, o;
+};
+
 class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
 {
     public:
