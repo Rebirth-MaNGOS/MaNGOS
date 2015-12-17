@@ -164,17 +164,17 @@ struct MANGOS_DLL_DECL npc_ahnqiraj_resource_reducing_triggerAI : public Scripte
         {
 
             // Update the start and end times for the 10 hour war to make it survive a server restart.
-            std::stringstream start_ss, end_ss;
+            char start_buf[20], end_buf[20];
 
             std::time_t start = std::time(nullptr);
             std::tm* start_time = std::localtime(&start);
-            start_ss << std::put_time(start_time, "%F %T");
+            strftime(start_buf, 20, "%F %T", start_time);
 
             std::time_t end = std::time(nullptr) + 15552000;
             std::tm* end_time = std::localtime(&end);
-            end_ss << std::put_time(end_time, "%F %T");
+            strftime(end_buf, 20, "%F %T", end_time);
 
-            UpdateEventDatabaseStartEnd(55, start_ss.str().c_str(), end_ss.str().c_str());
+            UpdateEventDatabaseStartEnd(55, start_buf, end_buf);
 
             StartGameEvent(55, true);
         }
