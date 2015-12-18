@@ -115,7 +115,6 @@ struct MANGOS_DLL_DECL boss_majordomoAI : public npc_escortAI
 
         m_bCanWalk = false;
 
-		m_creature->setFaction(FACTION_ENEMY);			// Make sure that Majordomo Executus is killable if he resets.
 		m_pInstance->SetData(TYPE_MAJORDOMO, FAIL);		
 		m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
 
