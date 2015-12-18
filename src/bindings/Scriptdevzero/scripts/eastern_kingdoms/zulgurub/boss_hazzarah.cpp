@@ -28,8 +28,9 @@ enum eHazzarah
 {
     SPELL_MANA_BURN             = 26046,
     SPELL_SLEEP                 = 24664,
-    SUMMON_NIGHTMARE_ILLUSION   = 24729,
-    SUMMON_NIGHTMARE_ILLUSION_  = 24681,
+    SUMMON_NIGHTMARE_ILLUSION_L   = 24729,
+    SUMMON_NIGHTMARE_ILLUSION_R  = 24681,
+    SUMMON_NIGHTMARE_ILLUSION_B = 24728,
 
     MODELID_FELGUARD            = 5049,
     MODELID_ABOMINATION         = 1693,
@@ -54,8 +55,50 @@ struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
     void Reset()
     {
         m_uiManaBurnTimer = urand(4000, 10000);
-        m_uiSleepTimer = urand(10000, 18000);
-        m_uiIllusionsTimer = urand(10000, 18000);
+        m_uiSleepTimer = urand(10000, 15000);
+        m_uiIllusionsTimer = urand(17000, 22000);
+    }
+    
+     void JustReachedHome()
+    {
+        m_creature->RemoveGuardians();       
+    }
+    
+    void JustSummoned(Creature* pSummoned)
+    {
+        // Summoned Illusion will have a random model
+        uint32 m_uiNewDisplayId = 0;
+        switch (rand() % 5)
+        {
+            case 0: 
+                m_uiNewDisplayId = MODELID_ABOMINATION;
+                break;
+            case 1: 
+                m_uiNewDisplayId = MODELID_LASHER;
+                break;
+            case 2: 
+                m_uiNewDisplayId = MODELID_FELGUARD;
+                break;
+            case 3: 
+                m_uiNewDisplayId = MODELID_DEVILSAUR;                
+                break;
+            case 4: 
+                    m_uiNewDisplayId = MODELID_BARTHILAS; 
+                break;
+        }
+        pSummoned->SetFloatValue(OBJECT_FIELD_SCALE_X, 3.0f);
+        pSummoned->SetDisplayId(m_uiNewDisplayId);
+        pSummoned->SetMaxHealth(500);
+        
+        Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+        if(pTarget)        
+            pSummoned->AI()->AttackStart(pTarget);
+        
+        pSummoned->StopMoving();
+        pSummoned->addUnitState(UNIT_STAT_CAN_NOT_MOVE);        
+        
+        // no respawns
+        pSummoned->SetRespawnEnabled(false);
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -82,14 +125,18 @@ struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
         if (m_uiSleepTimer <= uiDiff)
         {
             DoCastSpellIfCan(m_creature->getVictim(), SPELL_SLEEP);
-            m_uiSleepTimer = urand(12000, 20000);
+            m_uiSleepTimer = urand(25000, 35000);
         }
         else
             m_uiSleepTimer -= uiDiff;
 	
         // Illusions
-        if (m_uiIllusionsTimer <= uiDiff)			// get the positions within the platform, and random between those because movemaps are buggy.
+        if (m_uiIllusionsTimer <= uiDiff)
         {
+            m_creature->CastSpell(m_creature, SUMMON_NIGHTMARE_ILLUSION_B, true);
+            m_creature->CastSpell(m_creature, SUMMON_NIGHTMARE_ILLUSION_L, true);
+            m_creature->CastSpell(m_creature, SUMMON_NIGHTMARE_ILLUSION_R, true);
+          /*    
             //We will summon 3 illusions that will spawn on a random player and attack this player
             for (uint8 i = 0; i < 3; ++i)
             {
@@ -143,8 +190,8 @@ struct MANGOS_DLL_DECL boss_hazzarahAI : public ScriptedAI
                         pIllusion->AI()->AttackStart(pTarget);
                     }
                 }
-            }
-            m_uiIllusionsTimer = urand(15000, 25000);
+            }*/
+            m_uiIllusionsTimer = urand(15000, 21000);
         }
         else
             m_uiIllusionsTimer -= uiDiff;
@@ -168,16 +215,24 @@ struct MANGOS_DLL_DECL mob_nightmare_illusionAI : public ScriptedAI
 		m_creature->SetAOEImmunity(true);	
         Reset();
     }
+    
+    uint32 m_uiSpawnTimer;
 
     void Reset()
     {
+        m_uiSpawnTimer = 2500;
     }
 
 	void UpdateAI(const uint32 uiDiff)
     {
 		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
+        
+        if (m_uiSpawnTimer <= uiDiff)
+            m_creature->clearUnitState(UNIT_STAT_CAN_NOT_MOVE);
+        else
+            m_uiSpawnTimer -= uiDiff;
+        
         DoMeleeAttackIfReady();
 	}
 };
