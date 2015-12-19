@@ -152,9 +152,21 @@ bool ChatHandler::HandleServerInfoCommand(char* /*args*/)
 {
     uint32 activeClientsNum = sWorld.GetActiveSessionCount();
     uint32 queuedClientsNum = sWorld.GetQueuedSessionCount();
-    uint32 maxActiveClientsNum = sWorld.GetMaxActiveSessionCount();
     uint32 maxQueuedClientsNum = sWorld.GetMaxQueuedSessionCount();
     std::string str = secsToTimeString(sWorld.GetUptime());
+
+    // Get the maximum count for the last four weeks.
+    uint32 maxActiveClientsNum;
+    QueryResult* res = LoginDatabase.Query("SELECT MAX(maxplayers) FROM zp_realmd.uptime WHERE starttime > UNIX_TIMESTAMP(NOW()) - 2419000;");
+    if (res)
+    {
+        Field* row = res->Fetch();
+        maxActiveClientsNum = row[0].GetUInt32();
+
+        delete res;
+    }
+    else
+        maxActiveClientsNum = sWorld.GetMaxActiveSessionCount();
 
     char const* full;
     if(m_session)
