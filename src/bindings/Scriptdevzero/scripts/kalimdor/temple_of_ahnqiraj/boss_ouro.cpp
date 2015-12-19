@@ -189,13 +189,13 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 		}
 	}
 
-	void Submerge()			// not doing submerge animation, it's right emote tho
+	void Submerge()
 	{           
-		// Submerge
-		m_creature->HandleEmote(EMOTE_ONESHOT_SUBMERGE);
+		// Submerge		
 		m_creature->AttackStop();
 		if (m_creature->IsNonMeleeSpellCasted(false))
 			m_creature->InterruptNonMeleeSpells(false);
+        m_creature->HandleEmote(EMOTE_ONESHOT_SUBMERGE);
 		m_creature->SetVisibility(VISIBILITY_OFF);
 		m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
 		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
