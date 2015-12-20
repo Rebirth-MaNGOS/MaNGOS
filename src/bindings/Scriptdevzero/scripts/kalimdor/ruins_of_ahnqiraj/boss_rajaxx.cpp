@@ -65,6 +65,11 @@ struct Move
     float x, y, z;
 };
 
+struct Orientation
+{
+    float o;
+};
+
 static Move Andorov[]=
 {
     {-8872.0f, 1628.0f, 21.38f},
@@ -87,6 +92,12 @@ static Loc AndorovKaldoreiSpawn[] =
     {-8717.14f, 1584.30f, 21.41f, 2.37f, NPC_KALDOREI_ELITE},
     {-8714.63f, 1587.17f, 21.67f, 2.37f, NPC_KALDOREI_ELITE},
 };
+
+static Orientation BossTurn[]=
+{6.08f, 5.37f, 0.89f, 4.96f, 0.25f, 4.67f, 5.65f};
+
+static Orientation BossTurnBack[]=
+{2.97f, 2.06f, 4.03f, 1.82f, 3.37f, 1.51f, 2.57f};
 
 static Loc WaveOne[]=
 {
@@ -200,7 +211,13 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
     uint32 m_uiWaveCount;
     uint32 m_uiWaveTimer;
     uint32 m_uiAndorovRespawn;
-
+    uint32 m_uiTurnCaptains;
+    uint32 m_uiAttackTraining;
+    uint32 m_uiAttackTrainingOdd;
+    uint32 m_uiAttackTrainingCpt;
+    uint32 m_uiAttackTrainingOddCpt;
+    uint32 m_uiAttackTrainingBoss;
+    
     std::vector<ObjectGuid> m_uiSummonList;
 
     void Reset()
@@ -208,10 +225,12 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
         RestartEvent();
 
         m_bHasEnraged = false;
-        m_bAndorovEngaged = false;
-
+        m_bAndorovEngaged = false;        
         m_uiDisarmTimer = 5000;
         m_uiThunderCrashTimer = 25000; 
+        
+        // beginning RP
+        m_uiAttackTrainingBoss = 15000;
     }
 
     void JustReachedHome()
@@ -360,6 +379,125 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
     {
         m_uiAndorovRespawn = 60000;
     }
+    
+    void AttackTrainWave(int Groups = 0)
+    {
+        if(Groups == 0)     // turn the captains
+        {
+            int pos = 0;
+            for (short i = 0; i <= 42; i ++) 
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->SetFacingTo(BossTurn[pos].o);      
+                i = i + 6;
+                pos++;
+            }           
+        }
+        if(Groups == 1)    // turn the captains back
+        {       
+            int pos = 0;
+            for (short i = 0; i <= 42; i ++) 
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->SetFacingTo(BossTurnBack[pos].o);
+                i = i + 6;
+                pos++;
+            }            
+        }
+        
+        if(Groups == 2)
+        {
+            for (short i = 0; i < 7; i++)   // first group
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            }            
+           for (short i = 14; i < 21; i++)   // second group
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            }
+            for (short i = 21; i < 28; i++)   // third group
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            }
+        }
+        if(Groups == 3)
+        {
+            for (short i = 28; i < 35; i++)   // fourth group
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            }            
+           for (short i = 35; i < 42; i++)   // fifth group
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            }
+            for (short i = 42; i < 49; i++)   // sixth group
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            }
+            for (short i = 49; i < 56; i++)   // seventh group
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            }
+        }
+        if(Groups == 4)     // attack with first groups of captains
+        {
+            for (short i = 0; i <= 21; i ++) 
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);     
+                i = i + 6;
+            }
+        }
+          if(Groups == 5)     // attack with rest of the captains
+        {
+            for (short i = 21; i <= 49; i ++) 
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);     
+                i = i + 6;
+            }
+        }
+    }
 
     void AttackWave(Unit* pTarget = nullptr)
     {
@@ -468,6 +606,64 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+        // RP
+        if(m_pInstance && m_pInstance->GetData(TYPE_RAJAXX) == NOT_STARTED && m_creature->isAlive() && !m_creature->isInCombat())
+        {  
+            if (m_uiAttackTrainingBoss <= uiDiff)
+            {
+                m_creature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+                AttackTrainWave(0);     // turns captains                
+                m_uiAttackTrainingBoss = 15000;     
+                m_uiTurnCaptains = 6000;
+                m_uiAttackTrainingCpt = 1000;
+                m_uiAttackTraining = 3000;
+                m_uiAttackTrainingOdd = 4000;
+                m_uiAttackTrainingOddCpt = 2000;                
+            }
+            else
+                m_uiAttackTrainingBoss -= uiDiff;
+            
+            if (m_uiTurnCaptains <= uiDiff)     // turn the captains back
+            {
+                AttackTrainWave(1);     // turns captains back
+                m_uiTurnCaptains = 15000;
+            }
+            else
+                m_uiTurnCaptains -= uiDiff;
+            
+             if (m_uiAttackTraining <= uiDiff)
+            {
+                AttackTrainWave(2);     // attack with full groups 1             
+                m_uiAttackTraining = 15000;                    
+            }
+            else
+                m_uiAttackTraining -= uiDiff;
+            
+            if (m_uiAttackTrainingOdd <= uiDiff)
+            {
+                AttackTrainWave(3);    // attack with full groups 2        
+                m_uiAttackTrainingOdd = 15000;
+            }
+            else
+                m_uiAttackTrainingOdd -= uiDiff;
+            
+            if (m_uiAttackTrainingOddCpt <= uiDiff)
+            {
+                AttackTrainWave(5);
+                m_uiAttackTrainingOddCpt = 15000;
+            }
+            else
+                m_uiAttackTrainingOddCpt -= uiDiff;
+            
+            if (m_uiAttackTrainingCpt <= uiDiff)
+            {
+                AttackTrainWave(4);
+                m_uiAttackTrainingCpt = 15000;
+            }
+            else
+                m_uiAttackTrainingCpt -= uiDiff;
+        }
+        
         if(m_uiAndorovRespawn)
         {
             if(m_uiAndorovRespawn <= uiDiff)
@@ -504,8 +700,6 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
             }
             else
                 m_uiWaveTimer -= uiDiff;
-
-
         }
 
         if (m_uiEventCheckTimer <= uiDiff)
