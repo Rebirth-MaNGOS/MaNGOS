@@ -50,7 +50,7 @@ struct MANGOS_DLL_DECL boss_ukorz_sandscalpAI : public ScriptedAI
 	bool BossScript;
 	bool enrage;
 
-	Creature* mFriend;
+	ObjectGuid mFriend;
 
     void Reset()
 	{
@@ -74,9 +74,9 @@ struct MANGOS_DLL_DECL boss_ukorz_sandscalpAI : public ScriptedAI
 		m_creature->CastSpell(m_creature,SPELL_BERSERKERHALTUNG,true);
 		m_creature->CallForHelp(15.0f);
 		if (BossScript)
-			mFriend = GetFriend(NPC_RUUZLU);
+			mFriend = GetFriendGuid(NPC_RUUZLU);
 		else
-			mFriend = GetFriend(NPC_UKORZ_SANDSCALP);
+			mFriend = GetFriendGuid(NPC_UKORZ_SANDSCALP);
 
 		GUIDList L = m_pInstance->m_uiSnakes;
 		Map* pMap = m_creature->GetMap();
@@ -109,26 +109,33 @@ struct MANGOS_DLL_DECL boss_ukorz_sandscalpAI : public ScriptedAI
 
 	void ReviveFriendIfDead(int /*pFriend*/)
 	{ 
-		if(mFriend && mFriend->isDead())
-			mFriend->Respawn();
+        Creature* pFriend = GetFriend(mFriend);
+		if(pFriend && pFriend->isDead())
+			pFriend->Respawn();
 	}
 
 	void GoLoot(int /*pFriend*/)
 	{
-		if(mFriend && mFriend->isDead()) 
-			mFriend->SetVisibility(VISIBILITY_ON);
+        Creature* pFriend = GetFriend(mFriend);
+		if(pFriend && pFriend->isDead()) 
+			pFriend->SetVisibility(VISIBILITY_ON);
 		else 
 			m_creature->SetVisibility(VISIBILITY_OFF);
 	}
 
-	Creature* GetFriend(int pFriend)
+    Creature* GetFriend(const ObjectGuid& guid)
+    {
+        return m_creature->GetMap()->GetCreature(guid);
+    }
+
+	ObjectGuid GetFriendGuid(int pFriend)
 	{
 		Creature* pTemp = 0;
 		std::list<Creature*> ADList;
 		GetCreatureListWithEntryInGrid(ADList,m_creature,pFriend,500.0f);
 		for(std::list<Creature*>::iterator i = ADList.begin(); i != ADList.end(); ++i)
 			pTemp = *i;
-		return pTemp;
+		return pTemp->GetObjectGuid();
 	}
 
 	 void UpdateAI(const uint32 uiDiff)
