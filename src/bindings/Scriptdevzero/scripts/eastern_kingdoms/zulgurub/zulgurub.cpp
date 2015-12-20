@@ -546,6 +546,7 @@ struct MANGOS_DLL_DECL npc_GurubashiAI : public ScriptedAI
 {
     npc_GurubashiAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
+        m_bMC = true;
         Reset();
     }
 
@@ -599,7 +600,7 @@ CreatureAI* GetAI_npc_Gurubashi(Creature* pCreature)
 
 bool GOUse_go_jinxed_hoodoo_pile(Player* pPlayer, GameObject* pGo)
 {
-	if(Creature* pGurubashi = pPlayer->SummonCreature(15047, 0,0,0,0,TEMPSUMMON_TIMED_DESPAWN,30000,false))
+	if(Creature* pGurubashi = pPlayer->SummonCreature(15047, pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), 0.f, TEMPSUMMON_TIMED_DESPAWN,30000,false))
 	{
 		if (npc_GurubashiAI* pAI = dynamic_cast<npc_GurubashiAI*>(pGurubashi->AI()))
 		{
