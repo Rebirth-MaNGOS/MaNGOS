@@ -345,6 +345,7 @@ Map::Add(T *obj)
 {
     MANGOS_ASSERT(obj);
 
+
     CellPair p = MaNGOS::ComputeCellPair(obj->GetPositionX(), obj->GetPositionY());
     if(p.x_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP || p.y_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP )
     {
@@ -398,23 +399,6 @@ Map::Add(T *obj)
     {
         obj->GetViewPoint().Event_AddedToWorld(&(*grid)(cell.CellX(), cell.CellY()));
         UpdateObjectVisibility(obj,cell,p);
-    }
-
-    // We want all creatures on the continents to be active.
-    // This should prevent players from getting stuck in combat.
-    // It should also make sure patrolling mobs eventually show up.
-    Creature* pCreature = dynamic_cast<Creature*>(obj);
-    if (pCreature && !pCreature->isActiveObject())
-    {
-        if (GetId() == 1 || GetId() == 0)
-        {
-            AddToContinent(pCreature);
-        }
-        else
-        {
-            if (!pCreature->isActiveObject())
-                pCreature->SetActiveObjectState(true);
-        }
     }
 }
 
@@ -750,8 +734,6 @@ Map::Remove(T *obj, bool remove)
 
     if(obj->isActiveObject())
         RemoveFromActive(obj);
-    else if (GetId() == 1 || GetId() == 0)
-        RemoveFromContinent(obj);
 
     if(remove)
         obj->CleanupsBeforeDelete();
