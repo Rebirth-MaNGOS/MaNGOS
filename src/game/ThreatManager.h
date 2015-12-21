@@ -203,7 +203,7 @@ class MANGOS_DLL_SPEC ThreatManager
 
         Unit* getHostileTarget();
 
-        void tauntApply(Unit* pTaunter);
+        void tauntApply(Unit* pTaunter, bool perm = false);
         void tauntFadeOut(Unit *pTaunter);
 
         void setCurrentVictim(HostileReference* pHostileReference);

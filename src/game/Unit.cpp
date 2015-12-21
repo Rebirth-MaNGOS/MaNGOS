@@ -7836,7 +7836,7 @@ void Unit::DeleteThreatList()
 
 //======================================================================
 
-void Unit::TauntApply(Unit* taunter)
+void Unit::TauntApply(Unit* taunter, bool perm)
 {
     MANGOS_ASSERT(GetTypeId() == TYPEID_UNIT);
 
@@ -7857,9 +7857,10 @@ void Unit::TauntApply(Unit* taunter)
 
         if (((Creature*)this)->AI())
             ((Creature*)this)->AI()->AttackStart(taunter);
+
     }
 
-    m_ThreatManager.tauntApply(taunter);
+    m_ThreatManager.tauntApply(taunter, perm);
 }
 
 //======================================================================
@@ -7889,6 +7890,8 @@ void Unit::TauntFadeOut(Unit *taunter)
 
         return;
     }
+
+    return;
 
     m_ThreatManager.tauntFadeOut(taunter);
     target = m_ThreatManager.getHostileTarget();
