@@ -1954,6 +1954,10 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
 
                 GetSession()->SendPacket( &data );
                 SendSavedInstances();
+
+                // Clear the player's combat state
+                // on a map change.
+                ClearInCombat();
             }
         }
         else

@@ -216,6 +216,19 @@ void Creature::AddToWorld()
     if (!IsInWorld() && GetObjectGuid().GetHigh() == HIGHGUID_UNIT)
     {
         GetMap()->GetObjectsStore().insert<Creature>(GetObjectGuid(), (Creature*)this);
+
+        // Mobs on the continents are added to their own list
+        // so they're always updated when in combat or patrolling.
+        if (GetMap()->GetId() == 1 || GetMap()->GetId() == 0)
+        {
+            GetMap()->AddToContinent(this);
+        }
+        else
+        {
+            // All instance creatures are set as active creatures.
+            if (!isActiveObject())
+                SetActiveObjectState(true);
+        }
     }
 
     SearchFormation();
@@ -232,6 +245,10 @@ void Creature::RemoveFromWorld()
             sFormationMgr.RemoveCreatureFromGroup(m_formation, this);
 
         GetMap()->GetObjectsStore().erase<Creature>(GetObjectGuid(), (Creature*)NULL);
+
+        // Remove continent mobs from their special list.
+        if (GetMap()->GetId() == 1 || GetMap()->GetId() == 0)
+            GetMap()->RemoveFromContinent(this);
     }
 
     Unit::RemoveFromWorld();

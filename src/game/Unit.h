@@ -1609,7 +1609,7 @@ public:
         float ApplyTotalThreatModifier(float threat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL);
         void DeleteThreatList();
         bool SelectHostileTarget();
-        void TauntApply(Unit* pVictim);
+        void TauntApply(Unit* pVictim, bool perm = false);
         void TauntFadeOut(Unit *taunter);
         ThreatManager& getThreatManager() { return m_ThreatManager; }
         ThreatManager const& getThreatManager() const { return m_ThreatManager; }
@@ -1813,6 +1813,10 @@ public:
 
 		bool IsRewardAllowedForPlayer();  // Checks if an NPC has done more than 50 % of the damage to the creature and does not allow rewards for the player if that's case.
 
+        void setMeleeReachable(bool meleeReachable);
+        bool isMeleeReachable() {return m_meleeReachable;}
+        void setSpellNextMelee(bool spellNextMelee) {m_spellNextHit = true;}
+
     protected:
         explicit Unit ();
 
@@ -1893,6 +1897,9 @@ public:
         GuardianPetList m_guardianPets;
 
         ObjectGuid m_TotemSlot[MAX_TOTEM_SLOT];
+
+        bool m_meleeReachable;
+        bool m_spellNextHit;
 
     private:                                                // Error traps for some wrong args using
         // this will catch and prevent build for any cases when all optional args skipped and instead triggered used non boolean type

@@ -494,11 +494,15 @@ float ThreatManager::getThreat(Unit *pVictim, bool pAlsoSearchOfflineList)
 
 //============================================================
 
-void ThreatManager::tauntApply(Unit* pTaunter)
+void ThreatManager::tauntApply(Unit* pTaunter, bool perm)
 {
     if(HostileReference* ref = iThreatContainer.getReferenceByTarget(pTaunter))
     {
         HostileReference* victRef = getCurrentVictim();
+        
+        if(perm)
+            setCurrentVictim(ref);
+
         if(victRef && (ref->getThreat() < victRef->getThreat()))
         {
             // Ok, temp threat is unused

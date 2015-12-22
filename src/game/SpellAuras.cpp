@@ -3855,8 +3855,15 @@ void Aura::HandleModTaunt(bool apply, bool Real)
     if (!caster || !caster->isAlive())
         return;
 
+    
+
     if (apply)
-        target->TauntApply(caster);
+    {
+        if(GetId() == 355 || GetId() == 6795)
+            target->TauntApply(caster, true);
+        else
+            target->TauntApply(caster);
+    }
     else
     {
         // When taunt aura fades out, mob will switch to previous target if current has less than 1.1 * secondthreat
