@@ -91,30 +91,31 @@ void instance_ruins_of_ahnqiraj::OnCreatureCreate(Creature* pCreature)
             
             // For mobs up til Rajaxx
         case NPC_QIRAJI_SWARMGUARD:
-        //case NPC_HIVEZARA_WASP:     // some, but not all, both at ayamiss and rajaxx 
-        //case NPC_HIVEZARA_STINGER:   // some, but not all, both at ayamiss and rajaxx 
-        //case NPC_QIRAJI_GLADIATOR: // first 4 gladiators? rly,
+        case NPC_HIVEZARA_WASP:
+        case NPC_HIVEZARA_STINGER:
+        case NPC_QIRAJI_GLADIATOR_2:
             m_lRajaxxTrash.push_back(pCreature->GetObjectGuid());  
             break;
             // For mobs up til Buru
         case NPC_HIVEZARA_SANDSTALKER:
         case NPC_HIVEZARA_SOLDIER:
-        //case NPC_FLESH_HUNTER:  // some, but not all, 
+        case NPC_FLESH_HUNTER_2:
             m_lBuruTrash.push_back(pCreature->GetObjectGuid());  
             break;
             // For mobs up til Ayamiss
         case NPC_HIVEZARA_TAIL_LASHER:
         case NPC_HIVEZARA_COLLECTOR:
         case NPC_HIVEZARA_DRONE:
-       // case NPC_HIVEZARA_WASP:       // some, but not all, both at ayamiss and rajaxx 
-        //case NPC_HIVEZARA_STINGER:    // some, but not all, both at ayamiss and rajaxx 
+        case NPC_HIVEZARA_WASP_2:
+        case NPC_HIVEZARA_STINGER_2:
+        case NPC_SILICATE_FEEDER:
             m_lAyamissTrash.push_back(pCreature->GetObjectGuid());  
             break;
         // For mobs up til Moam
         case NPC_SHRIEKER_SCARAB:
         case NPC_SPITTING_SCARAB:
         case NPC_OBSIDIAN_DESTROYER:
-        //case NPC_FLESH_HUNTER:  // some, but not all
+        case NPC_FLESH_HUNTER:
             m_lMoamTrash.push_back(pCreature->GetObjectGuid());  
             break;
             // For mobs up til Ossirian
