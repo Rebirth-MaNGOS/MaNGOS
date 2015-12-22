@@ -39,7 +39,7 @@ enum Creatures
     NPC_QIRAJI_WARRIOR            = 15387,
     NPC_MANA_FIEND                = 15527,    
     NPC_HIVEZARA_SWARMER          = 15546,
-	NPC_HIVEZARA_SWARMER_1		  = 155460,
+	NPC_HIVEZARA_SWARMER_1  = 155460,
     NPC_HIVEZARA_LARVA            = 15555,
     NPC_ANUB_WARRIOR              = 15537,      // AQ40
     NPC_ANUB_SWARM                = 15538,      // AQ40
@@ -50,34 +50,33 @@ enum Creatures
     NPC_OSSIRIAN_CRYSTAL_TRIGGER  = 15590,
     NPC_TORNADO                   = 15428,
     
-    // trash per boss 
-    // no respawn after rajaxx
+    // trash per boss that should stop respawning
+    // no respawn after Rajaxx
     NPC_QIRAJI_SWARMGUARD = 15343,
-    NPC_HIVEZARA_WASP             = 15325,      // some, but not all, both at ayamiss and rajaxx 
-    NPC_HIVEZARA_STINGER            = 15327,  // some, but not all, both at ayamiss and rajaxx 
-    NPC_QIRAJI_GLADIATOR = 15324,
-    // first 4 gladiators? rly,
+    NPC_HIVEZARA_WASP             = 15325,
+    NPC_HIVEZARA_STINGER            = 15327,
+    NPC_QIRAJI_GLADIATOR_2 = 153240,
     
-    // after buru no respawn
+    // after Buru
     NPC_HIVEZARA_SANDSTALKER = 15323,
     NPC_HIVEZARA_SOLDIER        = 15320,
-    NPC_FLESH_HUNTER = 15335,
-    // vissa flesh hunter 
+    NPC_FLESH_HUNTER_2 = 153350, 
     
-    // after ayamiss no respawn
+    // after Ayamiss
     NPC_HIVEZARA_TAIL_LASHER = 15336,
     NPC_HIVEZARA_COLLECTOR = 15319,
     NPC_HIVEZARA_DRONE = 15318,
-    //NPC_HIVEZARA_WASP             = 15325,      // some, but not all, both at ayamiss and rajaxx 
-   // NPC_HIVEZARA_STINGER            = 15327, // some, but not all, both at ayamiss and rajaxx 
+    NPC_HIVEZARA_WASP_2             = 153250,
+    NPC_HIVEZARA_STINGER_2            = 153270,
+    NPC_SILICATE_FEEDER = 15333,
     
-    // after moam 
+    // after Moam 
     NPC_SHRIEKER_SCARAB = 15461,
     NPC_SPITTING_SCARAB = 15462,
     NPC_OBSIDIAN_DESTROYER = 15338,
-    //a couple flesh hunters
+    NPC_FLESH_HUNTER = 15335,
     
-    // after ossirian 
+    // after Ossirian 
     NPC_ANUBISATH_GUARDIAN = 15355,
 };
 
