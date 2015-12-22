@@ -91,7 +91,8 @@ namespace VMAP
              * @param pStopAtFirstHit
              * @return bool
              */
-            bool getIntersectionTime(const G3D::Ray& pRay, float& pMaxDist, bool pStopAtFirstHit) const;
+            bool getIntersectionTime(const G3D::Ray& pRay, float& pMaxDist, bool pStopAtFirstHit, 
+                                     bool ignoreM2 = true) const;
             // bool containsLoadedMapTile(unsigned int pTileIdent) const { return(iLoadedMapTiles.containsKey(pTileIdent)); }
         public:
             /**
@@ -150,7 +151,7 @@ namespace VMAP
              * @param pos2
              * @return bool
              */
-            bool isInLineOfSight(const G3D::Vector3& pos1, const G3D::Vector3& pos2) const;
+            bool isInLineOfSight(const G3D::Vector3& pos1, const G3D::Vector3& pos2, bool ignoreM2 = true) const;
             /**
              * @brief
              *

@@ -155,7 +155,13 @@ namespace VMAP
             Vector3 pos2 = convertPositionToInternalRep(x2, y2, z2);
             if (pos1 != pos2)
             {
-                result = instanceTree->second->isInLineOfSight(pos1, pos2);
+                bool ignoreM2 = true;
+
+                // Let trees and other models break LOS in the BGs.
+                if (pMapId == 489 || pMapId == 529 || pMapId == 30)
+                    ignoreM2 = false;
+
+                result = instanceTree->second->isInLineOfSight(pos1, pos2, ignoreM2);
             }
         }
         return result;

@@ -321,7 +321,7 @@ namespace VMAP
              * @param stopAtFirstHit
              * @return bool
              */
-            bool IntersectRay(const G3D::Ray& ray, float& distance, bool stopAtFirstHit) const;
+            bool IntersectRay(const G3D::Ray& ray, float& distance, bool stopAtFirstHit, bool ignoreM2 = true) const;
             /**
              * @brief
              *

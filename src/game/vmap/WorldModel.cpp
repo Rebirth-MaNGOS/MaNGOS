@@ -23,6 +23,7 @@
  */
 
 #include "WorldModel.h"
+#include "Object.h"
 #include "VMapDefinitions.h"
 #include "MapTree.h"
 
@@ -367,7 +368,7 @@ namespace VMAP
     {
         GModelRayCallback(const std::vector<MeshTriangle>& tris, const std::vector<Vector3>& vert):
             vertices(vert.begin()), triangles(tris.begin()), hit(false) {}
-        bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool /*pStopAtFirstHit*/)
+        bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool /*pStopAtFirstHit*/, bool /*ignoreM2*/)
         {
             bool result = IntersectTriangle(triangles[entry], vertices, ray, distance);
             if (result)  { hit = true; }
@@ -426,7 +427,7 @@ namespace VMAP
     struct WModelRayCallBack
     {
         WModelRayCallBack(const std::vector<GroupModel>& mod): models(mod.begin()), hit(false) {}
-        bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit)
+        bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit, bool /*ignoreM2*/)
         {
             bool result = models[entry].IntersectRay(ray, distance, pStopAtFirstHit);
             if (result)  { hit = true; }
@@ -436,10 +437,10 @@ namespace VMAP
         bool hit;
     };
 
-    bool WorldModel::IntersectRay(const G3D::Ray& ray, float& distance, bool stopAtFirstHit) const
+    bool WorldModel::IntersectRay(const G3D::Ray& ray, float& distance, bool stopAtFirstHit, bool ignoreM2) const
     {
         // M2 models, such as trees, should be ignored for LOS.
-        if (flags & static_cast<uint32>(ModelFlags::MOD_M2))
+        if (ignoreM2 && (flags & static_cast<uint32>(ModelFlags::MOD_M2)))
             return false;
 
         // small M2 workaround, maybe better make separate class with virtual intersection funcs

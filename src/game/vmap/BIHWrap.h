@@ -63,7 +63,7 @@ class BIHWrap
              * @param bool
              * @return bool operator
              */
-            bool operator()(const Ray& r, uint32 Idx, float& MaxDist, bool /*stopAtFirst*/)
+            bool operator()(const Ray& r, uint32 Idx, float& MaxDist, bool /*stopAtFirst*/, bool /*ignoreM2*/)
             {
                 if (const T* obj = objects[Idx])
                     { return cb(r, *obj, MaxDist/*, stopAtFirst*/); }
