@@ -88,6 +88,40 @@ void instance_ruins_of_ahnqiraj::OnCreatureCreate(Creature* pCreature)
 			pCreature->setFaction(35);
 			pCreature->SetVisibility(VISIBILITY_OFF);
 			break;
+            
+            // For mobs up til Rajaxx
+        case NPC_QIRAJI_SWARMGUARD:
+        case NPC_HIVEZARA_WASP:
+        case NPC_HIVEZARA_STINGER:
+        case NPC_QIRAJI_GLADIATOR_2:
+            m_lRajaxxTrash.push_back(pCreature->GetObjectGuid());  
+            break;
+            // For mobs up til Buru
+        case NPC_HIVEZARA_SANDSTALKER:
+        case NPC_HIVEZARA_SOLDIER:
+        case NPC_FLESH_HUNTER_2:
+            m_lBuruTrash.push_back(pCreature->GetObjectGuid());  
+            break;
+            // For mobs up til Ayamiss
+        case NPC_HIVEZARA_TAIL_LASHER:
+        case NPC_HIVEZARA_COLLECTOR:
+        case NPC_HIVEZARA_DRONE:
+        case NPC_HIVEZARA_WASP_2:
+        case NPC_HIVEZARA_STINGER_2:
+        case NPC_SILICATE_FEEDER:
+            m_lAyamissTrash.push_back(pCreature->GetObjectGuid());  
+            break;
+        // For mobs up til Moam
+        case NPC_SHRIEKER_SCARAB:
+        case NPC_SPITTING_SCARAB:
+        case NPC_OBSIDIAN_DESTROYER:
+        case NPC_FLESH_HUNTER:
+            m_lMoamTrash.push_back(pCreature->GetObjectGuid());  
+            break;
+            // For mobs up til Ossirian
+        case NPC_ANUBISATH_GUARDIAN:
+            m_lOssirianTrash.push_back(pCreature->GetObjectGuid());  
+            break;
     }
 }
 
@@ -102,13 +136,49 @@ void instance_ruins_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
                 DoOrSimulateScriptTextForThisInstance(YELL_OSSIRIAN_BREACHED, NPC_OSSIRIAN);
             }
             break;
-        case TYPE_RAJAXX:
+        case TYPE_RAJAXX:           // no trash respawn after Rajaxx is dead
             m_auiEncounter[1] = uiData;
+            if (uiData == DONE)
+            {
+                if (!m_lRajaxxTrash.empty())
+                {
+                    for(GUIDList::iterator itr = m_lRajaxxTrash.begin(); itr != m_lRajaxxTrash.end(); ++itr)
+                    {
+                        if (Creature* pTrash = instance->GetCreature(*itr))
+                        {
+                            pTrash->SetRespawnDelay(604800);
+                            if (!pTrash->isAlive())
+                            {
+                                pTrash->SetRespawnTime(604800);
+                                pTrash->SaveRespawnTime();
+                            }
+                        }
+                    }
+                }
+            }
             break;
-        case TYPE_MOAM:
+        case TYPE_MOAM:           // no trash respawn after Moam is dead
             m_auiEncounter[2] = uiData;
+            if (uiData == DONE)
+            {
+                if (!m_lMoamTrash.empty())
+                {
+                    for(GUIDList::iterator itr = m_lMoamTrash.begin(); itr != m_lMoamTrash.end(); ++itr)
+                    {
+                        if (Creature* pTrash = instance->GetCreature(*itr))
+                        {
+                            pTrash->SetRespawnDelay(604800);
+                            if (!pTrash->isAlive())
+                            {
+                                pTrash->SetRespawnTime(604800);
+                                pTrash->SaveRespawnTime();
+                            }
+                        }
+                    }
+                }
+            }
             break;
-        case TYPE_BURU:
+        case TYPE_BURU:           // no trash respawn after Buru is dead
             m_auiEncounter[3] = uiData;
 			if (uiData == DONE)					// If Buru is dead despawn the eggs that are alive and set the respawn of all eggs to 1 week
 			{
@@ -124,15 +194,66 @@ void instance_ruins_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
 							pTarget->SetRespawnTime(604800);
 							pTarget->SaveRespawnTime();
 						}
-					}
+					}				
+                    if (!m_lBuruTrash.empty())
+                    {
+                        for(GUIDList::iterator itr = m_lBuruTrash.begin(); itr != m_lBuruTrash.end(); ++itr)
+                        {
+                            if (Creature* pTrash = instance->GetCreature(*itr))
+                            {
+                                pTrash->SetRespawnDelay(604800);
+                                if (!pTrash->isAlive())
+                                {
+                                    pTrash->SetRespawnTime(604800);
+                                    pTrash->SaveRespawnTime();
+                                }
+                            }
+                        }
+                    }
 				}
 			}
             break;
-        case TYPE_AYAMISS:
+        case TYPE_AYAMISS:           // no trash respawn after Ayamiss is dead
             m_auiEncounter[4] = uiData;
+            if (uiData == DONE)
+            {
+                if (!m_lAyamissTrash.empty())
+                {
+                    for(GUIDList::iterator itr = m_lAyamissTrash.begin(); itr != m_lAyamissTrash.end(); ++itr)
+                    {
+                        if (Creature* pTrash = instance->GetCreature(*itr))
+                        {
+                            pTrash->SetRespawnDelay(604800);
+                            if (!pTrash->isAlive())
+                            {
+                                pTrash->SetRespawnTime(604800);
+                                pTrash->SaveRespawnTime();
+                            }
+                        }
+                    }
+                }
+            }
             break;
-        case TYPE_OSSIRIAN:
+        case TYPE_OSSIRIAN:           // no trash respawn after Ossirian is dead
             m_auiEncounter[5] = uiData;
+            if (uiData == DONE)
+            {
+                if (!m_lOssirianTrash.empty())
+                {
+                    for(GUIDList::iterator itr = m_lOssirianTrash.begin(); itr != m_lOssirianTrash.end(); ++itr)
+                    {
+                        if (Creature* pTrash = instance->GetCreature(*itr))
+                        {
+                            pTrash->SetRespawnDelay(604800);
+                            if (!pTrash->isAlive())
+                            {
+                                pTrash->SetRespawnTime(604800);
+                                pTrash->SaveRespawnTime();
+                            }
+                        }
+                    }
+                }
+            }
             break;
     }
 
