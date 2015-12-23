@@ -3665,6 +3665,118 @@ CreatureAI* GetAI_jonathan_the_revelator(Creature* pCreature)
     return new npc_jonathan_the_revelatorAI(pCreature);
 }
 
+/*####
+# mob_tortured_druid_sentinel
+####*/
+
+enum eTortured
+{
+    SPELL_HEALING_TOUCH_DRUID          = 23381,
+    SPELL_MOONFIRE                  = 23380,
+    NPC_TORTURED_DRUID = 12178,
+    NPC_TORTURED_SENTINEL = 12179,
+    NPC_HIVEASHI_AMBUSHER = 13301
+};
+
+struct MANGOS_DLL_DECL mob_tortured_druid_sentinelAI : public ScriptedAI
+{
+    mob_tortured_druid_sentinelAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        switch(m_creature->GetEntry())
+        {
+            case NPC_TORTURED_DRUID:
+                m_uiSpell1Entry = SPELL_HEALING_TOUCH_DRUID;
+                m_uiSpell2Entry = SPELL_MOONFIRE;
+                m_bDruidEmote = true;
+                break;
+            case NPC_TORTURED_SENTINEL:
+                m_uiSpell1Entry = 0;
+                m_uiSpell2Entry = 0;
+                m_bDruidEmote = false;
+                break;
+        }
+        Reset(); 
+    }
+
+    uint32 m_uiHealingTouchimer;
+    uint32 m_uiMoonfireTimer;
+
+    uint32 m_uiSpell1Entry;
+    uint32 m_uiSpell2Entry;
+    
+    bool m_bDruidEmote;
+    
+    void Reset()
+    {
+        m_uiHealingTouchimer = urand(10000,25000);
+        m_uiMoonfireTimer = urand(2000,8000);
+        
+    }
+
+    void JustDied(Unit* pKiller)
+    {
+        int r = urand(0,4);
+        if(r >0)
+        {
+            if(m_bDruidEmote)
+                m_creature->GenericTextEmote("Tortured Druid's death cry has stirred the nearby silithid hive.", NULL, false);
+            else
+                m_creature->GenericTextEmote("Tortured Sentinel's death cry has stirred the nearby silithid hive.", NULL, false);
+            
+            Creature* pAmbusher = m_creature->SummonCreature(NPC_HIVEASHI_AMBUSHER, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 
+                0.f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 180000);
+            if(pAmbusher && pKiller)
+                pAmbusher->AI()->AttackStart(pKiller);                     
+        }
+    }
+    
+    void Execute(uint32 uiSpellEntry)
+    {
+        Unit* pTarget = NULL;
+        switch(uiSpellEntry)
+        {
+            case SPELL_MOONFIRE:
+                pTarget = m_creature->getVictim();
+                break;
+            case SPELL_HEALING_TOUCH_DRUID:    
+                pTarget = m_creature;
+                break;
+        }
+        if (pTarget && uiSpellEntry != 0)
+            DoCastSpellIfCan(pTarget, uiSpellEntry);
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if (m_uiHealingTouchimer <= uiDiff)
+        {
+            if(HealthBelowPct(80))
+                Execute(m_uiSpell1Entry);
+            m_uiHealingTouchimer = urand(10000,15000);
+        }   
+        else
+            m_uiHealingTouchimer -= uiDiff;
+
+        if (m_uiMoonfireTimer <= uiDiff)
+        {
+            Execute(m_uiSpell2Entry);
+            m_uiMoonfireTimer = 6000;
+        }   
+        else
+            m_uiMoonfireTimer -= uiDiff;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_tortured_druid_sentinel(Creature* pCreature)
+{
+    return new mob_tortured_druid_sentinelAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -3799,5 +3911,10 @@ void AddSC_silithus()
     pNewscript = new Script;
     pNewscript->Name = "npc_jonathan_the_revelator";
     pNewscript->GetAI = &GetAI_jonathan_the_revelator;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "mob_tortured_druid_sentinel";
+    pNewscript->GetAI = &GetAI_mob_tortured_druid_sentinel;
     pNewscript->RegisterSelf();
 }
