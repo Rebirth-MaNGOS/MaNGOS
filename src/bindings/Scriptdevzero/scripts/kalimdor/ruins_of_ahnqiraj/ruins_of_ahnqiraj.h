@@ -84,6 +84,7 @@ enum GameObjects
 {
     GO_SAND_TRAP                  = 180647,
     GO_OSSIRIAN_CRYSTAL           = 180619,
+    GO_SCARAB_COFFER = 180691,
 };
 
 enum Misc
