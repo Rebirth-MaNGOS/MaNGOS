@@ -174,6 +174,74 @@ CreatureAI* GetAI_generic_creature(Creature* pCreature)
     return new generic_creatureAI(pCreature);
 }
 
+/*######
+## mob_linked
+######*/
+
+struct MANGOS_DLL_DECL mob_linkedAI : public ScriptedAI
+{
+    mob_linkedAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Adds.clear();
+        m_creature->SetVisibility(VISIBILITY_OFF);
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED);
+        m_creature->GetMotionMaster()->Clear(false, true);
+        m_creature->GetMotionMaster()->MoveIdle();
+        m_bGetPos = true;
+        Reset();
+    }
+    
+    bool m_bGetPos;
+    std::vector<ObjectGuid> Adds;
+    
+    void Reset() 
+    {                       
+    }
+    
+    void GetAddsPos()
+    {
+        for(uint8 i = 0; i < Adds.size(); ++i)
+        {
+            Creature* currentAdd = m_creature->GetMap()->GetCreature(Adds[i]);
+            
+            if (currentAdd)
+            {
+                if (currentAdd && currentAdd->IsInWorld() && currentAdd->isAlive())
+                {
+                    CreatureCreatePos pos(currentAdd->GetMap(), currentAdd->GetPositionX(), currentAdd->GetPositionY(), currentAdd->GetPositionZ(), currentAdd->GetOrientation());
+                    currentAdd->SetSummonPoint(pos);              
+                    m_bGetPos = false;
+                }
+            }
+        }
+    }
+    
+    void GetAdds()
+    {
+        std::vector<Creature*> members;
+        m_creature->GetFormationMembers(members);
+        
+        for (Creature* member : members)
+            Adds.push_back(member->GetObjectGuid());
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(m_bGetPos)
+        {
+            GetAdds();
+            GetAddsPos();
+        }
+        else
+            return;
+    }
+};
+
+CreatureAI* GetAI_mob_linked(Creature* pCreature)
+{
+    return new mob_linkedAI(pCreature);
+}
+
 struct MANGOS_DLL_DECL mob_schnakeAI : public ScriptedAI
 {
 	mob_schnakeAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -297,7 +365,6 @@ struct MANGOS_DLL_DECL trigger_resonating_crystal : public ScriptedAI
             else
                 m_McTimer -= uiDiff;
         }
-
 	}
 };
 
@@ -314,6 +381,11 @@ void AddSC_generic_creature()
     pNewscript->GetAI = &GetAI_generic_creature;
     pNewscript->RegisterSelf(false);
 
+    pNewscript = new Script;
+    pNewscript->Name = "mob_linked";
+    pNewscript->GetAI = &GetAI_mob_linked;
+    pNewscript->RegisterSelf();
+    
 	pNewscript = new Script;
 	pNewscript->Name = "mob_schnake";
 	pNewscript->GetAI = &GetAI_mob_schnake;
