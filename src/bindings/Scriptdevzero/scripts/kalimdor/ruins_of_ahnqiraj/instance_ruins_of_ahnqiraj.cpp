@@ -57,6 +57,10 @@ void instance_ruins_of_ahnqiraj::OnObjectCreate(GameObject* pGo)
         case GO_OSSIRIAN_CRYSTAL:
             m_mGoEntryGuidStore[pGo->GetEntry()] = pGo->GetObjectGuid();
             break;
+        case GO_SCARAB_COFFER:        // not working     
+            pGo->SetRespawnTime(urand(3 * HOUR, 6 * HOUR));
+            pGo->SaveRespawnTime();
+            break;
     }
 }
 
