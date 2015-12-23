@@ -68,6 +68,7 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_KURINNAXX, NOT_STARTED);
+        RemoveTraps();
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -80,7 +81,8 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_KURINNAXX, DONE);
-
+        
+        RemoveTraps();
         // Summon Andorov
         if (Creature* pAndorov = m_creature->SummonCreature(NPC_GENERAL_ANDOROV, -8719.97f, 1579.10f, 21.43f, 2.47f, TEMPSUMMON_CORPSE_DESPAWN, 0))
         {
@@ -91,6 +93,18 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
         }
     }
 
+    void RemoveTraps()
+    {
+         // make sure there's no traps after a reset
+        std::list<GameObject*> m_lTraps;
+        GetGameObjectListWithEntryInGrid(m_lTraps, m_creature, GO_SAND_TRAP, 50.f);
+
+        if (!m_lTraps.empty())
+            for(std::list<GameObject*>::iterator itr = m_lTraps.begin(); itr != m_lTraps.end(); ++itr)
+                if ((*itr))
+                    (*itr)->RemoveFromWorld();
+    }
+    
 	void SpellHit(Unit* pCaster, SpellEntry const* pSpell) // emote if he enrages
     {
         if (pSpell->Id == SPELL_ENRAGE)
