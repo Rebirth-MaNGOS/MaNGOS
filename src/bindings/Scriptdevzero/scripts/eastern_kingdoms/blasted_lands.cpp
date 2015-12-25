@@ -141,6 +141,128 @@ bool GossipSelect_npc_fallen_hero_of_horde(Player* pPlayer, Creature* pCreature,
     return true;
 }
 
+/*######
+## mob_lady_sevine
+######*/
+
+enum eSevine
+{
+    SPELL_IMMOLATE               = 12742,
+    SPELL_FROST_ARMOR                = 12544,
+    SPELL_CURSE_OF_WEAKNESS           = 12741,
+    SPELL_SHADOW_BOLT         = 12739,
+    SPELL_SUMMON_INFERNAL        = 12740,
+    SPELL_FEL_CURSE = 12938
+};
+
+struct MANGOS_DLL_DECL mob_lady_sevineAI : public ScriptedAI
+{
+    mob_lady_sevineAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        DoCastSpellIfCan(m_creature, SPELL_FROST_ARMOR, CAST_AURA_NOT_PRESENT);
+        Reset();
+    }
+
+    uint32 m_uiSummonCount;
+
+    uint32 m_uiImmolateTimer;
+    uint32 m_uiCurseTimer;
+    uint32 m_uiShadowBoltTimer;
+    uint32 m_uiSummonInfernal;
+    
+    bool m_bSalved;
+
+    void Reset()
+    {
+        m_bSalved = false;
+        m_uiSummonCount = 0;
+
+        m_uiImmolateTimer = urand(4000, 6000);
+        m_uiCurseTimer = urand(1000, 3000);
+        m_uiShadowBoltTimer = urand(7000, 8000);
+        m_uiSummonInfernal = urand(10000, 15000);
+    }
+
+    void Aggro(Unit* /*pWho*/)
+    {
+        DoCastSpellIfCan(m_creature, SPELL_FROST_ARMOR, CAST_AURA_NOT_PRESENT);
+    }
+
+    void JustSummoned(Creature* pSummoned)
+    {
+        pSummoned->AI()->AttackStart(m_creature->getVictim());
+        ++m_uiSummonCount;
+    }
+    void SummonedCreatureJustDied(Creature* /*pSummoned*/)
+    {
+        --m_uiSummonCount;
+    }
+
+    void DamageTaken(Unit* /*pDoneBy*/, uint32& uiDamage)
+    {
+        if (!m_bSalved && (uiDamage >= m_creature->GetHealth()))   
+            uiDamage = 0;
+    }
+    
+    void SpellHit(Unit* /*pCaster*/, SpellEntry const* pSpell) // emote if he enrages
+    {
+        if (pSpell->Id == SPELL_FEL_CURSE)
+        {
+            m_creature->GenericTextEmote("Lady Sevine is substantially more susceptible to your attacks. The Felcurse is working!", NULL, false);
+            m_creature->InterruptNonMeleeSpells(false);
+            m_bSalved = true;
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if (m_uiShadowBoltTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_SHADOW_BOLT);
+            m_uiShadowBoltTimer = urand(3000, 5000);
+        }
+        else
+            m_uiShadowBoltTimer -= uiDiff;
+        
+        if (m_uiImmolateTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_IMMOLATE, CAST_INTERRUPT_PREVIOUS);
+            m_uiImmolateTimer = urand(15000, 24000);
+        }
+        else
+            m_uiImmolateTimer -= uiDiff;
+
+        if (m_uiCurseTimer <= uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_CURSE_OF_WEAKNESS, CAST_AURA_NOT_PRESENT);
+            m_uiCurseTimer = urand(30000, 45000);
+        }
+        else
+            m_uiCurseTimer -= uiDiff;
+
+        if (m_uiSummonInfernal <= uiDiff)
+        {
+            // change for summon spell
+            if (m_uiSummonCount < 4)
+                DoCastSpellIfCan(m_creature, SPELL_SUMMON_INFERNAL, CAST_INTERRUPT_PREVIOUS);
+
+            m_uiSummonInfernal = urand(15000, 25000);
+        }
+        else
+            m_uiSummonInfernal -= uiDiff;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_lady_sevine(Creature* pCreature)
+{
+    return new mob_lady_sevineAI(pCreature);
+}
+
 void AddSC_blasted_lands()
 {
     Script* pNewscript;
@@ -155,5 +277,10 @@ void AddSC_blasted_lands()
     pNewscript->Name = "npc_fallen_hero_of_horde";
     pNewscript->pGossipHello =  &GossipHello_npc_fallen_hero_of_horde;
     pNewscript->pGossipSelect = &GossipSelect_npc_fallen_hero_of_horde;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "mob_lady_sevine";
+    pNewscript->GetAI = &GetAI_mob_lady_sevine;
     pNewscript->RegisterSelf();
 }
