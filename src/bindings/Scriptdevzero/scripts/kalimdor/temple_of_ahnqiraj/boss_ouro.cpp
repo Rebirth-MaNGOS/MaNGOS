@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Boss_Ouro
 SD%Complete: 50
-SDComment: script needs to be reworked
+SDComment: For emerge, use handleemotestate submerged, but when its removed boss won't turn.
 SDCategory: Temple of Ahn'Qiraj
 EndScriptData */
 
@@ -63,8 +63,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     uint32 m_uiSweepTimer;
     uint32 m_uiSandBlastTimer;
     uint32 m_uiSubmergeTimer;
-	uint32 m_uiReSubmergeTimer;
-	uint32 m_uiCanReSubmergeTimer;
+    uint32 m_uiForceSubmergeTimer;
     uint32 m_uiBackTimer;
     uint32 m_uiChangeTargetTimer;
     uint32 m_uiSpawnTimer;
@@ -72,21 +71,18 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
 	uint8  m_bossState;
 
+    bool m_bForceSubmerge;
     bool m_bEnraged;
-	bool m_bReSubmerge;
-	bool m_bCanSubmerge;
 
 	GUIDList m_lDirtMounds;
 
     void Reset()
     {
-		m_bCanSubmerge = false;
-		m_bReSubmerge = false;
-		m_uiReSubmergeTimer = 5000;	
+        m_uiForceSubmergeTimer = 5000;
+        m_bForceSubmerge = false;
         m_uiSweepTimer = urand(5000, 10000);
         m_uiSandBlastTimer = urand(4000, 8000);
-        m_uiSubmergeTimer = 90000;//urand(90000, 150000);
-		m_uiCanReSubmergeTimer = 10000;//30000;		// just guessing, shouldn't be able to submerge if no tank at the start, but how long until boss can submerge due to no melee?
+        m_uiSubmergeTimer = 90000;//urand(90000, 150000);		
         m_uiBackTimer = 10000;//urand(30000, 45000);
         m_uiChangeTargetTimer = urand(5000, 8000);
         m_uiSpawnTimer = urand(10000, 20000);
@@ -142,9 +138,10 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     {
 		m_creature->SetVisibility(VISIBILITY_ON);
         m_creature->CastSpell(m_creature, SPELL_BIRTH, true);
+        m_creature->UpdateVisibilityAndView();
 		if(Player* pPlayer = GetPlayerAtMinimumRange(5))
-			m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);			//uncomment when they work, atm animation gets lost due to spell being casted
-		m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
+			m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);      
+        m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
     }
 
 	void SpawnDirtMound()
@@ -211,20 +208,6 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         // Just call this so that if there's a wipe we reset properly
         m_creature->SelectHostileTarget();
 
-		// Change Target
-        /*if (m_uiChangeTargetTimer < uiDiff)				// summon the mounds instead
-        {
-            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-            {
-                m_creature->GetMap()->CreatureRelocation(m_creature, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0.0f);
-                m_creature->SendMonsterMove(pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, 1);
-            }
-
-            m_uiChangeTargetTimer = urand(10000, 20000);
-        }
-        else
-            m_uiChangeTargetTimer -= uiDiff;*/
-
         // Back
         if (m_uiBackTimer < uiDiff)
         {
@@ -232,13 +215,13 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             m_creature->setFaction(14);	
 			m_creature->SetVisibility(VISIBILITY_ON);
 			m_creature->CastSpell(m_creature, SPELL_BIRTH, true);
+            m_creature->UpdateVisibilityAndView();
 			if(Player* pPlayer = GetPlayerAtMinimumRange(5))
-				m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);			//uncomment when they work, atm animation gets lost due to spell being casted
+				m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);
 
 			m_bossState = BOSS_STATE_NORMAL;
             m_uiSubmergeTimer = 90000;//urand(60000, 120000);
 			
-			m_creature->UpdateVisibilityAndView();
 			RemoveDirtMounds(0);
         }
         else
@@ -249,12 +232,16 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     {
 		if(!m_bEnraged)
 		{
-			// Timer at start so the boss can submerge if no melee in range
-			if (m_uiCanReSubmergeTimer <= uiDiff)
-				m_bCanSubmerge = true;
-			else
-				m_uiCanReSubmergeTimer -= uiDiff;
-
+            if(m_bForceSubmerge)
+            {
+                if (m_uiForceSubmergeTimer <= uiDiff)
+                {
+                    m_uiSubmergeTimer = 1;
+                    m_bForceSubmerge = false;
+                }
+                else
+                    m_uiForceSubmergeTimer -= uiDiff;
+            }
 			// Submerge
 			if (m_uiSubmergeTimer <= uiDiff)
 			{
@@ -294,7 +281,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 		}
 
 		if (m_bossState == BOSS_STATE_NORMAL)
-        {
+        { 
             if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
             {
                 if (Player* melee_player = DoGetPlayerInMeleeRangeByThreat())
@@ -302,32 +289,30 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                     // If there are players in melee range prioritise them.
                     m_creature->SetTargetGuid(melee_player->GetGUID());
                     if (m_creature->getVictim())
+                    {
                         this->DoMeleeAttackIfReady();
+                        m_bForceSubmerge = false;       // if there's someone in melee don't submerge
+                    }
                 }
                 else
                 {
 					if(m_bEnraged) // Cannot find target and enraged - move to boulder mode	
 						m_bossState = BOSS_STATE_BOULDER;
-					else
-					{						
-						m_bReSubmerge = true;		
-						// Re-submerge, when no one is within melee for 5sec
-						if (m_uiReSubmergeTimer <= uiDiff)
-						{
-							if(m_bReSubmerge && m_bCanSubmerge)
-								m_uiSubmergeTimer = 100;
-							m_uiReSubmergeTimer = 15000;	//100000; <- set the timer 10sec longer than it would take to emerge
-						}			
-						else
-							m_uiReSubmergeTimer -= uiDiff;
-					}
+					else			
+                    {
+                        if(!m_bForceSubmerge)
+                        {
+                            m_uiForceSubmergeTimer = 5000;
+                            m_bForceSubmerge = true;	
+                        }
+                    }
                 }
             }
             else
-			{
+            {
                 this->DoMeleeAttackIfReady();
-				m_bReSubmerge = false;
-			}
+                m_bForceSubmerge = false;       // if there's someone in melee don't submerge
+            }
         }
 		else
         {
