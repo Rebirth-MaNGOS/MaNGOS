@@ -188,11 +188,9 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
                     {
                         if ((*itr) && !(*itr)->isAlive())
                         {                            
-                            //Creature* pGuard = m_creature->GetMap()->GetCreature(m_uiGuardGUID);
-                            
                             // Check if we already exploded corpse    
-                            //if((*itr)->GetObjectGuid() == pGuard)
-                                //continue;
+                            if(std::find(m_uiGuardGUID.begin(), m_uiGuardGUID.end(), (*itr)->GetObjectGuid()) != m_uiGuardGUID.end())
+                                continue;
                             
                             // Spawn scarabs         
                             (*itr)->CastSpell((*itr), SPELL_SELF_SPAWN_10, true);    
@@ -200,7 +198,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
                             for(uint8 i = 0; i < 10; ++i)
                                 m_creature->SummonCreature(MOB_CORPSE_SCARAB, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
                             
-                            //m_uiGuardGUID.push_back((*itr)-->GetObjectGuid());
+                            m_uiGuardGUID.push_back((*itr)->GetObjectGuid());
                             break;
                         }
                     }
