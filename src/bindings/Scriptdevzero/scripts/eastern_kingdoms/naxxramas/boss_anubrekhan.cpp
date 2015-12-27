@@ -36,44 +36,78 @@ enum
     SAY_TAUNT4                  = -1533007,
     SAY_SLAY                    = -1533008,
 
+    EMOTE_CRYPT_GUARD           = -1533153,     // really, have emotes?
+    EMOTE_INSECT_SWARM          = -1533154,
+    EMOTE_CORPSE_SCARABS        = -1533155,
+    
     SPELL_IMPALE                = 28783,                    //May be wrong spell id. Causes more dmg than I expect
     SPELL_LOCUSTSWARM           = 28785,                    //This is a self buff that triggers the dmg debuff
 
     SPELL_SELF_SPAWN_5          = 29105,                    //This spawns 5 corpse scarabs ontop of us (most likely the pPlayer casts this on death)
     SPELL_SELF_SPAWN_10         = 28864,                    //This is used by the crypt guards when they die
 
-    MOB_CRYPT_GUARD             = 16573
+    MOB_CRYPT_GUARD             = 16573,
+    MOB_CORPSE_SCARAB         = 16698
 };
+
+static const DialogueEntry aIntroDialogue[] =
+{
+    {SAY_GREET,   NPC_ANUB_REKHAN,  8000},
+    {SAY_TAUNT1,  NPC_ANUB_REKHAN,  13000},
+    {SAY_TAUNT2,  NPC_ANUB_REKHAN,  11000},
+    {SAY_TAUNT3,  NPC_ANUB_REKHAN,  10000},
+    {SAY_TAUNT4,  NPC_ANUB_REKHAN,  0},
+    {0, 0, 0}
+};
+
+static const float aCryptGuardLoc[4] = {3333.5f, -3475.9f, 287.1f, 3.17f};
 
 struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
 {
-    boss_anubrekhanAI(Creature* pCreature) : ScriptedAI(pCreature)
+    boss_anubrekhanAI(Creature* pCreature) : ScriptedAI(pCreature),
+        m_introDialogue(aIntroDialogue)
     {
         m_pInstance = (instance_naxxramas*)pCreature->GetInstanceData();
+        m_introDialogue.InitializeDialogueHelper(m_pInstance);
         m_bHasTaunted = false;
         Reset();
     }
 
     instance_naxxramas* m_pInstance;
-
+    DialogueHelper m_introDialogue;
+    
+    float fX, fY, fZ;
+    float FX, FY, FZ;
+    
     uint32 m_uiImpaleTimer;
     uint32 m_uiLocustSwarmTimer;
     uint32 m_uiSummonTimer;
-    bool   m_bHasTaunted;
-
+    uint32 m_uiGuardExplode;
+    
+    bool m_bHasTaunted;
+    std::list<Creature*> m_lCryptGuards;
+    GUIDList m_uiGuardGUID;
+   
     void Reset()
     {
         m_uiImpaleTimer = 15000;                            // 15 seconds
         m_uiLocustSwarmTimer = urand(80000, 120000);        // Random time between 80 seconds and 2 minutes for initial cast
-        m_uiSummonTimer = m_uiLocustSwarmTimer + 45000;     // 45 seconds after initial locust swarm
+        m_uiSummonTimer = m_uiLocustSwarmTimer + 45000;
+        m_uiGuardExplode = 10000;
+        GetCreatureListWithEntryInGrid(m_lCryptGuards, m_creature, MOB_CRYPT_GUARD, DEFAULT_VISIBILITY_INSTANCE);
+        m_uiGuardGUID.clear();
     }
 
     void KilledUnit(Unit* pVictim)
     {
         //Force the player to spawn corpse scarabs via spell
         if (pVictim->GetTypeId() == TYPEID_PLAYER)
+        {
             pVictim->CastSpell(pVictim, SPELL_SELF_SPAWN_5, true);
-
+            pVictim->GetPosition(FX, FY, FZ);
+            for(uint8 i = 0; i < 5; ++i)
+                m_creature->SummonCreature(MOB_CORPSE_SCARAB, FX+irand(-3,3), FY+irand(-3,3), FZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+        }
         if (urand(0, 4))
             return;
 
@@ -101,27 +135,81 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
 
     void MoveInLineOfSight(Unit* pWho)
     {
-        if (!m_bHasTaunted && m_creature->IsWithinDistInMap(pWho, 60.0f))
+        if (!m_bHasTaunted && pWho->GetTypeId() == TYPEID_PLAYER && m_creature->IsWithinDistInMap(pWho, 110.0f) && m_creature->IsWithinLOSInMap(pWho))
         {
-            switch(urand(0, 4))
-            {
-                case 0: DoScriptText(SAY_GREET, m_creature); break;
-                case 1: DoScriptText(SAY_TAUNT1, m_creature); break;
-                case 2: DoScriptText(SAY_TAUNT2, m_creature); break;
-                case 3: DoScriptText(SAY_TAUNT3, m_creature); break;
-                case 4: DoScriptText(SAY_TAUNT4, m_creature); break;
-            }
+            m_introDialogue.StartNextDialogueText(SAY_GREET);
             m_bHasTaunted = true;
         }
-
         ScriptedAI::MoveInLineOfSight(pWho);
     }
 
+    void JustSummoned(Creature* pSummoned)
+    {
+        if (pSummoned->GetEntry() == MOB_CRYPT_GUARD)
+        {
+            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                pSummoned->AI()->AttackStart(pTarget);
+        }
+        if (pSummoned->GetEntry() == MOB_CORPSE_SCARAB)
+        {
+            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                pSummoned->AddThreat(pTarget,10000.0f);
+        }
+    }
+        
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_ANUB_REKHAN, FAIL);
+        
+        // Respawn Guards       
+        if (!m_lCryptGuards.empty())
+        {
+            for(std::list<Creature*>::iterator itr = m_lCryptGuards.begin(); itr != m_lCryptGuards.end(); ++itr)
+            {
+                if ((*itr) && !(*itr)->isAlive())
+                    (*itr)->Respawn();
+            }
+        }
+    }
+    
     void UpdateAI(const uint32 uiDiff)
     {
+        m_introDialogue.DialogueUpdate(uiDiff);
+        
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
+        
+            if (m_uiGuardExplode < uiDiff)
+            {            
+                 if (!m_lCryptGuards.empty())
+                {
+                    for(std::list<Creature*>::iterator itr = m_lCryptGuards.begin(); itr != m_lCryptGuards.end(); ++itr)
+                    {
+                        if ((*itr) && !(*itr)->isAlive())
+                        {                            
+                            //Creature* pGuard = m_creature->GetMap()->GetCreature(m_uiGuardGUID);
+                            
+                            // Check if we already exploded corpse    
+                            //if((*itr)->GetObjectGuid() == pGuard)
+                                //continue;
+                            
+                            // Spawn scarabs         
+                            (*itr)->CastSpell((*itr), SPELL_SELF_SPAWN_10, true);    
+                            (*itr)->GetPosition(fX, fY, fZ);
+                            for(uint8 i = 0; i < 10; ++i)
+                                m_creature->SummonCreature(MOB_CORPSE_SCARAB, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                            
+                            //m_uiGuardGUID.push_back((*itr)-->GetObjectGuid());
+                            break;
+                        }
+                    }
+                }
+                m_uiGuardExplode = 10000;
+            }            
+            else
+                m_uiGuardExplode -= uiDiff;
+        
         // Impale
         if (m_uiImpaleTimer < uiDiff)
         {
@@ -142,17 +230,15 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
         if (m_uiLocustSwarmTimer < uiDiff)
         {
             DoCastSpellIfCan(m_creature, SPELL_LOCUSTSWARM);
-            m_uiLocustSwarmTimer = 90000;
+            m_uiLocustSwarmTimer = urand(70000, 120000);
+            m_uiSummonTimer = 3000;
         }
         else
             m_uiLocustSwarmTimer -= uiDiff;
 
         // Summon
         if (m_uiSummonTimer < uiDiff)
-        {
-            DoSpawnCreature(MOB_CRYPT_GUARD, 5, 5, 0, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60000);
-            m_uiSummonTimer = 45000;
-        }
+            m_creature->SummonCreature(MOB_CRYPT_GUARD, aCryptGuardLoc[0], aCryptGuardLoc[1], aCryptGuardLoc[2], aCryptGuardLoc[3], TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
         else
             m_uiSummonTimer -= uiDiff;
 
@@ -160,35 +246,59 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
     }
 };
 
-struct MANGOS_DLL_DECL mob_cryptguardsAI : public ScriptedAI
-{
-    mob_cryptguardsAI(Creature* pCreature) : ScriptedAI(pCreature)
-	{
-	}
-	    void Reset()
-    {
-    } 
-		
-		void KilledUnit(Unit* pVictim)
-    {
-        //Force the player to spawn corpse scarabs via spell
-        if (pVictim->GetTypeId() == TYPEID_PLAYER)
-            pVictim->CastSpell(pVictim, SPELL_SELF_SPAWN_5, true);
-    }
-	
-	    void UpdateAI(const uint32 /*uiDiff*/)
-    {
-    }
-	    void JustDied(Unit* /*pKiller*/)
-    {
-        DoCastSpellIfCan(m_creature, SPELL_SELF_SPAWN_10);
-    }
-};
-
 CreatureAI* GetAI_boss_anubrekhan(Creature* pCreature)
 {
     return new boss_anubrekhanAI(pCreature);
 }
+
+struct MANGOS_DLL_DECL mob_cryptguardsAI : public ScriptedAI
+{
+    mob_cryptguardsAI(Creature* pCreature) : ScriptedAI(pCreature)
+	{
+        m_pInstance = (instance_naxxramas*)pCreature->GetInstanceData();
+        Reset();
+	}
+	
+	instance_naxxramas* m_pInstance;
+    float FX, FY, FZ;
+        
+	void Reset()
+    {
+    } 
+		
+	void KilledUnit(Unit* pVictim)
+    {
+        //Force the player to spawn corpse scarabs via spell
+        if (pVictim->GetTypeId() == TYPEID_PLAYER)
+        {
+            pVictim->CastSpell(pVictim, SPELL_SELF_SPAWN_5, true);
+            pVictim->GetPosition(FX, FY, FZ);
+            for(uint8 i = 0; i < 5; ++i)
+                m_creature->SummonCreature(MOB_CORPSE_SCARAB, FX+irand(-3,3), FY+irand(-3,3), FZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+        }
+    }
+    
+    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_SELF_SPAWN_10 && !pTarget->GetTypeId() == TYPEID_PLAYER)            
+        {
+            pTarget->GetPosition(FX, FY, FZ);
+            for(uint8 i = 0; i < 10; ++i)
+                m_creature->SummonCreature(MOB_CORPSE_SCARAB, FX+irand(-3,3), FY+irand(-3,3), FZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+        }
+    }
+	
+	 void UpdateAI(const uint32 /*uiDiff*/)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+        DoMeleeAttackIfReady();
+    }
+	 void JustDied(Unit* /*pKiller*/)
+    {
+        m_creature->CastSpell(m_creature, SPELL_SELF_SPAWN_10, true);
+    }
+};
 
 CreatureAI* GetAI_mob_cryptguards(Creature* pCreature)
 {
