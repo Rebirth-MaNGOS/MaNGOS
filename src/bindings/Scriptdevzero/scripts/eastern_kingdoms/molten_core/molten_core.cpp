@@ -74,7 +74,7 @@ struct MANGOS_DLL_DECL mob_ancient_core_houndAI : public ScriptedAI
         m_uiRandomDebuffTimer = 15000;
 
         m_uiRandomDebuffId = 0;
-        switch(urand(0,4))
+        switch(urand(0,5))
         {
             case 0:
                 m_uiRandomDebuffId = SPELL_GROUND_STOMP;
@@ -91,9 +91,9 @@ struct MANGOS_DLL_DECL mob_ancient_core_houndAI : public ScriptedAI
             case 4:
                 m_uiRandomDebuffId = SPELL_ANCIENT_HYSTERIA;
                 break;
-            //case 5:
-            //    m_uiRandomDebuffId = SPELL_ANCIENT_DESPAIR;
-            //    break;
+            case 5:
+               m_uiRandomDebuffId = SPELL_ANCIENT_DESPAIR;
+               break;
         }
     }
 
