@@ -4746,12 +4746,12 @@ SpellCastResult Spell::CheckCast(bool strict)
             Totem* pCasterT = dynamic_cast<Totem*>(m_caster);
 
             // Make sure that the dispel check is only applied on player targets. Warriors' Shield Bash should also be an exception.
-            // 24406 - Improved Mend Pet is also excepted.
+            // 24406 - Improved Mend Pet and 8913 Sacred Cleansing are also excepted.
             if(m_caster && m_caster->getClass() != CLASS_WARRIOR && target->GetTypeId() != TYPEID_UNIT && !pCasterT )
             {
                 if (m_spellInfo->Id != 552 && m_spellInfo->Id != 10872 &&
                     m_spellInfo->Id != 2893 && m_spellInfo->Id != 3137 &&
-                    m_spellInfo->Id != 24406)
+                    m_spellInfo->Id != 24406 && m_spellInfo->Id != 8913)
                     return SPELL_FAILED_NOTHING_TO_DISPEL;
             }
         }
