@@ -16,8 +16,8 @@
 
 /* ScriptData
 SDName: Boss_Anubrekhan
-SD%Complete: 70
-SDComment:
+SD%Complete: 90
+SDComment: Spells for adds, link with a dummy, check if emotes should be used, 
 SDCategory: Naxxramas
 EndScriptData */
 
@@ -36,9 +36,9 @@ enum
     SAY_TAUNT4                  = -1533007,
     SAY_SLAY                    = -1533008,
 
-    EMOTE_CRYPT_GUARD           = -1533153,     // really, have emotes?
+    /*EMOTE_CRYPT_GUARD           = -1533153,     // really, have emotes?
     EMOTE_INSECT_SWARM          = -1533154,
-    EMOTE_CORPSE_SCARABS        = -1533155,
+    EMOTE_CORPSE_SCARABS        = -1533155,*/
     
     SPELL_IMPALE                = 28783,                    //May be wrong spell id. Causes more dmg than I expect
     SPELL_LOCUSTSWARM           = 28785,                    //This is a self buff that triggers the dmg debuff
@@ -83,6 +83,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
     uint32 m_uiLocustSwarmTimer;
     uint32 m_uiSummonTimer;
     uint32 m_uiGuardExplode;
+    uint8 m_uiExplodedGuards;
     
     bool m_bHasTaunted;
     std::list<Creature*> m_lCryptGuards;
@@ -90,6 +91,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
    
     void Reset()
     {
+        m_uiExplodedGuards = 0;
         m_uiImpaleTimer = 15000;                            // 15 seconds
         m_uiLocustSwarmTimer = urand(80000, 120000);        // Random time between 80 seconds and 2 minutes for initial cast
         m_uiSummonTimer = m_uiLocustSwarmTimer + 45000;
@@ -114,7 +116,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
         DoScriptText(SAY_SLAY, m_creature);
     }
 
-    void Aggro(Unit* /*pWho*/)
+    void Aggro(Unit* pWho)
     {
         switch(urand(0, 2))
         {
@@ -155,6 +157,18 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
             if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
                 pSummoned->AddThreat(pTarget,10000.0f);
         }
+        pSummoned->SetRespawnEnabled(false);        // no respawns
+    }
+    
+    void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        if (pSummoned->GetEntry() == MOB_CRYPT_GUARD)
+        {
+            pSummoned->CastSpell(pSummoned, SPELL_SELF_SPAWN_10, true);
+            pSummoned->GetPosition(FX, FY, FZ);
+            for(uint8 i = 0; i < 10; ++i)
+                m_creature->SummonCreature(MOB_CORPSE_SCARAB, FX+irand(-3,3), FY+irand(-3,3), FZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+        }            
     }
         
     void JustReachedHome()
@@ -180,6 +194,8 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
         
+       if(m_uiExplodedGuards <= 2)
+       {
             if (m_uiGuardExplode < uiDiff)
             {            
                  if (!m_lCryptGuards.empty())
@@ -197,7 +213,8 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
                             (*itr)->GetPosition(fX, fY, fZ);
                             for(uint8 i = 0; i < 10; ++i)
                                 m_creature->SummonCreature(MOB_CORPSE_SCARAB, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
-                            
+                           
+                            ++m_uiExplodedGuards;
                             m_uiGuardGUID.push_back((*itr)->GetObjectGuid());
                             break;
                         }
@@ -206,8 +223,9 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
                 m_uiGuardExplode = 10000;
             }            
             else
-                m_uiGuardExplode -= uiDiff;
-        
+                m_uiGuardExplode -= uiDiff;            
+       }  
+       
         // Impale
         if (m_uiImpaleTimer < uiDiff)
         {
@@ -236,7 +254,10 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
 
         // Summon
         if (m_uiSummonTimer < uiDiff)
+        {
             m_creature->SummonCreature(MOB_CRYPT_GUARD, aCryptGuardLoc[0], aCryptGuardLoc[1], aCryptGuardLoc[2], aCryptGuardLoc[3], TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+            m_uiSummonTimer = m_uiLocustSwarmTimer + 45000;
+        }
         else
             m_uiSummonTimer -= uiDiff;
 
@@ -275,26 +296,12 @@ struct MANGOS_DLL_DECL mob_cryptguardsAI : public ScriptedAI
                 m_creature->SummonCreature(MOB_CORPSE_SCARAB, FX+irand(-3,3), FY+irand(-3,3), FZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
         }
     }
-    
-    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
-    {
-        if (pSpell->Id == SPELL_SELF_SPAWN_10 && !pTarget->GetTypeId() == TYPEID_PLAYER)            
-        {
-            pTarget->GetPosition(FX, FY, FZ);
-            for(uint8 i = 0; i < 10; ++i)
-                m_creature->SummonCreature(MOB_CORPSE_SCARAB, FX+irand(-3,3), FY+irand(-3,3), FZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
-        }
-    }
-	
+    	
 	 void UpdateAI(const uint32 /*uiDiff*/)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
         DoMeleeAttackIfReady();
-    }
-	 void JustDied(Unit* /*pKiller*/)
-    {
-        m_creature->CastSpell(m_creature, SPELL_SELF_SPAWN_10, true);
     }
 };
 
