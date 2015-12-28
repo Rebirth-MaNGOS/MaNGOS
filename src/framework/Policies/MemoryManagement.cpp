@@ -21,7 +21,7 @@
 //switch to OS specific allocator only when _STANDARD_MALLOC is defined
 #ifndef USE_STANDARD_MALLOC
 
-#include "../../dep/tbb/include/tbb/scalable_allocator.h"
+#include "tbb/scalable_allocator.h"
 
 void* operator new(size_t sz)
 {

@@ -636,6 +636,15 @@ void Map::Update(const uint32 &t_diff)
         }
     }
 
+    // Add and remove new continent mobs from the update list.
+    // The queues are thread safe while the list is not.
+    ObjectGuid guid;
+    while (m_continentRemoveQueue.try_pop(guid))
+        m_continentMobs.remove(guid);
+
+    while (m_continentAddQueue.try_pop(guid))
+        m_continentMobs.push_back(guid);
+
     // Send world objects and item update field changes
     SendObjectUpdates();
 
@@ -1222,11 +1231,7 @@ void Map::RemoveFromActive( WorldObject* obj )
 
 void Map::AddToContinent( WorldObject* obj )
 {
-    // If the active object is already in the list we shouldn't mark it as active again.
-    if (std::find(m_continentMobs.begin(), m_continentMobs.end(), obj->GetObjectGuid()) != m_continentMobs.end())
-        return;
-    
-    m_continentMobs.push_back(obj->GetObjectGuid());
+    m_continentAddQueue.push(obj->GetObjectGuid());
     
     // also not allow unloading spawn grid to prevent creating creature clone at load
     if (obj->GetTypeId()==TYPEID_UNIT)
@@ -1252,7 +1257,7 @@ void Map::AddToContinent( WorldObject* obj )
 
 void Map::RemoveFromContinent( WorldObject* obj )
 {
-    m_continentMobs.remove(obj->GetObjectGuid());
+    m_continentRemoveQueue.push(obj->GetObjectGuid());
 
     // also allow unloading spawn grid
     if (obj->GetTypeId()==TYPEID_UNIT)
