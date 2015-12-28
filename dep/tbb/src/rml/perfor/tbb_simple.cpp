@@ -1,29 +1,21 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
 #include <cstddef>
@@ -32,8 +24,6 @@
 #include <float.h>
 #include <math.h>
 #include <time.h>
-#include <unistd.h>
-#include <pthread.h>
 
 #include <omp.h>
 #include <assert.h>
@@ -43,7 +33,20 @@
 #include "tbb/task.h"
 #include "tbb/tick_count.h"
 #include "tbb/task_scheduler_init.h"
-#include "tbb/scalable_allocator.h"
+
+#if _WIN32||_WIN64
+#include <Windows.h> /* Need Sleep */
+#else
+#include <unistd.h>  /* Need usleep */
+#endif
+
+void MilliSleep( unsigned milliseconds ) {
+#if _WIN32||_WIN64
+    Sleep( milliseconds );
+#else
+    usleep( milliseconds*1000 );
+#endif /* _WIN32||_WIN64 */
+}
 
 using namespace std;
 using namespace tbb;
@@ -106,7 +109,9 @@ class SimpleTask : public task {
 public:
   SimpleTask(bool isLeaf_, int myId_) : isLeaf(isLeaf_), myId(myId_) {}
   task* execute() {
+#ifdef LOG_THREADS
     TotalThreadLevel.change_level(1, tbb_outer);
+#endif
     omp_set_num_threads(max_omp_threads);
     if (!isLeaf) {
       set_ref_count(17);
@@ -114,54 +119,73 @@ public:
 	SimpleTask& st = *new(allocate_child()) SimpleTask(true, i);
 	spawn(st);
       }
+#ifdef LOG_THREADS
       TotalThreadLevel.change_level(-1, tbb_outer);
+#endif
       wait_for_all();
+#ifdef LOG_THREADS
       TotalThreadLevel.change_level(1, tbb_outer);
+#endif
     }
     else {
       if (myId == 0) {
-	sleep(3);
+	MilliSleep(3000);
+#ifdef LOG_THREADS
 	TotalThreadLevel.change_level(-1, tbb_outer);
+#endif
 #pragma omp parallel
 	{
-	  if (omp_get_thread_num() == 0) {
+#ifdef LOG_THREADS
+	  if (omp_get_thread_num() == 0)
 	    TotalThreadLevel.change_level(omp_get_num_threads(), omp_inner);
-	  }
+#endif
 	  printf("In OMP parallel region on TBB task with myId=0: thread %d of %d\n", 
 		 omp_get_thread_num(), omp_get_num_threads());
-	  if (omp_get_thread_num() == 0) {
+#ifdef LOG_THREADS
+	  if (omp_get_thread_num() == 0)
 	    TotalThreadLevel.change_level(-omp_get_num_threads(), omp_inner);
-	  }
+#endif
 	}
+#ifdef LOG_THREADS
 	TotalThreadLevel.change_level(1, tbb_outer);
+#endif
       }
       else {
-	sleep(6);
+	MilliSleep(6000);
       }
     }
+#ifdef LOG_THREADS
     TotalThreadLevel.change_level(-1, tbb_outer);
+#endif
     return NULL;
   }
 };
 
 
 int main(int argc, char *argv[]) { 
+#ifdef LOG_THREADS
   TotalThreadLevel.init();
   TotalThreadLevel.change_level(1, tbb_outer);
+#endif
   process_args(argc, argv, &max_tbb_threads, &max_omp_threads);
 
   task_scheduler_init phase(max_tbb_threads);
   tick_count start, end;
   start = tick_count::now();
   SimpleTask& st = *new(task::allocate_root()) SimpleTask(false, -1);
+#ifdef LOG_THREADS
   TotalThreadLevel.change_level(-1, tbb_outer);
+#endif
   task::spawn_root_and_wait(st);
+#ifdef LOG_THREADS
   TotalThreadLevel.change_level(1, tbb_outer);
+#endif
   end = tick_count::now();
   printf("Simple Test of TBB (%d threads max) with OMP (%d threads max) inside took: %6.6f\n", 
 	 max_tbb_threads, max_omp_threads, (end-start).seconds());
-
+#ifdef LOG_THREADS
   TotalThreadLevel.change_level(-1, tbb_outer);
   TotalThreadLevel.dump();
+#endif
   return 0;
 }

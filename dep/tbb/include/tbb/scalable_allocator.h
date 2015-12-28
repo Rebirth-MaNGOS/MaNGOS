@@ -1,29 +1,21 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
 #ifndef __TBB_scalable_allocator_H
@@ -31,6 +23,9 @@
 /** @file */
 
 #include <stddef.h> /* Need ptrdiff_t and size_t from here. */
+#if !_MSC_VER
+#include <stdint.h> /* Need intptr_t from here. */
+#endif
 
 #if !defined(__cplusplus) && __ICC==1100
     #pragma warning (push)
@@ -85,11 +80,120 @@ void __TBB_EXPORTED_FUNC scalable_aligned_free (void* ptr);
     @ingroup memory_allocation */
 size_t __TBB_EXPORTED_FUNC scalable_msize (void* ptr);
 
+/* Results for scalable_allocation_* functions */
+typedef enum {
+    TBBMALLOC_OK,
+    TBBMALLOC_INVALID_PARAM,
+    TBBMALLOC_UNSUPPORTED,
+    TBBMALLOC_NO_MEMORY,
+    TBBMALLOC_NO_EFFECT
+} ScalableAllocationResult;
+
+/* Setting TBB_MALLOC_USE_HUGE_PAGES environment variable to 1 enables huge pages.
+   scalable_allocation_mode call has priority over environment variable. */
+typedef enum {
+    TBBMALLOC_USE_HUGE_PAGES,  /* value turns using huge pages on and off */
+    /* deprecated, kept for backward compatibility only */
+    USE_HUGE_PAGES = TBBMALLOC_USE_HUGE_PAGES,
+    /* try to limit memory consumption value Bytes, clean internal buffers
+       if limit is exceeded, but not prevents from requesting memory from OS */
+    TBBMALLOC_SET_SOFT_HEAP_LIMIT
+} AllocationModeParam;
+
+/** Set TBB allocator-specific allocation modes.
+    @ingroup memory_allocation */
+int __TBB_EXPORTED_FUNC scalable_allocation_mode(int param, intptr_t value);
+
+typedef enum {
+    /* Clean internal allocator buffers for all threads.
+       Returns TBBMALLOC_NO_EFFECT if no buffers cleaned,
+       TBBMALLOC_OK if some memory released from buffers. */
+    TBBMALLOC_CLEAN_ALL_BUFFERS,
+    /* Clean internal allocator buffer for current thread only.
+       Return values same as for TBBMALLOC_CLEAN_ALL_BUFFERS. */
+    TBBMALLOC_CLEAN_THREAD_BUFFERS
+} ScalableAllocationCmd;
+
+/** Call TBB allocator-specific commands.
+    @ingroup memory_allocation */
+int __TBB_EXPORTED_FUNC scalable_allocation_command(int cmd, void *param);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
 
 #ifdef __cplusplus
+
+//! The namespace rml contains components of low-level memory pool interface.
+namespace rml {
+class MemoryPool;
+
+typedef void *(*rawAllocType)(intptr_t pool_id, size_t &bytes);
+// returns non-zero in case of error
+typedef int   (*rawFreeType)(intptr_t pool_id, void* raw_ptr, size_t raw_bytes);
+
+/*
+MemPoolPolicy extension must be compatible with such structure fields layout
+
+struct MemPoolPolicy {
+    rawAllocType pAlloc;
+    rawFreeType  pFree;
+    size_t       granularity;   // granularity of pAlloc allocations
+};
+*/
+
+struct MemPoolPolicy {
+    enum {
+        TBBMALLOC_POOL_VERSION = 1
+    };
+
+    rawAllocType pAlloc;
+    rawFreeType  pFree;
+                 // granularity of pAlloc allocations. 0 means default used.
+    size_t       granularity;
+    int          version;
+                 // all memory consumed at 1st pAlloc call and never returned,
+                 // no more pAlloc calls after 1st
+    unsigned     fixedPool : 1,
+                 // memory consumed but returned only at pool termination
+                 keepAllMemory : 1,
+                 reserved : 30;
+
+    MemPoolPolicy(rawAllocType pAlloc_, rawFreeType pFree_,
+                  size_t granularity_ = 0, bool fixedPool_ = false,
+                  bool keepAllMemory_ = false) :
+        pAlloc(pAlloc_), pFree(pFree_), granularity(granularity_), version(TBBMALLOC_POOL_VERSION),
+        fixedPool(fixedPool_), keepAllMemory(keepAllMemory_),
+        reserved(0) {}
+};
+
+// enums have same values as appropriate enums from ScalableAllocationResult
+// TODO: use ScalableAllocationResult in pool_create directly
+enum MemPoolError {
+    // pool created successfully
+    POOL_OK = TBBMALLOC_OK,
+    // invalid policy parameters found
+    INVALID_POLICY = TBBMALLOC_INVALID_PARAM,
+     // requested pool policy is not supported by allocator library
+    UNSUPPORTED_POLICY = TBBMALLOC_UNSUPPORTED,
+    // lack of memory during pool creation
+    NO_MEMORY = TBBMALLOC_NO_MEMORY,
+    // action takes no effect
+    NO_EFFECT = TBBMALLOC_NO_EFFECT
+};
+
+MemPoolError pool_create_v1(intptr_t pool_id, const MemPoolPolicy *policy,
+                            rml::MemoryPool **pool);
+
+bool  pool_destroy(MemoryPool* memPool);
+void *pool_malloc(MemoryPool* memPool, size_t size);
+void *pool_realloc(MemoryPool* memPool, void *object, size_t size);
+void *pool_aligned_malloc(MemoryPool* mPool, size_t size, size_t alignment);
+void *pool_aligned_realloc(MemoryPool* mPool, void *ptr, size_t size, size_t alignment);
+bool  pool_reset(MemoryPool* memPool);
+bool  pool_free(MemoryPool *memPool, void *object);
+MemoryPool *pool_identify(void *object);
+}
 
 #include <new>      /* To use new with the placement argument */
 
@@ -102,6 +206,9 @@ size_t __TBB_EXPORTED_FUNC scalable_msize (void* ptr);
     #include "tbb_stddef.h"
 #endif
 
+#if __TBB_ALLOCATOR_CONSTRUCT_VARIADIC
+ #include <utility> // std::forward
+#endif
 
 namespace tbb {
 
@@ -110,6 +217,23 @@ namespace tbb {
     #pragma warning (push)
     #pragma warning (disable: 4100)
 #endif
+
+//! @cond INTERNAL
+namespace internal {
+
+#if TBB_USE_EXCEPTIONS
+// forward declaration is for inlining prevention
+template<typename E> __TBB_NOINLINE( void throw_exception(const E &e) );
+#endif
+
+// keep throw in a separate function to prevent code bloat
+template<typename E>
+void throw_exception(const E &e) {
+    __TBB_THROW(e);
+}
+
+} // namespace internal
+//! @endcond
 
 //! Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5
 /** The members are ordered the same way they are in section 20.4.1
@@ -138,7 +262,10 @@ public:
 
     //! Allocate space for n objects.
     pointer allocate( size_type n, const void* /*hint*/ =0 ) {
-        return static_cast<pointer>( scalable_malloc( n * sizeof(value_type) ) );
+        pointer p = static_cast<pointer>( scalable_malloc( n * sizeof(value_type) ) );
+        if (!p)
+            internal::throw_exception(std::bad_alloc());
+        return p;
     }
 
     //! Free previously allocated block of memory
@@ -151,7 +278,16 @@ public:
         size_type absolutemax = static_cast<size_type>(-1) / sizeof (value_type);
         return (absolutemax > 0 ? absolutemax : 1);
     }
-    void construct( pointer p, const value_type& val ) { new(static_cast<void*>(p)) value_type(val); }
+#if __TBB_ALLOCATOR_CONSTRUCT_VARIADIC
+    template<typename U, typename... Args>
+    void construct(U *p, Args&&... args)
+        { ::new((void *)p) U(std::forward<Args>(args)...); }
+#else // __TBB_ALLOCATOR_CONSTRUCT_VARIADIC
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+    void construct( pointer p, value_type&& value ) { ::new((void*)(p)) value_type( std::move( value ) ); }
+#endif
+    void construct( pointer p, const value_type& value ) {::new((void*)(p)) value_type(value);}
+#endif // __TBB_ALLOCATOR_CONSTRUCT_VARIADIC
     void destroy( pointer p ) {p->~value_type();}
 };
 
@@ -181,7 +317,7 @@ inline bool operator!=( const scalable_allocator<T>&, const scalable_allocator<U
 } // namespace tbb
 
 #if _MSC_VER
-    #if __TBB_BUILD && !defined(__TBBMALLOC_NO_IMPLICIT_LINKAGE)
+    #if (__TBB_BUILD || __TBBMALLOC_BUILD) && !defined(__TBBMALLOC_NO_IMPLICIT_LINKAGE)
         #define __TBBMALLOC_NO_IMPLICIT_LINKAGE 1
     #endif
 

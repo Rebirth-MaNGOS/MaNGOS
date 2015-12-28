@@ -1,29 +1,21 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
 #ifndef __TBB_concurrent_queue_H
@@ -41,7 +33,6 @@ namespace internal {
 
 class concurrent_queue_rep;
 class concurrent_queue_iterator_rep;
-class concurrent_queue_iterator_base;
 template<typename Container, typename Value> class concurrent_queue_iterator;
 
 //! For internal use only.
@@ -55,13 +46,18 @@ class concurrent_queue_base: no_copy {
     friend struct micro_queue;
     friend class concurrent_queue_iterator_rep;
     friend class concurrent_queue_iterator_base;
-protected:
+
+    // In C++ 1998/2003 (but quite likely not beyond), friend micro_queue's rights
+    // do not apply to the declaration of micro_queue::pop_finalizer::my_page,
+    // as a member of a class nested within that friend class, so...
+public:
     //! Prefix on a page
     struct page {
         page* next;
-        uintptr mask; 
+        uintptr_t mask; 
     };
 
+protected:
     //! Capacity of the queue
     ptrdiff_t my_capacity;
    
@@ -98,8 +94,8 @@ protected:
 
 //! Type-independent portion of concurrent_queue_iterator.
 /** @ingroup containers */
-class concurrent_queue_iterator_base {
-    //! Concurrentconcurrent_queue over which we are iterating.
+class concurrent_queue_iterator_base : no_assign{
+    //! concurrent_queue over which we are iterating.
     /** NULL if one past last element in queue. */
     concurrent_queue_iterator_rep* my_rep;
 
@@ -214,9 +210,9 @@ class concurrent_queue: public internal::concurrent_queue_base {
         ~destroyer() {my_value.~T();}          
     };
 
-    T& get_ref( page& page, size_t index ) {
+    T& get_ref( page& pg, size_t index ) {
         __TBB_ASSERT( index<items_per_page, NULL );
-        return static_cast<T*>(static_cast<void*>(&page+1))[index];
+        return static_cast<T*>(static_cast<void*>(&pg+1))[index];
     }
 
     /*override*/ virtual void copy_item( page& dst, size_t index, const void* src ) {
@@ -240,7 +236,7 @@ public:
     typedef const T& const_reference;
 
     //! Integral type for representing size of the queue.
-    /** Notice that the size_type is a signed integral type.
+    /** Note that the size_type is a signed integral type.
         This is because the size can be negative if there are pending pops without corresponding pushes. */
     typedef std::ptrdiff_t size_type;
 
@@ -298,8 +294,8 @@ public:
     //! Set the capacity
     /** Setting the capacity to 0 causes subsequent push_if_not_full operations to always fail,
         and subsequent push operations to block forever. */
-    void set_capacity( size_type capacity ) {
-        internal_set_capacity( capacity, sizeof(T) );
+    void set_capacity( size_type new_capacity ) {
+        internal_set_capacity( new_capacity, sizeof(T) );
     }
 
     typedef internal::concurrent_queue_iterator<concurrent_queue,T> iterator;

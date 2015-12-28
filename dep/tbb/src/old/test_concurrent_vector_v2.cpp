@@ -1,29 +1,21 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
 #include "concurrent_vector_v2.h"
@@ -79,12 +71,12 @@ public:
         ASSERT( x.state==DefaultInitialized||x.state==CopyInitialized, NULL );
         ASSERT( state==DefaultInitialized||state==CopyInitialized, NULL );
         my_bar = x.my_bar;
-    } 
+    }
 };
 
 inline void NextSize( int& s ) {
     if( s<=32 ) ++s;
-    else s += s/10;     
+    else s += s/10;
 }
 
 static void CheckVector( const tbb::concurrent_vector<Foo>& cv, size_t expected_size, size_t old_size ) {
@@ -111,7 +103,7 @@ void TestResizeAndCopy() {
             ASSERT( count+new_size==FooCount, NULL );
             for( int j=0; j<new_size; ++j ) {
                 int expected = j<old_size ? j*j : Foo::initial_value_of_bar;
-                if( v[j].bar()!=expected ) 
+                if( v[j].bar()!=expected )
                     std::printf("ERROR on line %d for old_size=%ld new_size=%ld v[%ld].bar()=%d != %d\n",__LINE__,long(old_size),long(new_size),long(j),v[j].bar(), expected);
             }
             ASSERT( v.size()==size_t(new_size), NULL );
@@ -132,7 +124,7 @@ void TestResizeAndCopy() {
 void TestCapacity() {
     for( size_t old_size=0; old_size<=10000; old_size=(old_size<5 ? old_size+1 : 3*old_size) ) {
         for( size_t new_size=0; new_size<=10000; new_size=(new_size<5 ? new_size+1 : 3*new_size) ) {
-            long count = FooCount; 
+            long count = FooCount;
             {
                 typedef tbb::concurrent_vector<Foo> vector_t;
                 vector_t v;
@@ -149,7 +141,7 @@ void TestCapacity() {
             }
             ASSERT( FooCount==count, NULL );
         }
-    } 
+    }
 }
 
 struct AssignElement {
@@ -180,16 +172,17 @@ struct CheckElement {
 #include "tbb/parallel_for.h"
 #include "../test/harness.h"
 
+//! Test parallel access by iterators
 void TestParallelFor( int nthread ) {
     typedef tbb::concurrent_vector<int> vector_t;
     vector_t v;
-    v.grow_to_at_least(N);  
+    v.grow_to_at_least(N);
     tbb::tick_count t0 = tbb::tick_count::now();
     if( Verbose )
         std::printf("Calling parallel_for.h with %ld threads\n",long(nthread));
     tbb::parallel_for( v.range(10000), AssignElement(v.begin()) );
     tbb::tick_count t1 = tbb::tick_count::now();
-    const vector_t& u = v;      
+    const vector_t& u = v;
     tbb::parallel_for( u.range(10000), CheckElement(u.begin()) );
     tbb::tick_count t2 = tbb::tick_count::now();
     if( Verbose )
@@ -213,9 +206,9 @@ void TestIteratorAssignment( Iterator2 j ) {
 
 template<typename Iterator, typename T>
 void TestIteratorTraits() {
-    AssertSameType( static_cast<typename Iterator::difference_type*>(0), static_cast<ptrdiff_t*>(0) ); 
-    AssertSameType( static_cast<typename Iterator::value_type*>(0), static_cast<T*>(0) ); 
-    AssertSameType( static_cast<typename Iterator::pointer*>(0), static_cast<T**>(0) ); 
+    AssertSameType( static_cast<typename Iterator::difference_type*>(0), static_cast<ptrdiff_t*>(0) );
+    AssertSameType( static_cast<typename Iterator::value_type*>(0), static_cast<T*>(0) );
+    AssertSameType( static_cast<typename Iterator::pointer*>(0), static_cast<T**>(0) );
     AssertSameType( static_cast<typename Iterator::iterator_category*>(0), static_cast<std::random_access_iterator_tag*>(0) );
     T x;
     typename Iterator::reference xr = x;
@@ -235,7 +228,7 @@ void CheckConstIterator( const Vector& u, int i, const Iterator& cp ) {
     ASSERT( u.begin()[i].bar()==i, NULL );
 }
 
-template<typename Iterator1, typename Iterator2, typename V> 
+template<typename Iterator1, typename Iterator2, typename V>
 void CheckIteratorComparison( V& u ) {
     Iterator1 i = u.begin();
     for( int i_count=0; i_count<100; ++i_count ) {
@@ -261,7 +254,7 @@ void TestSequentialFor() {
     V v;
     v.grow_by(N);
 
-    // Check iterator 
+    // Check iterator
     tbb::tick_count t0 = tbb::tick_count::now();
     typename V::iterator p = v.begin();
     ASSERT( !(*p).is_const(), NULL );
@@ -276,9 +269,9 @@ void TestSequentialFor() {
         ASSERT( -delta<=0, "difference type not signed?" );
     }
     tbb::tick_count t1 = tbb::tick_count::now();
-    
+
     // Check const_iterator going forwards
-    const V& u = v;     
+    const V& u = v;
     typename V::const_iterator cp = u.begin();
     ASSERT( (*cp).is_const(), NULL );
     ASSERT( cp->is_const(), NULL );
@@ -308,24 +301,24 @@ void TestSequentialFor() {
 
     // Now go forwards and backwards
     cp = u.begin();
-    ptrdiff_t j = 0;
+    ptrdiff_t k = 0;
     for( size_t i=0; i<u.size(); ++i ) {
-        CheckConstIterator(u,int(j),cp);
+        CheckConstIterator(u,int(k),cp);
         typename V::difference_type delta = i*3 % u.size();
-        if( 0<=j+delta && size_t(j+delta)<u.size() ) {
+        if( 0<=k+delta && size_t(k+delta)<u.size() ) {
             cp += delta;
-            j += delta; 
-        } 
+            k += delta;
+        }
         delta = i*7 % u.size();
-        if( 0<=j-delta && size_t(j-delta)<u.size() ) {
-            if( i&1 ) 
+        if( 0<=k-delta && size_t(k-delta)<u.size() ) {
+            if( i&1 )
                 cp -= delta;            // Test operator-=
             else
                 cp = cp - delta;        // Test operator-
-            j -= delta; 
-        } 
+            k -= delta;
+        }
     }
-    
+
     for( int i=0; size_t(i)<u.size(); i=(i<50?i+1:i*3) )
         for( int j=-i; size_t(i+j)<u.size(); j=(j<50?j+1:j*5) ) {
             ASSERT( (u.begin()+i)[j].bar()==i+j, NULL );
@@ -343,7 +336,7 @@ void TestSequentialFor() {
     TestIteratorAssignment<typename V::const_iterator>( v.begin() );
     TestIteratorAssignment<typename V::iterator>( v.begin() );
 
-    // Check reverse_iterator 
+    // Check reverse_iterator
     typename V::reverse_iterator rp = v.rbegin();
     for( size_t i=v.size(); i>0; --i, ++rp ) {
         typename V::reference pref = *rp;
@@ -351,8 +344,8 @@ void TestSequentialFor() {
         ASSERT( rp!=v.rend(), NULL );
     }
     ASSERT( rp==v.rend(), NULL );
-    
-    // Check const_reverse_iterator 
+
+    // Check const_reverse_iterator
     typename V::const_reverse_iterator crp = u.rbegin();
     for( size_t i=v.size(); i>0; --i, ++crp ) {
         typename V::const_reference cpref = *crp;
@@ -397,7 +390,7 @@ public:
     void operator()( const tbb::blocked_range<int>& range ) const {
         for( int i=range.begin(); i!=range.end(); ++i ) {
             if( i%3 ) {
-                Foo& element = my_vector[my_vector.grow_by(1)]; 
+                Foo& element = my_vector[my_vector.grow_by(1)];
                 element.bar() = i;
             } else {
                 Foo f;
@@ -457,7 +450,7 @@ void TestAssign() {
             for( int i=0; i<src_size; ++i )
                 ASSERT( v[i].bar()==(i*i), NULL );
         }
-    }    
+    }
 }
 
 //------------------------------------------------------------------------
@@ -475,7 +468,7 @@ static tbb::concurrent_vector<Number> Primes;
 class FindPrimes {
     bool is_prime( Number val ) const {
         int limit, factor = 3;
-        if( val<5u ) 
+        if( val<5u )
             return val==2;
         else {
             limit = long(sqrtf(float(val))+0.5f);
@@ -486,7 +479,7 @@ class FindPrimes {
     }
 public:
     void operator()( const tbb::blocked_range<Number>& r ) const {
-        for( Number i=r.begin(); i!=r.end(); ++i ) { 
+        for( Number i=r.begin(); i!=r.end(); ++i ) {
             if( i%2 && is_prime(i) ) {
                 Primes[Primes.grow_by(1)] = i;
             }
@@ -507,10 +500,10 @@ static void TestFindPrimes() {
     // Time fully subscribed run.
     double t2 = TimeFindPrimes( tbb::task_scheduler_init::automatic );
 
-    // Time parallel run that is very likely oversubscribed.  
+    // Time parallel run that is very likely oversubscribed.
     double t128 = TimeFindPrimes(128);
 
-    if( Verbose ) 
+    if( Verbose )
         std::printf("TestFindPrimes: t2==%g t128=%g\n", t2, t128 );
 
     // We allow the 128-thread run a little extra time to allow for thread overhead.
@@ -519,7 +512,7 @@ static void TestFindPrimes() {
     // and the generalization to fix the issue is not worth the trouble.
     if( t128>1.10*t2 ) {
         std::printf("Warning: grow_by is pathetically slow: t2==%g t128=%g\n", t2, t128);
-    } 
+    }
 }
 
 //------------------------------------------------------------------------
@@ -542,11 +535,7 @@ void TestSort() {
 
 //------------------------------------------------------------------------
 
-//! Test driver
-int main( int argc, char* argv[] ) {
-    // Test requires at least one thread.
-    MinThread = 1;
-    ParseCommandLine( argc, argv );
+int TestMain () {
     if( MinThread<1 ) {
         std::printf("ERROR: MinThread=%d, but must be at least 1\n",MinThread);
     }
@@ -565,6 +554,5 @@ int main( int argc, char* argv[] ) {
     }
     TestFindPrimes();
     TestSort();
-    std::printf("done\n");
-    return 0;
+    return Harness::Done;
 }

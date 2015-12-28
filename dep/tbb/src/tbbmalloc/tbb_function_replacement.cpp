@@ -1,38 +1,38 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
-//We works on windows only
-#ifdef _WIN32
+#include "tbb/tbb_config.h"
+
+#if !__TBB_WIN8UI_SUPPORT && defined(_WIN32)
+
 #define _CRT_SECURE_NO_DEPRECATE 1
+#define __TBB_NO_IMPLICIT_LINKAGE 1
 
 #include <windows.h>
 #include <new>
+#include <stdio.h>
 #include "tbb_function_replacement.h"
+
+#include "tbb/tbb_config.h"
+#include "tbb/tbb_stddef.h"
+#include "../tbb/tbb_assert_impl.h"
 
 inline UINT_PTR Ptr2Addrint(LPVOID ptr)
 {
@@ -57,7 +57,7 @@ inline bool IsInDistance(UINT_PTR addr1, UINT_PTR addr2, __int64 dist)
 
 /*
  * When inserting a probe in 64 bits process the distance between the insertion
- * point and the target may be bigger than 2^32. In this case we are using 
+ * point and the target may be bigger than 2^32. In this case we are using
  * indirect jump through memory where the offset to this memory location
  * is smaller than 2^32 and it contains the absolute address (8 bytes).
  *
@@ -132,22 +132,22 @@ MemoryBuffer *CreateBuffer(UINT_PTR addr)
     }
 
 public:
-    MemoryProvider() 
-    { 
+    MemoryProvider()
+    {
         SYSTEM_INFO sysInfo;
         GetSystemInfo(&sysInfo);
-        m_allocSize = sysInfo.dwAllocationGranularity; 
+        m_allocSize = sysInfo.dwAllocationGranularity;
         m_lastBuffer = &m_pages[0];
     }
 
     // We can't free the pages in the destructor because the trampolines
     // are using these memory locations and a replaced function might be called
     // after the destructor was called.
-    ~MemoryProvider() 
+    ~MemoryProvider()
     {
     }
 
-    // Return a memory location in distance less than 2^31 from input address 
+    // Return a memory location in distance less than 2^31 from input address
     UINT_PTR GetLocation(UINT_PTR addr)
     {
         MemoryBuffer *pBuff = m_pages;
@@ -178,10 +178,70 @@ private:
 
 static MemoryProvider memProvider;
 
+// Compare opcodes from dictionary (str1) and opcodes from code (str2)
+// str1 might contain '*' to mask addresses
+// RETURN: NULL if opcodes did not match, string length of str1 on success
+size_t compareStrings( const char *str1, const char *str2 )
+{
+   size_t str1Length = strlen(str1);
+   for (size_t i=0; i<str1Length; i++){
+       if( str1[i] != '*' && str1[i] != str2[i] ) return 0;
+   }
+   return str1Length;
+}
+
+// Check function prologue with know prologues from the dictionary
+// opcodes - dictionary
+// inpAddr - pointer to function prologue
+// Dictionary contains opcodes for several full asm instructions
+// + one opcode byte for the next asm instruction for safe address processing
+// RETURN: number of bytes for safe bytes replacement
+// (matched_pattern/2-1)
+UINT CheckOpcodes( const char ** opcodes, void *inpAddr )
+{
+    static size_t opcodesStringsCount = 0;
+    static size_t maxOpcodesLength = 0;
+    static size_t opcodes_pointer = (size_t)opcodes;
+    char opcodeString[61];
+    size_t i;
+    size_t result;
+
+    // Get the values for static variables
+    // max length and number of patterns
+    if( !opcodesStringsCount || opcodes_pointer != (size_t)opcodes ){
+        while( *(opcodes + opcodesStringsCount)!= NULL ){
+            if( (i=strlen(*(opcodes + opcodesStringsCount))) > maxOpcodesLength )
+                maxOpcodesLength = i;
+            opcodesStringsCount++;
+        }
+        opcodes_pointer = (size_t)opcodes;
+        __TBB_ASSERT( maxOpcodesLength < 61, "Limit is 30 opcodes/60 symbols per pattern" );
+    }
+
+    // Translate prologue opcodes to string format to compare
+    for( i=0; i< maxOpcodesLength/2; i++ ){
+        sprintf( opcodeString + 2*i, "%.2X", *((unsigned char*)inpAddr+i) );
+    }
+    opcodeString[maxOpcodesLength] = 0;
+
+    // Compare translated opcodes with patterns
+    for( i=0; i< opcodesStringsCount; i++ ){
+        result = compareStrings( opcodes[i],opcodeString );
+        if( result )
+            return (UINT)(result/2-1);
+    }
+    // TODO: to add more stuff to patterns
+    __TBB_ASSERT( false, "CheckOpcodes failed" );
+
+    // No matches found just do not store original calls
+    return 0;
+}
+
 // Insert jump relative instruction to the input address
 // RETURN: the size of the trampoline or 0 on failure
-static DWORD InsertTrampoline32(void *inpAddr, void *targetAddr, UINT opcodesNumber, FUNCPTR* storedAddr)
+static DWORD InsertTrampoline32(void *inpAddr, void *targetAddr, const char ** opcodes, void** storedAddr)
 {
+    UINT opcodesNumber = SIZE_OF_RELJUMP;
     UINT_PTR srcAddr = Ptr2Addrint(inpAddr);
     UINT_PTR tgtAddr = Ptr2Addrint(targetAddr);
     // Check that the target fits in 32 bits
@@ -194,20 +254,26 @@ static DWORD InsertTrampoline32(void *inpAddr, void *targetAddr, UINT opcodesNum
 
     // If requested, store original function code
     if ( storedAddr ){
-        UINT_PTR strdAddr = memProvider.GetLocation(srcAddr);
-        if (!strdAddr)
-            return 0;
-        *storedAddr = (FUNCPTR)Addrint2Ptr(strdAddr);
-        // Set 'executable' flag for original instructions in the new place
-        DWORD pageFlags = PAGE_EXECUTE_READWRITE;
-        if (!VirtualProtect(*storedAddr, MAX_PROBE_SIZE, pageFlags, &pageFlags)) return 0;
-        // Copy original instructions to the new place
-        memcpy(*storedAddr, codePtr, opcodesNumber);
-        // Set jump to the code after replacement
-        offset = srcAddr - strdAddr - SIZE_OF_RELJUMP;
-        offset32 = (UINT)((offset & 0xFFFFFFFF));
-        *((UCHAR*)*storedAddr+opcodesNumber) = 0xE9;
-        memcpy(((UCHAR*)*storedAddr+opcodesNumber+1), &offset32, sizeof(offset32));
+        opcodesNumber = CheckOpcodes( opcodes, inpAddr );
+        if( opcodesNumber >= SIZE_OF_RELJUMP ){
+            UINT_PTR strdAddr = memProvider.GetLocation(srcAddr);
+            if (!strdAddr)
+                return 0;
+            *storedAddr = Addrint2Ptr(strdAddr);
+            // Set 'executable' flag for original instructions in the new place
+            DWORD pageFlags = PAGE_EXECUTE_READWRITE;
+            if (!VirtualProtect(*storedAddr, MAX_PROBE_SIZE, pageFlags, &pageFlags)) return 0;
+            // Copy original instructions to the new place
+            memcpy(*storedAddr, codePtr, opcodesNumber);
+            // Set jump to the code after replacement
+            offset = srcAddr - strdAddr - SIZE_OF_RELJUMP;
+            offset32 = (UINT)((offset & 0xFFFFFFFF));
+            *((UCHAR*)*storedAddr+opcodesNumber) = 0xE9;
+            memcpy(((UCHAR*)*storedAddr+opcodesNumber+1), &offset32, sizeof(offset32));
+        }else{
+            // No matches found just do not store original calls
+            *storedAddr = NULL;
+        }
     }
 
     // The following will work correctly even if srcAddr>tgtAddr, as long as
@@ -231,8 +297,10 @@ static DWORD InsertTrampoline32(void *inpAddr, void *targetAddr, UINT opcodesNum
 // 2  Put jump RIP relative indirect through the address in the close page
 // 3  Put the absolute address of the target in the allocated location
 // RETURN: the size of the trampoline or 0 on failure
-static DWORD InsertTrampoline64(void *inpAddr, void *targetAddr, UINT opcodesNumber, FUNCPTR* storedAddr)
+static DWORD InsertTrampoline64(void *inpAddr, void *targetAddr, const char ** opcodes, void** storedAddr)
 {
+    UINT opcodesNumber = SIZE_OF_INDJUMP;
+
     UINT_PTR srcAddr = Ptr2Addrint(inpAddr);
     UINT_PTR tgtAddr = Ptr2Addrint(targetAddr);
 
@@ -251,20 +319,26 @@ static DWORD InsertTrampoline64(void *inpAddr, void *targetAddr, UINT opcodesNum
 
     // If requested, store original function code
     if( storedAddr ){
-        UINT_PTR strdAddr = memProvider.GetLocation(srcAddr);
-        if (!strdAddr)
-            return 0;
-        *storedAddr = (FUNCPTR)Addrint2Ptr(strdAddr);
-        // Set 'executable' flag for original instructions in the new place
-        DWORD pageFlags = PAGE_EXECUTE_READWRITE;
-        if (!VirtualProtect(*storedAddr, MAX_PROBE_SIZE, pageFlags, &pageFlags)) return 0;
-        // Copy original instructions to the new place
-        memcpy(*storedAddr, codePtr, opcodesNumber);
-        // Set jump to the code after replacement. It is within the distance of relative jump!
-        offset = srcAddr - strdAddr - SIZE_OF_RELJUMP;
-        offset32 = (UINT)((offset & 0xFFFFFFFF));
-        *((UCHAR*)*storedAddr+opcodesNumber) = 0xE9;
-        memcpy(((UCHAR*)*storedAddr+opcodesNumber+1), &offset32, sizeof(offset32));
+        opcodesNumber = CheckOpcodes( opcodes, inpAddr );
+        if( opcodesNumber >= SIZE_OF_INDJUMP ){
+            UINT_PTR strdAddr = memProvider.GetLocation(srcAddr);
+            if (!strdAddr)
+                return 0;
+            *storedAddr = Addrint2Ptr(strdAddr);
+            // Set 'executable' flag for original instructions in the new place
+            DWORD pageFlags = PAGE_EXECUTE_READWRITE;
+            if (!VirtualProtect(*storedAddr, MAX_PROBE_SIZE, pageFlags, &pageFlags)) return 0;
+            // Copy original instructions to the new place
+            memcpy(*storedAddr, codePtr, opcodesNumber);
+            // Set jump to the code after replacement. It is within the distance of relative jump!
+            offset = srcAddr - strdAddr - SIZE_OF_RELJUMP;
+            offset32 = (UINT)((offset & 0xFFFFFFFF));
+            *((UCHAR*)*storedAddr+opcodesNumber) = 0xE9;
+            memcpy(((UCHAR*)*storedAddr+opcodesNumber+1), &offset32, sizeof(offset32));
+        }else{
+            // No matches found just do not store original calls
+            *storedAddr = NULL;
+        }
     }
 
     // Fill the buffer
@@ -288,16 +362,16 @@ static DWORD InsertTrampoline64(void *inpAddr, void *targetAddr, UINT opcodesNum
 // 3. Call InsertTrampoline32 or InsertTrampoline64
 // 4. Restore memory protection
 // RETURN: FALSE on failure, TRUE on success
-static bool InsertTrampoline(void *inpAddr, void *targetAddr, UINT opcodesNumber, FUNCPTR* origFunc)
+static bool InsertTrampoline(void *inpAddr, void *targetAddr, const char ** opcodes, void** origFunc)
 {
     DWORD probeSize;
     // Change page protection to EXECUTE+WRITE
     DWORD origProt = 0;
     if (!VirtualProtect(inpAddr, MAX_PROBE_SIZE, PAGE_EXECUTE_WRITECOPY, &origProt))
         return FALSE;
-    probeSize = InsertTrampoline32(inpAddr, targetAddr, opcodesNumber, origFunc);
+    probeSize = InsertTrampoline32(inpAddr, targetAddr, opcodes, origFunc);
     if (!probeSize)
-        probeSize = InsertTrampoline64(inpAddr, targetAddr, opcodesNumber, origFunc);
+        probeSize = InsertTrampoline64(inpAddr, targetAddr, opcodes, origFunc);
 
     // Restore original protection
     VirtualProtect(inpAddr, MAX_PROBE_SIZE, origProt, &origProt);
@@ -313,10 +387,10 @@ static bool InsertTrampoline(void *inpAddr, void *targetAddr, UINT opcodesNumber
 
 // Routine to replace the functions
 // TODO: replace opcodesNumber with opcodes and opcodes number to check if we replace right code.
-FRR_TYPE ReplaceFunctionA(const char *dllName, const char *funcName, FUNCPTR newFunc, UINT opcodesNumber, FUNCPTR* origFunc)
+FRR_TYPE ReplaceFunctionA(const char *dllName, const char *funcName, FUNCPTR newFunc, const char ** opcodes, FUNCPTR* origFunc)
 {
     // Cache the results of the last search for the module
-    // Assume that there was no DLL unload between 
+    // Assume that there was no DLL unload between
     static char cachedName[MAX_PATH+1];
     static HMODULE cachedHM = 0;
 
@@ -345,7 +419,7 @@ FRR_TYPE ReplaceFunctionA(const char *dllName, const char *funcName, FUNCPTR new
         return FRR_NOFUNC;
     }
 
-    if (!InsertTrampoline((void*)inpFunc, (void*)newFunc, opcodesNumber, origFunc)){
+    if (!InsertTrampoline((void*)inpFunc, (void*)newFunc, opcodes, (void**)origFunc)){
         // Failed to insert the trampoline to the target address
         return FRR_FAILED;
     }
@@ -353,10 +427,10 @@ FRR_TYPE ReplaceFunctionA(const char *dllName, const char *funcName, FUNCPTR new
     return FRR_OK;
 }
 
-FRR_TYPE ReplaceFunctionW(const wchar_t *dllName, const char *funcName, FUNCPTR newFunc, UINT opcodesNumber, FUNCPTR* origFunc)
+FRR_TYPE ReplaceFunctionW(const wchar_t *dllName, const char *funcName, FUNCPTR newFunc, const char ** opcodes, FUNCPTR* origFunc)
 {
     // Cache the results of the last search for the module
-    // Assume that there was no DLL unload between 
+    // Assume that there was no DLL unload between
     static wchar_t cachedName[MAX_PATH+1];
     static HMODULE cachedHM = 0;
 
@@ -385,7 +459,7 @@ FRR_TYPE ReplaceFunctionW(const wchar_t *dllName, const char *funcName, FUNCPTR 
         return FRR_NOFUNC;
     }
 
-    if (!InsertTrampoline((void*)inpFunc, (void*)newFunc, opcodesNumber, origFunc)){
+    if (!InsertTrampoline((void*)inpFunc, (void*)newFunc, opcodes, (void**)origFunc)){
         // Failed to insert the trampoline to the target address
         return FRR_FAILED;
     }
@@ -393,4 +467,4 @@ FRR_TYPE ReplaceFunctionW(const wchar_t *dllName, const char *funcName, FUNCPTR 
     return FRR_OK;
 }
 
-#endif //_WIN32
+#endif /* !__TBB_WIN8UI_SUPPORT && defined(_WIN32) */
