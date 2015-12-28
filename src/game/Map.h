@@ -26,6 +26,8 @@
 #include "ace/RW_Thread_Mutex.h"
 #include "ace/Thread_Mutex.h"
 
+#include "tbb/concurrent_queue.h"
+
 #include "DBCStructure.h"
 #include "GridDefines.h"
 #include "Cell.h"
@@ -363,7 +365,11 @@ protected:
 
     typedef std::list<ObjectGuid> ActiveNonPlayers;
     ActiveNonPlayers m_activeNonPlayers;
+    
     ActiveNonPlayers m_continentMobs;
+    typedef tbb::concurrent_queue<ObjectGuid> ActiveNonPlayerQueue;
+    ActiveNonPlayerQueue m_continentAddQueue;
+    ActiveNonPlayerQueue m_continentRemoveQueue;
     
     MapStoredObjectTypesContainer m_objectsStore;
 

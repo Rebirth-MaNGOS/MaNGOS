@@ -25,6 +25,12 @@ if(WIN32)
   )
 endif()
 
+if (TBB_USE_EXTERNAL)
+    include_directories(
+        ${TBB_INCLUDE_DIR}
+    )
+endif()
+
 add_subdirectory(bindings)
 add_subdirectory(framework)
 add_subdirectory(shared)
