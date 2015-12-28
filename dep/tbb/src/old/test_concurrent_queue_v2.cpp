@@ -1,32 +1,24 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
-#include "tbb/concurrent_queue.h"
+#include "old/concurrent_queue_v2.h"
 #include "tbb/atomic.h"
 #include "tbb/tick_count.h"
 
@@ -36,11 +28,12 @@
 static tbb::atomic<long> FooConstructed;
 static tbb::atomic<long> FooDestroyed;
 
+enum state_t{
+    LIVE=0x1234,
+    DEAD=0xDEAD
+};
+
 class Foo {
-    enum state_t{
-        LIVE=0x1234,
-        DEAD=0xDEAD
-    };
     state_t state;
 public:
     int thread_id;
@@ -58,8 +51,8 @@ public:
         ASSERT( state==LIVE, NULL );
         ++FooDestroyed;
         state=DEAD;
-        thread_id=0xDEAD;
-        serial=0xDEAD;
+        thread_id=DEAD;
+        serial=DEAD;
     }
     void operator=( Foo& item ) {
         ASSERT( item.state==LIVE, NULL );
@@ -83,7 +76,7 @@ static tbb::atomic<long> PopKind[3];
 
 const int M = 10000;
 
-struct Body {
+struct Body: NoAssign {
     tbb::concurrent_queue<Foo>* queue;
     const int nthread;
     Body( int nthread_ ) : nthread(nthread_) {}
@@ -96,8 +89,8 @@ struct Body {
         long sum = 0;
         for( long j=0; j<M; ++j ) {
             Foo f;
-            f.thread_id = 0xDEAD;
-            f.serial = 0xDEAD;
+            f.thread_id = DEAD;
+            f.serial = DEAD;
             bool prepopped = false;
             if( j&1 ) {
                 prepopped = queue->pop_if_present(f);
@@ -245,20 +238,20 @@ void TestIterator() {
     tbb::concurrent_queue<Foo> queue;
     tbb::concurrent_queue<Foo>& const_queue = queue;
     for( int j=0; j<500; ++j ) {
-        TestIteratorAux( queue.begin(), queue.end(), j );
+        TestIteratorAux(       queue.begin(),       queue.end(), j );
         TestIteratorAux( const_queue.begin(), const_queue.end(), j );
-        TestIteratorAux( const_queue.begin(), queue.end(), j );
-        TestIteratorAux( queue.begin(), const_queue.end(), j );
+        TestIteratorAux( const_queue.begin(),       queue.end(), j );
+        TestIteratorAux(       queue.begin(), const_queue.end(), j );
         Foo f;
         f.serial = j+1;
         queue.push(f);
     }
     TestIteratorAssignment<tbb::concurrent_queue<Foo>::const_iterator>( const_queue.begin() );
-    TestIteratorAssignment<tbb::concurrent_queue<Foo>::const_iterator>( queue.begin() );
-    TestIteratorAssignment<tbb::concurrent_queue<Foo>::iterator>( queue.begin() );
+    TestIteratorAssignment<tbb::concurrent_queue<Foo>::const_iterator>(       queue.begin() );
+    TestIteratorAssignment<tbb::concurrent_queue<Foo>::      iterator>(       queue.begin() );
 }
 
-void TestConcurrenetQueueType() {
+void TestConcurrentQueueType() {
     AssertSameType( tbb::concurrent_queue<Foo>::value_type(), Foo() );
     Foo f;
     const Foo g;
@@ -301,7 +294,7 @@ void TestFullQueue() {
 }
 
 template<typename T>
-struct TestNegativeQueueBody {
+struct TestNegativeQueueBody: NoAssign {
     tbb::concurrent_queue<T>& queue;
     const int nthread;
     TestNegativeQueueBody( tbb::concurrent_queue<T>& q, int n ) : queue(q), nthread(n) {}
@@ -334,15 +327,11 @@ void TestNegativeQueue( int nthread ) {
     NativeParallelFor( nthread, TestNegativeQueueBody<T>(queue,nthread) );
 }
 
-int main( int argc, char* argv[] ) {
-    // Set default for minimum number of threads.
-    MinThread = 1;
-    ParseCommandLine(argc,argv);
-
+int TestMain () {
     TestEmptyQueue<char>();
     TestEmptyQueue<Foo>();
     TestFullQueue();
-    TestConcurrenetQueueType();
+    TestConcurrentQueueType();
     TestIterator();
 
     // Test concurrent operations
@@ -356,6 +345,5 @@ int main( int argc, char* argv[] ) {
             TestPushPop(prefill,ptrdiff_t(100),nthread);
         }
     }
-    printf("done\n");
-    return 0;
+    return Harness::Done;
 }

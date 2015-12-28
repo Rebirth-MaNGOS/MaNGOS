@@ -1,34 +1,32 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
-#include "thread_monitor.h"
 #include "harness.h"
+#if __TBB_MIC_OFFLOAD
+int TestMain () {
+    return Harness::Skipped;
+}
+#else
+#include "thread_monitor.h"
 #include "harness_memory.h"
+#include "tbb/semaphore.cpp"
 
 class ThreadState {
     void loop();
@@ -43,7 +41,7 @@ public:
     volatile int ack;
     volatile unsigned clock;
     volatile unsigned stamp;
-    ThreadState() : request(-1), ack(-1) {}
+    ThreadState() : request(-1), ack(-1), clock(0) {}
 };
 
 void ThreadState::loop() {
@@ -53,9 +51,7 @@ void ThreadState::loop() {
             thread_monitor::cookie c;
             monitor.prepare_wait(c);
             if( ack==request ) {
-                if( Verbose ) {
-                    printf("%p: request=%d ack=%d\n", this, request, ack );
-                }
+                REMARK("%p: request=%d ack=%d\n", this, request, ack );
                 monitor.commit_wait(c);
             } else
                 monitor.cancel_wait();
@@ -74,21 +70,15 @@ void ThreadState::loop() {
     }
 }
 
-// Linux on Itanium seems to require at least 1<<18 bytes per stack.
+// Linux on IA-64 architecture seems to require at least 1<<18 bytes per stack.
 const size_t MinStackSize = 1<<18;
 const size_t MaxStackSize = 1<<22;
 
-int main( int argc, char* argv[] ) {
-    // Set defaults
-    MinThread = 1;
-    MaxThread = 4;
-    ParseCommandLine( argc, argv );
-
+int TestMain () {
     for( int p=MinThread; p<=MaxThread; ++p ) {
         ThreadState* t = new ThreadState[p];
         for( size_t stack_size = MinStackSize; stack_size<=MaxStackSize; stack_size*=2 ) {
-            if( Verbose )
-                printf("launching %d threads\n",p);
+            REMARK("launching %d threads\n",p);
             for( int i=0; i<p; ++i )
                 rml::internal::thread_monitor::launch( ThreadState::routine, t+i, stack_size ); 
             for( int k=1000; k>=0; --k ) {
@@ -100,21 +90,19 @@ int main( int argc, char* argv[] ) {
                             t[i].stamp = t[i].clock;
                             rml::internal::thread_monitor::yield();
                             if( ++count>=1000 ) {
-                                printf("Warning: thread %d not waiting\n",i);
+                                REPORT("Warning: thread %d not waiting\n",i);
                                 break;
                             }
                         } while( t[i].stamp!=t[i].clock );
                     }
                 }
-                if( Verbose ) 
-                    printf("notifying threads\n");
+                REMARK("notifying threads\n");
                 for( int i=0; i<p; ++i ) {
                     // Change state visible to launched thread
                     t[i].request = k;
                     t[i].monitor.notify();
                 }
-                if( Verbose ) 
-                    printf("waiting for threads to respond\n");
+                REMARK("waiting for threads to respond\n");
                 for( int i=0; i<p; ++i ) 
                     // Wait for thread to respond 
                     while( t[i].ack!=k ) 
@@ -124,6 +112,6 @@ int main( int argc, char* argv[] ) {
         delete[] t;
     }
 
-    printf("done\n");
-    return 0;
+    return Harness::Done;
 }
+#endif /* __TBB_MIC_OFFLOAD */

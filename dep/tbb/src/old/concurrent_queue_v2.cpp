@@ -1,29 +1,21 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
 #include "concurrent_queue_v2.h"
@@ -49,7 +41,7 @@ namespace internal {
 class concurrent_queue_rep;
 
 //! A queue using simple locking.
-/** For efficient, this class has no constructor.  
+/** For efficiency, this class has no constructor.
     The caller is expected to zero-initialize it. */
 struct micro_queue {
     typedef concurrent_queue_base::page page;
@@ -62,7 +54,7 @@ struct micro_queue {
     atomic<ticket> tail_counter;
 
     spin_mutex page_mutex;
-    
+
     class push_finalizer: no_copy {
         ticket my_ticket;
         micro_queue& my_queue;
@@ -80,7 +72,7 @@ struct micro_queue {
     class pop_finalizer: no_copy {
         ticket my_ticket;
         micro_queue& my_queue;
-        page* my_page; 
+        page* my_page;
     public:
         pop_finalizer( micro_queue& queue, ticket k, page* p ) :
             my_ticket(k), my_queue(queue), my_page(p)
@@ -96,7 +88,7 @@ struct micro_queue {
                 }
             }
             my_queue.head_counter = my_ticket;
-            if( p ) 
+            if( p )
                 operator delete(p);
         }
     };
@@ -105,7 +97,7 @@ struct micro_queue {
 };
 
 //! Internal representation of a ConcurrentQueue.
-/** For efficient, this class has no constructor.  
+/** For efficiency, this class has no constructor.
     The caller is expected to zero-initialize it. */
 class concurrent_queue_rep {
 public:
@@ -119,7 +111,7 @@ private:
 
 public:
     //! Must be power of 2
-    static const size_t n_queue = 8; 
+    static const size_t n_queue = 8;
 
     //! Map ticket to an array index
     static size_t index( ticket k ) {
@@ -127,11 +119,11 @@ public:
     }
 
     atomic<ticket> head_counter;
-    char pad1[NFS_MaxLineSize-sizeof(size_t)];
+    char pad1[NFS_MaxLineSize-sizeof(atomic<ticket>)];
 
     atomic<ticket> tail_counter;
-    char pad2[NFS_MaxLineSize-sizeof(ticket)];
-    micro_queue array[n_queue];    
+    char pad2[NFS_MaxLineSize-sizeof(atomic<ticket>)];
+    micro_queue array[n_queue];
 
     micro_queue& choose( ticket k ) {
         // The formula here approximates LRU in a cache-oblivious way.
@@ -154,7 +146,7 @@ public:
 void micro_queue::push( const void* item, ticket k, concurrent_queue_base& base ) {
     k &= -concurrent_queue_rep::n_queue;
     page* p = NULL;
-    size_t index = (k/concurrent_queue_rep::n_queue & base.items_per_page-1);
+    size_t index = modulo_power_of_two( k/concurrent_queue_rep::n_queue, base.items_per_page );
     if( !index ) {
         size_t n = sizeof(page) + base.items_per_page*base.item_size;
         p = static_cast<page*>(operator new( n ));
@@ -162,22 +154,22 @@ void micro_queue::push( const void* item, ticket k, concurrent_queue_base& base 
         p->next = NULL;
     }
     {
-        push_finalizer finalizer( *this, k+concurrent_queue_rep::n_queue ); 
+        push_finalizer finalizer( *this, k+concurrent_queue_rep::n_queue );
         spin_wait_until_eq( tail_counter, k );
         if( p ) {
             spin_mutex::scoped_lock lock( page_mutex );
             if( page* q = tail_page )
                 q->next = p;
             else
-                head_page = p; 
+                head_page = p;
             tail_page = p;
         } else {
             p = tail_page;
         }
         base.copy_item( *p, index, item );
         // If no exception was thrown, mark item as present.
-        p->mask |= uintptr(1)<<index;
-    } 
+        p->mask |= uintptr_t(1)<<index;
+    }
 }
 
 bool micro_queue::pop( void* dst, ticket k, concurrent_queue_base& base ) {
@@ -186,11 +178,11 @@ bool micro_queue::pop( void* dst, ticket k, concurrent_queue_base& base ) {
     spin_wait_while_eq( tail_counter, k );
     page& p = *head_page;
     __TBB_ASSERT( &p, NULL );
-    size_t index = (k/concurrent_queue_rep::n_queue & base.items_per_page-1);
-    bool success = false; 
+    size_t index = modulo_power_of_two( k/concurrent_queue_rep::n_queue, base.items_per_page );
+    bool success = false;
     {
-        pop_finalizer finalizer( *this, k+concurrent_queue_rep::n_queue, index==base.items_per_page-1 ? &p : NULL ); 
-        if( p.mask & uintptr(1)<<index ) {
+        pop_finalizer finalizer( *this, k+concurrent_queue_rep::n_queue, index==base.items_per_page-1 ? &p : NULL );
+        if( p.mask & uintptr_t(1)<<index ) {
             success = true;
             base.assign_and_destroy_item( dst, p, index );
         }
@@ -205,21 +197,21 @@ bool micro_queue::pop( void* dst, ticket k, concurrent_queue_base& base ) {
 //------------------------------------------------------------------------
 // concurrent_queue_base
 //------------------------------------------------------------------------
-concurrent_queue_base::concurrent_queue_base( size_t item_size ) {
-    items_per_page = item_size<=8 ? 32 :
-                     item_size<=16 ? 16 : 
-                     item_size<=32 ? 8 :
-                     item_size<=64 ? 4 :
-                     item_size<=128 ? 2 :
+concurrent_queue_base::concurrent_queue_base( size_t item_sz ) {
+    items_per_page = item_sz<=  8 ? 32 :
+                     item_sz<= 16 ? 16 :
+                     item_sz<= 32 ?  8 :
+                     item_sz<= 64 ?  4 :
+                     item_sz<=128 ?  2 :
                      1;
-    my_capacity = size_t(-1)/(item_size>1 ? item_size : 2); 
+    my_capacity = size_t(-1)/(item_sz>1 ? item_sz : 2);
     my_rep = cache_aligned_allocator<concurrent_queue_rep>().allocate(1);
     __TBB_ASSERT( (size_t)my_rep % NFS_GetLineSize()==0, "alignment error" );
     __TBB_ASSERT( (size_t)&my_rep->head_counter % NFS_GetLineSize()==0, "alignment error" );
     __TBB_ASSERT( (size_t)&my_rep->tail_counter % NFS_GetLineSize()==0, "alignment error" );
     __TBB_ASSERT( (size_t)&my_rep->array % NFS_GetLineSize()==0, "alignment error" );
     memset(my_rep,0,sizeof(concurrent_queue_rep));
-    this->item_size = item_size;
+    this->item_size = item_sz;
 }
 
 concurrent_queue_base::~concurrent_queue_base() {
@@ -236,15 +228,12 @@ concurrent_queue_base::~concurrent_queue_base() {
 void concurrent_queue_base::internal_push( const void* src ) {
     concurrent_queue_rep& r = *my_rep;
     concurrent_queue_rep::ticket k  = r.tail_counter++;
-    ptrdiff_t e = my_capacity;
-    if( e<concurrent_queue_rep::infinite_capacity ) {
+    if( my_capacity<concurrent_queue_rep::infinite_capacity ) {
+        // Capacity is limited, wait to not exceed it
         atomic_backoff backoff;
-        for(;;) {
-            if( (ptrdiff_t)(k-r.head_counter)<e ) break;
+        while( (ptrdiff_t)(k-r.head_counter)>=const_cast<volatile ptrdiff_t&>(my_capacity) )
             backoff.pause();
-            e = const_cast<volatile ptrdiff_t&>(my_capacity);
-        }
-    } 
+    }
     r.choose(k).push(src,k,*this);
 }
 
@@ -260,11 +249,10 @@ bool concurrent_queue_base::internal_pop_if_present( void* dst ) {
     concurrent_queue_rep& r = *my_rep;
     concurrent_queue_rep::ticket k;
     do {
-        atomic_backoff backoff;
-        for(;;) {
+        for( atomic_backoff b;;b.pause() ) {
             k = r.head_counter;
             if( r.tail_counter<=k ) {
-                // Queue is empty 
+                // Queue is empty
                 return false;
             }
             // Queue had item with ticket k when we looked.  Attempt to get that item.
@@ -272,7 +260,6 @@ bool concurrent_queue_base::internal_pop_if_present( void* dst ) {
                 break;
             }
             // Another thread snatched the item, so pause and retry.
-            backoff.pause();
         }
     } while( !r.choose(k).pop(dst,k,*this) );
     return true;
@@ -280,19 +267,17 @@ bool concurrent_queue_base::internal_pop_if_present( void* dst ) {
 
 bool concurrent_queue_base::internal_push_if_not_full( const void* src ) {
     concurrent_queue_rep& r = *my_rep;
-    atomic_backoff backoff;
     concurrent_queue_rep::ticket k;
-    for(;;) {
+    for( atomic_backoff b;;b.pause() ) {
         k = r.tail_counter;
         if( (ptrdiff_t)(k-r.head_counter)>=my_capacity ) {
             // Queue is full
             return false;
         }
         // Queue had empty slot with ticket k when we looked.  Attempt to claim that slot.
-        if( r.tail_counter.compare_and_swap(k+1,k)==k ) 
+        if( r.tail_counter.compare_and_swap(k+1,k)==k )
             break;
         // Another thread claimed the slot, so pause and retry.
-        backoff.pause();
     }
     r.choose(k).push(src,k,*this);
     return true;
@@ -303,7 +288,7 @@ ptrdiff_t concurrent_queue_base::internal_size() const {
     return ptrdiff_t(my_rep->tail_counter-my_rep->head_counter);
 }
 
-void concurrent_queue_base::internal_set_capacity( ptrdiff_t capacity, size_t /*item_size*/ ) {
+void concurrent_queue_base::internal_set_capacity( ptrdiff_t capacity, size_t /*item_sz*/ ) {
     my_capacity = capacity<0 ? concurrent_queue_rep::infinite_capacity : capacity;
 }
 
@@ -313,10 +298,10 @@ void concurrent_queue_base::internal_set_capacity( ptrdiff_t capacity, size_t /*
 class  concurrent_queue_iterator_rep: no_assign {
 public:
     typedef concurrent_queue_rep::ticket ticket;
-    ticket head_counter;   
+    ticket head_counter;
     const concurrent_queue_base& my_queue;
     concurrent_queue_base::page* array[concurrent_queue_rep::n_queue];
-    concurrent_queue_iterator_rep( const concurrent_queue_base& queue ) : 
+    concurrent_queue_iterator_rep( const concurrent_queue_base& queue ) :
         head_counter(queue.my_rep->head_counter),
         my_queue(queue)
     {
@@ -331,7 +316,7 @@ public:
         else {
             concurrent_queue_base::page* p = array[concurrent_queue_rep::index(k)];
             __TBB_ASSERT(p,NULL);
-            size_t i = k/concurrent_queue_rep::n_queue & my_queue.items_per_page-1;
+            size_t i = modulo_power_of_two( k/concurrent_queue_rep::n_queue, my_queue.items_per_page );
             return static_cast<unsigned char*>(static_cast<void*>(p+1)) + my_queue.item_size*i;
         }
     }
@@ -359,11 +344,11 @@ void concurrent_queue_iterator_base::assign( const concurrent_queue_iterator_bas
 }
 
 void concurrent_queue_iterator_base::advance() {
-    __TBB_ASSERT( my_item, "attempt to increment iterator past end of queue" );  
+    __TBB_ASSERT( my_item, "attempt to increment iterator past end of queue" );
     size_t k = my_rep->head_counter;
     const concurrent_queue_base& queue = my_rep->my_queue;
     __TBB_ASSERT( my_item==my_rep->choose(k), NULL );
-    size_t i = k/concurrent_queue_rep::n_queue & queue.items_per_page-1;
+    size_t i = modulo_power_of_two( k/concurrent_queue_rep::n_queue, queue.items_per_page );
     if( i==queue.items_per_page-1 ) {
         concurrent_queue_base::page*& root = my_rep->array[concurrent_queue_rep::index(k)];
         root = root->next;

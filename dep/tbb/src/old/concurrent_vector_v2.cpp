@@ -1,38 +1,40 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
 #include "concurrent_vector_v2.h"
 #include "tbb/tbb_machine.h"
-#include <stdexcept>
 #include "../tbb/itt_notify.h"
 #include "tbb/task.h"
+
+#if !TBB_USE_EXCEPTIONS && _MSC_VER
+    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
+    #pragma warning (push)
+    #pragma warning (disable: 4530)
+#endif
+
+#include <stdexcept> // std::length_error
 #include <cstring>
 
+#if !TBB_USE_EXCEPTIONS && _MSC_VER
+    #pragma warning (pop)
+#endif
 
 #if defined(_MSC_VER) && defined(_Wp64)
     // Workaround for overzealous compiler warnings in /Wp64 mode
@@ -81,14 +83,12 @@ void concurrent_vector_base::helper::extend_segment( concurrent_vector_base& v )
     segment_t* s = (segment_t*)NFS_Allocate( pointers_per_long_segment, sizeof(segment_t), NULL );
     std::memset( s, 0, pointers_per_long_segment*sizeof(segment_t) );
     // If other threads are trying to set pointers in the short segment, wait for them to finish their
-    // assigments before we copy the short segment to the long segment.
+    // assignments before we copy the short segment to the long segment.
     atomic_backoff backoff;
-    while( !v.my_storage[0].array || !v.my_storage[1].array ) {
-        backoff.pause();
-    }
-    s[0] = v.my_storage[0]; 
-    s[1] = v.my_storage[1]; 
-    if( v.my_segment.compare_and_swap( s, v.my_storage )!=v.my_storage ) 
+    while( !v.my_storage[0].array || !v.my_storage[1].array ) backoff.pause();
+    s[0] = v.my_storage[0];
+    s[1] = v.my_storage[1];
+    if( v.my_segment.compare_and_swap( s, v.my_storage )!=v.my_storage )
         NFS_Free(s);
 }
 
@@ -98,7 +98,7 @@ concurrent_vector_base::size_type concurrent_vector_base::internal_capacity() co
 
 void concurrent_vector_base::internal_reserve( size_type n, size_type element_size, size_type max_size ) {
     if( n>max_size ) {
-        throw std::length_error("argument to ConcurrentVector::reserve exceeds ConcurrentVector::max_size()");
+        __TBB_THROW( std::length_error("argument to concurrent_vector::reserve exceeds concurrent_vector::max_size()") );
     }
     for( segment_index_t k = helper::find_segment_end(*this); segment_base(k)<n; ++k ) {
         helper::extend_segment_if_necessary(*this,k);
@@ -119,7 +119,7 @@ void concurrent_vector_base::internal_copy( const concurrent_vector_base& src, s
             size_t m = segment_size(k);
             __TBB_ASSERT( !my_segment[k].array, "concurrent operation during copy construction?" );
             my_segment[k].array = NFS_Allocate( m, element_size, NULL );
-            if( m>n-b ) m = n-b; 
+            if( m>n-b ) m = n-b;
             copy( my_segment[k].array, src.my_segment[k].array, m );
         }
     }
@@ -127,7 +127,7 @@ void concurrent_vector_base::internal_copy( const concurrent_vector_base& src, s
 
 void concurrent_vector_base::internal_assign( const concurrent_vector_base& src, size_type element_size, internal_array_op1 destroy, internal_array_op2 assign, internal_array_op2 copy ) {
     size_type n = src.my_early_size;
-    while( my_early_size>n ) { 
+    while( my_early_size>n ) {
         segment_index_t k = segment_index_of( my_early_size-1 );
         size_type b=segment_base(k);
         size_type new_end = b>=n ? b : n;
@@ -149,13 +149,13 @@ void concurrent_vector_base::internal_assign( const concurrent_vector_base& src,
             a = dst_initialized_size-b;
             if( a>m ) a = m;
             assign( my_segment[k].array, src.my_segment[k].array, a );
-            m -= a; 
-            a *= element_size; 
+            m -= a;
+            a *= element_size;
         }
-        if( m>0 ) 
+        if( m>0 )
             copy( (char*)my_segment[k].array+a, (char*)src.my_segment[k].array+a, m );
     }
-    __TBB_ASSERT( src.my_early_size==n, "detected use of ConcurrentVector::operator= with right side that was concurrently modified" );
+    __TBB_ASSERT( src.my_early_size==n, "detected use of concurrent_vector::operator= with right side that was concurrently modified" );
 }
 
 void* concurrent_vector_base::internal_push_back( size_type element_size, size_type& index ) {
@@ -225,7 +225,7 @@ void concurrent_vector_base::internal_grow( const size_type start, size_type fin
 
 void concurrent_vector_base::internal_clear( internal_array_op1 destroy, bool reclaim_storage ) {
     // Set "my_early_size" early, so that subscripting errors can be caught.
-    // FIXME - doing so may be hurting exception saftey
+    // FIXME - doing so may be hurting exception safety
     __TBB_ASSERT( my_segment, NULL );
     size_type finish = my_early_size;
     my_early_size = 0;
@@ -250,14 +250,14 @@ void concurrent_vector_base::internal_clear( internal_array_op1 destroy, bool re
             s.array = NULL;
             NFS_Free( array );
         }
-        // Clear short segment.  
+        // Clear short segment.
         my_storage[0].array = NULL;
         my_storage[1].array = NULL;
         segment_t* s = my_segment;
         if( s!=my_storage ) {
             my_segment = my_storage;
             NFS_Free( s );
-        } 
+        }
     }
 }
 

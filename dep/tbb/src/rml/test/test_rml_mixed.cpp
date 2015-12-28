@@ -1,39 +1,47 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
+#include <tbb/tbb_config.h>
+#if __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD
+#include "harness.h"
+int TestMain () {
+    return Harness::Skipped;
+}
+#else
 #include "rml_tbb.h"
 #include "rml_omp.h"
 #include "tbb/atomic.h"
 #include "tbb/tick_count.h"
+
+#define HARNESS_DEFAULT_MIN_THREADS 4
 #include "harness.h"
 
+// dynamic_link initializes its data structures in a static constructor. But
+// the initialization order of static constructors in different modules is
+// non-deterministic. Thus dynamic_link fails on some systems when the
+// application changes its current directory after the library (TBB/OpenMP/...)
+// is loaded but before the static constructors in the library are executed.
+#define CHDIR_SUPPORT_BROKEN ( (__TBB_GCC_VERSION >= 40600 && __TBB_GCC_VERSION < 50200) || (__linux__ && __TBB_CLANG_VERSION == 30500) )
+
 const int OMP_ParallelRegionSize = 16;
-int TBB_MaxThread = 4;           // Includes master 
+int TBB_MaxThread = 4;           // Includes master
 int OMP_MaxThread = int(~0u>>1); // Includes master
 
 template<typename Client>
@@ -60,7 +68,58 @@ private:
         delete this;
     }
     /*override*/void cleanup( job& j ) {delete &j;}
+
+public:
+    virtual ~ClientBase() {}
 };
+
+#if _WIN32
+#include <direct.h>
+#define PATH_LEN MAX_PATH+1
+#define SLASH '\\'
+#define ROOT_DIR "\\"
+// ROOT_DIR_REST means how many symbols before first slash in the path
+#define ROOT_DIR_REST 2
+#else
+#include <unistd.h>
+#include <limits.h>
+#define PATH_LEN PATH_MAX+1
+#define SLASH '/'
+#define ROOT_DIR "/"
+// ROOT_DIR_REST means how many symbols before first slash in the path
+#define ROOT_DIR_REST 0
+#define _getcwd getcwd
+#define _chdir  chdir
+#endif
+
+#if !CHDIR_SUPPORT_BROKEN
+class ChangeCurrentDir {
+    char dir[PATH_LEN+1];
+    char *last_slash;
+public:
+    ChangeCurrentDir() {
+        if ( !_getcwd( dir, PATH_LEN ) ) {
+            REPORT_FATAL_ERROR("ERROR: Couldn't get current working directory\n");
+        }
+
+        last_slash = strrchr( dir, SLASH );
+        ASSERT( last_slash, "The current directory doesn't contain slashes" );
+        *last_slash = 0;
+
+        if ( _chdir( last_slash-dir == ROOT_DIR_REST ? ROOT_DIR : dir ) ) {
+            REPORT_FATAL_ERROR("ERROR: Couldn't change current working directory (%s)\n", dir );
+        }
+    }
+
+    // Restore current dir
+    ~ChangeCurrentDir() {
+        *last_slash = SLASH;
+        if ( _chdir(dir) ) {
+            REPORT_FATAL_ERROR("ERROR: Couldn't change current working directory\n");
+        }
+    }
+};
+#endif
 
 //! Represents a TBB or OpenMP run-time that uses RML.
 template<typename Factory, typename Client>
@@ -70,6 +129,9 @@ public:
     Factory factory;
     Client* client;
     typename Factory::server_type* server;
+#if _WIN32||_WIN64
+    ::rml::server::execution_resource_t me;
+#endif
     RunTime() {
         factory.open();
     }
@@ -142,6 +204,11 @@ class OMP_Client: public ClientBase<__kmp::rml::omp_client> {
     }
 };
 
+#if !CHDIR_SUPPORT_BROKEN
+// A global instance of ChangeCurrentDir should be declared before TBB_RunTime and OMP_RunTime
+// since we want to change current directory before opening factory
+ChangeCurrentDir Changer;
+#endif
 RunTime<tbb::internal::rml::tbb_factory, TBB_Client> TBB_RunTime;
 RunTime<__kmp::rml::omp_factory, OMP_Client> OMP_RunTime;
 
@@ -150,10 +217,16 @@ void RunTime<Factory,Client>::create_connection() {
     client = new Client;
     typename Factory::status_type status = factory.make_server( server, *client );
     ASSERT( status==Factory::st_success, NULL );
+#if _WIN32||_WIN64
+    server->register_master( me );
+#endif /* _WIN32||_WIN64 */
 }
 
 template<typename Factory, typename Client>
 void RunTime<Factory,Client>::destroy_connection() {
+#if _WIN32||_WIN64
+    server->unregister_master( me );
+#endif /* _WIN32||_WIN64 */
     server->request_close_connection();
     server = NULL;
 }
@@ -226,15 +299,14 @@ void TBBOutSideOpenMPInside() {
         TBBWork();
     }
     TotalThreadLevel.change_level(-1);
-}  
+}
 
-int main( int argc, char* argv[] ) {
-    // Set defaults
-    MinThread = 4;
-    MaxThread = 4;
-    ParseCommandLine(argc,argv);
+int TestMain () {
+#if CHDIR_SUPPORT_BROKEN
+    REPORT("Known issue: dynamic_link does not support current directory changing before its initialization.\n");
+#endif
     for( int TBB_MaxThread=MinThread; TBB_MaxThread<=MaxThread; ++TBB_MaxThread ) {
-        if( Verbose ) printf("Testing with TBB_MaxThread=%d\n", TBB_MaxThread);
+        REMARK("Testing with TBB_MaxThread=%d\n", TBB_MaxThread);
         TBB_RunTime.create_connection();
         OMP_RunTime.create_connection();
         TBBOutSideOpenMPInside();
@@ -242,6 +314,6 @@ int main( int argc, char* argv[] ) {
         TBB_RunTime.destroy_connection();
     }
     TotalThreadLevel.dump();
-    printf("done\n");
-    return 0;
+    return Harness::Done;
 }
+#endif /* __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD */

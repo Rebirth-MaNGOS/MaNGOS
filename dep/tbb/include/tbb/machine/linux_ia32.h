@@ -1,54 +1,55 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
-#ifndef __TBB_machine_H
-#error Do not include this file directly; include tbb_machine.h instead
+#if !defined(__TBB_machine_H) || defined(__TBB_machine_linux_ia32_H)
+#error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-#if !__MINGW32__
-#include "linux_common.h"
-#endif
+#define __TBB_machine_linux_ia32_H
+
+#include <stdint.h>
+#include "gcc_ia32_common.h"
 
 #define __TBB_WORDSIZE 4
-#define __TBB_BIG_ENDIAN 0
+#define __TBB_ENDIANNESS __TBB_ENDIAN_LITTLE
 
-#define __TBB_release_consistency_helper() __asm__ __volatile__("": : :"memory")
+#define __TBB_compiler_fence() __asm__ __volatile__("": : :"memory")
+#define __TBB_control_consistency_helper() __TBB_compiler_fence()
+#define __TBB_acquire_consistency_helper() __TBB_compiler_fence()
+#define __TBB_release_consistency_helper() __TBB_compiler_fence()
+#define __TBB_full_memory_fence()          __asm__ __volatile__("mfence": : :"memory")
 
-inline void __TBB_rel_acq_fence() { __asm__ __volatile__("mfence": : :"memory"); }
+#if __TBB_ICC_ASM_VOLATILE_BROKEN
+#define __TBB_VOLATILE
+#else
+#define __TBB_VOLATILE volatile
+#endif
 
-#define __MACHINE_DECL_ATOMICS(S,T,X) \
+#define __TBB_MACHINE_DEFINE_ATOMICS(S,T,X,R)                                        \
 static inline T __TBB_machine_cmpswp##S (volatile void *ptr, T value, T comparand )  \
 {                                                                                    \
     T result;                                                                        \
                                                                                      \
     __asm__ __volatile__("lock\ncmpxchg" X " %2,%1"                                  \
-                          : "=a"(result), "=m"(*(T *)ptr)                            \
-                          : "q"(value), "0"(comparand), "m"(*(T *)ptr)               \
+                          : "=a"(result), "=m"(*(__TBB_VOLATILE T*)ptr)              \
+                          : "q"(value), "0"(comparand), "m"(*(__TBB_VOLATILE T*)ptr) \
                           : "memory");                                               \
     return result;                                                                   \
 }                                                                                    \
@@ -57,8 +58,8 @@ static inline T __TBB_machine_fetchadd##S(volatile void *ptr, T addend)         
 {                                                                                    \
     T result;                                                                        \
     __asm__ __volatile__("lock\nxadd" X " %0,%1"                                     \
-                          : "=r"(result), "=m"(*(T *)ptr)                            \
-                          : "0"(addend), "m"(*(T *)ptr)                              \
+                          : R (result), "=m"(*(__TBB_VOLATILE T*)ptr)                \
+                          : "0"(addend), "m"(*(__TBB_VOLATILE T*)ptr)                \
                           : "memory");                                               \
     return result;                                                                   \
 }                                                                                    \
@@ -67,87 +68,134 @@ static inline  T __TBB_machine_fetchstore##S(volatile void *ptr, T value)       
 {                                                                                    \
     T result;                                                                        \
     __asm__ __volatile__("lock\nxchg" X " %0,%1"                                     \
-                          : "=r"(result), "=m"(*(T *)ptr)                            \
-                          : "0"(value), "m"(*(T *)ptr)                               \
+                          : R (result), "=m"(*(__TBB_VOLATILE T*)ptr)                \
+                          : "0"(value), "m"(*(__TBB_VOLATILE T*)ptr)                 \
                           : "memory");                                               \
     return result;                                                                   \
 }                                                                                    \
                                                                                      
-__MACHINE_DECL_ATOMICS(1,int8_t,"")
-__MACHINE_DECL_ATOMICS(2,int16_t,"")
-__MACHINE_DECL_ATOMICS(4,int32_t,"l")
+__TBB_MACHINE_DEFINE_ATOMICS(1,int8_t,"","=q")
+__TBB_MACHINE_DEFINE_ATOMICS(2,int16_t,"","=r")
+__TBB_MACHINE_DEFINE_ATOMICS(4,int32_t,"l","=r")
 
-static inline int64_t __TBB_machine_cmpswp8 (volatile void *ptr, int64_t value, int64_t comparand )
-{
-    int64_t result;
-#if __PIC__ 
-    /* compiling position-independent code */
-    // EBX register preserved for compliancy with position-independent code rules on IA32
-    __asm__ __volatile__ (
-            "pushl %%ebx\n\t"
-            "movl  (%%ecx),%%ebx\n\t"
-            "movl  4(%%ecx),%%ecx\n\t"
-            "lock\n\t cmpxchg8b %1\n\t"
-            "popl  %%ebx"
-             : "=A"(result), "=m"(*(int64_t *)ptr)
-             : "m"(*(int64_t *)ptr)
-             , "0"(comparand)
-             , "c"(&value)
-             : "memory", "esp"
 #if __INTEL_COMPILER
-             ,"ebx"
+#pragma warning( push )
+// reference to EBX in a function requiring stack alignment
+#pragma warning( disable: 998 )
 #endif
-    );
-#else /* !__PIC__ */
+
+#if __TBB_GCC_CAS8_BUILTIN_INLINING_BROKEN
+#define  __TBB_IA32_CAS8_NOINLINE  __attribute__ ((noinline))
+#else
+#define  __TBB_IA32_CAS8_NOINLINE
+#endif
+
+static inline __TBB_IA32_CAS8_NOINLINE int64_t __TBB_machine_cmpswp8 (volatile void *ptr, int64_t value, int64_t comparand )  {
+//TODO: remove the extra part of condition once __TBB_GCC_BUILTIN_ATOMICS_PRESENT is lowered to gcc version 4.1.2
+#if (__TBB_GCC_BUILTIN_ATOMICS_PRESENT || (__TBB_GCC_VERSION >= 40102)) && !__TBB_GCC_64BIT_ATOMIC_BUILTINS_BROKEN
+    return __sync_val_compare_and_swap( reinterpret_cast<volatile int64_t*>(ptr), comparand, value );
+#else /* !__TBB_GCC_BUILTIN_ATOMICS_PRESENT */
+    //TODO: look like ICC 13.0 has some issues with this code, investigate it more deeply
+    int64_t result;
     union {
         int64_t i64;
         int32_t i32[2];
     };
     i64 = value;
+#if __PIC__ 
+    /* compiling position-independent code */
+    // EBX register preserved for compliance with position-independent code rules on IA32
+    int32_t tmp;
+    __asm__ __volatile__ (
+            "movl  %%ebx,%2\n\t"
+            "movl  %5,%%ebx\n\t"
+#if __GNUC__==3
+            "lock\n\t cmpxchg8b %1\n\t"
+#else
+            "lock\n\t cmpxchg8b (%3)\n\t"
+#endif
+            "movl  %2,%%ebx"
+             : "=A"(result)
+             , "=m"(*(__TBB_VOLATILE int64_t *)ptr)
+             , "=m"(tmp)
+#if __GNUC__==3
+             : "m"(*(__TBB_VOLATILE int64_t *)ptr)
+#else
+             : "SD"(ptr)
+#endif
+             , "0"(comparand)
+             , "m"(i32[0]), "c"(i32[1])
+             : "memory"
+#if __INTEL_COMPILER
+             ,"ebx"
+#endif
+    );
+#else /* !__PIC__ */
     __asm__ __volatile__ (
             "lock\n\t cmpxchg8b %1\n\t"
-             : "=A"(result), "=m"(*(int64_t *)ptr)
-             : "m"(*(int64_t *)ptr)
+             : "=A"(result), "=m"(*(__TBB_VOLATILE int64_t *)ptr)
+             : "m"(*(__TBB_VOLATILE int64_t *)ptr)
              , "0"(comparand)
              , "b"(i32[0]), "c"(i32[1])
              : "memory"
     );
 #endif /* __PIC__ */
     return result;
+#endif /* !__TBB_GCC_BUILTIN_ATOMICS_PRESENT */
 }
 
-static inline int32_t __TBB_machine_lg( uint32_t x ) {
-    int32_t j;
-    __asm__ ("bsr %1,%0" : "=r"(j) : "r"(x));
-    return j;
-}
+#undef __TBB_IA32_CAS8_NOINLINE
+
+#if __INTEL_COMPILER
+#pragma warning( pop )
+#endif // warning 998 is back
 
 static inline void __TBB_machine_or( volatile void *ptr, uint32_t addend ) {
-    __asm__ __volatile__("lock\norl %1,%0" : "=m"(*(uint32_t *)ptr) : "r"(addend), "m"(*(uint32_t *)ptr) : "memory");
+    __asm__ __volatile__("lock\norl %1,%0" : "=m"(*(__TBB_VOLATILE uint32_t *)ptr) : "r"(addend), "m"(*(__TBB_VOLATILE uint32_t *)ptr) : "memory");
 }
 
 static inline void __TBB_machine_and( volatile void *ptr, uint32_t addend ) {
-    __asm__ __volatile__("lock\nandl %1,%0" : "=m"(*(uint32_t *)ptr) : "r"(addend), "m"(*(uint32_t *)ptr) : "memory");
+    __asm__ __volatile__("lock\nandl %1,%0" : "=m"(*(__TBB_VOLATILE uint32_t *)ptr) : "r"(addend), "m"(*(__TBB_VOLATILE uint32_t *)ptr) : "memory");
 }
 
-static inline void __TBB_machine_pause( int32_t delay ) {
-    for (int32_t i = 0; i < delay; i++) {
-       __asm__ __volatile__("pause;");
-    }
-    return;
-}   
+//TODO: Check if it possible and profitable for IA-32 architecture on (Linux* and Windows*)
+//to use of 64-bit load/store via floating point registers together with full fence
+//for sequentially consistent load/store, instead of CAS.
+
+#if __clang__
+#define __TBB_fildq  "fildll"
+#define __TBB_fistpq "fistpll"
+#else
+#define __TBB_fildq  "fildq"
+#define __TBB_fistpq "fistpq"
+#endif
+
+static inline int64_t __TBB_machine_aligned_load8 (const volatile void *ptr) {
+    __TBB_ASSERT(tbb::internal::is_aligned(ptr,8),"__TBB_machine_aligned_load8 should be used with 8 byte aligned locations only \n");
+    int64_t result;
+    __asm__ __volatile__ ( __TBB_fildq  " %1\n\t"
+                           __TBB_fistpq " %0" :  "=m"(result) : "m"(*(const __TBB_VOLATILE uint64_t*)ptr) : "memory" );
+    return result;
+}
+
+static inline void __TBB_machine_aligned_store8 (volatile void *ptr, int64_t value ) {
+    __TBB_ASSERT(tbb::internal::is_aligned(ptr,8),"__TBB_machine_aligned_store8 should be used with 8 byte aligned locations only \n");
+    // Aligned store
+    __asm__ __volatile__ ( __TBB_fildq  " %1\n\t"
+                           __TBB_fistpq " %0" :  "=m"(*(__TBB_VOLATILE int64_t*)ptr) : "m"(value) : "memory" );
+}
 
 static inline int64_t __TBB_machine_load8 (const volatile void *ptr) {
-    int64_t result;
-    if( ((uint32_t)ptr&7u)==0 ) {
-        // Aligned load
-        __asm__ __volatile__ ( "fildq %1\n\t"
-                               "fistpq %0" :  "=m"(result) : "m"(*(uint64_t *)ptr) : "memory" );
+#if __TBB_FORCE_64BIT_ALIGNMENT_BROKEN
+    if( tbb::internal::is_aligned(ptr,8)) {
+#endif
+        return __TBB_machine_aligned_load8(ptr);
+#if __TBB_FORCE_64BIT_ALIGNMENT_BROKEN
     } else {
         // Unaligned load
-        result = __TBB_machine_cmpswp8((void*)ptr,0,0);
+        return __TBB_machine_cmpswp8(const_cast<void*>(ptr),0,0);
     }
-    return result;
+#endif
 }
 
 //! Handles misaligned 8-byte store
@@ -156,10 +204,11 @@ extern "C" void __TBB_machine_store8_slow( volatile void *ptr, int64_t value );
 extern "C" void __TBB_machine_store8_slow_perf_warning( volatile void *ptr );
 
 static inline void __TBB_machine_store8(volatile void *ptr, int64_t value) {
-    if( ((uint32_t)ptr&7u)==0 ) {
-        // Aligned store
-        __asm__ __volatile__ ( "fildq %1\n\t"
-                               "fistpq %0" :  "=m"(*(int64_t *)ptr) : "m"(value) : "memory" );
+#if __TBB_FORCE_64BIT_ALIGNMENT_BROKEN
+    if( tbb::internal::is_aligned(ptr,8)) {
+#endif
+        __TBB_machine_aligned_store8(ptr,value);
+#if __TBB_FORCE_64BIT_ALIGNMENT_BROKEN
     } else {
         // Unaligned store
 #if TBB_USE_PERFORMANCE_WARNINGS
@@ -167,87 +216,17 @@ static inline void __TBB_machine_store8(volatile void *ptr, int64_t value) {
 #endif /* TBB_USE_PERFORMANCE_WARNINGS */
         __TBB_machine_store8_slow(ptr,value);
     }
+#endif
 }
  
-template <typename T, size_t S>
-struct __TBB_machine_load_store {
-    static inline T load_with_acquire(const volatile T& location) {
-        T to_return = location;
-        __asm__ __volatile__("" : : : "memory" );   // Compiler fence to keep operations from migrating upwards
-        return to_return;
-    }
-
-    static inline void store_with_release(volatile T &location, T value) {
-        __asm__ __volatile__("" : : : "memory" );   // Compiler fence to keep operations from migrating upwards
-        location = value;
-    }
-};
-
-template <typename T>
-struct __TBB_machine_load_store<T,8> {
-    static inline T load_with_acquire(const volatile T& location) {
-        T to_return = __TBB_machine_load8((volatile void *)&location);
-        __asm__ __volatile__("" : : : "memory" );   // Compiler fence to keep operations from migrating upwards
-        return to_return;
-    }
-
-    static inline void store_with_release(volatile T &location, T value) {
-        __asm__ __volatile__("" : : : "memory" );   // Compiler fence to keep operations from migrating downwards
-        __TBB_machine_store8((volatile void *)&location,(int64_t)value);
-    }
-};
-
-template<typename T>
-inline T __TBB_machine_load_with_acquire(const volatile T &location) {
-    return __TBB_machine_load_store<T,sizeof(T)>::load_with_acquire(location);
-}
-
-template<typename T, typename V>
-inline void __TBB_machine_store_with_release(volatile T &location, V value) {
-    __TBB_machine_load_store<T,sizeof(T)>::store_with_release(location,value);
-}
-
-#define __TBB_load_with_acquire(L) __TBB_machine_load_with_acquire((L))
-#define __TBB_store_with_release(L,V) __TBB_machine_store_with_release((L),(V))
-
 // Machine specific atomic operations
-
-#define __TBB_CompareAndSwap1(P,V,C) __TBB_machine_cmpswp1(P,V,C)
-#define __TBB_CompareAndSwap2(P,V,C) __TBB_machine_cmpswp2(P,V,C)
-#define __TBB_CompareAndSwap4(P,V,C) __TBB_machine_cmpswp4(P,V,C)
-#define __TBB_CompareAndSwap8(P,V,C) __TBB_machine_cmpswp8(P,V,C)
-#define __TBB_CompareAndSwapW(P,V,C) __TBB_machine_cmpswp4(P,V,C)
-
-#define __TBB_FetchAndAdd1(P,V) __TBB_machine_fetchadd1(P,V)
-#define __TBB_FetchAndAdd2(P,V) __TBB_machine_fetchadd2(P,V)
-#define __TBB_FetchAndAdd4(P,V) __TBB_machine_fetchadd4(P,V)
-#define __TBB_FetchAndAddW(P,V) __TBB_machine_fetchadd4(P,V)
-
-#define __TBB_FetchAndStore1(P,V) __TBB_machine_fetchstore1(P,V)
-#define __TBB_FetchAndStore2(P,V) __TBB_machine_fetchstore2(P,V)
-#define __TBB_FetchAndStore4(P,V) __TBB_machine_fetchstore4(P,V)
-#define __TBB_FetchAndStoreW(P,V) __TBB_machine_fetchstore4(P,V)
-
-#define __TBB_Store8(P,V) __TBB_machine_store8(P,V)
-#define __TBB_Load8(P)    __TBB_machine_load8(P)
-
 #define __TBB_AtomicOR(P,V) __TBB_machine_or(P,V)
 #define __TBB_AtomicAND(P,V) __TBB_machine_and(P,V)
 
+#define __TBB_USE_GENERIC_DWORD_FETCH_ADD                   1
+#define __TBB_USE_GENERIC_DWORD_FETCH_STORE                 1
+#define __TBB_USE_FETCHSTORE_AS_FULL_FENCED_STORE           1
+#define __TBB_USE_GENERIC_HALF_FENCED_LOAD_STORE            1
+#define __TBB_USE_GENERIC_RELAXED_LOAD_STORE                1
+#define __TBB_USE_GENERIC_SEQUENTIAL_CONSISTENCY_LOAD_STORE 1
 
-// Those we chose not to implement (they will be implemented generically using CMPSWP8)
-#undef __TBB_FetchAndAdd8
-#undef __TBB_FetchAndStore8
-
-// Definition of other functions
-#define __TBB_Pause(V) __TBB_machine_pause(V)
-#define __TBB_Log2(V)  __TBB_machine_lg(V)
-
-// Special atomic functions
-#define __TBB_FetchAndAddWrelease(P,V) __TBB_FetchAndAddW(P,V)
-#define __TBB_FetchAndIncrementWacquire(P) __TBB_FetchAndAddW(P,1)
-#define __TBB_FetchAndDecrementWrelease(P) __TBB_FetchAndAddW(P,-1)
-
-// Use generic definitions from tbb_machine.h
-#undef __TBB_TryLockByte
-#undef __TBB_LockByte

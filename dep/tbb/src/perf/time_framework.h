@@ -1,29 +1,21 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
 #ifndef __TIME_FRAMEWORK_H__
@@ -37,6 +29,7 @@
 #include "tbb/tbb_stddef.h"
 #include "tbb/task_scheduler_init.h"
 #include "tbb/tick_count.h"
+#define HARNESS_CUSTOM_MAIN 1
 #include "../test/harness.h"
 #include "../test/harness_barrier.h"
 #define STATISTICS_INLINE
@@ -75,11 +68,14 @@ protected:
     //! some value for tester
     arg_t value;
 
+    //! tester name
+    const char *tester_name;
+
     // avoid false sharing
-    char pad[128 - sizeof(arg_t) - sizeof(int)*2 - sizeof(void*) ];
+    char pad[128 - sizeof(arg_t) - sizeof(int)*2 - sizeof(void*)*2 ];
 
 public:
-    //! init tester base. @arg ntests is number of embeded tests in this tester.
+    //! init tester base. @arg ntests is number of embedded tests in this tester.
     TesterBase(int ntests)
         : barrier(NULL), tests_count(ntests)
     {}
@@ -156,8 +152,18 @@ class ValuePerSecond : public Tester {
     /*override*/ value_t test(int testn, int threadn) {
         Timer timer;
         Tester::test(testn, threadn);
-        // return time value per seconds/scale
+        // return value per seconds/scale
         return double(Tester::value)/(timer.get_time()*scale);
+    }
+};
+
+template<typename Tester, int scale = 1>
+class NumberPerSecond : public Tester {
+    /*override*/ value_t test(int testn, int threadn) {
+        Timer timer;
+        Tester::test(testn, threadn);
+        // return a scale per seconds
+        return double(scale)/timer.get_time();
     }
 };
 
@@ -177,7 +183,9 @@ public:
     template<typename Test>
     TestRunner(const char *name, Test *test)
         : tester_name(name), tester(*static_cast<TesterBase*>(test))
-    {}
+    {
+        test->tester_name = name;
+    }
     
     ~TestRunner() { delete &tester; }
 

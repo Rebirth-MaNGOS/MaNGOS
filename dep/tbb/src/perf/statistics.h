@@ -1,29 +1,21 @@
 /*
-    Copyright 2005-2009 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
 
-    This file is part of Threading Building Blocks.
+    This file is part of Threading Building Blocks. Threading Building Blocks is free software;
+    you can redistribute it and/or modify it under the terms of the GNU General Public License
+    version 2  as  published  by  the  Free Software Foundation.  Threading Building Blocks is
+    distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See  the GNU General Public License for more details.   You should have received a copy of
+    the  GNU General Public License along with Threading Building Blocks; if not, write to the
+    Free Software Foundation, Inc.,  51 Franklin St,  Fifth Floor,  Boston,  MA 02110-1301 USA
 
-    Threading Building Blocks is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License
-    version 2 as published by the Free Software Foundation.
-
-    Threading Building Blocks is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Threading Building Blocks; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-    As a special exception, you may use this file as part of a free software
-    library without restriction.  Specifically, if other files instantiate
-    templates or use macros or inline functions from this file, or you compile
-    this file and link it with other files to produce an executable, this
-    file does not by itself cause the resulting executable to be covered by
-    the GNU General Public License.  This exception does not however
-    invalidate any other reasons why the executable file might be covered by
-    the GNU General Public License.
+    As a special exception,  you may use this file  as part of a free software library without
+    restriction.  Specifically,  if other files instantiate templates  or use macros or inline
+    functions from this file, or you compile this file and link it with other files to produce
+    an executable,  this file does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU General Public License.
 */
 
 // Internal Intel tool
@@ -47,7 +39,7 @@ typedef double value_t;
 
 /*
    Statistical collector class.
-  
+
    Resulting table output:
         +---------------------------------------------------------------------------+
         | [Date] <Title>...                                                         |
@@ -63,7 +55,7 @@ typedef double value_t;
         +---------------------------------------------------------------------------+
         | [Date] <TestName>, Threads: <N>, Mode: <M>; for <Title>...                |
         +----------+----v----+--v---+----------------+------------+-..-+------------+
-        
+
 */
 
 class StatisticsCollector
@@ -85,11 +77,11 @@ protected:
     };
 
     // internal members
-	//bool OpenFile;
+    //bool OpenFile;
     StatisticResults *CurrentKey;
     string Title;
     const char /**Name,*/ *ResultsFmt;
-	string Name;
+    string Name;
     //! Data
     typedef map<string, StatisticResults*> Statistics_t;
     Statistics_t Statistics;
@@ -100,6 +92,8 @@ protected:
     Formulas_t   Formulas;
     typedef set<string> AnalysisTitles_t;
     AnalysisTitles_t AnalysisTitles;
+    typedef vector<pair<string, string> > RunInfo_t;
+    RunInfo_t RunInfo;
 
 public:
     struct TestCase {
@@ -129,7 +123,8 @@ public:
         Stdout   = 1<<8,    //< Output to the console
         TextFile = 1<<9,    //< Output to plain text file "name.txt" (delimiter is TAB by default)
         ExcelXML = 1<<10,   //< Output to Excel-readable XML-file "name.xml"
-        HTMLFile = 1<<11    //< Output to HTML file "name.html"
+        HTMLFile = 1<<11,   //< Output to HTML file "name.html"
+        PivotMode= 1<<15    //< Puts all the rounds into one columt to better fit for pivot table in Excel
     };
 
     //! Constructor. Specify tests set name which used as name of output files
@@ -145,7 +140,7 @@ public:
     TestCase SetTestCase(const char *name, const char *mode, int threads);
     //! Specify next test key
     void SetTestCase(const TestCase &t) { SetTestCase(t.getName(), t.getMode(), t.getThreads()); }
-    //! Reserve specified number of rounds. Use for effeciency. Used mostly internally
+    //! Reserve specified number of rounds. Use for efficiency. Used mostly internally
     void ReserveRounds(size_t index);
     //! Add result of the measure
     void AddRoundResult(const TestCase &, value_t v);
@@ -166,6 +161,9 @@ public:
     //TODO://! #1 .. #n templates represent data cells from the first to the last
     //TODO: merge with Analisis
     void SetStatisticFormula(const char *name, const char *formula);
+    //! Add information about run or compile parameters
+    void SetRunInfo(const char *title, const char *fmt, ...);
+    void SetRunInfo(const char *title, int num) { SetRunInfo(title, "%d", num); }
 
     //! Data output
     void Print(int dataOutput, const char *ModeName = "Mode");
@@ -175,7 +173,12 @@ private:
 };
 
 //! using: Func(const char *fmt, ...) { vargf2buff(buff, 128, fmt);...
-#define vargf2buff(name, size, fmt) char name[size]; memset(name, 0, size); va_list args; va_start(args, fmt); vsnprintf( name, size-1, fmt, args)
+#define vargf2buff(name, size, fmt) \
+    char name[size]; memset(name, 0, size); \
+    va_list args; va_start(args, fmt); \
+    vsnprintf(name, size-1, fmt, args); \
+    va_end(args);
+
 
 inline std::string Format(const char *fmt, ...) {
     vargf2buff(buf, 1024, fmt); // from statistics.h
