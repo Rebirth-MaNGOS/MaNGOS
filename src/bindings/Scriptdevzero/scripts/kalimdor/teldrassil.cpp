@@ -97,8 +97,70 @@ bool QuestAccept_npc_mist(Player* pPlayer, Creature* pCreature, const Quest* pQu
         if (npc_mistAI* pMistAI = dynamic_cast<npc_mistAI*>(pCreature->AI()))
             pMistAI->StartFollow(pPlayer, FACTION_DARNASSUS, pQuest);
     }
-
     return true;
+}
+
+/*####
+# mob_sethir_the_ancient
+####*/
+
+enum eSethir
+{
+    MOB_MINION_OF_SETHIR = 6911
+};
+
+struct MANGOS_DLL_DECL mob_sethir_the_ancientAI : public ScriptedAI
+{
+    mob_sethir_the_ancientAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiSayTimer;
+
+    void Reset() 
+    {       
+        m_uiSayTimer = urand(60000, 120000);
+    }
+    
+    void Aggro(Unit* who)
+    {
+        m_creature->MonsterYell("DIE!", LANG_UNIVERSAL, NULL);
+        
+        uint8 rand = urand(1,5);
+        float fX, fY, fZ;
+        m_creature->GetPosition(fX, fY, fZ);
+        for(uint8 i = 0; i < rand; ++i)
+            m_creature->SummonCreature(MOB_MINION_OF_SETHIR, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiSayTimer <= uiDiff)
+        {
+            if(!m_creature->isInCombat())
+            {
+                uint8 r = urand(0,1);
+                if(r<1)
+                    m_creature->MonsterSay("I know you are there, rogue. Leave my hove or join the others at the bottom of the world tree.", LANG_UNIVERSAL, NULL);
+                else
+                    m_creature->MonsterSay("The end of the days is upon us! May the earth embrace my flesh and bones.", LANG_UNIVERSAL, NULL);
+            }
+            m_uiSayTimer = urand(60000, 120000);
+         } 
+        else
+            m_uiSayTimer -= uiDiff;
+        
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_sethir_the_ancient(Creature* pCreature)
+{
+    return new mob_sethir_the_ancientAI(pCreature);
 }
 
 void AddSC_teldrassil()
@@ -109,5 +171,10 @@ void AddSC_teldrassil()
     pNewscript->Name = "npc_mist";
     pNewscript->GetAI = &GetAI_npc_mist;
     pNewscript->pQuestAcceptNPC = &QuestAccept_npc_mist;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "mob_sethir_the_ancient";
+    pNewscript->GetAI = &GetAI_mob_sethir_the_ancient;
     pNewscript->RegisterSelf();
 }
