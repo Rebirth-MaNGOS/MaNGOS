@@ -367,7 +367,9 @@ class Spell
 
         void FillAreaTargets(UnitList &targetUnitMap, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets, WorldObject* originalCaster = NULL);
         void FillRaidOrPartyTargets( UnitList &TagUnitMap, Unit* target, float radius, bool raid, bool withPets, bool withcaster );
-
+  
+        void GetSpellRangeAndRadius(SpellEffectIndex effIndex, float& radius, uint32& EffectChainTarget, uint32& unMaxTargets) const;
+        
         template<typename T> WorldObject* FindCorpseUsing();
 
         bool CheckTarget( Unit* target, SpellEffectIndex eff );
