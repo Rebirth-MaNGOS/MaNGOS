@@ -421,7 +421,8 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 if (pCreature)
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             }            
-           for (short i = 14; i < 21; i++)   // second group
+           
+            for (short i = 14; i < 21; i++)   // third group
             {
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
@@ -429,7 +430,15 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 if (pCreature)
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             }
-            for (short i = 21; i < 28; i++)   // third group
+            for (short i = 21; i < 28; i++)   // fourth group
+            {
+                Creature* pCreature = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[i]);
+
+                if (pCreature)
+                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            }     
+            for (short i = 42; i < 49; i++)   // seventh group
             {
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
@@ -440,23 +449,15 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
         }
         if(Groups == 3)
         {
-            for (short i = 28; i < 35; i++)   // fourth group
+            for (short i = 7; i < 14; i++)   // second group
             {
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
                 if (pCreature)
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
-            }            
-           for (short i = 35; i < 42; i++)   // fifth group
-            {
-                Creature* pCreature = m_creature->GetMap()->GetCreature(
-                        m_uiSummonList[i]);
-
-                if (pCreature)
-                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
-            }
-            for (short i = 42; i < 49; i++)   // sixth group
+            }                   
+           for (short i = 28; i < 35; i++)   // fifth group
             {
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
@@ -464,38 +465,60 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 if (pCreature)
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             }
-            for (short i = 49; i < 56; i++)   // seventh group
+            for (short i = 35; i < 42; i++)   // sixth group
             {
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
                 if (pCreature)
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
-            }
+            }        
         }
-        if(Groups == 4)     // attack with first groups of captains
-        {
-            for (short i = 0; i <= 21; i ++) 
-            {
-                Creature* pCreature = m_creature->GetMap()->GetCreature(
-                        m_uiSummonList[i]);
+        if(Groups == 4)     // attack with first groups of captains 1,3,4,7
+        {            
+            Creature* pCreature1 = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[0]);
 
-                if (pCreature)
-                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);     
-                i = i + 6;
-            }
+            if (pCreature1)
+                pCreature1->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+                
+            Creature* pCreature3 = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[14]);
+
+            if (pCreature3)
+                pCreature3->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+
+            Creature* pCreature4 = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[21]);
+
+            if (pCreature4)
+                pCreature4->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            
+            Creature* pCreature7 = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[42]);
+
+            if (pCreature7)
+                pCreature7->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
         }
-          if(Groups == 5)     // attack with rest of the captains
+          if(Groups == 5)     // attack with rest of the captains 2,5,6
         {
-            for (short i = 21; i <= 49; i ++) 
-            {
-                Creature* pCreature = m_creature->GetMap()->GetCreature(
-                        m_uiSummonList[i]);
+            Creature* pCreature2 = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[7]);
 
-                if (pCreature)
-                    pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);     
-                i = i + 6;
-            }
+            if (pCreature2)
+                pCreature2->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            
+            Creature* pCreature5 = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[28]);
+
+            if (pCreature5)
+                pCreature5->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
+            
+            Creature* pCreature6 = m_creature->GetMap()->GetCreature(
+                        m_uiSummonList[35]);
+
+            if (pCreature6)
+                pCreature6->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
         }
     }
 
