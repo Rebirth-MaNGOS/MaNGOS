@@ -324,16 +324,18 @@ void BattleGround::Update(uint32 diff)
 
 
     /*********************************************************/
-    /***           BATTLEGROUND BALLANCE SYSTEM            ***/
+    /***           BATTLEGROUND BALANCE SYSTEM            ***/
     /*********************************************************/
-
-    // if less then minimum players are in on one side, then start premature finish timer
-    if (GetStatus() == STATUS_IN_PROGRESS && sBattleGroundMgr.GetPrematureFinishTime() && (GetPlayersCountByTeam(ALLIANCE) < GetMinPlayersPerTeam() || GetPlayersCountByTeam(HORDE) < GetMinPlayersPerTeam()))
+    // if less then minimum players are in on one side, then start premature finish timer, hardcoded exeption for AV
+    if (GetStatus() == STATUS_IN_PROGRESS && sBattleGroundMgr.GetPrematureFinishTime() && 
+        (GetTypeID() == BATTLEGROUND_AV ? (GetPlayersCountByTeam(ALLIANCE) < 10 || GetPlayersCountByTeam(HORDE) < 10) :
+        (GetPlayersCountByTeam(ALLIANCE) < GetMinPlayersPerTeam() || GetPlayersCountByTeam(HORDE) < GetMinPlayersPerTeam())))
     {
         if (!m_PrematureCountDown)
         {
             m_PrematureCountDown = true;
-            m_PrematureCountDownTimer = sBattleGroundMgr.GetPrematureFinishTime();
+            // special 30 min timer for AV, hopefully it will increase activity and keep the BG going
+            m_PrematureCountDownTimer = GetTypeID() == BATTLEGROUND_AV ? (30 * MINUTE * IN_MILLISECONDS) : sBattleGroundMgr.GetPrematureFinishTime();
         }
         else if (m_PrematureCountDownTimer < diff)
         {

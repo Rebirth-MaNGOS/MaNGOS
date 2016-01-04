@@ -384,7 +384,7 @@ public:
     void HandleQuestComplete(uint32 questid, Player *player);
     bool PlayerCanDoMineQuest(int32 GOId, Team team);
 
-    void EndBattleGround(Team winner);
+    void EndBattleGround(Team winner, bool killedBoss);
 
     virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player *plr);
 

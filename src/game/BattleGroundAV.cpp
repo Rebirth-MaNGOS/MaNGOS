@@ -62,14 +62,14 @@ void BattleGroundAV::HandleKillUnit(Creature *creature, Player *killer)
         RewardReputationToTeam(BG_AV_FACTION_H, m_RepBoss, HORDE);
         RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_BOSS), HORDE);
         SendYellToAll(LANG_BG_AV_A_GENERAL_DEAD, LANG_UNIVERSAL, GetSingleCreatureGuid(BG_AV_HERALD, 0));
-        EndBattleGround(HORDE);
+        EndBattleGround(HORDE, true);
         break;
     case BG_AV_BOSS_H:
         CastSpellOnTeam(BG_AV_BOSS_KILL_QUEST_SPELL, ALLIANCE); // this is a spell which finishes a quest where a player has to kill the boss
         RewardReputationToTeam(BG_AV_FACTION_A, m_RepBoss, ALLIANCE);
         RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_BOSS), ALLIANCE);
         SendYellToAll(LANG_BG_AV_H_GENERAL_DEAD, LANG_UNIVERSAL, GetSingleCreatureGuid(BG_AV_HERALD, 0));
-        EndBattleGround(ALLIANCE);
+        EndBattleGround(ALLIANCE, true);
         break;
     case BG_AV_CAPTAIN_A:
         if (IsActiveEvent(BG_AV_NodeEventCaptainDead_A, 0))
@@ -362,62 +362,65 @@ void BattleGroundAV::AddPlayer(Player *plr)
             plr->SetQuestStatus(BG_AV_reset_quests[i], QUEST_STATUS_NONE);
             plr->getQuestStatusMap()[BG_AV_reset_quests[i]].m_rewarded = false;
         }
-
 }
 
-void BattleGroundAV::EndBattleGround(Team winner)
+void BattleGroundAV::EndBattleGround(Team winner, bool killedBoss)
 {
-    // calculate bonuskills for both teams:
-    uint32 tower_survived[BG_TEAMS_COUNT]  = {0, 0};
-    uint32 graves_owned[BG_TEAMS_COUNT]    = {0, 0};
-    uint32 mines_owned[BG_TEAMS_COUNT]     = {0, 0};
-    // towers all not destroyed:
-    for(BG_AV_Nodes i = BG_AV_NODES_DUNBALDAR_SOUTH; i <= BG_AV_NODES_STONEHEART_BUNKER; ++i)
-        if (m_Nodes[i].State == POINT_CONTROLLED)
-            if (m_Nodes[i].TotalOwner == BG_AV_TEAM_ALLIANCE)
-                ++tower_survived[BG_TEAM_ALLIANCE];
-    for(BG_AV_Nodes i = BG_AV_NODES_ICEBLOOD_TOWER; i <= BG_AV_NODES_FROSTWOLF_WTOWER; ++i)
-        if (m_Nodes[i].State == POINT_CONTROLLED)
-            if (m_Nodes[i].TotalOwner == BG_AV_TEAM_HORDE)
-                ++tower_survived[BG_TEAM_HORDE];
-
-    // graves all controlled
-    for(BG_AV_Nodes i = BG_AV_NODES_FIRSTAID_STATION; i < BG_AV_NODES_MAX; ++i)
-        if (m_Nodes[i].State == POINT_CONTROLLED && m_Nodes[i].Owner != BG_AV_TEAM_NEUTRAL)
-            ++graves_owned[m_Nodes[i].Owner];
-
-    for (uint32 i = 0; i < BG_AV_MAX_MINES; ++i)
-        if (m_Mine_Owner[i] != BG_AV_TEAM_NEUTRAL)
-            ++mines_owned[m_Mine_Owner[i]];
-
-    // now we have the values give the honor/reputation to the teams:
-    Team team[BG_TEAMS_COUNT]      = { ALLIANCE, HORDE };
-    uint32 faction[BG_TEAMS_COUNT]   = { BG_AV_FACTION_A, BG_AV_FACTION_H };
-    for (uint32 i = 0; i < BG_TEAMS_COUNT; i++)
+    // if they killed the boss hand out extra rep, otherwise skip it
+    if(killedBoss)
     {
-        if (tower_survived[i])
-        {
-            RewardReputationToTeam(faction[i], tower_survived[i] * m_RepSurviveTower, team[i]);
-            RewardHonorToTeam(GetBonusHonorFromKill(tower_survived[i] * BG_AV_KILL_SURVIVING_TOWER), team[i]);
-        }
-        DEBUG_LOG("BattleGroundAV: EndbattleGround: bgteam: %u towers:%u honor:%u rep:%u", i, tower_survived[i], GetBonusHonorFromKill(tower_survived[i] * BG_AV_KILL_SURVIVING_TOWER), tower_survived[i] * BG_AV_REP_SURVIVING_TOWER);
-        if (graves_owned[i])
-            RewardReputationToTeam(faction[i], graves_owned[i] * m_RepOwnedGrave, team[i]);
-        if (mines_owned[i])
-            RewardReputationToTeam(faction[i], mines_owned[i] * m_RepOwnedMine, team[i]);
-        // captain survived?:
-        if (!IsActiveEvent(BG_AV_NodeEventCaptainDead_A + GetTeamIndexByTeamId(team[i]), 0))
-        {
-            RewardReputationToTeam(faction[i], m_RepSurviveCaptain, team[i]);
-            RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_SURVIVING_CAPTAIN), team[i]);
-        }
-    }
+        // calculate bonuskills for both teams:
+        uint32 tower_survived[BG_TEAMS_COUNT]  = {0, 0};
+        uint32 graves_owned[BG_TEAMS_COUNT]    = {0, 0};
+        uint32 mines_owned[BG_TEAMS_COUNT]     = {0, 0};
+        // towers all not destroyed:
+        for(BG_AV_Nodes i = BG_AV_NODES_DUNBALDAR_SOUTH; i <= BG_AV_NODES_STONEHEART_BUNKER; ++i)
+            if (m_Nodes[i].State == POINT_CONTROLLED)
+                if (m_Nodes[i].TotalOwner == BG_AV_TEAM_ALLIANCE)
+                    ++tower_survived[BG_TEAM_ALLIANCE];
+        for(BG_AV_Nodes i = BG_AV_NODES_ICEBLOOD_TOWER; i <= BG_AV_NODES_FROSTWOLF_WTOWER; ++i)
+            if (m_Nodes[i].State == POINT_CONTROLLED)
+                if (m_Nodes[i].TotalOwner == BG_AV_TEAM_HORDE)
+                    ++tower_survived[BG_TEAM_HORDE];
 
-    // both teams:
-    if (m_HonorMapComplete)
-    {
-        RewardHonorToTeam(m_HonorMapComplete, ALLIANCE);
-        RewardHonorToTeam(m_HonorMapComplete, HORDE);
+        // graves all controlled
+        for(BG_AV_Nodes i = BG_AV_NODES_FIRSTAID_STATION; i < BG_AV_NODES_MAX; ++i)
+            if (m_Nodes[i].State == POINT_CONTROLLED && m_Nodes[i].Owner != BG_AV_TEAM_NEUTRAL)
+                ++graves_owned[m_Nodes[i].Owner];
+
+        for (uint32 i = 0; i < BG_AV_MAX_MINES; ++i)
+            if (m_Mine_Owner[i] != BG_AV_TEAM_NEUTRAL)
+                ++mines_owned[m_Mine_Owner[i]];
+
+        // now we have the values give the honor/reputation to the teams:
+        Team team[BG_TEAMS_COUNT]      = { ALLIANCE, HORDE };
+        uint32 faction[BG_TEAMS_COUNT]   = { BG_AV_FACTION_A, BG_AV_FACTION_H };
+        for (uint32 i = 0; i < BG_TEAMS_COUNT; i++)
+        {
+            if (tower_survived[i])
+            {
+                RewardReputationToTeam(faction[i], tower_survived[i] * m_RepSurviveTower, team[i]);
+                RewardHonorToTeam(GetBonusHonorFromKill(tower_survived[i] * BG_AV_KILL_SURVIVING_TOWER), team[i]);
+            }
+            DEBUG_LOG("BattleGroundAV: EndbattleGround: bgteam: %u towers:%u honor:%u rep:%u", i, tower_survived[i], GetBonusHonorFromKill(tower_survived[i] * BG_AV_KILL_SURVIVING_TOWER), tower_survived[i] * BG_AV_REP_SURVIVING_TOWER);
+            if (graves_owned[i])
+                RewardReputationToTeam(faction[i], graves_owned[i] * m_RepOwnedGrave, team[i]);
+            if (mines_owned[i])
+                RewardReputationToTeam(faction[i], mines_owned[i] * m_RepOwnedMine, team[i]);
+            // captain survived?:
+            if (!IsActiveEvent(BG_AV_NodeEventCaptainDead_A + GetTeamIndexByTeamId(team[i]), 0))
+            {
+                RewardReputationToTeam(faction[i], m_RepSurviveCaptain, team[i]);
+                RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_SURVIVING_CAPTAIN), team[i]);
+            }
+        }
+
+        // both teams:
+        if (m_HonorMapComplete)
+        {
+            RewardHonorToTeam(m_HonorMapComplete, ALLIANCE);
+            RewardHonorToTeam(m_HonorMapComplete, HORDE);
+        }
     }
     BattleGround::EndBattleGround(winner);
 }
