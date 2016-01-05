@@ -31,113 +31,183 @@ EndContentData */
 ## npc_lazy_peon
 ######*/
 
-enum LazyPeon
+enum
 {
-    SAY_WORK              = -1000159,
+    SAY_PEON_AWAKE_1        = -1000159,
+    SAY_PEON_AWAKE_2        = -1000796,
 
-    GO_LUMBERPILE         = 175784,
-    QUEST_LAZY_PEONS      = 5441,
+    SPELL_PEON_SLEEP        = 17743,
+    SPELL_AWAKEN_PEON       = 19938,
 
-    SPELL_BUFF_SLEEP      = 17743,
-    SPELL_AWAKEN_PEON     = 19938,
-
-	WORKING_TIME          = 60000
+    NPC_SLEEPING_PEON       = 10556,
+    GO_LUMBERPILE           = 175784,
+    GO_TREE_CHOP_DUMMY = 1757840
 };
 
-struct npc_lazy_peonAI : public ScriptedAI
+struct MANGOS_DLL_DECL npc_lazy_peonAI : public ScriptedAI
 {
-    npc_lazy_peonAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
-
-    bool m_bWorking;
-    uint32 m_uiRebuffTimer;
-	uint32 m_uiUpdateTimer;
-
+    npc_lazy_peonAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+    uint8 m_uiWoodRPStep;
+    uint32 m_uiWoodRPTimer;
+    uint32 m_uiRandomRPTimer;
+    bool m_bReverse;
+    bool m_bDoingRP;
+    
     void Reset()
     {
-        m_bWorking = false;
-        m_uiRebuffTimer = 0;
-		m_uiUpdateTimer = 1000;
-		m_creature->CastSpell(m_creature,SPELL_BUFF_SLEEP,false);
+        m_bReverse = false;
+        m_uiWoodRPStep = 1;
+        m_uiWoodRPTimer = 0;
+        m_creature->CastSpell(m_creature,SPELL_PEON_SLEEP, true);
+        m_uiRandomRPTimer = urand((1 * MINUTE * IN_MILLISECONDS), (2 * MINUTE * IN_MILLISECONDS));
     }
 
-	bool IsMoving()
-	{
-		return m_creature->GetMotionMaster() && (m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == POINT_MOTION_TYPE
-				|| m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == HOME_MOTION_TYPE);
-	}
-
+    void MoveToGO(int type = 0)
+    {        
+        if (type == 0)
+        {            
+            if (GameObject* pLumber = GetClosestGameObjectWithEntry(m_creature, GO_LUMBERPILE, 25.0f))
+            {                
+                float fX, fY, fZ;
+                pLumber->GetContactPoint(m_creature, fX, fY, fZ, CONTACT_DISTANCE);
+                if(!m_bReverse)
+                    m_creature->GetMotionMaster()->MovePoint(1, fX, fY, fZ);
+                else
+                    m_creature->GetMotionMaster()->MovePoint(3, fX, fY, fZ);
+            }
+        }
+        else
+        {
+             if (GameObject* pTree = GetClosestGameObjectWithEntry(m_creature, GO_TREE_CHOP_DUMMY, 30.0f))
+            {
+                float FX, FY, FZ;
+                pTree->GetPosition(FX, FY, FZ);
+                m_creature->GetMotionMaster()->MovePoint(2, FX, FY, FZ);
+                m_bReverse = true;
+            }
+        }
+    }
+    
     void JustReachedHome()
     {
-        //m_creature->LoadCreatureAddon();
-		m_creature->CastSpell(m_creature,SPELL_BUFF_SLEEP,false);
+        int r = urand(0,1);
+        if(r == 1)
+            DoScriptText(SAY_PEON_AWAKE_2, m_creature);
+        m_creature->CastSpell(m_creature, SPELL_PEON_SLEEP, true);        
     }
-
-	//void MoveInLineOfSight(Unit* U)
-	//{
-	//	if (!m_bWorking && !m_creature->HasAura(SPELL_BUFF_SLEEP,EFFECT_INDEX_0) && !IsMoving())
-	//		m_creature->CastSpell(m_creature,SPELL_BUFF_SLEEP,false);
-	//}
-
-    void MovementInform(uint32 /*uiType*/, uint32 uiPointId)
+    
+    void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId)
     {
-        if (uiPointId == 1)
-            m_bWorking = true;
-    }
-
-    void SpellHit(Unit* pCaster, const SpellEntry* pSpell)
-    {
-        if (m_bWorking || pCaster->GetTypeId() != TYPEID_PLAYER)
-            return;
-
-        if (pSpell->Id == SPELL_AWAKEN_PEON && ((Player*)pCaster)->GetQuestStatus(QUEST_LAZY_PEONS) == QUEST_STATUS_INCOMPLETE)
+        switch(uiPointId)
         {
-			((Player*)pCaster)->KilledMonsterCredit(m_creature->GetEntry(), m_creature->GetObjectGuid());
-            DoScriptText(SAY_WORK, m_creature, pCaster);
-            m_creature->RemoveAllAuras();
-            m_uiRebuffTimer = WORKING_TIME;
-            if (GameObject* pGo = GetClosestGameObjectWithEntry(m_creature, GO_LUMBERPILE, 20.0f))
-                m_creature->GetMotionMaster()->MovePoint(1, pGo->GetPositionX()-1, pGo->GetPositionY(), pGo->GetPositionZ());
+            case 1:
+                m_uiWoodRPTimer = 1000;
+                m_uiWoodRPStep = 1;
+                break;
         }
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (m_bWorking)
+        if (m_uiWoodRPTimer && m_bDoingRP)
         {
-			m_creature->HandleEmote(173);
-			if (m_uiRebuffTimer > WORKING_TIME)
-				m_uiRebuffTimer = 10000;
-            if (m_uiRebuffTimer <= uiDiff)
+            if(!m_uiWoodRPStep)
+                return;
+        
+            if(m_uiWoodRPTimer <= uiDiff)
             {
-                m_creature->GetMotionMaster()->MoveTargetedHome();
-                m_bWorking = false;
-                m_uiRebuffTimer = 0;
+                switch(m_uiWoodRPStep)
+                {                   
+                    case 1:
+                        m_creature->HandleEmote(EMOTE_ONESHOT_KNEEL);           
+                        m_uiWoodRPTimer = 5000;
+                        break;
+                    case 2: 
+                        // move to the tree
+                        MoveToGO(1);
+                        m_uiWoodRPTimer = 8000;
+                        break;
+                    case 3:
+                        m_creature->HandleEmoteState(EMOTE_STATE_WORK_CHOPWOOD);
+                        m_uiWoodRPTimer = urand(10000, 15000);
+                        break;
+                    case 4:
+                        m_creature->HandleEmoteState(EMOTE_STATE_NONE);      
+                        // back to lumber
+                        MoveToGO(0);
+                        m_uiWoodRPTimer = 8000;
+                        break;
+                    case 5:
+                        m_creature->HandleEmote(EMOTE_ONESHOT_KNEEL);                   
+                        m_uiWoodRPTimer = 5000;
+                        break;
+                    case 6:
+                        // move home to sleep                       
+                        m_creature->GetMotionMaster()->MoveTargetedHome();
+                        m_bDoingRP = false;
+                        break;
+                    /*default:
+                        m_uiWoodRPStep = 0;
+                        return;*/
+                }
+                ++m_uiWoodRPStep;
             }
             else
-                m_uiRebuffTimer -= uiDiff;
+                m_uiWoodRPTimer -= uiDiff;
+        }      
+        else
+        {            
+            if (m_uiRandomRPTimer)
+            {
+                if (m_uiRandomRPTimer <= uiDiff)
+                {
+                    StartLumbering(m_creature);
+                    m_uiRandomRPTimer = urand((1 * MINUTE * IN_MILLISECONDS), (2 * MINUTE * IN_MILLISECONDS));
+                }
+                else
+                    m_uiRandomRPTimer -= uiDiff;
+            }
         }
-		else 
-		{
-			if (m_uiUpdateTimer <= uiDiff)
-			{
-				m_uiUpdateTimer = 1000;
-				if (!m_creature->HasAura(SPELL_BUFF_SLEEP,EFFECT_INDEX_0) && !IsMoving())
-					m_creature->CastSpell(m_creature,SPELL_BUFF_SLEEP,false);
-			}
-			else
-				m_uiUpdateTimer -= uiDiff;
-		}
-
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
-        DoMeleeAttackIfReady();
-    }
+    }  
+    
+        // Can also be self invoked for random working
+    void StartLumbering(Unit* pInvoker)
+    {
+        m_bDoingRP = true;      
+        m_bReverse = false;
+        m_creature->RemoveAurasDueToSpell(SPELL_PEON_SLEEP);
+        MoveToGO(0);
+         if (pInvoker->GetTypeId() == TYPEID_PLAYER)
+        {
+            DoScriptText(SAY_PEON_AWAKE_1, m_creature, pInvoker);
+            ((Player*)pInvoker)->KilledMonsterCredit(m_creature->GetEntry(), m_creature->GetObjectGuid());
+        }                
+    }   
 };
 
 CreatureAI* GetAI_npc_lazy_peon(Creature* pCreature)
 {
     return new npc_lazy_peonAI(pCreature);
+}
+
+bool EffectDummyCreature_lazy_peon_awake(Unit* pCaster, uint32 uiSpellId, SpellEffectIndex uiEffIndex, Creature* pCreatureTarget)
+{
+    // always check spellid and effectindex
+    if (uiSpellId == SPELL_AWAKEN_PEON && uiEffIndex == EFFECT_INDEX_0)
+    {
+        if (!pCreatureTarget->HasAura(SPELL_PEON_SLEEP) || pCaster->GetTypeId() != TYPEID_PLAYER || pCreatureTarget->GetEntry() != NPC_SLEEPING_PEON)
+            return true;
+
+        if (npc_lazy_peonAI* pPeonAI = dynamic_cast<npc_lazy_peonAI*>(pCreatureTarget->AI()))
+            pPeonAI->StartLumbering(pCaster);
+
+        // always return true when we are handling this spell and effect
+        return true;
+    }
+    return false;
 }
 
 /*######
@@ -293,10 +363,16 @@ CreatureAI* GetAI_npc_bom_bay(Creature* pCreature)
 void AddSC_durotar()
 {
     Script* pNewscript;
-
+/*
     pNewscript = new Script;
     pNewscript->Name = "npc_lazy_peon";
     pNewscript->GetAI = &GetAI_npc_lazy_peon;
+    pNewscript->RegisterSelf();*/
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_lazy_peon";
+    pNewscript->GetAI = &GetAI_npc_lazy_peon;
+    pNewscript->pEffectDummyNPC = &EffectDummyCreature_lazy_peon_awake;
     pNewscript->RegisterSelf();
 
 	pNewscript = new Script;
