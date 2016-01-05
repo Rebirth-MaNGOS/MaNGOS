@@ -4744,7 +4744,15 @@ SpellCastResult Spell::CheckCast(bool strict)
             // abolish poison initial cast
             // abolish poison effect
             Totem* pCasterT = dynamic_cast<Totem*>(m_caster);
-
+            
+            // added extra check to see if caster and target is in duel, same faction couldn't dispel each other before
+            bool duelvsplayertar = false;
+            for(int j = 0; j < MAX_EFFECT_INDEX; ++j)                
+                duelvsplayertar |= (m_spellInfo->EffectImplicitTargetA[j] == TARGET_DUELVSPLAYER); //TARGET_DUELVSPLAYER is positive AND negative
+            
+            if(m_caster->IsFriendlyTo(target) && !duelvsplayertar)
+                 isEmpty = false;
+            
             // Make sure that the dispel check is only applied on player targets. Warriors' Shield Bash should also be an exception.
             // 24406 - Improved Mend Pet and 8913 Sacred Cleansing are also excepted.
             if(m_caster && m_caster->getClass() != CLASS_WARRIOR && target->GetTypeId() != TYPEID_UNIT && !pCasterT )
