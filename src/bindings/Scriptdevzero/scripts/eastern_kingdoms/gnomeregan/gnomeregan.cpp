@@ -859,26 +859,75 @@ bool GossipSelect_go_matrix_punchograph_3005D(Player* pPlayer, GameObject* /*pGo
 
 struct MANGOS_DLL_DECL mob_land_mineAI : public Scripted_NoMovementAI
 {
-    mob_land_mineAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature) {Reset();}
+    mob_land_mineAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature) 
+    {
+        Reset();
+        m_bDidEmote = false;
+        m_bArmed = false;
+        m_bSpawnEmote = false;
+        m_uiEmoteTimer = 5000;
+        m_uiArmedTimer = 10000;       
+    }
 
-    uint32 DetonationTimer;
-
+    uint32 m_uiDetonationTimer;
+    uint32 m_uiArmedTimer;
+    uint32 m_uiEmoteTimer;
+    bool m_bDidEmote;
+    bool m_bSpawnEmote;
+    bool m_bArmed;
+    
+    
     void Reset()
     {
 		SetCombatMovement(false);
-        DetonationTimer = 5000;
+        m_uiDetonationTimer = 1000;
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
-        if (DetonationTimer <= uiDiff)
-			//can only detonate once
-            m_creature->CastSpell(m_creature, 4043,false);
+        if(!m_bArmed)
+        {
+            if(!m_bSpawnEmote)
+            {
+                m_creature->GenericTextEmote("Dark Iron Land Mine will be armed in 10 seconds!", NULL, false);
+                m_bSpawnEmote = true;
+            }
+            
+            if (m_uiEmoteTimer <= uiDiff && !m_bDidEmote)
+            {
+                m_creature->GenericTextEmote("Dark Iron Land Mine will be armed in 5 seconds!", NULL, false);
+                m_bDidEmote = true;
+            }
+            else
+                m_uiEmoteTimer -= uiDiff;
+            
+            if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+                return;
+            
+            if (m_uiArmedTimer <= uiDiff)
+            {
+                m_bArmed = true;
+                m_creature->GenericTextEmote("Dark Iron Land Mine is now armed!", NULL, false);
+            }
+            else
+                m_uiArmedTimer -= uiDiff;
+        }
         else
-            DetonationTimer -= uiDiff;
+        {        
+            // blow up if anyone is within 5yr
+            if (m_uiDetonationTimer <= uiDiff)        
+            {
+                // 5man instance so no need to loop through more
+                for(uint8 i = 0; i < 5; ++i)
+                {
+                    if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_TOPAGGRO,i))
+                         if (m_creature->IsWithinDistInMap(pTarget, 5.0f))
+                            m_creature->CastSpell(m_creature, 4043,true);
+                }
+            }                        
+            else
+                m_uiDetonationTimer -= uiDiff;
+        }
     }
 };
 
