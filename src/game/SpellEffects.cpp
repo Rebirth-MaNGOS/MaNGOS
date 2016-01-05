@@ -1343,9 +1343,10 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             if (healthPerc < 100 && healthPerc > 40)
                 melee_mod = 10+(100-healthPerc)/3;
 
+            // melee, ranged and cast time reduction should be same for all the three
             int32 hasteModBasePoints0 = melee_mod;          // (EffectBasePoints[0]+1)-1+(5-melee_mod) = (melee_mod-1+1)-1+5-melee_mod = 5-1
-            int32 hasteModBasePoints1 = abs(5-melee_mod);
-            int32 hasteModBasePoints2 = 5;
+            int32 hasteModBasePoints1 = melee_mod;
+            int32 hasteModBasePoints2 = melee_mod;
 
             // FIXME: custom spell required this aura state by some unknown reason, we not need remove it anyway
             m_caster->ModifyAuraState(AURA_STATE_BERSERKING,true);
