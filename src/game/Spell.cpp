@@ -4744,14 +4744,22 @@ SpellCastResult Spell::CheckCast(bool strict)
             // abolish poison initial cast
             // abolish poison effect
             Totem* pCasterT = dynamic_cast<Totem*>(m_caster);
-
+            
+            // added extra check to see if caster and target is in duel, same faction couldn't dispel each other before
+            bool duelvsplayertar = false;
+            for(int j = 0; j < MAX_EFFECT_INDEX; ++j)                
+                duelvsplayertar |= (m_spellInfo->EffectImplicitTargetA[j] == TARGET_DUELVSPLAYER); //TARGET_DUELVSPLAYER is positive AND negative
+            
+            if(m_caster->IsFriendlyTo(target) && !duelvsplayertar)
+                 isEmpty = false;
+            
             // Make sure that the dispel check is only applied on player targets. Warriors' Shield Bash should also be an exception.
-            // 24406 - Improved Mend Pet is also excepted.
+            // 24406 - Improved Mend Pet and 8913 Sacred Cleansing are also excepted.
             if(m_caster && m_caster->getClass() != CLASS_WARRIOR && target->GetTypeId() != TYPEID_UNIT && !pCasterT )
             {
                 if (m_spellInfo->Id != 552 && m_spellInfo->Id != 10872 &&
                     m_spellInfo->Id != 2893 && m_spellInfo->Id != 3137 &&
-                    m_spellInfo->Id != 24406)
+                    m_spellInfo->Id != 24406 && m_spellInfo->Id != 8913)
                     return SPELL_FAILED_NOTHING_TO_DISPEL;
             }
         }
@@ -7393,4 +7401,80 @@ void Spell::ResetEffectDamageAndHeal()
 {
     m_damage = 0;
     m_healing = 0;
+}
+
+void Spell::GetSpellRangeAndRadius(SpellEffectIndex effIndex, float& radius, uint32& EffectChainTarget, uint32& unMaxTargets) const
+{
+    if (m_spellInfo->EffectRadiusIndex[effIndex])
+        radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[effIndex]));
+    else
+        radius = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+
+    if (Unit* realCaster = GetAffectiveCaster())
+    {
+        if (Player* modOwner = realCaster->GetSpellModOwner())
+        {
+            modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RADIUS, radius, this);
+            modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_JUMP_TARGETS, EffectChainTarget, this);
+        }
+    }
+
+    // custom target amount cases
+    switch (m_spellInfo->SpellFamilyName)
+    {
+        case SPELLFAMILY_GENERIC:
+        {
+            switch (m_spellInfo->Id)
+            {
+                /*case 802:                                   // Mutate Bug (AQ40, Emperor Vek'nilash)
+                case 804:                                   // Explode Bug (AQ40, Emperor Vek'lor)
+                case 23138:                                 // Gate of Shazzrah (MC, Shazzrah)
+                case 24781:                                 // Dream Fog (Emerald Dragons)*/
+                case 28560:                                 // Summon Blizzard (Naxx, Sapphiron)
+                    unMaxTargets = 1;
+                    break;
+                /*case 10258:                                 // Awaken Vault Warder (Uldaman)
+                case 28542:                                 // Life Drain (Naxx, Sapphiron)
+                    unMaxTargets = 2;
+                    break;
+                case 28796:                                 // Poison Bolt Volley (Naxx, Faerlina)
+                    unMaxTargets = 10;
+                    break;
+                case 25991:                                 // Poison Bolt Volley (AQ40, Pincess Huhuran)
+                    unMaxTargets = 15;
+                    break;*/
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    // custom radius cases
+    switch (m_spellInfo->SpellFamilyName)
+    {
+        case SPELLFAMILY_GENERIC:
+        {
+            switch (m_spellInfo->Id)
+            {
+               /* case 24811:                                 // Draw Spirit (Lethon)
+                {
+                    if (effIndex == EFFECT_INDEX_0)         // Copy range from EFF_1 to 0
+                        { radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[EFFECT_INDEX_1])); }
+                    break;
+                }*/
+                case 28241:                                 // Poison (Naxxramas, Grobbulus Cloud)
+                {
+                    if (SpellAuraHolder* auraHolder = m_caster->GetSpellAuraHolder(28158))
+                        { radius = 0.5f * (60000 - auraHolder->GetAuraDuration()) * 0.001f; }
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        default:
+            break;
+    }
 }

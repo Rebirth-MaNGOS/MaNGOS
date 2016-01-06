@@ -133,7 +133,7 @@ void ExclusivePoolMgr::LoadFromDB()
             time_t currentRespawnTime = fields[1].GetUInt64();
             
             m_pools[poolID].currentRespawnTime = currentRespawnTime;
-        } while (result->NextRow());
+        } while (result3->NextRow());
         
         delete result3;
     }

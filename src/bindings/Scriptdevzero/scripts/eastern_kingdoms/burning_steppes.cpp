@@ -202,16 +202,18 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
 
     ObjectGuid m_nuzarkGuid;
     ObjectGuid m_lexlortGuid;
+    ObjectGuid m_uiPlayerGUID;
 
     GUIDList m_lSearscaleGuidList;
+    
 
     uint8 m_uiKilledCreatures;
     uint32 m_startTimer;
 	uint32 m_despawnTimer;
     bool m_bIsFirstSearScale;
-	/*bool m_bIsShackle;
-	bool m_bHealth;*/
-
+	bool m_bIsShackle;
+	bool m_bHealth;
+    
     void Reset()
     {
         if (!m_creature->isActiveObject() && m_creature->isAlive())
@@ -229,9 +231,10 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
             m_lSearscaleGuidList.clear();
 
             m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-			/*m_bIsShackle = false;
+			m_bIsShackle = false;
 			m_bHealth = false;
-			m_creature->ClearTemporaryFaction();*/
+			m_creature->ClearTemporaryFaction();
+            m_uiPlayerGUID.Clear();
         }
     }
 
@@ -243,51 +246,55 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
         }
     }
 
-	//void SpellHit(Unit* pCaster, SpellEntry const* pSpell)									// all these are for quest 4122 (the pre-q)
- //   {
- //       if (pSpell->Id == SPELL_CAPTURE_GRARK && !HasEscortState(STATE_ESCORT_ESCORTING))
- //       {
- //           m_creature->SetFactionTemporary(FACTION_HOSTILE, TEMPFACTION_RESTORE_RESPAWN);
-	//		m_creature->AI()->AttackStart(pCaster);
-	//		m_bIsShackle = true;
-	//	}
-	//}
+	void SpellHit(Unit* pCaster, SpellEntry const* pSpell)									// all these are for quest 4122 (the pre-q)
+    {
+       if (pSpell->Id == SPELL_CAPTURE_GRARK && !HasEscortState(STATE_ESCORT_ESCORTING))
+      {
+            m_creature->SetFactionTemporary(FACTION_HOSTILE, TEMPFACTION_RESTORE_RESPAWN);
+            m_creature->AI()->AttackStart(pCaster);
+            m_bIsShackle = true;
+            pCaster->GetGUID();
+            if (!pCaster->GetGUID())
+                return;
 
-	//void UpdateAI(const uint32 uiDiff)							// For quest 4122
- //   {
- //       // Return since we have no target
- //       if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
- //           return;
-	//}
-	//	if (HealthBelowPct(25) && !HasEscortState(STATE_ESCORT_ESCORTING))
-	//	{
-	//		// The faction is guesswork - needs more research
-	//		DoScriptText(EMOTE_SUBMIT, m_creature);
-	//		m_creature->SetFactionTemporary(FACTION_FRIENDLY, TEMPFACTION_RESTORE_RESPAWN);
-	//		m_creature->RemoveAllAuras();
- //           m_creature->AttackStop();
-	//		ResetToHome();
-	//		m_creature->SetEvadeMode(true);
-	//		m_bHealth = true;
-	//	}
+            m_uiPlayerGUID = pCaster->GetGUID();
+		}
+	}
 
-	//	if (m_bIsShackle && m_bHealth && !HasEscortState(STATE_ESCORT_ESCORTING))									// needs a better way to do this
-	//	{
-	//		Player* pPlayer = GetPlayerAtMinimumRange(20);
-	//		if (pPlayer->HasQuest(QUEST_ID_GRARK_LOKRUB) && QuestStatus(IN_PROGRESS));
-	//			pPlayer->GroupEventHappens(QUEST_ID_GRARK_LOKRUB, m_creature);				// give quest credit if player has used item to get him to aggro AND got him down to below 25% hp
-	//	}
+    void UpdateAI(const uint32 uiDiff)							// For quest 4122
+    {
+        npc_escortAI::UpdateAI(uiDiff);
+        
+        // Return since we have no target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+        
+        if (HealthBelowPct(25) && !HasEscortState(STATE_ESCORT_ESCORTING))
+        {
+            // The faction is guesswork - needs more research
+            DoScriptText(EMOTE_SUBMIT, m_creature);
+            m_bHealth = true;
+            if (m_bIsShackle && m_bHealth && !HasEscortState(STATE_ESCORT_ESCORTING))
+            {
+                Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+                if (pPlayer && pPlayer->HasQuest(QUEST_ID_GRARK_LOKRUB) && QuestStatus(IN_PROGRESS));
+                    pPlayer->GroupEventHappens(QUEST_ID_GRARK_LOKRUB, m_creature);              // give quest credit if player has used item to get him to aggro AND got him down to below 25% hp
+            }
+            m_creature->SetFactionTemporary(FACTION_FRIENDLY, TEMPFACTION_RESTORE_RESPAWN);
+            m_creature->RemoveAllAuras();
+            m_creature->AttackStop();
+            ResetToHome();
+            m_creature->SetEvadeMode(true);            
+        }
 
-	//	DoMeleeAttackIfReady();
-	//}
+        DoMeleeAttackIfReady();
+    }
 
     void MoveInLineOfSight(Unit* pWho)
     {
         // No combat during escort
         if (HasEscortState(STATE_ESCORT_ESCORTING))
-        {
             return;
-        }
 
         npc_escortAI::MoveInLineOfSight(pWho);
     }
@@ -363,9 +370,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
             case SAY_LEXLORT_3:
                 // Note: this part isn't very clear. Should he just simply attack him, or charge him?
                 if (Creature* pNuzark = m_creature->GetMap()->GetCreature(m_nuzarkGuid))
-                {
                     pNuzark->HandleEmote(EMOTE_ONESHOT_ATTACK2HTIGHT);
-                }
                 break;
             case NPC_GRARK_LORKRUB:
                 // Fake death creature when the axe is lowered. This will allow us to finish the event
@@ -384,9 +389,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
             case SAY_LEXLORT_4:
                 // Finish the quest
                 if (Player* pPlayer = GetPlayerForEscort())
-                {
                     pPlayer->GroupEventHappens(QUEST_ID_PRECARIOUS_PREDICAMENT, m_creature);
-                }
                 // Kill self
                 m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
                 break;
@@ -401,9 +404,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
 			case NPC_BLACKROCK_RAIDER:
 				pSummoned->SetFactionTemporary(FACTION_HOSTILE);
 				if (Player* pPlayer = GetPlayerForEscort())
-                {
                    pSummoned->AI()->AttackStart(pPlayer);
-                }
 				break;
             case NPC_HIGH_EXECUTIONER_NUZARK:
                 m_nuzarkGuid  = pSummoned->GetObjectGuid();
@@ -419,9 +420,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
                 {
                     m_bIsFirstSearScale = false;
 					if (Player* pPlayer = GetPlayerForEscort())
-					{
 						pSummoned->AI()->AttackStart(pPlayer);
-					}
 				}
 
 				m_lSearscaleGuidList.push_back(pSummoned->GetObjectGuid());
@@ -430,9 +429,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
             default:
                 // The hostile mobs should attack the player only
                 if (Player* pPlayer = GetPlayerForEscort())
-                {
                    pSummoned->AI()->AttackStart(pPlayer);
-                }
                 break;
         }
     }
@@ -507,9 +504,7 @@ struct MANGOS_DLL_DECL npc_grark_lorkrubAI : public npc_escortAI, private Dialog
         DialogueUpdate(uiDiff);
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-        {
             return;
-        }
 
         DoMeleeAttackIfReady();
     }
@@ -531,35 +526,10 @@ bool QuestAccept_npc_grark_lorkrub(Player* pPlayer, Creature* pCreature, const Q
             pEscortAI->m_startTimer = urand(60000, 180000); // Start timer, 1 min - 3 min.
 			pEscortAI->m_despawnTimer = 1800000; // despawn after 30min if he didn't reach the outro dialogue
         }
-
         return true;
     }
-
     return false;
 }
-
-//bool EffectDummyCreature_spell_capture_grark(Unit* /*pCaster*/, uint32 uiSpellId, SpellEffectIndex uiEffIndex, Creature* pCreatureTarget) //, ObjectGuid /*originalCasterGuid*/)		// unused D:
-//{
-//    // always check spellid and effectindex
-//    if (uiSpellId == SPELL_CAPTURE_GRARK && uiEffIndex == EFFECT_INDEX_0)
-//    {
-//        // Note: this implementation needs additional research! There is a lot of guesswork involved in this!
-//        if (pCreatureTarget->GetHealthPercent() > 25.0f)
-//        {
-//            return false;
-//        }
-//
-//        // The faction is guesswork - needs more research
-//        DoScriptText(EMOTE_SUBMIT, pCreatureTarget);
-//        pCreatureTarget->SetFactionTemporary(FACTION_FRIENDLY, TEMPFACTION_RESTORE_RESPAWN);
-//        pCreatureTarget->SetEvadeMode(true);
-//																						// Group event should happen here so they can turn in quest and start the escort
-//        // always return true when we are handling this spell and effect
-//        return true;
-//    }
-//
-//    //return false;								// this is for quest 4122(the pre-q)
-//}
 
 void AddSC_burning_steppes()
 {

@@ -961,38 +961,41 @@ struct MANGOS_DLL_DECL npc_voodoo_slaveAI : public ScriptedAI
 	uint32 m_uiRainOfFireTimer;
 	uint32 m_uiShadowBoltTimer;
 	uint32 m_uiCurseOfShadowTimer;
+    uint8 m_uiInfernalCount;
 	bool m_bSecondInfernal;
 
     void Reset()
     {
 		m_uiShadowBoltTimer = urand(1000, 3000);
 		m_uiCurseOfShadowTimer = 800;
-		m_uiInfernoTimer = urand(4000, 9000);
-		m_uiRainOfFireTimer = urand(10000, 20000);
+		m_uiInfernoTimer = urand(4000, 15000);
+		m_uiRainOfFireTimer = urand(10000, 22000);
 		m_bSecondInfernal = false;
+        m_uiInfernalCount = 0;
     }
 	
 	void JustSummoned(Creature* pSummoned)
-    {
+    {        
+        m_uiInfernalCount++;
 		pSummoned->SetRespawnEnabled(false);
 		// the first one that is summoned is by the spell and it bugs out, so despawn and make a new one
-		if(pSummoned->GetEntry() == NPC_INFERNAL && !m_bSecondInfernal)
+		if(pSummoned->GetEntry() == NPC_INFERNAL && m_uiInfernalCount !=  2)
 		{
 			pSummoned->ForcedDespawn();
-			m_bSecondInfernal = true;			
+			m_bSecondInfernal = true;	
 		}
     }
 
 	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
     {
-        if (pSpell->Id == SPELL_INFERNO && pTarget)
+        if (pSpell->Id == SPELL_INFERNO && pTarget && m_bSecondInfernal)
         {
             if(Creature* pInfernal = m_creature->SummonCreature(NPC_INFERNAL,pTarget->GetPositionX(),pTarget->GetPositionY(),pTarget->GetPositionZ(),0,TEMPSUMMON_TIMED_DESPAWN,300000,false))
 			{
 				pInfernal->setFaction(m_creature->getFaction());
 				pInfernal->SetLevel(60);
 				pInfernal->SetOwnerGuid(m_creature->GetGUID());
-				pInfernal->AI()->AttackStart(pTarget);
+				pInfernal->AI()->AttackStart(pTarget);      
 			}
         }
     }

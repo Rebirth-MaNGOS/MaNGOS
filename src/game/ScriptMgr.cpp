@@ -962,7 +962,7 @@ uint32 ScriptMgr::GetScriptId(const char *name) const
     if (itr == m_scriptNames.end() || *itr != name)
         return 0;
 
-    return uint32(itr - m_scriptNames.begin());
+    return std::distance(m_scriptNames.begin(), itr);
 }
 
 uint32 ScriptMgr::GetAreaTriggerScriptId(uint32 triggerId) const

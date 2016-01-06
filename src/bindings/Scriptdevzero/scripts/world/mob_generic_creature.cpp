@@ -297,7 +297,6 @@ struct MANGOS_DLL_DECL trigger_resonating_crystal : public ScriptedAI
             else
                 m_McTimer -= uiDiff;
         }
-
 	}
 };
 
@@ -313,7 +312,7 @@ void AddSC_generic_creature()
     pNewscript->Name = "generic_creature";
     pNewscript->GetAI = &GetAI_generic_creature;
     pNewscript->RegisterSelf(false);
-
+    
 	pNewscript = new Script;
 	pNewscript->Name = "mob_schnake";
 	pNewscript->GetAI = &GetAI_mob_schnake;
