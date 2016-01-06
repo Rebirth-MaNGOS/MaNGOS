@@ -57,10 +57,10 @@ void instance_ruins_of_ahnqiraj::OnObjectCreate(GameObject* pGo)
         case GO_OSSIRIAN_CRYSTAL:
             m_mGoEntryGuidStore[pGo->GetEntry()] = pGo->GetObjectGuid();
             break;
-        case GO_SCARAB_COFFER:        // not working     
+        /*case GO_SCARAB_COFFER:        // sets the initial spawn time to random, should be spawned and when looted have random respawn
             pGo->SetRespawnTime(urand(3 * HOUR, 6 * HOUR));
             pGo->SaveRespawnTime();
-            break;
+            break;*/
     }
 }
 
