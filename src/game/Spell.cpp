@@ -3001,10 +3001,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
 
         m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_INVISIBILITY);
      
-        m_caster->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
-        
-        // remove wsg rejuventaion buff if start casting
-        m_caster->RemoveAurasDueToSpell(23493);        
+        m_caster->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);           
     }
 
     sMod.spellPrepare(this, m_caster);  // extra for prepare
