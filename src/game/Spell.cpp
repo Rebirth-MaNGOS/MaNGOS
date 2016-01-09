@@ -1165,7 +1165,6 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         procVictim |= PROC_FLAG_TAKEN_ANY_DAMAGE;
 
 
-
         // Do triggers for unit (reflect triggers passed on hit phase for correct drop charge)
         if (m_canTrigger && missInfo != SPELL_MISS_REFLECT)
             caster->ProcDamageAndSpell(unitTarget, real_caster ? procAttacker : (uint32) PROC_FLAG_NONE, procVictim, procEx, damageInfo.damage, m_startedCasting, m_attackType, m_spellInfo);
@@ -1264,7 +1263,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
         ResetEffectDamageAndHeal();
         return;
     }
-
+    
     bool doDiminishingReturns = true;
 
     if (realCaster && realCaster != unit)
@@ -2993,7 +2992,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     // stealth must be removed at cast starting (at show channel bar)
     // skip triggered spell (item equip spell casting and other not explicit character casts/item uses)
     if ( !m_IsTriggeredSpell && isSpellBreakStealth(m_spellInfo) )
-    {
+    {            
         // Sap - don't exit Stealth yet to prevent getting in combat and making Sap impossible to cast
         // Removing Stealth depends on talent later
         // Pick Pocket - don't exit Stealth at all
@@ -3001,8 +3000,11 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
             m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
         m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_INVISIBILITY);
-
+     
         m_caster->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
+        
+        // remove wsg rejuventaion buff if start casting
+        m_caster->RemoveAurasDueToSpell(23493);        
     }
 
     sMod.spellPrepare(this, m_caster);  // extra for prepare
