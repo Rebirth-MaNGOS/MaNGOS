@@ -3306,6 +3306,10 @@ void Spell::cast(bool skipCheck)
         handle_immediate();
     }
     
+    // remove wsg rejuventaion buff from the caster on any damage,
+    if(m_caster != unitTarget && m_caster->HasAura(23493) && !IsPositiveSpell(m_spellInfo->Id))
+        m_caster->RemoveAurasDueToSpell(23493);        
+    
      // Remove spell mods that should only be removed if the spell was successfully cast.
     if (m_caster->GetTypeId() == TYPEID_PLAYER)
         dynamic_cast<Player*>(m_caster)->RemoveSpellModsOnSpellSuccess(this);
