@@ -101,7 +101,7 @@ ifneq ($(BUILDING_PHASE),1)
  # definitions for top-level Makefiles
  origin_build_dir:=$(origin tbb_build_dir)
  tbb_build_dir?=$(tbb_root)$(SLASH)build
- export tbb_build_prefix?=$(tbb_os)_$(arch)_$(compiler)_$(runtime)$(CPF_SUFFIX)
+ export tbb_build_prefix?=""
  work_dir=$(tbb_build_dir)$(SLASH)$(tbb_build_prefix)
 endif  # BUILDING_PHASE != 1
 
