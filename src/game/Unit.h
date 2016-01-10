@@ -1815,7 +1815,7 @@ public:
 
         void setMeleeReachable(bool meleeReachable);
         bool isMeleeReachable() {return m_meleeReachable;}
-        void setSpellNextMelee(bool spellNextMelee) {m_spellNextHit = true;}
+        void setSpellNextMelee(bool /*spellNextMelee*/) {m_spellNextHit = true;}
 
     protected:
         explicit Unit ();
