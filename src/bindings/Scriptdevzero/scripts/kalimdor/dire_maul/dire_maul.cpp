@@ -72,7 +72,7 @@ bool QuestRewarded_go_broken_trap(Player* pPlayer, GameObject* pGo, const Quest*
     {
         pPlayer->CLOSE_GOSSIP_MENU();
 
-		if(GameObject* pTrap = pPlayer->SummonGameObject(179512, 1 * HOUR  * IN_MILLISECONDS,pGo->GetPositionX(),pGo->GetPositionY(),pGo->GetPositionZ(),0,GO_STATE_READY,0))
+		if(GameObject* pTrap = pPlayer->SummonGameObject(179512, 0, pGo->GetPositionX(), pGo->GetPositionY(), pGo->GetPositionZ(), 0, GO_STATE_READY, 0))
 			pTrap->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND + GO_FLAG_NO_INTERACT);
 		pGo->RemoveFromWorld();
 		pGo->UpdateVisibilityAndView();
