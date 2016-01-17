@@ -594,8 +594,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 {
     // remove affects from victim (including from 0 damage and DoTs)
     if(pVictim != this)
+    {
         pVictim->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
-
+        // remove wsg rejuventaion buff from the victim on any damage
+        if(pVictim->HasAura(23493))
+            pVictim->RemoveAurasDueToSpell(23493);
+    }
+    
     // remove affects from attacker at any non-DoT damage (including 0 damage)
     if( damagetype != DOT)
     {
@@ -1824,6 +1829,10 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
         if(GetTypeId() == TYPEID_PLAYER && pVictim->isAlive())
             ((Player*)this)->CastItemCombatSpell(pVictim, damageInfo->attackType);
 
+            // remove wsg rejuventaion buff if starting melee
+            if(this->HasAura(23493))
+                this->RemoveAurasDueToSpell(23493);
+        
         // victim's damage shield
         std::set<Aura*> alreadyDone;
         AuraList const& vDamageShields = pVictim->GetAurasByType(SPELL_AURA_DAMAGE_SHIELD);

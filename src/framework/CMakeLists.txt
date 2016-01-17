@@ -66,6 +66,29 @@ if(NOT ACE_USE_EXTERNAL)
 # add_dependencies(framework ace)
 endif()
 
+# Paths for when the bundled TBB is used.
+if (UNIX)
+    if (NOT (TBB_USE_EXTERNAL OR USE_STD_MALLOC))
+        if (DEBUG)
+            add_library(tbb_debug SHARED IMPORTED)
+            set_target_properties(tbb_debug PROPERTIES IMPORTED_LOCATION 
+                ${PROJECT_SOURCE_DIR}/dep/tbb/build/_debug/libtbb_debug.so.2)
+
+            add_library(tbbmalloc_debug SHARED IMPORTED)
+            set_target_properties(tbbmalloc_debug PROPERTIES IMPORTED_LOCATION 
+                ${PROJECT_SOURCE_DIR}/dep/tbb/build/_debug/libtbbmalloc_debug.so.2)
+        else()
+            add_library(tbb SHARED IMPORTED)
+            set_target_properties(tbb PROPERTIES IMPORTED_LOCATION 
+                ${PROJECT_SOURCE_DIR}/dep/tbb/build/_release/libtbb.so.2)
+
+            add_library(tbbmalloc SHARED IMPORTED)
+            set_target_properties(tbbmalloc PROPERTIES IMPORTED_LOCATION 
+                ${PROJECT_SOURCE_DIR}/dep/tbb/build/_release/libtbbmalloc.so.2)
+        endif()
+    endif()
+endif()
+
 target_link_libraries(framework
   ${TBB_LIBRARIES}
 )

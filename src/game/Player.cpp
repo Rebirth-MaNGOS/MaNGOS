@@ -1094,7 +1094,7 @@ void Player::HandleDrowning(uint32 time_diff)
 
                 if (m_MirrorTimerFlags&UNDERWATER_INLAVA)
                     EnvironmentalDamage(DAMAGE_LAVA, damage);
-                else
+                else if (GetZoneId() != 1497) // Slime in Undercity shouldn't do damage.
                     EnvironmentalDamage(DAMAGE_SLIME, damage);
             }
         }

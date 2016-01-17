@@ -65,14 +65,26 @@ elseif(UNIX)
     set(TBB_BUILD_TOOL make)
   endif()
 
+  if (${DEBUG})
+      set(BIN_DIR "_debug")
+      set(LIBNAME "libtbb_debug.so.2")
+      set(LIBNAME1 "libtbbmalloc_debug.so.2")
+  else()
+      set(BIN_DIR "_release")
+      set(LIBNAME "libtbb.so.2")
+      set(LIBNAME1 "libtbbmalloc.so.2")
+  endif()
+
+  set(LIB_SEARCHPATH ${CMAKE_CURRENT_SOURCE_DIR}/build/${BIN_DIR})
+
   ExternalProject_Add(TBB_Project
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
     BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}
-    INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+    INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib
     DOWNLOAD_COMMAND ""
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${TBB_BUILD_TOOL} -j2 -C <SOURCE_DIR> # export arch="ia32" &&
-    INSTALL_COMMAND ${APPLE_BUILD}
+    INSTALL_COMMAND cp ${LIB_SEARCHPATH}/${LIBNAME} ${LIB_SEARCHPATH}/${LIBNAME1} ${CMAKE_INSTALL_PREFIX}/lib/
   )
 else()
   message(FATAL_ERROR
