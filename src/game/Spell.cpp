@@ -1079,8 +1079,8 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
                 m_caster->ModifyPower(powerType, (int32)m_powerCost*0.8);
         }
 
-		// Extra check for misses, put in combat on dodge/parry/block and if immune
-		if (missInfo == SPELL_MISS_DODGE || missInfo == SPELL_MISS_PARRY || missInfo == SPELL_MISS_BLOCK|| missInfo == SPELL_MISS_IMMUNE || missInfo == SPELL_MISS_IMMUNE2)
+		// Extra check for misses, put in combat on dodge/parry/block and if immune, ignore if its distract
+		if ((missInfo == SPELL_MISS_DODGE || missInfo == SPELL_MISS_PARRY || missInfo == SPELL_MISS_BLOCK|| missInfo == SPELL_MISS_IMMUNE || missInfo == SPELL_MISS_IMMUNE2) && (m_spellInfo->Id != 1725))
 			if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
 				((Creature*)unit)->AI()->AttackedBy(real_caster);
     }
