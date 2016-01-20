@@ -186,11 +186,54 @@ CreatureAI* GetAI_mob_av_marshal_or_warmaster(Creature* pCreature)
     return new mob_av_marshal_or_warmasterAI(pCreature);
 }
 
+/*######
+## mob_av_mount_lieutenant
+######*/
+
+struct MANGOS_DLL_DECL mob_av_mount_lieutenantAI : public ScriptedAI
+{
+    mob_av_mount_lieutenantAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    void Reset() 
+    {
+        // reload their mount
+        m_creature->LoadCreatureAddon();
+    }
+
+    void Aggro(Unit* /*pWho*/)
+    {
+        // don't wanna be mounted while combat
+         if (m_creature->IsMounted())
+            m_creature->Unmount();
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_av_mount_lieutenant(Creature* pCreature)
+{
+    return new mob_av_mount_lieutenantAI(pCreature);
+}
+
 void AddSC_alterac_valley()
 {
     Script* pNewscript;
     pNewscript = new Script;
     pNewscript->Name = "mob_av_marshal_or_warmaster";
     pNewscript->GetAI = &GetAI_mob_av_marshal_or_warmaster;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "mob_av_mount_lieutenant";
+    pNewscript->GetAI = &GetAI_mob_av_mount_lieutenant;
     pNewscript->RegisterSelf();
 }
