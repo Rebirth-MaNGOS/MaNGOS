@@ -18,10 +18,9 @@
 
 enum Spells
 {
-    SPELL_ARCANE_EXPLOSION      = 46608,
-    SPELL_CONE_OF_COLD          = 38384,
-    SPELL_FIREBALL              = 46988,
-    SPELL_FROSTBOLT             = 46987,
+    SPELL_ARCANE_EXPLOSION      = 13745,
+    SPELL_CONE_OF_COLD          = 15244,
+    SPELL_FIREBALL              = 14034,
     SPELL_STORMPIKES_SALVATION  = 23693,
 };
 
@@ -32,6 +31,12 @@ enum Yells
     YELL_EVADE                  = -1030024,
 };
 
+enum Phases
+{
+    PHASE_MELEE = 1,
+    PHASE_RANGE = 2,
+};
+
 struct MANGOS_DLL_DECL boss_balinda_stonehearthAI : public ScriptedAI
 {
     boss_balinda_stonehearthAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
@@ -39,15 +44,19 @@ struct MANGOS_DLL_DECL boss_balinda_stonehearthAI : public ScriptedAI
     uint32 m_uiArcaneExplosionTimer;
     uint32 m_uiConeOfColdTimer;
     uint32 m_uiFireBoltTimer;
-    uint32 m_uiFrostboltTimer;
+    uint32 m_uiCheckDistanceTimer;
     uint32 m_uiEvadeTimer;
+    uint32 m_uiStormPikesSalvationTimer;
+    uint32 m_uiPhase;
 
     void Reset()
     {
+        m_uiPhase = PHASE_MELEE;
+        m_uiCheckDistanceTimer = 1*IN_MILLISECONDS;
+        m_uiStormPikesSalvationTimer = 0;
         m_uiArcaneExplosionTimer      = urand(5*IN_MILLISECONDS,15*IN_MILLISECONDS);
         m_uiConeOfColdTimer           = 8*IN_MILLISECONDS;
-        m_uiFireBoltTimer             = 1*IN_MILLISECONDS;
-        m_uiFrostboltTimer            = 4*IN_MILLISECONDS;
+        m_uiFireBoltTimer             = 1100;
         m_uiEvadeTimer                = 5*IN_MILLISECONDS;
     }
 
@@ -58,44 +67,74 @@ struct MANGOS_DLL_DECL boss_balinda_stonehearthAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+        // Fury of Frostwolf
+        if (m_creature->isAlive())
+        {
+                if (m_uiStormPikesSalvationTimer <= uiDiff)
+                {
+                    DoScriptText(YELL_BUFF, m_creature);
+                    DoCastSpellIfCan(m_creature, SPELL_STORMPIKES_SALVATION);
+                    m_uiStormPikesSalvationTimer = 2*MINUTE*IN_MILLISECONDS;
+                }
+                else
+                    m_uiStormPikesSalvationTimer -= uiDiff;
+        }
+    
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        // Arcane Explosion
-        if (m_uiArcaneExplosionTimer <= uiDiff)
+        // See if target is in melee, range or if boss should just run
+        if (m_uiCheckDistanceTimer <= uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(), SPELL_ARCANE_EXPLOSION);
-            m_uiArcaneExplosionTimer =  urand(5*IN_MILLISECONDS,15*IN_MILLISECONDS);
+            Unit* pTarget = m_creature->getVictim();
+            // melee + short range spells
+            if(pTarget && m_creature->CanReachWithMeleeAttack(pTarget))
+                m_uiPhase = PHASE_MELEE;
+            
+            // within 40 yrds but not melee, cast spells
+            else if(pTarget && !m_creature->CanReachWithMeleeAttack(pTarget)  && pTarget->IsWithinDistInMap(m_creature, 40.f))
+                m_uiPhase = PHASE_RANGE;
+            m_uiCheckDistanceTimer = 1000;
         }
         else
-            m_uiArcaneExplosionTimer -= uiDiff;
+            m_uiCheckDistanceTimer -= uiDiff;
+        switch(m_uiPhase)
+        {
+            case PHASE_MELEE:
+            {
+                // Arcane Explosion
+                if (m_uiArcaneExplosionTimer <= uiDiff)
+                {
+                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_ARCANE_EXPLOSION, CAST_INTERRUPT_PREVIOUS);
+                    m_uiArcaneExplosionTimer =  urand(7*IN_MILLISECONDS, 9*IN_MILLISECONDS);
+                }
+                else
+                    m_uiArcaneExplosionTimer -= uiDiff;
 
-        // Cone Of Cold
-        if (m_uiConeOfColdTimer <= uiDiff)
-        {
-            DoCastSpellIfCan(m_creature->getVictim(), SPELL_CONE_OF_COLD);
-            m_uiConeOfColdTimer = urand(10*IN_MILLISECONDS,20*IN_MILLISECONDS);
+                // Cone Of Cold
+                if (m_uiConeOfColdTimer <= uiDiff)
+                {
+                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_CONE_OF_COLD);
+                    m_uiConeOfColdTimer = urand(17*IN_MILLISECONDS, 22*IN_MILLISECONDS);
+                }
+                else
+                    m_uiConeOfColdTimer -= uiDiff;
+                break;
+            }
+            
+            case PHASE_RANGE:
+            {
+                // Firebolt
+                if (m_uiFireBoltTimer <= uiDiff)
+                {
+                    DoCastSpellIfCan(m_creature->getVictim(), SPELL_FIREBALL);
+                    m_uiFireBoltTimer = 1000;
+                }
+                else
+                    m_uiFireBoltTimer -= uiDiff;
+                break;
+            }
         }
-        else
-            m_uiConeOfColdTimer -= uiDiff;
-
-        // Firebolt
-        if (m_uiFireBoltTimer <= uiDiff)
-        {
-            DoCastSpellIfCan(m_creature->getVictim(), SPELL_FIREBALL);
-            m_uiFireBoltTimer = urand(5*IN_MILLISECONDS,9*IN_MILLISECONDS);
-        }
-        else
-            m_uiFireBoltTimer -= uiDiff;
-
-        // Frostbolt
-        if (m_uiFrostboltTimer <= uiDiff)
-        {
-            DoCastSpellIfCan(m_creature->getVictim(), SPELL_FROSTBOLT);
-            m_uiFrostboltTimer = urand(4*IN_MILLISECONDS,12*IN_MILLISECONDS);
-        }
-        else
-            m_uiFrostboltTimer -= uiDiff;
 
         // Check if creature is not outside of building
         if (m_uiEvadeTimer <= uiDiff)
