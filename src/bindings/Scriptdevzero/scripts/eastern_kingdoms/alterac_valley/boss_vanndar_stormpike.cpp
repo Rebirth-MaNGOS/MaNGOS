@@ -144,7 +144,7 @@ struct MANGOS_DLL_DECL boss_vanndar_stormpikeAI : public ScriptedAI
         {
             float fX, fY, fZ;
             m_creature->GetRespawnCoord(fX,fY,fZ);
-            if (m_creature->GetDistance2d(fX, fY) > 50.0f)
+            if (m_creature->GetDistance2d(fX, fY) > 23.0f)
             {
                 ResetToHome();
                 DoScriptText(YELL_EVADE, m_creature);
