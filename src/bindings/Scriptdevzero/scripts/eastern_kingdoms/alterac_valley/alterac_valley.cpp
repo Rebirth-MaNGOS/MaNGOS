@@ -31,7 +31,7 @@ enum Creatures
 enum Spells
 {
     SPELL_CHARGE                                  = 22911,
-    SPELL_CLEAVE                                  = 40504,
+    SPELL_CLEAVE                                  = 15584,
     SPELL_DEMORALIZING_SHOUT                      = 23511,
     SPELL_ENRAGE                                  = 8599,
     SPELL_WHIRLWIND1                              = 15589,
