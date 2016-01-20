@@ -49,7 +49,7 @@ struct MANGOS_DLL_DECL boss_galvangarAI : public ScriptedAI
     {
         m_uiCleaveTimer = urand(1*IN_MILLISECONDS,9*IN_MILLISECONDS);
         m_uiFuryOfFrostwolfTimer = 0;
-        m_uiFrighteningShoutTimer = urand(2*IN_MILLISECONDS,19*IN_MILLISECONDS);
+        m_uiFrighteningShoutTimer = urand(10*IN_MILLISECONDS,15*IN_MILLISECONDS);
         m_uiMortalStrikeTimer = urand(5*IN_MILLISECONDS,20*IN_MILLISECONDS);
         m_uiWhirlwind1Timer = urand(1*IN_MILLISECONDS,13*IN_MILLISECONDS);
         m_uiWhirlwind2Timer = urand(5*IN_MILLISECONDS,20*IN_MILLISECONDS);
@@ -68,6 +68,7 @@ struct MANGOS_DLL_DECL boss_galvangarAI : public ScriptedAI
 	{
             if (m_uiFuryOfFrostwolfTimer <= uiDiff)
             {
+                DoScriptText(YELL_BUFF, m_creature);
                 DoCastSpellIfCan(m_creature, SPELL_FURY_OF_FROSTWOLF);
                 m_uiFuryOfFrostwolfTimer = 2*MINUTE*IN_MILLISECONDS;
             }
@@ -91,7 +92,7 @@ struct MANGOS_DLL_DECL boss_galvangarAI : public ScriptedAI
         if (m_uiFrighteningShoutTimer <= uiDiff)
         {
             DoCastSpellIfCan(m_creature->getVictim(), SPELL_FRIGHTENING_SHOUT);
-            m_uiFrighteningShoutTimer = urand(10*IN_MILLISECONDS,15*IN_MILLISECONDS);
+            m_uiFrighteningShoutTimer = urand(20*IN_MILLISECONDS,30*IN_MILLISECONDS);
         }
         else
             m_uiFrighteningShoutTimer -= uiDiff;
