@@ -754,6 +754,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 switch (triggeredByAura->GetId())
                 {
                     case 20154: spellId = 25742; mindmg = 1; maxdmg = 4; break;     // Rank 1
+                    case 21084: spellId = 25742; mindmg = 1; maxdmg = 4; break;     // Rank 1.5
                     case 20287: spellId = 25740; mindmg = 2; maxdmg = 8; break;     // Rank 2
                     case 20288: spellId = 25739; mindmg = 4; maxdmg = 14; break;     // Rank 3
                     case 20289: spellId = 25738; mindmg = 6; maxdmg = 21; break;     // Rank 4
