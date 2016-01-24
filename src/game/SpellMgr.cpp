@@ -1937,6 +1937,10 @@ bool SpellMgr::canStackSpellRanksInSpellBook(SpellEntry const *spellInfo) const
 		spellInfo->Id == 17391 || spellInfo->Id == 17392)
 		return true;
 
+    // Paladin Seal of Righteousness double r1, only show the newest
+    if (spellInfo->Id == 20154 || spellInfo->Id == 21084)
+        return false;
+    
     if (spellInfo->powerType != POWER_MANA && spellInfo->powerType != POWER_HEALTH)
         return false;
     if (IsProfessionOrRidingSpell(spellInfo->Id))
