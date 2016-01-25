@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 project(MaNGOS)
-set(MANGOS_VERSION 0.6.1)
+#set(MANGOS_VERSION 0.6.1)
 
 # CMake policies
 cmake_minimum_required(VERSION 2.8)
@@ -409,7 +409,7 @@ add_subdirectory(dep) # TODO: add vmap extractor build support
 set(DEFINITIONS
   DO_MYSQL
   HAVE_CONFIG_H
-  VERSION="${MANGOS_VERSION}"
+  #VERSION="${MANGOS_VERSION}"
   SYSCONFDIR="${CONF_DIR}/"
 )
 set(DEFINITIONS_RELEASE NDEBUG)
