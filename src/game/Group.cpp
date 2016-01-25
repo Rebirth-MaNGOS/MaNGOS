@@ -357,12 +357,32 @@ void Group::ChangeLeader(ObjectGuid guid)
 void Group::Disband(bool hideDestroy)
 {
     Player *player;
+    bool instanceQuotaReached = false;
 
-    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
+    for (member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         player = sObjectMgr.GetPlayer(citr->guid);
         if(!player)
             continue;
+
+        // Check if the instance reset quota has been reached.
+        for (auto boundInstance : m_boundInstances)
+        {
+            if (boundInstance.second.state->CanReset())
+            {
+                const MapEntry *entry = sMapStore.LookupEntry(boundInstance.first);
+                if (entry)
+                {
+                    if (!player->IsBelowResetQuotaForInstance(entry->MapID))
+                    {
+                        instanceQuotaReached = true;
+                    }
+                    else
+                        player->AddToResetQuotaList(entry->MapID);
+                }
+            }
+        }
+
 
         //we cannot call _removeMember because it would invalidate member iterator
         //if we are removing player from battleground raid
@@ -416,7 +436,7 @@ void Group::Disband(bool hideDestroy)
         CharacterDatabase.PExecute("DELETE FROM groups WHERE groupId='%u'", m_Id);
         CharacterDatabase.PExecute("DELETE FROM group_member WHERE groupId='%u'", m_Id);
         CharacterDatabase.CommitTransaction();
-        ResetInstances(INSTANCE_RESET_GROUP_DISBAND, NULL);
+        ResetInstances(INSTANCE_RESET_GROUP_DISBAND, NULL, instanceQuotaReached);
     }
 
     m_leaderGuid.Clear();
@@ -1505,7 +1525,7 @@ bool Group::InCombatToInstance(uint32 instanceId)
     return false;
 }
 
-void Group::ResetInstances(InstanceResetMethod method, Player* SendMsgTo)
+void Group::ResetInstances(InstanceResetMethod method, Player* SendMsgTo, bool QuotaReached /*= false*/)
 {
     if(isBGGroup())
         return;
@@ -1569,11 +1589,15 @@ void Group::ResetInstances(InstanceResetMethod method, Player* SendMsgTo)
                                        at->target_X, at->target_Y, at->target_Z, at->target_Orientation, at->target_mapId, current_player.guid.GetCounter(), entry->MapID);
         }
 
+        // Only reset the map if the quota hasn't been reached.
         bool isEmpty = true;
-        // if the map is loaded, reset it
-        if (Map *map = sMapMgr.FindMap(state->GetMapId(), state->GetInstanceId()))
-            if (map->IsDungeon() && !(method == INSTANCE_RESET_GROUP_DISBAND && !state->CanReset()))
-                isEmpty = ((DungeonMap*)map)->Reset(method);
+        if (!QuotaReached)
+        {
+            // if the map is loaded, reset it
+            if (Map *map = sMapMgr.FindMap(state->GetMapId(), state->GetInstanceId()))
+                if (map->IsDungeon() && !(method == INSTANCE_RESET_GROUP_DISBAND && !state->CanReset()))
+                    isEmpty = ((DungeonMap*)map)->Reset(method);
+        }
 
         if (SendMsgTo)
         {
@@ -1583,7 +1607,9 @@ void Group::ResetInstances(InstanceResetMethod method, Player* SendMsgTo)
                 SendMsgTo->SendResetInstanceFailed(0, state->GetMapId());
         }
 
-        if (isEmpty || method == INSTANCE_RESET_GROUP_DISBAND)
+        // If the reset quota has been reached disbanding the group should not
+        // clear the bind.
+        if (!QuotaReached && (isEmpty || method == INSTANCE_RESET_GROUP_DISBAND))
         {
             // do not reset the instance, just unbind if others are permanently bound to it
             if (state->CanReset())

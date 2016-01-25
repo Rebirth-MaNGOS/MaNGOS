@@ -275,7 +275,9 @@ class MANGOS_DLL_SPEC Group
         void SetTargetIcon(uint8 id, ObjectGuid targetGuid);
         uint16 InInstance();
         bool InCombatToInstance(uint32 instanceId);
-        void ResetInstances(InstanceResetMethod method, Player* SendMsgTo);
+        // QuotaReached is used for when groups are disbanded since
+        // quota checks have to be done before the group is disbanded.
+        void ResetInstances(InstanceResetMethod method, Player* SendMsgTo, bool QuotaReached = false);
 
         void SendTargetIconList(WorldSession *session);
         void SendUpdate();

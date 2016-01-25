@@ -490,6 +490,11 @@ void WorldSession::LogoutPlayer(bool Save)
         ///- Remove pet
         _player->RemovePet(PET_SAVE_AS_CURRENT);
 
+        // remove player from the group if he is:
+        // a) in group; b) not in raid group; c) logging out normally (not being kicked or disconnected)
+        if(_player->GetGroup() && !_player->GetGroup()->isRaidGroup() && m_Socket)
+            _player->RemoveFromGroup();
+
         ///- empty buyback items and save the player in the database
         // some save parts only correctly work in case player present in map/player_lists (pets, etc)
         if(Save)
@@ -500,11 +505,6 @@ void WorldSession::LogoutPlayer(bool Save)
 
         ///- If the player is in a group (or invited), remove him. If the group if then only 1 person, disband the group.
         _player->UninviteFromGroup();
-
-        // remove player from the group if he is:
-        // a) in group; b) not in raid group; c) logging out normally (not being kicked or disconnected)
-        if(_player->GetGroup() && !_player->GetGroup()->isRaidGroup() && m_Socket)
-            _player->RemoveFromGroup();
 
         ///- Send update to group
         if(_player->GetGroup())

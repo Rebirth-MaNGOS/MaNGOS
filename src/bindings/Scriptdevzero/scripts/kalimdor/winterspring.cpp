@@ -763,7 +763,7 @@ struct MANGOS_DLL_DECL npc_doctor_weavil_flying_machine : public ScriptedAI
                         m_uiDoctorSpeakTimer = 5000;
                         break;
                     case 2:
-                        doctorW->GenericTextEmote("Doctor Weavil eyes you suspiciously.", false);
+                        doctorW->GenericTextEmote("Doctor Weavil eyes you suspiciously.", nullptr, false);
                         m_uiDoctorSpeakTimer = 3000;
                         break;
                     case 3:
