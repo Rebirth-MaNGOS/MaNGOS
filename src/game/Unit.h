@@ -1407,9 +1407,9 @@ public:
         virtual Pet* GetMiniPet() const { return NULL; }    // overwrited in Player
 
         ObjectGuid const GetCharmerOrOwnerGuid() const { return GetCharmerGuid() ? GetCharmerGuid() : GetOwnerGuid(); }
-        ObjectGuid const& GetCharmerOrOwnerOrOwnGuid() const
+        ObjectGuid const GetCharmerOrOwnerOrOwnGuid() const
         {
-            if (ObjectGuid const& guid = GetCharmerOrOwnerGuid())
+            if (ObjectGuid const guid = GetCharmerOrOwnerGuid())
                 return guid;
             return GetObjectGuid();
         }
