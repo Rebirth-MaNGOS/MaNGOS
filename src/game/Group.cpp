@@ -359,7 +359,7 @@ void Group::Disband(bool hideDestroy)
     Player *player;
     bool instanceQuotaReached = false;
 
-    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
+    for (member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         player = sObjectMgr.GetPlayer(citr->guid);
         if(!player)
@@ -368,13 +368,17 @@ void Group::Disband(bool hideDestroy)
         // Check if the instance reset quota has been reached.
         for (auto boundInstance : m_boundInstances)
         {
-            const MapEntry *entry = sMapStore.LookupEntry(boundInstance.first);
-            if (entry)
+            if (boundInstance.second.state->CanReset())
             {
-                if (!player->IsBelowResetQuotaForInstance(entry->MapID))
+                const MapEntry *entry = sMapStore.LookupEntry(boundInstance.first);
+                if (entry)
                 {
-                    instanceQuotaReached = true;
-                    break;
+                    if (!player->IsBelowResetQuotaForInstance(entry->MapID))
+                    {
+                        instanceQuotaReached = true;
+                    }
+                    else
+                        player->AddToResetQuotaList(entry->MapID);
                 }
             }
         }
