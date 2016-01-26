@@ -133,7 +133,7 @@ struct MANGOS_DLL_DECL boss_pusillinAI : public ScriptedAI
             m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
             break;
         case 9:
-            m_creature->GetMotionMaster()->MovePoint(10, Move[10].x, Move[10].y, Move[10].z, false);		//Doesn't use MMaps
+            m_creature->GetMotionMaster()->MovePoint(10, Move[10].x, Move[10].y, Move[10].z, false);		//Don't use MMaps
             return;
         case 10:
             m_creature->GetMotionMaster()->MovePoint(11, Move[11].x, Move[11].y, Move[11].z);
@@ -156,6 +156,12 @@ struct MANGOS_DLL_DECL boss_pusillinAI : public ScriptedAI
             m_creature->SetInCombatWithZone();
             break;
         }
+    }
+    
+    void JustSummoned(Creature* pSummoned)
+    {
+        if(pSummoned->GetEntry() == NPC_WILDSPAWN_IMP)
+            pSummoned->SetRespawnEnabled(false);
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -261,17 +267,12 @@ bool GossipSelect_boss_pusillin(Player* pPlayer, Creature* pCreature, uint32 /*u
             break;
         case GOSSIP_ACTION_INFO_DEF + 5:
             DoScriptText(SAY_PUSILLIN_5, pCreature);
-            //pCreature->GetPosition(fX, fY, fZ);
             pCreature->GetMotionMaster()->MovePoint(15, Move[15].x, Move[15].y, Move[15].z);
             pCreature->SummonCreature(NPC_WILDSPAWN_IMP, 6.95f,-709.65f,-12.64f,1.88f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
             pCreature->SummonCreature(NPC_WILDSPAWN_IMP, 25.19f,-693.73f,-12.64f,3.68f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
             pCreature->SummonCreature(NPC_WILDSPAWN_IMP, 24.12f,-697.13f,-12.64f,4.01f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
             pCreature->SummonCreature(NPC_WILDSPAWN_IMP, 17.33f,-665.37f,-12.64f,4.71f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
             pCreature->SummonCreature(NPC_WILDSPAWN_IMP, 6.43f,-669.18f,-12.64f,5.33f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
-            if(Creature* Imp = m_pInstance->GetSingleCreatureFromStorage(NPC_WILDSPAWN_IMP))
-            {
-                Imp->AI()->AttackStart(pPlayer);						//Not working atm, increased aggro range in DB instead.
-            }
             break;
         }
     }
