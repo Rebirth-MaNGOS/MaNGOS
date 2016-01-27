@@ -319,9 +319,9 @@ struct MANGOS_DLL_DECL boss_jeklikAI : public ScriptedAI
 					++m_uiBatRiders;
 				}
 				if(m_uiBatRiders < 2)
-					m_uiSpawnFlyingBatsTimer = 20000;
+					m_uiSpawnFlyingBatsTimer = 12000;
 				else
-					m_uiSpawnFlyingBatsTimer = 30000;
+					m_uiSpawnFlyingBatsTimer = 22000;
             }
             else
                 m_uiSpawnFlyingBatsTimer -=uiDiff;
