@@ -3773,6 +3773,7 @@ void Spell::EffectEnchantItemTmp(SpellEffectIndex eff_idx)
             m_spellInfo->Id == 25120 ||
             m_spellInfo->Id == 25118 ||
             m_spellInfo->Id == 25122 ||
+            m_spellInfo->Id == 25121 ||
             m_spellInfo->Id == 25119 ||
             m_spellInfo->Id == 25117 ||
             m_spellInfo->Id == 16138 ||
