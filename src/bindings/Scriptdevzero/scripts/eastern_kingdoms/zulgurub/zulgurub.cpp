@@ -659,9 +659,16 @@ struct MANGOS_DLL_DECL npc_hakkari_witch_doctorAI : public ScriptedAI
 	
 	void JustDied(Unit* pKiller)
     {
-		// spawn a spirit on death and cast spirit burst
-        if(Creature* pSpirit = m_creature->SummonCreature(NPC_VOODOO_SPIRIT, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN, 6000, false))	
-			pSpirit->CastSpell(pSpirit, 24051, true);
+        float fX, fY, fZ;
+        m_creature->GetPosition(fX,fY,fZ);
+        
+        // spawn a spirit on death and cast spirit burst
+        if(Creature* pSpirit = m_creature->SummonCreature(NPC_VOODOO_SPIRIT, fX, fY,fZ, 0, TEMPSUMMON_TIMED_DESPAWN, 6000, false))
+        {
+            pSpirit->CastSpell(pSpirit, 24051, true);
+            pSpirit->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            pSpirit->AI()->AttackStart(GetRandomPlayerInCurrentMap(15.f));
+        }
     }
 
 	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)

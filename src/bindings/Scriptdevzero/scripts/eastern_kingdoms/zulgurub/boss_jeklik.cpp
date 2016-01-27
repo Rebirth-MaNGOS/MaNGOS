@@ -90,7 +90,7 @@ struct MANGOS_DLL_DECL boss_jeklikAI : public ScriptedAI
         m_uiShadowWordPainTimer = 6000;
         m_uiSonicBurstTimer = 6000;
         m_uiSpawnBatsTimer = urand(15000,60000);
-        m_uiSpawnFlyingBatsTimer = 10000;
+        m_uiSpawnFlyingBatsTimer = 1000;
         m_uiSwoopTimer = 2000;
 		m_uiSuspendTimer = 0;
 		m_uiBatRiders = 0;
