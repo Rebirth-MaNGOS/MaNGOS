@@ -151,6 +151,8 @@ struct MANGOS_DLL_DECL boss_emerald_dragonAI : public ScriptedAI
 
         if (pSummoned->GetEntry() == NPC_DREAM_FOG)
             pSummoned->CastSpell(pSummoned, SPELL_DREAM_FOG, true, NULL, NULL, m_creature->GetObjectGuid());
+        // we want no respawns
+        pSummoned->SetRespawnEnabled(false);
     }
 
     void SummonedCreatureJustDied(Creature* pSummoned)
