@@ -1,8 +1,8 @@
 before_script:
     - mkdir build
 
-jobs1:
-    stage: build
+build:
+    script:
         - cd build
-        - cmake ..
+        - cmake .. -DACE_USER_EXTERNAL=1 -DTBB_USE_EXTERNAL=1
         - make
