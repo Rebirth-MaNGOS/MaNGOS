@@ -23,6 +23,7 @@ EndScriptData */
 
 #include "precompiled.h"
 #include "temple_of_ahnqiraj.h"
+#include "TemporaryGameObject.h"
 
 enum
 {
@@ -46,9 +47,13 @@ enum
     NPC_OURO_TRIGGER        = 15717,
 	NPC_DIRT_MOUND			= 15712,
 
-	BOSS_STATE_NORMAL           = 0,
-    BOSS_STATE_SUBMERGE         = 1,
-    BOSS_STATE_BOULDER		    = 2
+    GO_SAND_WORM_ROCK_BASE  = 210343,
+
+	BOSS_STATE_NORMAL       = 0,
+    BOSS_STATE_SUBMERGE     = 1,
+    BOSS_STATE_BOULDER		= 2,
+
+    BIRTH_TIME              = 250 
 };
 
 struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
@@ -65,6 +70,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     uint32 m_uiSubmergeTimer;
     uint32 m_uiForceSubmergeTimer;
     uint32 m_uiBackTimer;
+    uint32 m_uiBirthTimer;
     uint32 m_uiChangeTargetTimer;
     uint32 m_uiSpawnTimer;
 	uint32 m_uiBoulderTimer;
@@ -76,6 +82,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
 	GUIDList m_lDirtMounds;
 
+    ObjectGuid m_WormBase;
+
     void Reset()
     {
         m_uiForceSubmergeTimer = 5000;
@@ -84,16 +92,21 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         m_uiSandBlastTimer = urand(4000, 8000);
         m_uiSubmergeTimer = 90000;//urand(90000, 150000);		
         m_uiBackTimer = 10000;//urand(30000, 45000);
+        m_uiBirthTimer = 0;
         m_uiChangeTargetTimer = urand(5000, 8000);
         m_uiSpawnTimer = urand(10000, 20000);
 		m_uiBoulderTimer = 5000;
+        m_bEnraged = false;
+
 		m_creature->RemoveAurasDueToSpell(SPELL_ROOT_SELF);
+        DespawnWormBase();
 		m_creature->SetVisibility(VISIBILITY_OFF);
 
 		if (m_bossState == BOSS_STATE_BOULDER)
             m_bossState = BOSS_STATE_NORMAL;
-        m_bEnraged = false;
+
 		m_creature->setFaction(14);
+
 		RemoveDirtMounds(1);			// remove all that would be up after a wipe
 		m_lDirtMounds.clear();
     }
@@ -129,7 +142,12 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             return tmp_list.front();
 
         // Sort the list from highest to lowest threat.
-        std::sort(tmp_list.begin(), tmp_list.end(), [&]( Player* first, Player* second) -> bool { return m_creature->getThreatManager().getThreat(first) > m_creature->getThreatManager().getThreat(second); });
+        std::sort(tmp_list.begin(), tmp_list.end(), 
+        [&]( Player* first, Player* second) -> bool 
+        { 
+            return m_creature->getThreatManager().getThreat(first) > 
+                   m_creature->getThreatManager().getThreat(second); 
+        });
 
         return tmp_list.empty() ? NULL : tmp_list.front();
     }
@@ -137,10 +155,15 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     void Aggro(Unit* /*pWho*/)
     {
 		m_creature->SetVisibility(VISIBILITY_ON);
-        m_creature->CastSpell(m_creature, SPELL_BIRTH, true);
         m_creature->UpdateVisibilityAndView();
+
+        m_uiBirthTimer = BIRTH_TIME;
+
+        SpawnWormBase();
+
 		if(Player* pPlayer = GetPlayerAtMinimumRange(5))
 			m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);      
+
         m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
     }
 
@@ -165,13 +188,18 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 			if (Creature* pDirtMound = m_creature->GetMap()->GetCreature(*itr))
 				if (pDirtMound->isAlive())
 				{
-					if(action == 0)
+					if (action == 0)
 					{
 						float fX, fY, fZ;
 						pDirtMound->GetPosition(fX, fY, fZ);
-						for(uint8 i = 0; i < 5; ++i)
+						for (uint8 i = 0; i < 5; ++i)
 						{
-							if(Creature* pScarab = m_creature->SummonCreature(NPC_OURO_SCARAB, fX+urand(-5,5),fY+urand(-5,5),fZ, 0,TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,15000,false))
+							if (Creature* pScarab = m_creature->SummonCreature(NPC_OURO_SCARAB, 
+                                                                               fX+urand(-5,5),
+                                                                               fY+urand(-5,5),
+                                                                               fZ, 0,
+                                                                               TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,
+                                                                               15000,false))
 							{
 								if(Player* pPlayer = GetRandomPlayerInCurrentMap(50))
 									pScarab->AddThreat(pPlayer,100000.0f);
@@ -192,9 +220,14 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 		m_creature->AttackStop();
 		if (m_creature->IsNonMeleeSpellCasted(false))
 			m_creature->InterruptNonMeleeSpells(false);
+
         m_creature->HandleEmote(EMOTE_ONESHOT_SUBMERGE);
 		m_creature->SetVisibility(VISIBILITY_OFF);
+
+        DespawnWormBase();
+
 		m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
+
 		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 		m_creature->setFaction(34); // not quite friendly because it stops combat if he is 35
 
@@ -213,9 +246,14 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         {
             m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             m_creature->setFaction(14);	
+
+            SpawnWormBase();
+
 			m_creature->SetVisibility(VISIBILITY_ON);
-			m_creature->CastSpell(m_creature, SPELL_BIRTH, true);
             m_creature->UpdateVisibilityAndView();
+
+            m_uiBirthTimer = BIRTH_TIME;
+
 			if(Player* pPlayer = GetPlayerAtMinimumRange(5))
 				m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);
 
@@ -333,8 +371,47 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 		}
 	}
 
+    void SpawnWormBase()
+    {
+        // To ensure we never get more than one base.
+        DespawnWormBase();
+
+        GameObject* pWormBase = m_creature->SummonGameObject(GO_SAND_WORM_ROCK_BASE, 
+                                                             0,
+                                                             m_creature->GetPositionX(),
+                                                             m_creature->GetPositionY(),
+                                                             m_creature->GetPositionZ(),
+                                                             0, GOState::GO_STATE_READY,
+                                                             0);
+        if (pWormBase)
+            m_WormBase = pWormBase->GetObjectGuid();
+    }
+
+    void DespawnWormBase()
+    {
+        TemporaryGameObject* pWormBase = 
+            dynamic_cast<TemporaryGameObject*>(m_creature->GetMap()->GetGameObject(m_WormBase));
+        if (pWormBase)
+            pWormBase->Delete();
+    }
+
 	void UpdateAI(const uint32 uiDiff)
     {
+        // Visual effect for when Ouro emerges.
+        if (m_uiBirthTimer)
+        {
+            if (m_uiBirthTimer <= uiDiff)
+            {
+                m_creature->CastSpell(m_creature, SPELL_BIRTH, false);
+
+                m_uiBirthTimer = 0;
+            }
+            else
+                m_uiBirthTimer -= uiDiff;
+
+            return;
+        }
+
         if (m_bossState == BOSS_STATE_SUBMERGE)
         {
             DoSubmergeState(uiDiff);
