@@ -33,7 +33,7 @@ enum
     SPELL_BIRTH             = 26262,                        //The Birth Animation
     SPELL_BOULDER           = 26616,
     SPELL_BERSERK           = 26615,
-	SPELL_ROOT_SELF         = 23973,
+    SPELL_ROOT_SELF         = 23973,
 
     SPELL_SUMMON_SCARABS    = 26060,
     SPELL_SUMMON_OURO_MOUND = 26058,
@@ -45,11 +45,11 @@ enum
     NPC_OURO_SCARAB         = 15718,
     NPC_OURO_SPAWNER        = 15957,
     NPC_OURO_TRIGGER        = 15717,
-	NPC_DIRT_MOUND			= 15712,
+    NPC_DIRT_MOUND			= 15712,
 
     GO_SAND_WORM_ROCK_BASE  = 210343,
 
-	BOSS_STATE_NORMAL       = 0,
+    BOSS_STATE_NORMAL       = 0,
     BOSS_STATE_SUBMERGE     = 1,
     BOSS_STATE_BOULDER		= 2,
 
@@ -59,11 +59,11 @@ enum
 struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 {
     boss_ouroAI(Creature* pCreature) : ScriptedAI(pCreature) 
-	{
-		SetCombatMovement(false);
-		m_bossState = BOSS_STATE_NORMAL;
-		Reset();
-	}
+    {
+        SetCombatMovement(false);
+        m_bossState = BOSS_STATE_NORMAL;
+        Reset();
+    }
 
     uint32 m_uiSweepTimer;
     uint32 m_uiSandBlastTimer;
@@ -73,14 +73,14 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     uint32 m_uiBirthTimer;
     uint32 m_uiChangeTargetTimer;
     uint32 m_uiSpawnTimer;
-	uint32 m_uiBoulderTimer;
+    uint32 m_uiBoulderTimer;
 
-	uint8  m_bossState;
+    uint8  m_bossState;
 
     bool m_bForceSubmerge;
     bool m_bEnraged;
 
-	GUIDList m_lDirtMounds;
+    GUIDList m_lDirtMounds;
 
     ObjectGuid m_WormBase;
 
@@ -95,23 +95,23 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         m_uiBirthTimer = 0;
         m_uiChangeTargetTimer = urand(5000, 8000);
         m_uiSpawnTimer = urand(10000, 20000);
-		m_uiBoulderTimer = 5000;
+        m_uiBoulderTimer = 5000;
         m_bEnraged = false;
 
-		m_creature->RemoveAurasDueToSpell(SPELL_ROOT_SELF);
+        m_creature->RemoveAurasDueToSpell(SPELL_ROOT_SELF);
         DespawnWormBase();
-		m_creature->SetVisibility(VISIBILITY_OFF);
+        m_creature->SetVisibility(VISIBILITY_OFF);
 
-		if (m_bossState == BOSS_STATE_BOULDER)
+        if (m_bossState == BOSS_STATE_BOULDER)
             m_bossState = BOSS_STATE_NORMAL;
 
-		m_creature->setFaction(14);
+        m_creature->setFaction(14);
 
-		RemoveDirtMounds(1);			// remove all that would be up after a wipe
-		m_lDirtMounds.clear();
+        RemoveDirtMounds(1);			// remove all that would be up after a wipe
+        m_lDirtMounds.clear();
     }
 
-	Player* DoGetPlayerInMeleeRangeByThreat()
+    Player* DoGetPlayerInMeleeRangeByThreat()
     {
         std::vector<Player*> tmp_list;
 
@@ -143,100 +143,100 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
         // Sort the list from highest to lowest threat.
         std::sort(tmp_list.begin(), tmp_list.end(), 
-        [&]( Player* first, Player* second) -> bool 
-        { 
-            return m_creature->getThreatManager().getThreat(first) > 
-                   m_creature->getThreatManager().getThreat(second); 
-        });
+                [&]( Player* first, Player* second) -> bool 
+                { 
+                    return m_creature->getThreatManager().getThreat(first) > 
+                    m_creature->getThreatManager().getThreat(second); 
+                });
 
         return tmp_list.empty() ? NULL : tmp_list.front();
     }
 
     void Aggro(Unit* /*pWho*/)
     {
-		m_creature->SetVisibility(VISIBILITY_ON);
+        m_creature->SetVisibility(VISIBILITY_ON);
         m_creature->UpdateVisibilityAndView();
 
         m_uiBirthTimer = BIRTH_TIME;
 
         SpawnWormBase();
 
-		if(Player* pPlayer = GetPlayerAtMinimumRange(5))
-			m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);      
+        if(Player* pPlayer = GetPlayerAtMinimumRange(5))
+            m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);      
 
         m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
     }
 
-	void SpawnDirtMound()
-	{
-		float fX, fY, fZ;
-		m_creature->GetPosition(fX, fY, fZ);
-		for(uint8 i = 0; i < 2; ++i)
-		{
-			if(Creature* pDirtMound = m_creature->SummonCreature(NPC_DIRT_MOUND, fX+urand(-5,5),fY+urand(-5,5),fZ, 0,TEMPSUMMON_TIMED_DESPAWN,45000,false))
-			{
-				pDirtMound->SetRespawnDelay(-10);				// to stop them from randomly respawning
-				m_lDirtMounds.push_back(pDirtMound->GetObjectGuid());
-			}
-		}
-	}
+    void SpawnDirtMound()
+    {
+        float fX, fY, fZ;
+        m_creature->GetPosition(fX, fY, fZ);
+        for(uint8 i = 0; i < 2; ++i)
+        {
+            if(Creature* pDirtMound = m_creature->SummonCreature(NPC_DIRT_MOUND, fX+urand(-5,5),fY+urand(-5,5),fZ, 0,TEMPSUMMON_TIMED_DESPAWN,45000,false))
+            {
+                pDirtMound->SetRespawnDelay(-10);				// to stop them from randomly respawning
+                m_lDirtMounds.push_back(pDirtMound->GetObjectGuid());
+            }
+        }
+    }
 
-	void RemoveDirtMounds(int action = 0)		// just the basics for now
-	{
-		for (GUIDList::iterator itr = m_lDirtMounds.begin(); itr != m_lDirtMounds.end(); itr++)
-		{
-			if (Creature* pDirtMound = m_creature->GetMap()->GetCreature(*itr))
-				if (pDirtMound->isAlive())
-				{
-					if (action == 0)
-					{
-						float fX, fY, fZ;
-						pDirtMound->GetPosition(fX, fY, fZ);
-						for (uint8 i = 0; i < 5; ++i)
-						{
-							if (Creature* pScarab = m_creature->SummonCreature(NPC_OURO_SCARAB, 
-                                                                               fX+urand(-5,5),
-                                                                               fY+urand(-5,5),
-                                                                               fZ, 0,
-                                                                               TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,
-                                                                               15000,false))
-							{
-								if(Player* pPlayer = GetRandomPlayerInCurrentMap(50))
-									pScarab->AddThreat(pPlayer,100000.0f);
-								pScarab->SetRespawnDelay(-10);				// to stop them from randomly respawning
-							}
-						}	
-						pDirtMound->ForcedDespawn();		// should be instant despawn?
-					}
-					else
-						pDirtMound->ForcedDespawn();		// should be instant despawn?
-				}
-		}
-	}
+    void RemoveDirtMounds(int action = 0)		// just the basics for now
+    {
+        for (GUIDList::iterator itr = m_lDirtMounds.begin(); itr != m_lDirtMounds.end(); itr++)
+        {
+            if (Creature* pDirtMound = m_creature->GetMap()->GetCreature(*itr))
+                if (pDirtMound->isAlive())
+                {
+                    if (action == 0)
+                    {
+                        float fX, fY, fZ;
+                        pDirtMound->GetPosition(fX, fY, fZ);
+                        for (uint8 i = 0; i < 5; ++i)
+                        {
+                            if (Creature* pScarab = m_creature->SummonCreature(NPC_OURO_SCARAB, 
+                                        fX+urand(-5,5),
+                                        fY+urand(-5,5),
+                                        fZ, 0,
+                                        TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,
+                                        15000,false))
+                            {
+                                if(Player* pPlayer = GetRandomPlayerInCurrentMap(50))
+                                    pScarab->AddThreat(pPlayer,100000.0f);
+                                pScarab->SetRespawnDelay(-10);				// to stop them from randomly respawning
+                            }
+                        }	
+                        pDirtMound->ForcedDespawn();		// should be instant despawn?
+                    }
+                    else
+                        pDirtMound->ForcedDespawn();		// should be instant despawn?
+                }
+        }
+    }
 
-	void Submerge()
-	{           
-		// Submerge		
-		m_creature->AttackStop();
-		if (m_creature->IsNonMeleeSpellCasted(false))
-			m_creature->InterruptNonMeleeSpells(false);
+    void Submerge()
+    {           
+        // Submerge		
+        m_creature->AttackStop();
+        if (m_creature->IsNonMeleeSpellCasted(false))
+            m_creature->InterruptNonMeleeSpells(false);
 
         m_creature->HandleEmote(EMOTE_ONESHOT_SUBMERGE);
-		m_creature->SetVisibility(VISIBILITY_OFF);
+        m_creature->SetVisibility(VISIBILITY_OFF);
 
         DespawnWormBase();
 
-		m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
+        m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
 
-		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-		m_creature->setFaction(34); // not quite friendly because it stops combat if he is 35
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        m_creature->setFaction(34); // not quite friendly because it stops combat if he is 35
 
-		m_bossState = BOSS_STATE_SUBMERGE;
-		m_uiBackTimer = 10000;//urand(30000, 45000);			// for testing purposes, change back after
-		SpawnDirtMound();
-	}      
+        m_bossState = BOSS_STATE_SUBMERGE;
+        m_uiBackTimer = 10000;//urand(30000, 45000);			// for testing purposes, change back after
+        SpawnDirtMound();
+    }      
 
-	void DoSubmergeState(uint32 uiDiff)
+    void DoSubmergeState(uint32 uiDiff)
     {
         // Just call this so that if there's a wipe we reset properly
         m_creature->SelectHostileTarget();
@@ -249,27 +249,27 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
             SpawnWormBase();
 
-			m_creature->SetVisibility(VISIBILITY_ON);
+            m_creature->SetVisibility(VISIBILITY_ON);
             m_creature->UpdateVisibilityAndView();
 
             m_uiBirthTimer = BIRTH_TIME;
 
-			if(Player* pPlayer = GetPlayerAtMinimumRange(5))
-				m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);
+            if(Player* pPlayer = GetPlayerAtMinimumRange(5))
+                m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);
 
-			m_bossState = BOSS_STATE_NORMAL;
+            m_bossState = BOSS_STATE_NORMAL;
             m_uiSubmergeTimer = 90000;//urand(60000, 120000);
-			
-			RemoveDirtMounds(0);
+
+            RemoveDirtMounds(0);
         }
         else
             m_uiBackTimer -= uiDiff;
     }
 
-	void DoNormalState(uint32 uiDiff)
+    void DoNormalState(uint32 uiDiff)
     {
-		if(!m_bEnraged)
-		{
+        if(!m_bEnraged)
+        {
             if(m_bForceSubmerge)
             {
                 if (m_uiForceSubmergeTimer <= uiDiff)
@@ -280,17 +280,17 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                 else
                     m_uiForceSubmergeTimer -= uiDiff;
             }
-			// Submerge
-			if (m_uiSubmergeTimer <= uiDiff)
-			{
-				Submerge();
-				return;
-			}
-			else
-				m_uiSubmergeTimer -= uiDiff;
-		}
+            // Submerge
+            if (m_uiSubmergeTimer <= uiDiff)
+            {
+                Submerge();
+                return;
+            }
+            else
+                m_uiSubmergeTimer -= uiDiff;
+        }
 
-		// Sweep
+        // Sweep
         if (m_uiSweepTimer < uiDiff)
         {
             DoCastSpellIfCan(m_creature->getVictim(), SPELL_SWEEP);
@@ -316,9 +316,9 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                 m_bEnraged = true;
                 return;
             }
-		}
+        }
 
-		if (m_bossState == BOSS_STATE_NORMAL)
+        if (m_bossState == BOSS_STATE_NORMAL)
         { 
             if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
             {
@@ -334,9 +334,9 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                 }
                 else
                 {
-					if(m_bEnraged) // Cannot find target and enraged - move to boulder mode	
-						m_bossState = BOSS_STATE_BOULDER;
-					else			
+                    if(m_bEnraged) // Cannot find target and enraged - move to boulder mode	
+                        m_bossState = BOSS_STATE_BOULDER;
+                    else			
                     {
                         if(!m_bForceSubmerge)
                         {
@@ -352,24 +352,24 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                 m_bForceSubmerge = false;       // if there's someone in melee don't submerge
             }
         }
-		else
+        else
         {
             if (m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
                 m_bossState = BOSS_STATE_NORMAL;
-		}
+        }
 
-		if (m_bossState == BOSS_STATE_BOULDER)
+        if (m_bossState == BOSS_STATE_BOULDER)
         {
-			// Boulder
-			if (m_uiBoulderTimer < uiDiff)
-			{
-				DoCastSpellIfCan(m_creature->getVictim(), SPELL_BOULDER);
-				m_uiBoulderTimer = 10000;
-			}
-			else
-				m_uiBoulderTimer -= uiDiff;
-		}
-	}
+            // Boulder
+            if (m_uiBoulderTimer < uiDiff)
+            {
+                DoCastSpellIfCan(m_creature->getVictim(), SPELL_BOULDER);
+                m_uiBoulderTimer = 10000;
+            }
+            else
+                m_uiBoulderTimer -= uiDiff;
+        }
+    }
 
     void SpawnWormBase()
     {
@@ -377,12 +377,12 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         DespawnWormBase();
 
         GameObject* pWormBase = m_creature->SummonGameObject(GO_SAND_WORM_ROCK_BASE, 
-                                                             0,
-                                                             m_creature->GetPositionX(),
-                                                             m_creature->GetPositionY(),
-                                                             m_creature->GetPositionZ(),
-                                                             0, GOState::GO_STATE_READY,
-                                                             0);
+                0,
+                m_creature->GetPositionX(),
+                m_creature->GetPositionY(),
+                m_creature->GetPositionZ(),
+                0, GOState::GO_STATE_READY,
+                0);
         if (pWormBase)
             m_WormBase = pWormBase->GetObjectGuid();
     }
@@ -395,7 +395,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             pWormBase->Delete();
     }
 
-	void UpdateAI(const uint32 uiDiff)
+    void UpdateAI(const uint32 uiDiff)
     {
         // Visual effect for when Ouro emerges.
         if (m_uiBirthTimer)
@@ -423,10 +423,10 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
         switch (m_bossState)
         {
-        case BOSS_STATE_NORMAL:
-        case BOSS_STATE_BOULDER:
-            DoNormalState(uiDiff);
-            break;
+            case BOSS_STATE_NORMAL:
+            case BOSS_STATE_BOULDER:
+                DoNormalState(uiDiff);
+                break;
         }
     }
 };
@@ -439,62 +439,62 @@ CreatureAI* GetAI_boss_ouro(Creature* pCreature)
 struct MANGOS_DLL_DECL mob_dirt_moundAI : public ScriptedAI				// should they behave like the clouds on nightmare dragons?
 {
     mob_dirt_moundAI(Creature* pCreature) : ScriptedAI(pCreature) 
-	{ 
-		m_creature->CastSpell(m_creature,SPELL_DIRTMOUND_PASSIVE,true);
-		Reset(); 
-	}
+    { 
+        m_creature->CastSpell(m_creature,SPELL_DIRTMOUND_PASSIVE,true);
+        Reset(); 
+    }
 
     uint32 m_uiRoamTimer;
-	bool m_bCanChangeTarget;
-	uint32 m_uiChangeTargetTimer;
+    bool m_bCanChangeTarget;
+    uint32 m_uiChangeTargetTimer;
 
     void Reset()
     {
         m_uiRoamTimer = 0;
-		m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
     }
 
-	void MoveInLineOfSight(Unit* /*pWho*/)
+    void MoveInLineOfSight(Unit* /*pWho*/)
     {
         // Must to be empty to ignore aggro
     }
 
-	void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
     {
         if (pSpell->Id == 26092 && pTarget->GetTypeId() == TYPEID_PLAYER && m_bCanChangeTarget)		
-			ChangeTarget();
-	}
+            ChangeTarget();
+    }
 
-	void ChangeTarget()
-	{
-		if (Unit* pTarget = GetRandomPlayerInCurrentMap(50))
-		{
-			DoResetThreat();
-			m_creature->AddThreat(pTarget,100000.0f);
-			m_creature->SelectHostileTarget();
-			m_uiChangeTargetTimer = 5000;
-			m_bCanChangeTarget = false;
-			m_uiRoamTimer = urand(20000, 30000);			// Reset the 30 sec timer in case the change is due to hitting a player
-		}
-	}
-	
+    void ChangeTarget()
+    {
+        if (Unit* pTarget = GetRandomPlayerInCurrentMap(50))
+        {
+            DoResetThreat();
+            m_creature->AddThreat(pTarget,100000.0f);
+            m_creature->SelectHostileTarget();
+            m_uiChangeTargetTimer = 5000;
+            m_bCanChangeTarget = false;
+            m_uiRoamTimer = urand(20000, 30000);			// Reset the 30 sec timer in case the change is due to hitting a player
+        }
+    }
+
     void UpdateAI(uint32 const uiDiff)
     {
         if (m_uiRoamTimer < uiDiff)
         {
-			ChangeTarget();
+            ChangeTarget();
             m_uiRoamTimer = urand(20000, 30000);
         }
         else
             m_uiRoamTimer -= uiDiff;
 
-		if (!m_bCanChangeTarget)
-		{
-			if (m_uiChangeTargetTimer < uiDiff)
-				m_bCanChangeTarget = true;
-			else
-				m_uiChangeTargetTimer -= uiDiff;
-		}
+        if (!m_bCanChangeTarget)
+        {
+            if (m_uiChangeTargetTimer < uiDiff)
+                m_bCanChangeTarget = true;
+            else
+                m_uiChangeTargetTimer -= uiDiff;
+        }
     }
 };
 
@@ -511,7 +511,7 @@ void AddSC_boss_ouro()
     newscript->GetAI = &GetAI_boss_ouro;
     newscript->RegisterSelf();
 
-	newscript = new Script;
+    newscript = new Script;
     newscript->Name = "mob_dirt_mound";
     newscript->GetAI = &GetAI_mob_dirt_mound;
     newscript->RegisterSelf();
