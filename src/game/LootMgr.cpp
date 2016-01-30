@@ -663,7 +663,15 @@ LootItem* Loot::LootItemInSlot(uint32 lootSlot, Player* player, QuestItem **qite
             if(qitem)
                 *qitem = qitem2;
             item = &m_questItems[qitem2->index];
-            is_looted = qitem2->is_looted;
+
+            // If the quest item should only be lootable by one person we need to 
+            // make sure that the actual item hasn't been looted by anyone.
+            // This should be done on item instead of qitem2 since qitem2 exists
+            // for every player that should be able to loot a quest item.
+            if (item->freeforall)
+                is_looted = qitem2->is_looted;
+            else
+                is_looted = item->is_looted;
         }
     }
     else
