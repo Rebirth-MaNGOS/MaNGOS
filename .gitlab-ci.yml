@@ -4,5 +4,5 @@ before_script:
 build:
     script:
         - cd build
-        - cmake .. -DACE_USE_EXTERNAL=1 -DTBB_USE_EXTERNAL=1 -j5
-        - make
+        - cmake .. -DACE_USE_EXTERNAL=1 -DTBB_USE_EXTERNAL=1
+        - make -j5
