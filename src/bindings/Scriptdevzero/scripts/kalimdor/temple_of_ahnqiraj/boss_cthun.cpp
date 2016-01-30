@@ -208,13 +208,16 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        // Check if we have a target
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
         // No instance
         if (!m_pInstance)
             return;
+
+        if (m_pInstance->GetData(TYPE_CTHUN_PHASE) == PHASE_EYE_NORMAL)
+        {
+            // Check if we have a target
+            if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+                return;
+        }
 
         switch (m_pInstance->GetData(TYPE_CTHUN_PHASE))
         {
