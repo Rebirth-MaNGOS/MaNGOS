@@ -23,6 +23,7 @@ EndScriptData */
 
 #include "precompiled.h"
 #include "temple_of_ahnqiraj.h"
+#include "Creature.h"
 
 enum
 {
@@ -101,6 +102,32 @@ enum
 #define KICK_X                              -8545.0f
 #define KICK_Y                              1984.0f
 #define KICK_Z                              -96.0f
+
+ObjectGuid SummonSmallPortal(Creature* creature)
+{
+    float x, y, z;
+    creature->GetPosition(x, y, z);
+    if (Unit* pPortal = creature->SummonCreature(MOB_SMALL_PORTAL, x, y, z, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
+    {
+        pPortal->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+        return pPortal->GetObjectGuid();
+    }
+
+    return ObjectGuid();
+}
+
+ObjectGuid SummonGiantPortal(Creature* creature)
+{
+    float x, y, z;
+    creature->GetPosition(x, y, z);
+    if (Unit* pPortal = creature->SummonCreature(MOB_GIANT_PORTAL, x, y, z, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
+    {
+        pPortal->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+        return pPortal->GetObjectGuid();
+    }
+
+    return ObjectGuid();
+}
 
 struct MANGOS_DLL_DECL flesh_tentacleAI : public ScriptedAI
 {
@@ -950,8 +977,7 @@ struct MANGOS_DLL_DECL eye_tentacleAI : public ScriptedAI
         SetCombatMovement(false);
         Reset();
 
-        if (Unit* pPortal = m_creature->SummonCreature(MOB_SMALL_PORTAL, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
-            m_portalGuid = pPortal->GetObjectGuid();
+        m_portalGuid = SummonSmallPortal(m_creature);
     }
 
     uint32 m_uiMindflayTimer;
@@ -1018,8 +1044,7 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
 		DoCastSpellIfCan(m_creature->getVictim(),SPELL_GROUND_RUPTURE);
         Reset();
 
-        if (Unit* pPortal = m_creature->SummonCreature(MOB_SMALL_PORTAL, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
-			m_portalGuid = pPortal->GetObjectGuid();
+        m_portalGuid = SummonSmallPortal(m_creature);
     }
 
     uint32 m_uiGroundRuptureTimer;
@@ -1074,8 +1099,7 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
                 {
                     m_creature->GetMap()->CreatureRelocation(m_creature, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0);
 
-                    if (Unit* pPortal = m_creature->SummonCreature(MOB_SMALL_PORTAL, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
-                        m_portalGuid = pPortal->GetObjectGuid();
+                    m_portalGuid = SummonSmallPortal(m_creature);
 
                     m_uiGroundRuptureTimer = 500;
                     m_uiHamstringTimer = 2000;
@@ -1118,8 +1142,7 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
         SetCombatMovement(false);
         Reset();
 
-        if (Unit* pPortal = m_creature->SummonCreature(MOB_GIANT_PORTAL, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
-            m_portalGuid = pPortal->GetObjectGuid();
+        m_portalGuid = SummonGiantPortal(m_creature);
     }
 
     uint32 m_uiGroundRuptureTimer;
@@ -1177,8 +1200,7 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
                 {
                     m_creature->GetMap()->CreatureRelocation(m_creature, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), 0);
 
-                    if (Unit* pPortal = m_creature->SummonCreature(MOB_GIANT_PORTAL, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
-                        m_portalGuid = pPortal->GetObjectGuid();
+                    m_portalGuid = SummonGiantPortal(m_creature);
 
                     m_uiGroundRuptureTimer = 500;
                     m_uiHamstringTimer = 2000;
@@ -1232,8 +1254,7 @@ struct MANGOS_DLL_DECL giant_eye_tentacleAI : public ScriptedAI
         SetCombatMovement(false);
         Reset();
 
-        if (Unit* pPortal = m_creature->SummonCreature(MOB_GIANT_PORTAL, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
-            m_portalGuid = pPortal->GetObjectGuid();
+        m_portalGuid = SummonGiantPortal(m_creature);
     }
 
     uint32 m_uiBeamTimer;
