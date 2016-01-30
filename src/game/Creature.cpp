@@ -2139,8 +2139,10 @@ bool Creature::IsOutOfThreatArea(Unit* pVictim) const
     Map* pMap = GetMap();
 
     // Only allow the mob to reset if the leash timers have run out 
-    // and the current map is one of the world continents.
-    if (m_noPlayerHitResetTimer == 0 && m_noCreatureMeleeHitResetTimer == 0 && pMap && pMap->GetId() <= 1)
+    // and the current map is one of the world continents. Mobs should
+    // also reset in AV (map 30).
+    if (m_noPlayerHitResetTimer == 0 && m_noCreatureMeleeHitResetTimer == 0 && 
+        pMap && (pMap->GetId() <= 1 || pMap->GetId() == 30))
     {
         float AttackDist = GetAttackDistance(pVictim);
         float ThreatRadius = sWorld.getConfig(CONFIG_FLOAT_THREAT_RADIUS);
