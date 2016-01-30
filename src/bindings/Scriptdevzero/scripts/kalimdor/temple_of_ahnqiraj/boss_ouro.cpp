@@ -173,7 +173,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         m_creature->GetPosition(fX, fY, fZ);
         for(uint8 i = 0; i < 2; ++i)
         {
-            if(Creature* pDirtMound = m_creature->SummonCreature(NPC_DIRT_MOUND, fX+urand(-5,5),fY+urand(-5,5),fZ, 0,TEMPSUMMON_TIMED_DESPAWN,45000,false))
+            if(Creature* pDirtMound = m_creature->SummonCreature(NPC_DIRT_MOUND, fX + frand(-5,5), 
+                        fY + frand(-5,5), fZ + 1, 0, TEMPSUMMON_TIMED_DESPAWN, 45000, false))
             {
                 pDirtMound->SetRespawnDelay(-10);				// to stop them from randomly respawning
                 m_lDirtMounds.push_back(pDirtMound->GetObjectGuid());
@@ -195,8 +196,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                         for (uint8 i = 0; i < 5; ++i)
                         {
                             if (Creature* pScarab = m_creature->SummonCreature(NPC_OURO_SCARAB, 
-                                        fX+urand(-5,5),
-                                        fY+urand(-5,5),
+                                        fX + frand(-5,5),
+                                        fY + frand(-5,5),
                                         fZ, 0,
                                         TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,
                                         15000,false))
