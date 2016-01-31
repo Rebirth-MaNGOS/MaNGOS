@@ -530,6 +530,8 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 	//custom XP system
 	m_XPrate = 0;
 
+    m_AntiSpellTime = 0;
+
     //AI
     i_AI = NULL;
 

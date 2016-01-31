@@ -1868,6 +1868,7 @@ void Spell::EffectTriggerSpell(SpellEffectIndex eff_idx)
 
         unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_ROOT);
         unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_STALKED);
+        dynamic_cast<Player*>(unitTarget)->SetAntiSpellTime(WorldTimer::getMSTime());
 
 
         // If the player is already stealthed we don't reapply the stealth.

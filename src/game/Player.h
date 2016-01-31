@@ -2043,6 +2043,13 @@ public:
 		void SetXPRate(uint32 rate) {m_XPrate = rate;}
 		uint32 GetXPRate() {return m_XPrate;}
 
+        // When Vanish and other abilities of that kind is cast
+        // all incoming magic spells should be ignored. This
+        // time is used in the SpellEvent to check if it should be
+        // ignored.
+        uint32 GetAntiSpellTime() const { return m_AntiSpellTime; }
+        void SetAntiSpellTime(time_t time) { m_AntiSpellTime = time; }
+
         /*********************************************************/
         /***                 INSTANCE SYSTEM                   ***/
         /*********************************************************/
@@ -2401,6 +2408,8 @@ public:
         ReputationMgr  m_reputationMgr;
 
 		uint32 m_XPrate;
+
+        uint32 m_AntiSpellTime;
 };
 
 void AddItemsSetItem(Player*player,Item *item);

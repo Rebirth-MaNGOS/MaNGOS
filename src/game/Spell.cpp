@@ -2927,7 +2927,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
         m_triggeredByAuraSpell  = triggeredByAura->GetSpellProto();
 
     // create and add update event for this spell
-    SpellEvent* Event = new SpellEvent(this);
+    SpellEvent* Event = new SpellEvent(this, WorldTimer::getMSTime());
     m_caster->m_Events.AddEvent(Event, m_caster->m_Events.CalculateTime(1));
 
     //Prevent casting at cast another spell (ServerSide check)
@@ -7076,9 +7076,10 @@ bool Spell::HaveTargetsForEffect(SpellEffectIndex effect) const
     return false;
 }
 
-SpellEvent::SpellEvent(Spell* spell) : BasicEvent()
+SpellEvent::SpellEvent(Spell* spell, time_t add_time) : BasicEvent()
 {
     m_Spell = spell;
+    m_AddTime = add_time;
 }
 
 SpellEvent::~SpellEvent()
@@ -7149,14 +7150,18 @@ bool SpellEvent::Execute(uint64 e_time, uint32 p_time)
             }
             else
             {
-                // run the spell handler and think about what we can do next
-                uint64 t_offset = e_time - m_Spell->GetDelayStart();
-                uint64 n_offset = m_Spell->handle_delayed(t_offset);
-                if (n_offset)
+                Player* pPlayer = dynamic_cast<Player*>(m_Spell->m_targets.getUnitTarget());
+                if (!pPlayer || (m_AddTime > pPlayer->GetAntiSpellTime()))
                 {
-                    // re-add us to the queue
-                    m_Spell->GetCaster()->m_Events.AddEvent(this, m_Spell->GetDelayStart() + n_offset, false);
-                    return false;                       // event not complete
+                    // run the spell handler and think about what we can do next
+                    uint64 t_offset = e_time - m_Spell->GetDelayStart();
+                    uint64 n_offset = m_Spell->handle_delayed(t_offset);
+                    if (n_offset)
+                    {
+                        // re-add us to the queue
+                        m_Spell->GetCaster()->m_Events.AddEvent(this, m_Spell->GetDelayStart() + n_offset, false);
+                        return false;                       // event not complete
+                    }
                 }
                 // event complete
                 // finish update event will be re-added automatically at the end of routine)
@@ -7195,6 +7200,11 @@ void SpellEvent::Abort(uint64 /*e_time*/)
 bool SpellEvent::IsDeletable() const
 {
     return m_Spell->IsDeletable();
+}
+
+uint32 SpellEvent::GetEventAddTime() const
+{
+    return m_AddTime;
 }
 
 SpellCastResult Spell::CanOpenLock(SpellEffectIndex effIndex, uint32 lockId, SkillType& skillId, int32& reqSkillValue, int32& skillValue)
