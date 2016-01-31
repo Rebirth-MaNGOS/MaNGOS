@@ -706,7 +706,7 @@ LootItem* Loot::LootItemInSlot(uint32 lootSlot, Player* player, QuestItem **qite
                         QuestItem *conditem2 = (QuestItem*)&(*iter);
                         if(conditem)
                             *conditem = conditem2;
-                        is_looted = conditem2->is_looted;
+
                         break;
                     }
                 }
