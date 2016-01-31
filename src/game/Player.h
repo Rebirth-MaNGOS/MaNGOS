@@ -2048,7 +2048,7 @@ public:
         // time is used in the SpellEvent to check if it should be
         // ignored.
         uint32 GetAntiSpellTime() const { return m_AntiSpellTime; }
-        void SetAntiSpellTime(time_t time) { m_AntiSpellTime = time; }
+        void SetAntiSpellTime(uint32 time) { m_AntiSpellTime = time; }
 
         /*********************************************************/
         /***                 INSTANCE SYSTEM                   ***/

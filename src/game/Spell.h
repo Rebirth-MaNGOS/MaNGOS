@@ -811,7 +811,7 @@ typedef void(Spell::*pEffect)(SpellEffectIndex eff_idx);
 class SpellEvent : public BasicEvent
 {
     public:
-        SpellEvent(Spell* spell, time_t add_time);
+        SpellEvent(Spell* spell, uint32 add_time);
         virtual ~SpellEvent();
 
         virtual bool Execute(uint64 e_time, uint32 p_time);

@@ -7076,7 +7076,7 @@ bool Spell::HaveTargetsForEffect(SpellEffectIndex effect) const
     return false;
 }
 
-SpellEvent::SpellEvent(Spell* spell, time_t add_time) : BasicEvent()
+SpellEvent::SpellEvent(Spell* spell, uint32 add_time) : BasicEvent()
 {
     m_Spell = spell;
     m_AddTime = add_time;
