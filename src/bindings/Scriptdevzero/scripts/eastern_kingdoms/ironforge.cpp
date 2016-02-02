@@ -456,6 +456,156 @@ bool OnQuestRewarded_npc_grand_mason_marblesten(Player* pPlayer, Creature* pCrea
 	return true;
 }
 
+/*####
+# npc_jordan_stilwell
+####*/
+
+enum eStilwell
+{
+    QUEST_ID_TEST_OF_RIGHTEOUS               = 1806,
+    
+    STILWELL_SAY_1                                           = -1720234,
+    STILWELL_SAY_2                                           = -1720235,
+    
+    SPELL_FORGE_VERIGANS_FIST                   =  8912,
+    GO_VERIGANS_FIST                                      = 102413
+};
+
+struct MANGOS_DLL_DECL npc_jordan_stilwellAI : public ScriptedAI
+{
+    npc_jordan_stilwellAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        Reset(); 
+    }
+    
+    uint8 m_uiSpeechStep;
+    uint32 m_uiSpeechTimer;
+    bool m_bOutro1806;
+
+    ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+    {
+        m_bOutro1806 = false;
+        m_uiSpeechStep = 1;
+        m_uiSpeechTimer = 0;
+        m_uiPlayerGUID.Clear();
+    }
+
+    void StartOutro(ObjectGuid pPlayerGUID, uint32 uiQuestId = 0)
+    {       
+        if (uiQuestId == 1806)
+        {
+            if (!pPlayerGUID)
+                return;
+
+            m_uiPlayerGUID = pPlayerGUID;
+            m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+                        
+            m_bOutro1806 = true; 
+            m_uiSpeechTimer = 3000;
+            m_uiSpeechStep = 1;
+            m_creature->GetMotionMaster()->MovePoint(1, -5094.48f, -786.08f, 495.20f);
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiSpeechTimer && m_bOutro1806)
+        {
+            if(!m_uiSpeechStep)
+                return;
+        
+            if(m_uiSpeechTimer <= uiDiff)
+            {
+                Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+                switch(m_uiSpeechStep)
+                {                   
+                    case 1:
+                        // turn + say
+                        DoScriptText(STILWELL_SAY_1, m_creature, pPlayer);
+                        m_creature->SetFacingTo(2.98f);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 2:
+                        m_creature->CastSpell(m_creature, SPELL_FORGE_VERIGANS_FIST, false);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 3:
+                        m_creature->CastSpell(m_creature, SPELL_FORGE_VERIGANS_FIST, false);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 4:                        
+                        m_creature->CastSpell(m_creature, SPELL_FORGE_VERIGANS_FIST, false);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 5:        
+                        // Shouldn't be able to interact with the mace
+                        if (GameObject* pFist = m_creature->SummonGameObject(GO_VERIGANS_FIST, 18000, -5095.60f, -785.54f, 496.28f,1.31f, GO_STATE_READY, 0.f))
+                            pFist->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NO_INTERACT);
+                        
+                        m_creature->CastSpell(m_creature, SPELL_FORGE_VERIGANS_FIST, false);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                     case 6:        
+                        m_creature->CastSpell(m_creature, SPELL_FORGE_VERIGANS_FIST, false);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                     case 7:        
+                        m_creature->CastSpell(m_creature, SPELL_FORGE_VERIGANS_FIST, false);
+                        m_uiSpeechTimer = 5000;
+                        break;
+                     case 8:
+                         // bow and say 
+                         m_creature->MonsterSay("I thank the Light for this blessing. May it be used for justice and and to defend all good creatures.", LANG_COMMON, NULL);
+                         m_creature->HandleEmote(EMOTE_ONESHOT_KNEEL);
+                         m_uiSpeechTimer = 7000;
+                        break;
+                     case 9:
+                         // walk home
+                         m_creature->GetMotionMaster()->MovePoint(2, -5089.28f, -782.95f, 495.279f);
+                         m_uiSpeechTimer = 3000;
+                         break;
+                     case 10:
+                         // turn and say
+                         DoScriptText(STILWELL_SAY_2, m_creature, pPlayer);
+                         m_creature->GetMotionMaster()->MoveTargetedHome();
+                     case 11:
+                        m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+                        m_bOutro1806 = false;
+                        break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+        }
+
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_jordan_stilwell(Creature* pCreature)
+{
+    return new npc_jordan_stilwellAI(pCreature);
+}
+
+bool QuestAccept_npc_jordan_stilwell(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+    if (pQuest->GetQuestId() == QUEST_ID_TEST_OF_RIGHTEOUS)
+    {
+        if (npc_jordan_stilwellAI* pStilwellAI = dynamic_cast<npc_jordan_stilwellAI*>(pCreature->AI()))
+            pStilwellAI->StartOutro(pPlayer->GetObjectGuid(), 1806);
+    }
+    return true;
+}
+
 void AddSC_ironforge()
 {
     Script* pNewscript;
@@ -480,5 +630,11 @@ void AddSC_ironforge()
     pNewscript->Name = "npc_grand_mason_marblesten";
     pNewscript->GetAI = &GetAI_npc_grand_mason_marblesten;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_grand_mason_marblesten;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_jordan_stilwell";
+    pNewscript->GetAI = &GetAI_npc_jordan_stilwell;
+    pNewscript->pQuestAcceptNPC = &QuestAccept_npc_jordan_stilwell;
     pNewscript->RegisterSelf();
 }
