@@ -136,5 +136,7 @@ public PathMovementBase<Player,TaxiPathNodeList const*>
 
         // allow use for overwrite empty implementation
         bool GetDestination(float& x, float& y, float& z) const { return PathMovementBase<Player,TaxiPathNodeList const*>::GetDestination(x,y,z); }
+
+        void ResendPathToOtherPlayers(Player& player);
 };
 #endif

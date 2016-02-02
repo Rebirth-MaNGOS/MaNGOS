@@ -18101,7 +18101,55 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
     }
 }
 
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Player*        target, UpdateData& data, std::set<WorldObject*>& visibleNow);
+template<>
+void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Player* target, UpdateData& data, std::set<WorldObject*>& visibleNow)
+{
+    if(HaveAtClient(target))
+    {
+        if(!target->isVisibleForInState(this,viewPoint,true))
+        {
+            BeforeVisibilityDestroy<Player>(target,this);
+
+            ObjectGuid t_guid = target->GetObjectGuid();
+
+            target->BuildOutOfRangeUpdateBlock(&data);
+            m_clientGUIDs.erase(t_guid);
+
+            DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is out of range for %s. Distance = %f", t_guid.GetString().c_str(), GetGuidStr().c_str(), GetDistance(target));
+        }
+    }
+    else
+    {
+        if(target->isVisibleForInState(this,viewPoint,false) && 
+           GetDistance(target) < GetMap()->GetVisibilityDistance())
+        {
+            visibleNow.insert(target);
+            target->BuildCreateUpdateBlockForPlayer(&data, this);
+            UpdateVisibilityOf_helper(m_clientGUIDs,target);
+
+            // If a flying player just entered another player's field
+            // of vision we update the motion for that player.
+            if (target->IsTaxiFlying())
+            {
+                FlightPathMovementGenerator* gen = 
+                    dynamic_cast<FlightPathMovementGenerator*>(target->GetMotionMaster()->top());
+                if (gen)
+                    gen->ResendPathToOtherPlayers(*target);
+            }
+            
+            if (IsTaxiFlying())
+            {
+                FlightPathMovementGenerator* gen = dynamic_cast<FlightPathMovementGenerator*>(GetMotionMaster()->top());
+                if (gen)
+                    gen->ResendPathToOtherPlayers(*this);
+            }
+
+            DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is visible now for %s. Distance = %f", target->GetGuidStr().c_str(), GetGuidStr().c_str(), GetDistance(target));
+        }
+    }
+}
+
+
 template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Creature*      target, UpdateData& data, std::set<WorldObject*>& visibleNow);
 template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Corpse*        target, UpdateData& data, std::set<WorldObject*>& visibleNow);
 template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, GameObject*    target, UpdateData& data, std::set<WorldObject*>& visibleNow);

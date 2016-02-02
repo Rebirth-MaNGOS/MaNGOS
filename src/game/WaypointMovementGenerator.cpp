@@ -445,3 +445,17 @@ void FlightPathMovementGenerator::SetCurrentNodeAfterTeleport()
         }
     }
 }
+
+void FlightPathMovementGenerator::ResendPathToOtherPlayers(Player& player)
+{
+    TaxiPathNodeList path = GetPath();
+    uint32 pathEndPoint = GetPathAtMapEnd();
+    uint32 traveltime = uint32(PLAYER_FLIGHT_SPEED * (path.GetTotalLength(GetCurrentNode(),pathEndPoint) 
+            - player.GetDistance(path[GetCurrentNode()].x, path[GetCurrentNode()].y, path[GetCurrentNode()].z)));
+    player.SendMonsterMoveByPath(path,
+                                 GetCurrentNode(),
+                                 pathEndPoint, 
+                                 SplineFlags(SPLINEFLAG_WALKMODE|SPLINEFLAG_FLYING), 
+                                 traveltime,
+                                 true );
+} 
