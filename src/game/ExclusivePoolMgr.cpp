@@ -5,6 +5,7 @@
 #include "ObjectMgr.h"
 #include "MapManager.h"
 #include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
 #include "Cell.h"
 #include "CellImpl.h"
 

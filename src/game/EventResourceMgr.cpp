@@ -2,6 +2,7 @@
 #include "Policies/SingletonImp.h"
 #include "ProgressBar.h"
 #include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
 #include "MapManager.h"
 #include "CellImpl.h"
 
