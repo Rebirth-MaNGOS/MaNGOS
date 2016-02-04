@@ -1884,10 +1884,6 @@ void Spell::EffectTriggerSpell(SpellEffectIndex eff_idx)
         if (((Player*)unitTarget)->HasSpellCooldown(spellId))
             ((Player*)unitTarget)->RemoveSpellCooldown(spellId);
 
-        // When the player vanishes we make sure to remove all
-        // attackers to avoid the player being seen.
-        unitTarget->RemoveAllAttackers();
-
         m_caster->CastSpell(unitTarget, spellId, true);
         return;
     }

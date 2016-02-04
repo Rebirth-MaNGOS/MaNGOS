@@ -3529,7 +3529,12 @@ void Aura::HandleModStealth(bool apply, bool Real)
             target->SetByteFlag(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAGS_CREEP);
 
             if (target->GetTypeId()==TYPEID_PLAYER)
+            {
                 target->SetByteFlag(PLAYER_FIELD_BYTES2, 1, PLAYER_FIELD_BYTE2_STEALTH);
+
+                // Remove all attackers when entering stealth to avoid incorrect detection.
+                target->RemoveAllAttackers();
+            }
 
             // apply only if not in GM invisibility (and overwrite invisibility state)
             if (target->GetVisibility()!=VISIBILITY_OFF)
@@ -3541,6 +3546,7 @@ void Aura::HandleModStealth(bool apply, bool Real)
             // for RACE_NIGHTELF stealth
             if (target->GetTypeId() == TYPEID_PLAYER && GetId() == 20580)
                 target->CastSpell(target, 21009, true, NULL, this);
+
         }
     }
     else
