@@ -1480,7 +1480,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         {
             HandleStealthedUnitsDetection();
 			HandleStealthedTrapsDetection();
-            m_DetectInvTimer = 3000;
+            m_DetectInvTimer = 1000;
         }
         else
             m_DetectInvTimer -= update_diff;
