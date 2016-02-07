@@ -1492,6 +1492,11 @@ bool DungeonMap::Add(Player *player)
                         sLog.outError("GroupBind save NULL");
                     MANGOS_ASSERT(false);
                 }
+                
+                // If a player has reached the cap but has no personal bind we let it get the groupbind.
+                if (!player->IsBelowResetQuotaForInstance(GetId()) && !playerBind)
+                    player->BindToInstance(GetPersistanceState(), true);
+
                 // if the group/leader is permanently bound to the instance
                 // players also become permanently bound when they enter
                 if (groupBind->perm)
