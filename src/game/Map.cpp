@@ -1495,7 +1495,7 @@ bool DungeonMap::Add(Player *player)
                 
                 // If a player has reached the cap but has no personal bind we let it get the groupbind.
                 if (!player->IsBelowResetQuotaForInstance(GetId()) && !playerBind)
-                    player->BindToInstance(GetPersistanceState(), true);
+                    player->BindToInstance(GetPersistanceState(), false);
 
                 // if the group/leader is permanently bound to the instance
                 // players also become permanently bound when they enter
