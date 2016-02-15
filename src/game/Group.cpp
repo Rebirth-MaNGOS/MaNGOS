@@ -1569,16 +1569,16 @@ void Group::ResetInstances(InstanceResetMethod method, Player* SendMsgTo, bool Q
 
         if (exit)
             continue;
-	
-	// If no player had met the quota the current reset should be added to all players.
-	for (MemberSlot current_player : GetMemberSlots())
+
+        // If no player had met the quota the current reset should be added to all players.
+        for (MemberSlot current_player : GetMemberSlots())
         {
             // Make sure that no player in the group has met their reset quota.
             Player *player = SendMsgTo->GetMap()->GetPlayer(current_player.guid);
 
             if (player)
-		player->AddToResetQuotaList(entry->MapID);
-	}
+                player->AddToResetQuotaList(entry->MapID);
+        }
 
 
         for (MemberSlot current_player : GetMemberSlots())
