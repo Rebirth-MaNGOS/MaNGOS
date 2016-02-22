@@ -822,7 +822,8 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     stmt.PExecute(address.c_str(), account.c_str());
 
     // Only players should be stopped from logging onto several accounts at once.
-    if (AccountTypes(security) == SEC_PLAYER)
+    QueryResult* exception_result = LoginDatabase.PQuery("SELECT id FROM account_faction_exception WHERE id = '%u'", id);
+    if (AccountTypes(security) == SEC_PLAYER && !exception_result)
     {
         // Make sure a person can't be on both a horde and ally char at the same time.
         QueryResult* result1 = LoginDatabase.PQuery("SELECT id FROM account WHERE last_ip = '%s'", address.c_str());
@@ -869,6 +870,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
             delete result1;
         }
     }
+    delete exception_result;
 
     // NOTE ATM the socket is single-threaded, have this in mind ...
     ACE_NEW_RETURN (m_Session, WorldSession (id, this, AccountTypes(security), mutetime, locale), -1);
