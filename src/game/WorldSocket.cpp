@@ -45,6 +45,7 @@
 #include "WorldSocketMgr.h"
 #include "Log.h"
 #include "DBCStores.h"
+#include "Player.h"
 
 #if defined( __GNUC__ )
 #pragma pack(1)
@@ -819,6 +820,55 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
 
     SqlStatement stmt = LoginDatabase.CreateStatement(updAccount, "UPDATE account SET last_ip = ? WHERE username = ?");
     stmt.PExecute(address.c_str(), account.c_str());
+
+    // Only players should be stopped from logging onto several accounts at once.
+    if (AccountTypes(security) == SEC_PLAYER)
+    {
+        // Make sure a person can't be on both a horde and ally char at the same time.
+        QueryResult* result1 = LoginDatabase.PQuery("SELECT id FROM account WHERE last_ip = '%s'", address.c_str());
+
+        if (result1)
+        {
+            Field* fields;
+            do
+            {
+                fields = result1->Fetch();
+                uint32 account_id = fields[0].GetUInt32();
+
+                WorldSession* session = sWorld.FindSession(account_id);
+
+                // Make sure that the player is actually connected.
+                if (session && !session->isLogingOut())
+                {
+                    QueryResult *result2 = CharacterDatabase.PQuery("SELECT race FROM characters WHERE account = '%u' LIMIT 1", id);
+                    QueryResult *result3 = CharacterDatabase.PQuery("SELECT race FROM characters WHERE account = '%u' LIMIT 1", session->GetAccountId());
+                    if(result2 && result3)
+                    {
+                        Field* field = result2->Fetch();
+                        uint8 acc_race  = field[0].GetUInt8();
+
+                        Field* field1 = result3->Fetch();
+                        uint8 acc_race1 = field1[0].GetUInt8();
+
+                        // If the same IP has another account with the opposing faction
+                        // we don't allow both to be connected at the same time.
+                        if (Player::TeamForRace(acc_race) != Player::TeamForRace(acc_race1))
+                        {
+                            delete result3;
+                            delete result2;
+                            delete result1;
+                            return -1;
+                        }
+                    }
+
+                    delete result3;
+                    delete result2;
+                }
+            } while (result1->NextRow());
+
+            delete result1;
+        }
+    }
 
     // NOTE ATM the socket is single-threaded, have this in mind ...
     ACE_NEW_RETURN (m_Session, WorldSession (id, this, AccountTypes(security), mutetime, locale), -1);
