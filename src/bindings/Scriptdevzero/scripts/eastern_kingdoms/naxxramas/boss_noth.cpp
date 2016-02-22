@@ -125,6 +125,7 @@ struct MANGOS_DLL_DECL boss_nothAI : public ScriptedAI
     void JustSummoned(Creature* pSummoned)
     {
         pSummoned->SetInCombatWithZone();
+        pSummoned->SetRespawnEnabled(false);
     }
 
     void KilledUnit(Unit* /*pVictim*/)
@@ -143,7 +144,7 @@ struct MANGOS_DLL_DECL boss_nothAI : public ScriptedAI
     void SpellHit(Unit* pCaster, const SpellEntry* pSpell)
     {
         if (pCaster == m_creature && pSpell->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEAP)
-            DoCastSpellIfCan(m_creature, SPELL_CRIPPLE);
+            m_creature->CastSpell(m_creature, SPELL_CRIPPLE, true);
     }
 
     void UpdateAI(const uint32 uiDiff)

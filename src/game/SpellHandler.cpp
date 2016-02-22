@@ -404,6 +404,10 @@ void WorldSession::HandleCancelAuraOpcode( WorldPacket& recvPacket)
 
     if (!IsPositiveSpell(spellId))
     {
+        // Mind Vision aura should be removed when clicking off the buff(or casting it again)
+        if(_player->HasAura(2096) || _player->HasAura(10909))
+            _player->InterruptSpell(CURRENT_CHANNELED_SPELL);
+    
         // ignore for remote control state
         if (!_player->IsSelfMover())
         {
