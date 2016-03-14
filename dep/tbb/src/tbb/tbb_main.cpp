@@ -242,7 +242,8 @@ void DoOneTimeInitializations() {
     __TBB_InitOnce::unlock();
 }
 
-#if (_WIN32||_WIN64) && !__TBB_SOURCE_DIRECTLY_INCLUDED
+
+#if 0 // (_WIN32||_WIN64) && !__TBB_SOURCE_DIRECTLY_INCLUDED
 //! Windows "DllMain" that handles startup and shutdown of dynamic library.
 extern "C" bool WINAPI DllMain( HANDLE /*hinstDLL*/, DWORD reason, LPVOID /*lpvReserved*/ ) {
     switch( reason ) {

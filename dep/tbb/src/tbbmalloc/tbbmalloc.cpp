@@ -82,7 +82,7 @@ void init_tbbmalloc() {
 #endif /* USE_PTHREAD && !__TBB_SOURCE_DIRECTLY_INCLUDED */
 }
 
-#if !__TBB_SOURCE_DIRECTLY_INCLUDED
+#if 0 //!__TBB_SOURCE_DIRECTLY_INCLUDED
 #if USE_WINTHREAD
 extern "C" BOOL WINAPI DllMain( HINSTANCE /*hInst*/, DWORD callReason, LPVOID )
 {

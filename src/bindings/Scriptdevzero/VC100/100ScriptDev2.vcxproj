@@ -103,7 +103,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\..\dep\boost_1_55_0;..\system;..\..\..\..\dep\include\;..\..\..\shared\;..\..\..\framework\;..\..\..\game\;..\include\;..\base\;..\..\..\..\dep\ACE_wrappers\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\dep\tbb\include;..\..\..\..\dep\boost_1_55_0;..\system;..\..\..\..\dep\include\;..\..\..\shared\;..\..\..\framework\;..\..\..\game\;..\include\;..\base\;..\..\..\..\dep\ACE_wrappers\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;MANGOS_DEBUG;_WINDOWS;_USRDLL;SCRIPT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -119,7 +119,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>mangosd.lib;ACEd.lib;framework.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\win\VC100\mangosd__Win32_Debug;..\..\..\..\win\VC100\framework__Win32_Debug;..\..\..\..\dep\lib\win32_debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\dep\tbb\build\vs2010\tbbmalloc__$(Platform)_$(Configuration);..\..\..\..\dep\tbb\build\vs2010\tbb__$(Platform)_$(Configuration);..\..\..\..\win\VC100\mangosd__Win32_Debug;..\..\..\..\win\VC100\framework__Win32_Debug;..\..\..\..\dep\lib\win32_debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -135,7 +135,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\..\dep\boost_1_55_0\;..\..\..\..\dep\include\;..\..\..\shared\;..\..\..\framework\;..\..\..\game\;..\include\;..\base\;..\..\..\..\dep\ACE_wrappers\;..\system\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\dep\tbb\include;..\..\..\..\dep\boost_1_55_0\;..\..\..\..\dep\include\;..\..\..\shared\;..\..\..\framework\;..\..\..\game\;..\include\;..\base\;..\..\..\..\dep\ACE_wrappers\;..\system\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;MANGOS_DEBUG;_WINDOWS;_USRDLL;SCRIPT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -151,7 +151,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>mangosd.lib;ACEd.lib;framework.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\win\VC100\mangosd__x64_Debug;..\..\..\..\win\VC100\framework__x64_Debug;..\..\..\..\dep\lib\x64_Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\dep\tbb\build\vs2010\tbbmalloc__$(Platform)_$(Configuration);..\..\..\..\dep\tbb\build\vs2010\tbb__$(Platform)_$(Configuration);..\..\..\..\win\VC100\mangosd__x64_Debug;..\..\..\..\win\VC100\framework__x64_Debug;..\..\..\..\dep\lib\x64_Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -504,6 +504,7 @@
     <ClCompile Include="..\scripts\world\bosses_emerald_dragons.cpp" />
     <ClCompile Include="..\scripts\world\boss_lord_kazzak.cpp" />
     <ClCompile Include="..\scripts\world\dungeon_set2.cpp" />
+    <ClCompile Include="..\scripts\world\elemental_invasions.cpp" />
     <ClCompile Include="..\scripts\world\engineering.cpp" />
     <ClCompile Include="..\scripts\world\go_scripts.cpp" />
     <ClCompile Include="..\scripts\world\guards.cpp" />
@@ -514,6 +515,7 @@
     <ClCompile Include="..\scripts\world\npc_building_mount_guard.cpp" />
     <ClCompile Include="..\scripts\world\npc_professions.cpp" />
     <ClCompile Include="..\scripts\world\spell_scripts.cpp" />
+    <ClCompile Include="..\scripts\world\war_effort_ambassadors.cpp" />
     <ClCompile Include="..\system\MangosdRev.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

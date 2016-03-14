@@ -980,6 +980,12 @@
     <ClCompile Include="..\scripts\kalimdor\temple_of_ahnqiraj\temple_of_ahnqiraj.cpp">
       <Filter>scripts\kalimdor\temple_of_ahnqiraj</Filter>
     </ClCompile>
+    <ClCompile Include="..\scripts\world\war_effort_ambassadors.cpp">
+      <Filter>scripts\world</Filter>
+    </ClCompile>
+    <ClCompile Include="..\scripts\world\elemental_invasions.cpp">
+      <Filter>scripts\world</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\base\escort_ai.h">
