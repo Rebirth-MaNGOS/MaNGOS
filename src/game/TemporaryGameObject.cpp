@@ -1,6 +1,5 @@
 #include "TemporaryGameObject.h"
 
-
 TemporaryGameObject::TemporaryGameObject(uint32 duration) : GameObject()
 {
 	m_uiDuration = duration;
@@ -10,7 +9,6 @@ TemporaryGameObject::TemporaryGameObject(uint32 duration) : GameObject()
 TemporaryGameObject::~TemporaryGameObject()
 {
 }
-
 
 void TemporaryGameObject::Update(uint32 update_diff, uint32 p_time)
 {
@@ -24,6 +22,12 @@ void TemporaryGameObject::Update(uint32 update_diff, uint32 p_time)
 		else
 			m_uiDuration -= update_diff;
 	}
+
+    if (m_lootState == GO_JUST_DEACTIVATED)
+    {
+        SetRespawnTime(0);
+        Delete();
+    }
 
 	GameObject::Update(update_diff, p_time);
 }

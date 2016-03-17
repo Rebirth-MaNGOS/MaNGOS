@@ -358,6 +358,7 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
 		{		
 			pChunk->SetGoState(GO_STATE_READY);
 			pChunk->SetLootState(GO_READY);	
+            pChunk->SetOwnerGuid(ObjectGuid());
 		}
     }
 
