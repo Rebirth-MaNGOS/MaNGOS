@@ -88,12 +88,14 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
     float globs;
     uint32 globCounter;
+    int m_globSpawned;
 
     uint32 m_health;
     GUIDList m_lToxinClouds;
 
     void Reset()
     {
+        m_globSpawned = 0;
         m_uiGlobCount = 0;
         m_uiGlobSpawnTimer = 0;
         m_uiSetInvisTimer = 4000;
@@ -215,6 +217,15 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         }
     }
 
+    void KillViscidus()
+    {
+        if(Unit* pTarget = GetRandomPlayerInCurrentMap(100))
+        {                   
+            m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);  
+            m_creature->SetLootRecipient(pTarget);            
+        }
+    }
+    
     void MeleeHitCount()
     {
         if(m_uiMeleeCounter >= 1 && !m_bCracking1)		// 25, 50, 75?
@@ -235,12 +246,8 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             if (!m_bExploded)
             {
                 if (HealthBelowPct(5))			// if Viscidus has less than 5% hp he should die since every glob is 5% hp
-                {
-                    if(Unit* pTarget = GetRandomPlayerInCurrentMap(100))
-                        pTarget->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
-                    else
-                        m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);		// just in case we won't find a player
-                }
+                    KillViscidus();
+                
                 m_bCanDoDamage = false;
                 m_bExploded = true;
                 m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
@@ -277,7 +284,12 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             m_creature->SetVisibility(VISIBILITY_ON);
             m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);			
             m_creature->RelocateCreature(-7991.48f, 920.19f, -52.91f, 0.f);
-            m_creature->SetHealth(m_health - globCounter * 0.05f * m_creature->GetMaxHealth());
+            
+            // kill on set visible if killed all globs that wave
+            if(m_globSpawned > 0 && m_globSpawned <= globCounter)
+                KillViscidus();
+            else  
+                m_creature->SetHealth(m_health - globCounter * 0.05f * m_creature->GetMaxHealth());
 
             if (m_creature->getVictim())
                 m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim());
@@ -286,15 +298,18 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
     void SpawnGlobs()
     {
+        // reset how many spawned
+        m_globSpawned = 0;
+        
         //spawn all adds here
-        globs = floor(((float) m_creature->GetHealth() / (float) m_creature->GetMaxHealth()) / 0.05f);
+        globs = ceil(((float) m_creature->GetHealth() / (float) m_creature->GetMaxHealth()) / 0.05f);
         for (float angle = 0; angle < 2 * 3.141592654; angle += 2 * 3.141592654 / globs)
         {
             m_creature->SummonCreature(NPC_GLOB_OF_VISCIDUS, -7990.f + 50.f * cosf(angle),
                     925.f + 50.f * sinf(angle),-42.f, 0.f,
                     TEMPSUMMON_DEAD_DESPAWN, 0, true);
+            ++m_globSpawned;
         }
-
         globCounter = 0;
     }
 
@@ -302,7 +317,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     {
         if(pSummoned->GetEntry() == NPC_GLOB_OF_VISCIDUS)
             pSummoned->GetMotionMaster()->MovePoint(1,-7991.48f,920.19f,-52.91f);		// a point in the middle of the room
-        pSummoned->SetRespawnDelay(-10);			// make sure they won't respawn
+        pSummoned->SetRespawnEnabled(false);			// make sure they won't respawn
     }
 
     void SummonedMovementInform(Creature* pSummoned, uint32 uiMotionType, uint32 uiPointId)				// something like this?
@@ -348,8 +363,11 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
             if (m_uiSetVisibleTimer <= uiDiff)
             {
+               
                 SetVisible(1);
-                m_creature->SetObjectScale(1.2*(m_creature->GetHealthPercent()/100));			// set Viscidus' size depending on the blobs that are alive 1/ too small?   
+                
+                // set scale 0.4f scale is the smallest             
+                m_creature->SetObjectScale(m_creature->GetHealthPercent() * 0.0084 + 0.358);			// set Viscidus' size depending on the blobs that are alive 1/ too small?   
                 m_creature->UpdateModelData();
                 m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
             }
