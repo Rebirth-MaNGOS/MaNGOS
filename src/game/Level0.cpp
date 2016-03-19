@@ -194,6 +194,61 @@ bool ChatHandler::HandleServerInfoCommand(char* /*args*/)
     return true;
 }
 
+bool ChatHandler::HandleQuestMultiplierCommand(char* args)
+{
+
+
+    Player *chr = m_session->GetPlayer();
+
+    if (!*args)
+    {
+        if(chr)
+        {
+            if(chr->GetQuestMultiplier() > 1)
+            {
+                PSendSysMessage("Your current quest EXP multiplier is set to %u. This is not the blizzlike setting. You can change the multiplier by using the command '.questexp 1-5'", chr->GetQuestMultiplier());
+            }
+            else
+            {
+                PSendSysMessage("Your current quest EXP multiplier is set to %u. This is the blizzlike setting. You can change the multiplier by using the command '.questexp 1-5'", chr->GetQuestMultiplier());
+            }
+        }
+        
+        return true;
+    }
+
+    if(args)
+    {
+        uint8 quest_exp = atoi(args);
+
+        if(quest_exp < 1 || quest_exp > 3)
+        {
+            PSendSysMessage("Invalid value. You must use a value between 1 and 3, for example: '.questexp 2'.");
+            return true;
+        }
+        
+        if(chr)
+        {
+            chr->SetQuestMultiplier(quest_exp);
+
+            CharacterDatabase.BeginTransaction();
+            chr->SaveQuestExpRateToDB();
+            CharacterDatabase.CommitTransaction();
+
+            if(chr->GetQuestMultiplier() > 1)
+            {
+                PSendSysMessage("Your current quest EXP multiplier has been set to %u. This is not the blizzlike setting. You can change the multiplier by using the command '.questexp 1-5'", chr->GetQuestMultiplier());
+            }
+            else
+            {
+                PSendSysMessage("Your current quest EXP multiplier has been set to %u. This is the blizzlike setting. You can change the multiplier by using the command '.questexp 1-5'", chr->GetQuestMultiplier());
+            }
+        }
+    }
+
+    return true;
+}
+
 bool ChatHandler::HandleDismountCommand(char* /*args*/)
 {
     //If player is not mounted, so go out :)
