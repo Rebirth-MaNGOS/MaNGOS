@@ -219,7 +219,7 @@ bool ChatHandler::HandleQuestMultiplierCommand(char* args)
 
     if(args)
     {
-        uint8 quest_exp = atoi(args);
+        uint32 quest_exp = atoi(args);
 
         if(quest_exp < 1 || quest_exp > 3)
         {
