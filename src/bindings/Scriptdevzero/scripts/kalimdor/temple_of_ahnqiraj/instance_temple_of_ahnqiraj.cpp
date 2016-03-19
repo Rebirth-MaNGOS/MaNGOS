@@ -58,6 +58,7 @@ void instance_temple_of_ahnqiraj::OnObjectCreate(GameObject* pGo)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
         case GO_TWINS_ENTER_DOOR:
+            pGo->SetGoState(GO_STATE_ACTIVE);
             break;
         case GO_TWINS_EXIT_DOOR:
             if (m_auiEncounter[TYPE_TWINS] == DONE)
@@ -95,9 +96,12 @@ void instance_temple_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
                 return;
 
             m_auiEncounter[uiType] = uiData;
-            DoUseDoorOrButton(GO_TWINS_ENTER_DOOR);
-            if (uiData == DONE)
-                DoUseDoorOrButton(GO_TWINS_EXIT_DOOR);
+
+            if (GameObject* pEntryDoor = GetSingleGameObjectFromStorage(GO_TWINS_ENTER_DOOR))
+                pEntryDoor->SetGoState(uiData != IN_PROGRESS ? GO_STATE_ACTIVE : GO_STATE_READY);
+
+            if (GameObject* pExitDoor = GetSingleGameObjectFromStorage(GO_TWINS_EXIT_DOOR))
+                pExitDoor->SetGoState(uiData == DONE ? GO_STATE_ACTIVE : GO_STATE_READY);
             break;
         case TYPE_CTHUN_PHASE:
             m_auiEncounter[uiType] = uiData;

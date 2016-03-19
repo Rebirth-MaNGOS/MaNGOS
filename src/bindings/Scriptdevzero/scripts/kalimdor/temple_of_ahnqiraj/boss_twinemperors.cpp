@@ -175,7 +175,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
     void JustReachedHome()
     {
         if (m_pInstance)
-            m_pInstance->SetData(TYPE_TWINS, DONE);
+            m_pInstance->SetData(TYPE_TWINS, FAIL);
     }
 
     void SpellHit(Unit *caster, const SpellEntry *entry)
@@ -834,7 +834,7 @@ CreatureAI* GetAI_npc_the_masters_eye(Creature* pCreature)
     return new npc_the_masters_eye(pCreature);
 }
 
-bool AreaTrigger_at_twin_emperor_room(Player* pPlayer, AreaTriggerEntry const* pAt)
+bool AreaTrigger_at_twin_emperor_room(Player* pPlayer, AreaTriggerEntry const* /*pAt*/)
 {
     if(pPlayer)
     {
