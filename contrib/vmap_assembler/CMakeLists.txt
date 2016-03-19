@@ -36,6 +36,7 @@ include_directories(../../dep/include/g3dlite/)
 include_directories(../../dep/ACE_wrappers/)
 include_directories(../../objdir/dep/ACE_wrappers)
 include_directories(../../src/framework/)
+include_directories(../../src/game/)
 
 add_library(g3dlite ../../dep/src/g3dlite/AABox.cpp
 	../../dep/src/g3dlite/Box.cpp

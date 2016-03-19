@@ -39,9 +39,11 @@
 #include "BattleGroundAV.h"
 #include "Util.h"
 #include "ScriptMgr.h"
+#include "vmap/GameObjectModel.h"
 
 GameObject::GameObject() : WorldObject(),
-    m_goInfo(NULL)
+    m_model(nullptr),
+    m_goInfo(nullptr)
 {
     m_objectType |= TYPEMASK_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;
@@ -61,6 +63,7 @@ GameObject::GameObject() : WorldObject(),
 
 GameObject::~GameObject()
 {
+    delete m_model;
 }
 
 void GameObject::AddToWorld()
@@ -71,7 +74,12 @@ void GameObject::AddToWorld()
         GetMap()->GetObjectsStore().insert<GameObject>(GetObjectGuid(), (GameObject*)this);
 	}
 
+    if (m_model)
+        GetMap()->InsertGameObjectModel(*m_model);
+
     Object::AddToWorld();
+
+    UpdateCollisionState();
 }
 
 void GameObject::RemoveFromWorld()
@@ -90,6 +98,9 @@ void GameObject::RemoveFromWorld()
                     GetGuidStr().c_str(), m_spellId, GetGOInfo()->GetLinkedGameObjectEntry(), owner_guid.GetString().c_str());
             }
         }
+
+        if (m_model && GetMap()->ContainsGameObjectModel(*m_model))
+            GetMap()->RemoveGameObjectModel(*m_model);
 
         GetMap()->GetObjectsStore().erase<GameObject>(GetObjectGuid(), (GameObject*)NULL);
     }
@@ -1919,9 +1930,58 @@ bool GameObject::IsFriendlyTo(Unit const* unit) const
     return tester_faction->IsFriendlyTo(*target_faction);
 }
 
+void GameObject::SetLootState(LootState state)
+{
+    m_lootState = state;
+    UpdateCollisionState();
+}
+
+void GameObject::SetGoState(GOState state)
+{
+    SetByteValue(GAMEOBJECT_STATE,  0, state);
+    UpdateCollisionState();
+}
+
 void GameObject::SetDisplayId(uint32 modelId)
 {
     SetUInt32Value(GAMEOBJECT_DISPLAYID, modelId);
+    UpdateModel();
+}
+
+bool GameObject::IsCollisionEnabled() const
+{
+    if (!isSpawned())
+        return false;
+
+    // TODO: Possible that this function must consider multiple checks
+    switch (GetGoType())
+    {    
+        case GAMEOBJECT_TYPE_DOOR:
+            return GetGoState() != GO_STATE_ACTIVE && GetGoState() != GO_STATE_ACTIVE_ALTERNATIVE;
+
+        default:
+            return true;
+    }    
+}
+            
+void GameObject::UpdateCollisionState() const
+{
+    if (!m_model || !IsInWorld())
+        return;
+
+    m_model->enable(IsCollisionEnabled() ? true : false);
+}
+
+void GameObject::UpdateModel()
+{
+    if (m_model && IsInWorld() && GetMap()->ContainsGameObjectModel(*m_model))
+        GetMap()->RemoveGameObjectModel(*m_model);
+    delete m_model;
+
+    m_model = GameObjectModel::construct(this);
+
+    if (m_model)
+        GetMap()->InsertGameObjectModel(*m_model);
 }
 
 float GameObject::GetObjectBoundingRadius() const
