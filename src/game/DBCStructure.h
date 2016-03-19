@@ -355,7 +355,7 @@ struct FactionTemplateEntry
 struct GameObjectDisplayInfoEntry
 {
     uint32      Displayid;                                  // 0        m_ID
-    // char* filename;                                      // 1        m_modelName
+    char*       filename;                                   // 1        m_modelName
                                                             // 2-11     m_Sound
 };
 

@@ -495,6 +495,8 @@ bool Map::loaded(const GridPair &p) const
 
 void Map::Update(const uint32 &t_diff)
 {
+    m_dyn_tree.update(t_diff);
+
     /// update worldsessions for existing players
     for(m_mapRefIter = m_mapRefManager.begin(); m_mapRefIter != m_mapRefManager.end(); ++m_mapRefIter)
     {
@@ -3427,6 +3429,21 @@ void Map::PlayDirectSoundToMap(uint32 soundId)
     Map::PlayerList const& pList = GetPlayers();
     for (PlayerList::const_iterator itr = pList.begin(); itr != pList.end(); ++itr)
         itr->getSource()->SendDirectMessage(&data);
+}
+
+void Map::InsertGameObjectModel(const GameObjectModel& md1)
+{
+    m_dyn_tree.insert(md1);
+}
+
+void Map::RemoveGameObjectModel(const GameObjectModel& md1)
+{
+    m_dyn_tree.remove(md1);
+}
+
+bool Map::ContainsGameObjectModel(const GameObjectModel& md1) const
+{
+    return m_dyn_tree.contains(md1);
 }
 
 MANGOS_DLL_SPEC void RemoveGameObjectFromMap(Map* map, GameObject* go)

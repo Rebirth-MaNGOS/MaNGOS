@@ -5466,6 +5466,11 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
             float ox,oy,oz;
             unitTarget->GetPosition(ox,oy,oz);
 
+            // Check dynamic LOS from GameObjects and update the end position if any are hit.
+            Map* pMap = unitTarget->GetMap();
+            if (pMap) 
+                pMap->GetDynMapTree().getObjectHitPos(ox, oy, oz + 1.f, fx, fy, fz, fx, fy, fz, -0.1);
+
             if (!mmap->GetNearestValidPosition(unitTarget, 1, 1, 5, ox, oy, oz,&polyRef))
                 return;
 

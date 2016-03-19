@@ -39,6 +39,7 @@
 #include "MapRefManager.h"
 #include "Utilities/TypeList.h"
 #include "ScriptMgr.h"
+#include "vmap/DynamicTree.h"
 
 #include <bitset>
 #include <list>
@@ -306,6 +307,12 @@ public:
 
     CreatureGroupHolderType CreatureGroupHolder;
 
+    // Object model handling
+    void InsertGameObjectModel(const GameObjectModel& md1);
+    void RemoveGameObjectModel(const GameObjectModel& md1);
+    bool ContainsGameObjectModel(const GameObjectModel& md1) const;
+    const DynamicMapTree& GetDynMapTree() const { return m_dyn_tree; }
+
 private:
     void LoadMapAndVMap(int gx, int gy);
 
@@ -404,6 +411,8 @@ private:
 
     template<class T>
     void RemoveFromGrid(T*, NGridType *, Cell const&);
+
+    DynamicMapTree m_dyn_tree;
 };
 
 class MANGOS_DLL_SPEC WorldMap : public Map

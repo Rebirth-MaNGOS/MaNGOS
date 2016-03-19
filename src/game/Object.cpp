@@ -1047,8 +1047,16 @@ bool WorldObject::IsWithinLOS(float ox, float oy, float oz) const
     float x,y,z;
     GetPosition(x,y,z);
     VMAP::IVMapManager *vMapManager = VMAP::VMapFactory::createOrGetVMapManager();
+
+    // Check LOS hindered by GameObjects.
+    Map* pMap = GetMap();
+    bool dynamicSight = true;
+    if (pMap)
+        dynamicSight = pMap->GetDynMapTree().isInLineOfSight(x, y, z + 2.0f, ox, oy, oz + 2.0f);
+
     return vMapManager->isInLineOfSight(GetMapId(), x, y, z+2.0f, ox, oy, oz+2.0f) && 
-	   !IsPathingBarrierIntersectedInMap(this, x, y, z + 2.0f, ox, oy, oz + 2.0f);
+	   !IsPathingBarrierIntersectedInMap(this, x, y, z + 2.0f, ox, oy, oz + 2.0f) &&
+       dynamicSight;
 }
 
 bool WorldObject::GetDistanceOrder(WorldObject const* obj1, WorldObject const* obj2, bool is3D /* = true */) const
