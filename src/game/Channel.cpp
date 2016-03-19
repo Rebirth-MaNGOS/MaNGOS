@@ -566,37 +566,66 @@ void Channel::Say(ObjectGuid p, const char *what, uint32 lang)
     }
     else
     {
-        uint32 messageLength = strlen(what) + 1;
+        if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHANNEL))
+        {
+            uint32 messageLength = strlen(what) + 1;
 
-        WorldPacket data(SMSG_MESSAGECHAT, 1+4+8+4+m_name.size()+1+8+4+messageLength+1);
-        data << uint8(CHAT_MSG_CHANNEL);
-        data << uint32(lang);
-        data << m_name;
-        data << uint32(0);
-        data << ObjectGuid(p);
-        data << uint32(messageLength);
-        data << what;
-        data << uint8(plr ? plr->chatTag() : 0);
-       
+            WorldPacket data(SMSG_MESSAGECHAT, 1+4+8+4+m_name.size()+1+8+4+messageLength+1);
+            data << uint8(CHAT_MSG_CHANNEL);
+            data << uint32(lang);
+            data << m_name;
+            data << uint32(0);
+            data << ObjectGuid(p);
+            data << uint32(messageLength);
+            data << what;
+            data << uint8(plr ? plr->chatTag() : 0);
 
-        // Add a packet with a faction tag so GMs can differentiate players by faction in the chat.
-        // For GMs we use the faction they've manually set.
-        Team team = plr->isGameMaster() ? plr->m_ChatTeam : plr->GetTeam(); 
+            // Add a packet with a faction tag so GMs can differentiate players by faction in the chat.
+            // For GMs we use the faction they've manually set.
+            Team team = plr->isGameMaster() ? plr->m_ChatTeam : plr->GetTeam(); 
 
-        std::stringstream ss("");
-        ss << "[" << (team == ALLIANCE ? "|cFF0000FFA|r" : "|cFFFF0000H|r") << "]: " << what;
+            std::stringstream ss("");
+            ss << "[" << (team == ALLIANCE ? "|cFF0000FFA|r" : "|cFFFF0000H|r") << "]: " << what;
 
-        WorldPacket gmData(SMSG_MESSAGECHAT, 1+4+8+4+m_name.size()+1+8+4+ss.str().size()+1+1);
-        gmData << uint8(CHAT_MSG_CHANNEL);
-        gmData << uint32(lang);
-        gmData << m_name;
-        gmData << uint32(0);
-        gmData << ObjectGuid(p);
-        gmData << uint32(ss.str().size() + 1);
-        gmData << ss.str();
-        gmData << uint8(plr ? plr->chatTag() : 0);
+            WorldPacket gmData(SMSG_MESSAGECHAT, 1+4+8+4+m_name.size()+1+8+4+ss.str().size()+1+1);
+            gmData << uint8(CHAT_MSG_CHANNEL);
+            gmData << uint32(lang);
+            gmData << m_name;
+            gmData << uint32(0);
+            gmData << ObjectGuid(p);
+            gmData << uint32(ss.str().size() + 1);
+            gmData << ss.str();
+            gmData << uint8(plr ? plr->chatTag() : 0);
 
-        SendToAll(&data, !m_players[p].IsModerator() ? p : ObjectGuid(), &gmData);
+            SendToAll(&data, !m_players[p].IsModerator() ? p : ObjectGuid(), &gmData);
+        }
+        else 
+        {
+            // In shared faction mode everyone except GMs should have and see faction badges in the chat.
+            Team team = plr->GetTeam(); 
+
+            std::stringstream ss("");
+            if (!plr->isGameMaster())
+            {
+                ss << "[" << (team == ALLIANCE ? "|cFF0000FFA|r" : "|cFFFF0000H|r") << "]: " << what;
+            }
+            else
+            {
+                ss << what;
+            }
+
+            WorldPacket data(SMSG_MESSAGECHAT, 1+4+8+4+m_name.size()+1+8+4+ss.str().size()+1+1);
+            data << uint8(CHAT_MSG_CHANNEL);
+            data << uint32(lang);
+            data << m_name;
+            data << uint32(0);
+            data << ObjectGuid(p);
+            data << uint32(ss.str().size() + 1);
+            data << ss.str();
+            data << uint8(plr ? plr->chatTag() : 0);
+
+            SendToAll(&data, !m_players[p].IsModerator() ? p : ObjectGuid(), nullptr);
+        }
     }
 }
 
