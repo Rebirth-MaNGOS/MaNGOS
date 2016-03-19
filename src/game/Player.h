@@ -684,7 +684,7 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADSKILLS,
     PLAYER_LOGIN_QUERY_LOADMAILS,
     PLAYER_LOGIN_QUERY_LOADMAILEDITEMS,
-
+    PLAYER_LOGIN_QUERY_QUESTEXPRATE,
     MAX_PLAYER_LOGIN_QUERY
 };
 
@@ -1353,6 +1353,8 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         PlayerMails::iterator GetMailBegin() { return m_mail.begin();}
         PlayerMails::iterator GetMailEnd() { return m_mail.end();}
+
+        void SaveQuestExpRateToDB();
 
         /*********************************************************/
         /*** MAILED ITEMS SYSTEM ***/
@@ -2107,6 +2109,9 @@ public:
 		// List for points for manual movemap generation.
 		std::vector<Point3D> m_MmapPoints;
 
+        void SetQuestMultiplier(uint32 mpl) { m_questMultiplier = mpl > 3 ? 1 : mpl; }
+        uint32 GetQuestMultiplier() { return m_questMultiplier; }
+
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2159,6 +2164,7 @@ public:
         bool _LoadHomeBind(QueryResult *result);
         void _LoadBGData(QueryResult* result);
         void _LoadIntoDataField(const char* data, uint32 startOffset, uint32 count);
+        bool _LoadQuestExpRate(QueryResult *result);
 
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
@@ -2371,6 +2377,8 @@ public:
 
         GridReference<Player> m_gridRef;
         MapReference m_mapRef;
+
+        uint32 m_questMultiplier;
 
         // Homebind coordinates
         uint32 m_homebindMapId;

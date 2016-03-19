@@ -748,6 +748,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "quit",           SEC_CONSOLE,        true,  &ChatHandler::HandleQuitCommand,                "", NULL },
         { "mmap",           SEC_GAMEMASTER,     false, NULL,                                           "", mmapCommandTable },
 		{ "rate",           SEC_PLAYER,         false, &ChatHandler::HandleRateCommand,                "", NULL },
+        { "questexp",       SEC_PLAYER,         false, &ChatHandler::HandleQuestMultiplierCommand,     "", NULL },
 
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };

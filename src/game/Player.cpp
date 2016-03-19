@@ -366,6 +366,7 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 
     m_speakTime = 0;
     m_speakCount = 0;
+    m_questMultiplier = 1;
 
     m_objectType |= TYPEMASK_PLAYER;
     m_objectTypeId = TYPEID_PLAYER;
@@ -12836,6 +12837,8 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
     // Not give XP in case already completed once repeatable quest
     uint32 XP = q_status.m_rewarded ? 0 : (uint32)(rate*pQuest->XPValue(this));
 
+    XP = GetQuestMultiplier() * XP;
+
     if (getLevel() < sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
         GiveXP(XP , NULL);
     else
@@ -14158,6 +14161,11 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
     SetInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, fields[43].GetInt32());
 
     SetUInt32Value(PLAYER_AMMO_ID, fields[53].GetUInt32());
+
+    if(!_LoadQuestExpRate(holder->GetResult(PLAYER_LOGIN_QUERY_QUESTEXPRATE)))
+    {
+        m_questMultiplier = 1;
+    }
 
     // Action bars state
     SetByteValue(PLAYER_FIELD_BYTES, 2, fields[54].GetUInt8());
@@ -15551,6 +15559,21 @@ void Player::ConvertInstancesToGroup(Player *player, Group *group, ObjectGuid pl
         CharacterDatabase.PExecute("DELETE FROM character_instance WHERE guid = '%u' AND permanent = 0", player_lowguid);
 }
 
+bool Player::_LoadQuestExpRate(QueryResult *result)
+{
+    if(result)
+    {
+        Field *fields = result->Fetch();
+        m_questMultiplier = fields[0].GetUInt32();
+        delete result;
+    }
+    else
+        return false;
+
+    return true;
+
+}
+
 bool Player::_LoadHomeBind(QueryResult *result)
 {
     PlayerInfo const *info = sObjectMgr.GetPlayerInfo(getRace(), getClass());
@@ -15828,6 +15851,13 @@ void Player::SaveGoldToDB()
 
     SqlStatement stmt = CharacterDatabase.CreateStatement(updateGold, "UPDATE characters SET money = ? WHERE guid = ?");
     stmt.PExecute(GetMoney(), GetGUIDLow());
+}
+
+void Player::SaveQuestExpRateToDB()
+{
+    static SqlStatementID updateQuestExpRate;
+    SqlStatement stmt = CharacterDatabase.CreateStatement(updateQuestExpRate, "REPLACE INTO character_questexprate (rate, guid) VALUES (?, ?)");
+    stmt.PExecute(GetQuestMultiplier(), GetGUIDLow());
 }
 
 void Player::_SaveActions()
