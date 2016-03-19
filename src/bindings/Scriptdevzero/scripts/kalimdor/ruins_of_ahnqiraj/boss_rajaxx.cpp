@@ -813,6 +813,7 @@ struct MANGOS_DLL_DECL npc_kaldorei_elite : public ScriptedAI
     npc_kaldorei_elite(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_bIsRunning = false;
+        m_bFirstRun = true;
         m_pInstance = (instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData();
         Reset();
     }
@@ -820,9 +821,11 @@ struct MANGOS_DLL_DECL npc_kaldorei_elite : public ScriptedAI
     instance_ruins_of_ahnqiraj* m_pInstance;
 
     bool m_bCanMoveNext;
+    bool m_bFirstRun;
     uint32 m_uiWaitForOthersTimer;
     uint32 m_uiWaypoint;
-    uint8 m_uiEndMovePoint;
+    uint32 m_uiEndMovePoint;
+    float m_EndMovePointCoords[3];
     bool m_uiSetFacing;
     bool m_bIsRunning;
 
@@ -840,6 +843,11 @@ struct MANGOS_DLL_DECL npc_kaldorei_elite : public ScriptedAI
         }
         else
             m_bCanMoveNext = true;
+
+        if(m_bFirstRun)
+        {
+            m_creature->GetMotionMaster()->MovePoint(5, m_EndMovePointCoords[0], m_EndMovePointCoords[1], m_EndMovePointCoords[2], false);
+        }
 
         m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
         m_uiWaitForOthersTimer = 500;
@@ -866,6 +874,7 @@ struct MANGOS_DLL_DECL npc_kaldorei_elite : public ScriptedAI
             case 5:
                 {
                     m_uiSetFacing = true;
+                    m_bFirstRun = false;
                     m_uiFacing = 5.69f;
                     break;
                 }
@@ -890,9 +899,12 @@ struct MANGOS_DLL_DECL npc_kaldorei_elite : public ScriptedAI
         }
     }
 
-    void SetEndMovePoint(uint8 movePoint)
+    void SetEndMovePoint(uint32 movePoint, float x, float y, float z)
     {
         m_uiEndMovePoint = movePoint;
+        m_EndMovePointCoords[0] = x;
+        m_EndMovePointCoords[1] = y;
+        m_EndMovePointCoords[2] = z;
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -934,6 +946,7 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
         m_creature->setFaction(1254);
         m_pInstance = (instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData();
         m_bIsRunning = false;
+        m_bFirstRun = true;
         SummonKaldorei();
 
         Reset();
@@ -944,6 +957,7 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
     bool m_bCanMoveNext;
     bool m_bIsRunning;
     bool m_uiSetFacing;
+    bool m_bFirstRun;
 
     uint32 m_uiAuraOfCommand;
     uint32 m_uiBashTimer;
@@ -970,6 +984,11 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
             m_bCanMoveNext = true;
         }
 
+        if(m_bFirstRun)
+        {
+            m_creature->GetMotionMaster()->MovePoint(5, -8873.42f, 1647.67f, 21.38f, false);
+        }
+
         m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
         m_uiAuraOfCommand = 10000;
         m_uiBashTimer = 5000;
@@ -994,7 +1013,7 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
                     npc_kaldorei_elite *pKaldoreiAi = dynamic_cast<npc_kaldorei_elite*>(pKaldorei->AI());
 
                     if(pKaldoreiAi)
-                        pKaldoreiAi->SetEndMovePoint(i);
+                        pKaldoreiAi->SetEndMovePoint(i, NPCs[i].x, NPCs[i].y, NPCs[i].z);
               //  }
             }
         }
@@ -1074,7 +1093,7 @@ struct MANGOS_DLL_DECL npc_general_andorovAI : public ScriptedAI
         case 5:
             {
                 m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-                
+                m_bFirstRun = false;
                 m_uiSetFacing = true;
                 m_uiFacing = 5.69f;
                 break;
