@@ -423,7 +423,7 @@ bool OnQuestRewarded_npc_chemist_cuely(Player* pPlayer, Creature* pCreature, Que
 }
 
 /*####
-# npc_chemist_cuely
+# npc_thersa_windsong
 ####*/
 
 enum eThersa
@@ -544,6 +544,224 @@ bool OnQuestRewarded_npc_thersa_windsong(Player* pPlayer, Creature* pCreature, Q
 }
 
 /*######
+## npc_brother_malach
+######*/
+
+enum
+{
+    SPELL_SUMMON = 3657, //8675,    // wrong spell, find a better, only want the visuals and we have no idea what the retail spell looks like
+
+    NPC_HUMAN_MALE_CAPTIVE = 5680,
+    NPC_HUMAN_FEMALE_CAPTIVE = 5681,
+    
+    NPC_CAPTIVE_GHOUL = 5685,
+    NPC_CAPTIVE_ZOMBIE = 5686,
+    NPC_CAPTIVE_ABOMINATION = 5687,
+    
+    NPC_LYSTA_BANCROFT = 5679,
+    
+    NPC_EDWARD = 5654,
+    NPC_TYLER = 5653
+};
+
+struct Loc
+{
+    float x, y, z, o;
+};
+
+static Loc aSpawnLoc[]= 
+{
+    {1738.03f, 378.25f, -62.29, 3.77f},    // left
+    {1736.07f, 378.05f, -62.29, 3.77f},   // mid
+    {1735.89f, 381.46f, -62.29, 3.83f},   // right
+};
+
+struct MANGOS_DLL_DECL npc_brother_malachAI : public ScriptedAI
+{
+    npc_brother_malachAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        Reset(); 
+    }
+
+    uint8 m_uiDeadAdds;
+    uint8 m_uiSpeechStep;
+    uint32 m_uiSpeechTimer;
+    
+    uint32 m_uiEventTimer;
+
+    bool m_bEvent;
+
+    void Reset()
+    {
+        if(!m_bEvent)
+        {
+            m_uiSpeechStep = 1;
+            m_uiSpeechTimer = 0;
+            m_uiEventTimer = urand(10000, 60000);
+        }
+    }
+    
+    void JustSummoned(Creature* pSummoned)
+    {
+        pSummoned->SetRespawnEnabled(false);            // make sure they won't respawn
+        
+        Creature* pEdward = GetClosestCreatureWithEntry(m_creature, NPC_EDWARD, 15.0f);
+        Creature* pTyler = GetClosestCreatureWithEntry(m_creature, NPC_TYLER, 15.0f);
+        
+        int a = urand(0,1);
+        if(pEdward && pTyler)
+            pSummoned->AddThreat(a > 0 ? pEdward : pTyler, 0.1f);
+        
+        if(pEdward)
+            pEdward->AddThreat(pSummoned, 0.1f);
+        if(pTyler)
+            pTyler->AddThreat(pSummoned, 0.1f);
+    }
+
+    void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        ++m_uiDeadAdds;
+        
+        if(m_uiDeadAdds == 3 || m_uiDeadAdds == 5 || m_uiDeadAdds == 6)
+            m_uiSpeechTimer = 1000;
+    }
+    
+    void DoSummonWave(uint32 uiSummonId = 0)
+    {
+        if (uiSummonId == 1)
+        {            
+            m_creature->SummonCreature(NPC_HUMAN_MALE_CAPTIVE, aSpawnLoc[0].x, aSpawnLoc[0].y, aSpawnLoc[0].z, aSpawnLoc[0].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+            m_creature->SummonCreature(NPC_HUMAN_FEMALE_CAPTIVE, aSpawnLoc[1].x, aSpawnLoc[1].y, aSpawnLoc[1].z, aSpawnLoc[1].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+            m_creature->SummonCreature(NPC_HUMAN_MALE_CAPTIVE, aSpawnLoc[2].x, aSpawnLoc[2].y, aSpawnLoc[2].z, aSpawnLoc[2].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+        }        
+        else if (uiSummonId == 2)
+        {
+            m_creature->SummonCreature(NPC_CAPTIVE_GHOUL, aSpawnLoc[0].x, aSpawnLoc[0].y, aSpawnLoc[0].z, aSpawnLoc[0].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);            
+            m_creature->SummonCreature(NPC_CAPTIVE_ZOMBIE, aSpawnLoc[2].x, aSpawnLoc[2].y, aSpawnLoc[2].z, aSpawnLoc[2].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+        }        
+        else if (uiSummonId == 3)
+            m_creature->SummonCreature(NPC_CAPTIVE_ABOMINATION, aSpawnLoc[1].x, aSpawnLoc[1].y, aSpawnLoc[1].z, aSpawnLoc[1].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);        
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiEventTimer <= uiDiff)
+        {
+            if(!m_bEvent)
+            {
+                m_bEvent = true;
+                m_uiSpeechTimer = 1000;
+                m_uiSpeechStep = 1;
+            }
+            // start event again after 5-10 min
+            m_uiEventTimer = urand(300000, 600000);
+        }
+        else
+            m_uiEventTimer -= uiDiff;
+        
+        if (m_uiSpeechTimer && m_bEvent)
+        {
+            if(!m_uiSpeechStep)
+                return;
+        
+            if(m_uiSpeechTimer <= uiDiff)
+            {
+                Creature* pLysta = GetClosestCreatureWithEntry(m_creature, NPC_LYSTA_BANCROFT, 10.0f);
+                switch(m_uiSpeechStep)
+                {                   
+                    case 1:                        
+                        // empty for now
+                        m_uiSpeechTimer = 1000;
+                        break;
+                    case 2:                        
+                        m_creature->MonsterSay("Edward, Tyler. Prepare for your first challenge.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 10000;
+                        break;                        
+                    case 3:                        
+                        m_creature->MonsterSay("Lysta, summon in the captives.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 2000;
+                        break;
+                    case 4:
+                        if(pLysta)
+                            pLysta->CastSpell(pLysta, SPELL_SUMMON, false);
+                        m_uiSpeechTimer = 6000;
+                        break;
+                    case 5:
+                        // max one minute or we'll move on the event
+                        DoSummonWave(1);
+                        m_uiSpeechTimer = 60000;
+                        break;
+                    case 6:                        
+                        m_creature->MonsterSay("Not a challenge at all it seems. Let us see how you handle your second test. Lysta, bring forth minions of the Lich King.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 7:                        
+                        m_creature->MonsterSay("Lysta, summon in undead captives.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_POINT);
+                        m_uiSpeechTimer = 2000;
+                        break;
+                    case 8:
+                        if(pLysta)
+                            pLysta->CastSpell(pLysta, SPELL_SUMMON, false);
+                        m_uiSpeechTimer = 6000;
+                        break;
+                    case 9:
+                        // max one minute or we'll move on the event
+                        DoSummonWave(2);
+                        m_uiSpeechTimer = 60000;
+                        break;
+                    case 10:                        
+                        m_creature->MonsterSay("It is time to face your final challenge, young warriors! Prepare for your hardest fight yet.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_EXCLAMATION);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 11:                        
+                        m_creature->MonsterSay("Lysta, summon forth... the abomination!", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_LAUGH);
+                        m_uiSpeechTimer = 2000;
+                        break;
+                    case 12:
+                        if(pLysta)
+                            pLysta->CastSpell(pLysta, SPELL_SUMMON, false);
+                        m_uiSpeechTimer = 6000;
+                        break;
+                    case 13:
+                        // max 1.5  minute or we'll move on the event
+                        DoSummonWave(3);
+                        m_uiSpeechTimer = 90000;
+                        break;
+                    case 14:
+                        m_creature->MonsterSay("Well done Edward and Tyler. You are progressing along in your training quite nicely. We shall test your mettle again soon.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_APPLAUD);
+                        m_uiDeadAdds = 0;
+                        m_bEvent = false;
+                        break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+        }
+
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_brother_malach(Creature* pCreature)
+{
+    return new npc_brother_malachAI(pCreature);
+}
+
+/*######
 ## AddSC
 ######*/
 
@@ -579,5 +797,10 @@ void AddSC_undercity()
     pNewscript->Name = "npc_thersa_windsong";
     pNewscript->GetAI = &GetAI_npc_thersa_windsong;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_thersa_windsong;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_brother_malach";
+    pNewscript->GetAI = &GetAI_npc_brother_malach;
     pNewscript->RegisterSelf();
 }
