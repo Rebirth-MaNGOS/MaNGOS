@@ -26,7 +26,7 @@
 class WorldObject;
 class Map;
 
-#define TRAVELLER_UPDATE_INTERVAL  300
+#define TRAVELLER_UPDATE_INTERVAL  100
 
 template<typename TRAVELLER>
 class MANGOS_DLL_DECL DestinationHolder
