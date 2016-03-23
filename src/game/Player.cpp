@@ -18159,13 +18159,17 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Player* target, Up
 
             // If a flying player just entered another player's field
             // of vision we update the motion for that player.
+
+            // Resending the path of a flying player to another flying player caused weird flying.
+            /*
             if (target->IsTaxiFlying())
             {
                 FlightPathMovementGenerator* gen = 
                     dynamic_cast<FlightPathMovementGenerator*>(target->GetMotionMaster()->top());
                 if (gen)
                     gen->ResendPathToOtherPlayers(*target);
-            }
+            }*/
+            
             
             if (IsTaxiFlying())
             {
