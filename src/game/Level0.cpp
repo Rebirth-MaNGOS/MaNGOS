@@ -221,9 +221,9 @@ bool ChatHandler::HandleQuestMultiplierCommand(char* args)
     {
         uint32 quest_exp = atoi(args);
 
-        if(quest_exp < 1 || quest_exp > 3)
+        if(quest_exp < 1 || quest_exp > 5)
         {
-            PSendSysMessage("Invalid value. You must use a value between 1 and 3, for example: '.questexp 2'.");
+            PSendSysMessage("Invalid value. You must use a value between 1 and 5, for example: '.questexp 2'.");
             return true;
         }
         
