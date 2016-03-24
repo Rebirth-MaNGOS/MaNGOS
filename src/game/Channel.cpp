@@ -585,7 +585,7 @@ void Channel::Say(ObjectGuid p, const char *what, uint32 lang)
             Team team = plr->isGameMaster() ? plr->m_ChatTeam : plr->GetTeam(); 
 
             std::stringstream ss("");
-            ss << "[" << (team == ALLIANCE ? "|cFF0000FFA|r" : "|cFFFF0000H|r") << "]: " << what;
+            ss << "[" << (team == ALLIANCE ? "|cFF1E8EFFA|r" : "|cFFFF0000H|r") << "]: " << what;
 
             WorldPacket gmData(SMSG_MESSAGECHAT, 1+4+8+4+m_name.size()+1+8+4+ss.str().size()+1+1);
             gmData << uint8(CHAT_MSG_CHANNEL);
@@ -607,7 +607,7 @@ void Channel::Say(ObjectGuid p, const char *what, uint32 lang)
             std::stringstream ss("");
             if (!plr->isGameMaster())
             {
-                ss << "[" << (team == ALLIANCE ? "|cFF0000FFA|r" : "|cFFFF0000H|r") << "]: " << what;
+                ss << "[" << (team == ALLIANCE ? "|cFF1E8EFFA|r" : "|cFFFF0000H|r") << "]: " << what;
             }
             else
             {
