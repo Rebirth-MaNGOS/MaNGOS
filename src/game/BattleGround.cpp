@@ -328,7 +328,7 @@ void BattleGround::Update(uint32 diff)
     /*********************************************************/
     // if less then minimum players are in on one side, then start premature finish timer, hardcoded exeption for AV
     if (GetStatus() == STATUS_IN_PROGRESS && sBattleGroundMgr.GetPrematureFinishTime() && 
-        (GetTypeID() == BATTLEGROUND_AV ? (GetPlayersCountByTeam(ALLIANCE) < 10 || GetPlayersCountByTeam(HORDE) < 10) :
+        (GetTypeID() == BATTLEGROUND_AV ? (GetPlayersCountByTeam(ALLIANCE) < 3 || GetPlayersCountByTeam(HORDE) < 3) :
         (GetPlayersCountByTeam(ALLIANCE) < GetMinPlayersPerTeam() || GetPlayersCountByTeam(HORDE) < GetMinPlayersPerTeam())))
     {
         if (!m_PrematureCountDown)
