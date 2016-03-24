@@ -1540,6 +1540,8 @@ bool DungeonMap::Add(Player *player)
 void DungeonMap::Update(const uint32& t_diff)
 {
     // Load the entire instance if it hasn't been loaded yet.
+    // TODO: Make this work for AQ.
+    /*
     if (!m_isLoaded)
     {
         QueryResult* result = WorldDatabase.PQuery("SELECT position_x, position_y"\
@@ -1564,6 +1566,7 @@ void DungeonMap::Update(const uint32& t_diff)
 
         m_isLoaded = true;
     }
+    */
 
     Map::Update(t_diff);
 }
