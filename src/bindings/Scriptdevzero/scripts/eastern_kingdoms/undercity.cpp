@@ -891,6 +891,226 @@ CreatureAI* GetAI_npc_samantha_shackleton(Creature* pCreature)
 }
 
 /*######
+## npc_jezelle_pruitt
+######*/
+
+enum
+{
+    SPELL_SUMMON_ = 7794,
+
+    NPC_IMP = 5730,
+    NPC_VOIDWALKER = 5729,    
+    NPC_SUCCUBUS = 5728,
+    NPC_FELHUNTER = 5726,
+    NPC_FELSTEED = 5727   
+};
+
+
+static Loc aSumLoc[]= 
+{
+    {1793.60f, 129.38f, -63.84, 3.77f}
+};
+
+struct MANGOS_DLL_DECL npc_jezelle_pruittAI : public ScriptedAI
+{
+    npc_jezelle_pruittAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        Reset(); 
+    }
+
+    uint8 m_uiSpeechStep;
+    uint32 m_uiSpeechTimer;
+    
+    uint32 m_uiEventTimer;
+
+    bool m_bEvent;
+
+    void Reset()
+    {
+        if(!m_bEvent)
+        {
+            m_uiSpeechStep = 1;
+            m_uiSpeechTimer = 0;
+            m_uiEventTimer = urand(10000, 60000);
+        }
+    }
+    
+    void JustSummoned(Creature* pSummoned)
+    {
+        pSummoned->SetRespawnEnabled(false);            // make sure they won't respawn
+        pSummoned->GetMotionMaster()->MoveRandom();
+    }
+
+    void DoSummonWave(uint32 uiSummonId = 0)
+    {
+        switch(uiSummonId)
+        {
+            case 0:
+                m_creature->SummonCreature(NPC_IMP, aSumLoc[0].x, aSumLoc[0].y, aSumLoc[0].z, aSumLoc[0].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                break;
+            case 1:
+                m_creature->SummonCreature(NPC_VOIDWALKER, aSumLoc[0].x, aSumLoc[0].y, aSumLoc[0].z, aSumLoc[0].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                break;
+            case 2:
+                m_creature->SummonCreature(NPC_SUCCUBUS, aSumLoc[0].x, aSumLoc[0].y, aSumLoc[0].z, aSumLoc[0].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                break;
+            case 3:
+                m_creature->SummonCreature(NPC_FELHUNTER, aSumLoc[0].x, aSumLoc[0].y, aSumLoc[0].z, aSumLoc[0].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                break;
+            case 4:
+                m_creature->SummonCreature(NPC_FELSTEED, aSumLoc[0].x, aSumLoc[0].y, aSumLoc[0].z, aSumLoc[0].o, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                break;
+        }
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiEventTimer <= uiDiff)
+        {
+            if(!m_bEvent)
+            {
+                m_bEvent = true;
+                m_uiSpeechTimer = 1000;
+                m_uiSpeechStep = 1;
+            }
+            // start event again after 5-10 min
+            m_uiEventTimer = urand(300000, 600000);
+        }
+        else
+            m_uiEventTimer -= uiDiff;
+        
+        if (m_uiSpeechTimer && m_bEvent)
+        {
+            if(!m_uiSpeechStep)
+                return;
+        
+            if(m_uiSpeechTimer <= uiDiff)
+            {
+                switch(m_uiSpeechStep)
+                {                   
+                    case 1:              
+                        m_creature->MonsterSay("If you're here, then it means you are prepared to begin this study of summoning demonic cohorts to do your bidding. We will start with the lowliest creatures you will be able to call and continue from there. Let us begin.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 2:                        
+                        m_creature->MonsterSay("The easiest creature for you to summon is the imp. You should already be able to bring forth this minion but for completeness' sake I will start with him.", LANG_GUTTERSPEAK, NULL);         
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 3000;
+                        break;                        
+                    case 3:                        
+                        m_creature->CastSpell(m_creature, SPELL_SUMMON_, false);
+                        m_uiSpeechTimer = 1500;
+                        break;
+                    case 4:
+                        DoSummonWave(0);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 5:
+                        m_creature->MonsterSay("This foul little beast is the imp. It is small and weak, making it almost useless as a meatshield, and its damage output is mediocre at best. This creature is best used for support of a larger group.", LANG_GUTTERSPEAK, NULL);         
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 30000;
+                        break;
+                    case 6:                        
+                        m_creature->MonsterSay("Now that you have had a chance to study the imp, let us move on the next minion you will be able to summon, the voidwalker.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 7:                        
+                        m_creature->CastSpell(m_creature, SPELL_SUMMON_, false);
+                        m_uiSpeechTimer = 1500;
+                        break;
+                    case 8:
+                        DoSummonWave(1);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 9:
+                        m_creature->MonsterSay("This demonic entity is know as the Voidwalker. Its strenght and endurance are significant, making it ideal for defense. Send it to attack your enemy, then use a shield while you use your spells and abilities to drain away your opponent's life.", LANG_GUTTERSPEAK, NULL);         
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 30000;
+                        break;
+                    case 10:                        
+                        m_creature->MonsterSay("If you've never seen one, it is a sight to behold. A very impressive creature both on and off the field of battle. Next, let us take a look at what I am sure all you male students have been waiting for. The succubus.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 11:                        
+                        m_creature->CastSpell(m_creature, SPELL_SUMMON_, false);
+                        m_uiSpeechTimer = 1500;
+                        break;
+                    case 12:
+                        DoSummonWave(2);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 13:
+                        m_creature->MonsterSay("All right now. Aside from the obvious distractions a minion like this will provide against your masculine foes, she is also capable of dealing out impressive amounts of damage. However, her fragile endurance makes her almost useless as a shield.", LANG_GUTTERSPEAK, NULL);         
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 30000;
+                        break;
+                    case 14:                        
+                        m_creature->MonsterSay("Study hard and you might one day be able to summon one on your own, but for now it's time to move to the felhunter.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                       case 15:                        
+                        m_creature->CastSpell(m_creature, SPELL_SUMMON_, false);
+                        m_uiSpeechTimer = 1500;
+                        break;
+                    case 16:
+                        DoSummonWave(3);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 17:
+                        m_creature->MonsterSay("What you see before you is a felhunter. This creature's natural talents include spell lock and other abilities which make it unequalled when facing a magically attuned opponent.", LANG_GUTTERSPEAK, NULL);         
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 30000;
+                        break;
+                    case 18:                        
+                        m_creature->MonsterSay("When facing a spellcaster of any kind, this feral beast will be your best friend. Now, let us take a look at something a bit different. This next creature will aid your travels and make your future journeys much easier. Let's take a look at a felsteed.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 3000;
+                        break; 
+                    case 19:                        
+                        m_creature->CastSpell(m_creature, SPELL_SUMMON_, false);
+                        m_uiSpeechTimer = 1500;
+                        break;
+                    case 20:
+                        DoSummonWave(4);
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 21:
+                        m_creature->MonsterSay(" I doubt you have had much occasion to see such a creature. These demonic equines will make your travels much faster by acting as your mount as long as you control them. However, they are difficult to control, so be sure you are ready before attempting it.", LANG_GUTTERSPEAK, NULL);         
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 30000;
+                        break;
+                    case 22:                        
+                        m_creature->MonsterSay("There you have it. Our lesson on summoning has come to an end. A new class will begin shortly, so if you wish to brush up, feel free to stay around.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_bEvent = false;
+                        break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+        }
+
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_jezelle_pruitt(Creature* pCreature)
+{
+    return new npc_jezelle_pruittAI(pCreature);
+}
+
+/*######
 ## AddSC
 ######*/
 
@@ -936,5 +1156,10 @@ void AddSC_undercity()
     pNewscript = new Script;
     pNewscript->Name = "npc_samantha_shackleton";
     pNewscript->GetAI = &GetAI_npc_samantha_shackleton;
-    pNewscript->RegisterSelf();    
+    pNewscript->RegisterSelf();
+    
+        pNewscript = new Script;
+    pNewscript->Name = "npc_jezelle_pruitt";
+    pNewscript->GetAI = &GetAI_npc_jezelle_pruitt;
+    pNewscript->RegisterSelf(); 
 }
