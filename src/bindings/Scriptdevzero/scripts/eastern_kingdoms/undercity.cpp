@@ -762,6 +762,135 @@ CreatureAI* GetAI_npc_brother_malach(Creature* pCreature)
 }
 
 /*######
+## npc_samantha_shackleton
+######*/
+
+struct MANGOS_DLL_DECL npc_samantha_shackletonAI : public ScriptedAI
+{
+    npc_samantha_shackletonAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        m_uiSpeechTimer = 0;
+        Reset(); 
+    }
+
+    uint8 textID;
+    uint8 OldtextID;
+    uint32 m_uiSpeechTimer;
+    
+    void Reset()
+    {
+    }
+    
+    void HandleQuote()
+    {
+        short attempts = 0;
+        while(attempts < 20)
+        {
+            textID = urand(0, 15);
+            
+            // if we get a new text move on
+            if(textID != OldtextID)
+                break;
+            
+            ++attempts;
+        }
+                
+        switch(textID)
+        {
+            case 0:
+                m_creature->MonsterSay("If I could just find \"Magic and the Ways of Power\". Ahh here it is, what was it doing over here?", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+             case 1:
+                m_creature->MonsterSay("That wasn't very helpful. Let me check the other one.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 2:
+                m_creature->MonsterSay("Ahh, \"Mystical Conjurings of the Archmages of Dalaran.\" Perfect.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 3:
+                m_creature->MonsterSay("But this can't be right. Where did I put that other book?", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 4:
+                m_creature->MonsterSay("\"Magic Maladies\", no. \"Magic Matricies\", no. Ahh here we go \"Magic Mysteries\".", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 5:
+                m_creature->MonsterSay("If this is correct, then I have a lot more research to do.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 6:
+                m_creature->MonsterSay("\"Magical Flows and How They Effect the World\", by Maginor Dumas. That's the one I was looking for.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 7:
+                m_creature->MonsterSay("That's what I wanted to know. Now I just need to find where the flux variance is discussed.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 8:
+                m_creature->MonsterSay("So I was right about the energies. Let's see what the other tome has to say on the subject.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 9:
+                m_creature->MonsterSay("Ahh there it is.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 10:
+                m_creature->MonsterSay("Back to the drawing board.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 11:
+                m_creature->MonsterSay("There's the mystical tome I was looking for.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 12:
+                m_creature->MonsterSay("\"Khadgar's Mystical Journal, Volume 8.\" I think this is the one I wanted.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 13:
+                m_creature->MonsterSay("I really need a better system for filing these books. Ahh that's the one I wanted.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 14:
+                m_creature->MonsterSay("Yes, yes. Hmm, it seems to cross reference another tome. Guess I have to find that one too.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+            case 15:
+                m_creature->MonsterSay("Very interesting. But if that's the case then my theory is wrong. I must reread the other sections to see what I missed.", LANG_GUTTERSPEAK, NULL);
+                m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                break;
+        }
+        
+        // save the text we just did as old
+        OldtextID = textID;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+
+        if(m_uiSpeechTimer <= uiDiff)
+        {                  
+            HandleQuote();                       
+            m_uiSpeechTimer = urand(30000, 60000);
+        }
+        else
+            m_uiSpeechTimer -= uiDiff;
+
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_samantha_shackleton(Creature* pCreature)
+{
+    return new npc_samantha_shackletonAI(pCreature);
+}
+
+/*######
 ## AddSC
 ######*/
 
@@ -803,4 +932,9 @@ void AddSC_undercity()
     pNewscript->Name = "npc_brother_malach";
     pNewscript->GetAI = &GetAI_npc_brother_malach;
     pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_samantha_shackleton";
+    pNewscript->GetAI = &GetAI_npc_samantha_shackleton;
+    pNewscript->RegisterSelf();    
 }
