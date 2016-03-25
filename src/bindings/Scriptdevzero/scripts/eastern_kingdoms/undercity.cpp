@@ -1111,6 +1111,228 @@ CreatureAI* GetAI_npc_jezelle_pruitt(Creature* pCreature)
 }
 
 /*######
+## npc_apothecary_keever
+######*/
+
+enum
+{    
+    NPC_SQUIRREL = 5739,
+    NPC_RABBIT = 5741,
+    NPC_TOAD = 5742,
+    NPC_SHEEP = 5743,
+    SPELL_EXPLODE = 7670,
+};
+
+struct MANGOS_DLL_DECL npc_apothecary_keeverAI : public ScriptedAI
+{
+    npc_apothecary_keeverAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        Reset(); 
+    }
+
+    uint8 m_uiSpeechStep;
+    uint32 m_uiSpeechTimer;
+    
+    uint32 m_uiEventTimer;
+
+    bool m_bEvent;
+
+    void Reset()
+    {
+        m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+        if(!m_bEvent)
+        {
+            m_uiSpeechStep = 1;
+            m_uiSpeechTimer = 0;
+            m_uiEventTimer = urand(10000, 60000);
+        }
+    }
+    
+    void JustSummoned(Creature* pSummoned)
+    {
+        pSummoned->SetRespawnEnabled(false);            // make sure they won't respawn
+        pSummoned->SetFactionTemporary(68);
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiEventTimer <= uiDiff)
+        {
+            if(!m_bEvent)
+            {
+                m_bEvent = true;
+                m_uiSpeechTimer = 1000;
+                m_uiSpeechStep = 1;
+            }
+            // start event again after 5-10 min
+            m_uiEventTimer = urand(300000, 600000);
+        }
+        else
+            m_uiEventTimer -= uiDiff;
+        
+        if (m_uiSpeechTimer && m_bEvent)
+        {
+            if(!m_uiSpeechStep)
+                return;
+        
+            if(m_uiSpeechTimer <= uiDiff)
+            {
+                Creature* pHuman = GetClosestCreatureWithEntry(m_creature, NPC_HUMAN_MALE_CAPTIVE, 10.0f);
+                Creature* pToad = GetClosestCreatureWithEntry(m_creature, NPC_TOAD, 10.0f);
+                Creature* pSquirrel = GetClosestCreatureWithEntry(m_creature, NPC_SQUIRREL, 10.0f);
+                Creature* pRabbit = GetClosestCreatureWithEntry(m_creature, NPC_RABBIT, 10.0f);
+                Creature* pSheep = GetClosestCreatureWithEntry(m_creature, NPC_SHEEP, 10.0f);
+                switch(m_uiSpeechStep)
+                {                   
+                    case 1:                        
+                        m_creature->MonsterSay("Hmm, it would seem Keever needs a new subject. If that fool, Abernathy, keeps taking Keever's subjects, Keever may have to have a word with him.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 5000;
+                        break;
+                    case 2:                        
+                        m_creature->CastSpell(m_creature, SPELL_SUMMON_, false);
+                        m_uiSpeechTimer = 1500;
+                        break;                
+                    case 3:                 
+                        m_creature->SummonCreature(NPC_HUMAN_MALE_CAPTIVE, 1400.85f, 363.242f, -84.868f, 1.11701f, TEMPSUMMON_TIMED_DESPAWN, 120000);
+                        m_uiSpeechTimer = 2000;
+                        break;
+                    case 4:
+                        m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+                        m_uiSpeechTimer = 6000;
+                        break;
+                    case 5:
+                        m_creature->MonsterSay("Ahh, there we go, now Keever must try this vial and see if it works.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 8000;
+                        break;
+                    case 6:         
+                        m_creature->GenericTextEmote("Apothecary Keever forces the fluid down the weary man's throat.", NULL, false);
+                        m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+                        m_uiSpeechTimer = 2000;
+                        break;
+                    case 7:              
+                        if(pHuman)
+                        {
+                            pHuman->SetEntry(NPC_TOAD);
+                            pHuman->SetDisplayId(901);
+                            pHuman->UpdateModelData();
+                        }
+                        m_uiSpeechTimer = 8000;
+                        break;
+                    case 8:
+                        m_creature->GenericTextEmote("Apothecary Keever pokes the small toad.", NULL, false);
+                        m_uiSpeechTimer = 8000;
+                        break;
+                    case 9:
+                        m_creature->MonsterSay("Not what Keever was hoping for. Keever may have added too much earthroot. Let's see if the second serum will do what I need.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                         m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 10:                        
+                        m_creature->GenericTextEmote("Apothecary Keever feeds the toad some of the strange liquid.", NULL, false);
+                        m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+                        m_uiSpeechTimer = 2000;
+                        break;
+                    case 11:              
+                        if(pToad)
+                        {
+                            pToad->SetEntry(NPC_SQUIRREL);
+                            pToad->SetDisplayId(134);
+                        }
+                        m_uiSpeechTimer = 5000;
+                        break;
+                    case 12:                        
+                        m_creature->GenericTextEmote("Apothecary Keever pokes the fuzzy squirrel with obvious disappointment.", NULL, false);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 13:
+                        m_creature->MonsterSay("Well, this is just not right. The creature is far too small. Let us see what Keever's third batch will do.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                         m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 14:                        
+                        m_creature->GenericTextEmote("Apothecary Keever feeds the squirrel some of the viscous fluid.", NULL, false);
+                        m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+                        m_uiSpeechTimer = 2000;
+                        break;
+                    case 15:              
+                        if(pSquirrel)
+                        {
+                            pSquirrel->SetEntry(NPC_RABBIT);
+                            pSquirrel->SetDisplayId(328);
+                        }
+                        m_uiSpeechTimer = 5000;
+                        break;
+                    case 16:                        
+                        m_creature->GenericTextEmote("Apothecary Keever pokes the skittish rabbit.", NULL, false);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 17:
+                        m_creature->MonsterSay("Keever is unhappy with this. Prehaps if Keever were to try a larger dose, that may fix this dilemma.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                         m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 18:                        
+                        m_creature->GenericTextEmote("Apothecary Keever grabs the rabbit and pours the liquid down its throat.", NULL, false);
+                        m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+                        m_uiSpeechTimer = 2000;
+                        break;
+                    case 19:              
+                        if(pRabbit)
+                        {
+                            pRabbit->SetEntry(NPC_SHEEP);
+                            pRabbit->SetDisplayId(856);
+                        }
+                        m_uiSpeechTimer = 5000;
+                        break;
+                    case 20:
+                        m_creature->MonsterSay("What is this? Did Keever ask for a sheep? Keever wanted a weapon of great power and all he got was this sheep. Keever is very disappointed.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                         m_creature->SetStandState(UNIT_STAND_STATE_STAND);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 21:                        
+                        m_creature->GenericTextEmote("Apothecary Keever pokes the wooly sheep repeatedly.", NULL, false);
+                        m_creature->SetStandState(UNIT_STAND_STATE_KNEEL);
+                        m_uiSpeechTimer = 2000;
+                        break;
+                    case 22:              
+                        if(pSheep)
+                            pSheep->CastSpell(pHuman, SPELL_EXPLODE, true);
+                        m_uiSpeechTimer = 3000;
+                        break;    
+                    case 23:
+                        m_creature->MonsterSay("Keever is most pleased.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_bEvent = false;
+                        break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+        }
+
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_apothecary_keever(Creature* pCreature)
+{
+    return new npc_apothecary_keeverAI(pCreature);
+}
+
+/*######
 ## AddSC
 ######*/
 
@@ -1158,8 +1380,13 @@ void AddSC_undercity()
     pNewscript->GetAI = &GetAI_npc_samantha_shackleton;
     pNewscript->RegisterSelf();
     
-        pNewscript = new Script;
+    pNewscript = new Script;
     pNewscript->Name = "npc_jezelle_pruitt";
     pNewscript->GetAI = &GetAI_npc_jezelle_pruitt;
+    pNewscript->RegisterSelf(); 
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_apothecary_keever";
+    pNewscript->GetAI = &GetAI_npc_apothecary_keever;
     pNewscript->RegisterSelf(); 
 }
