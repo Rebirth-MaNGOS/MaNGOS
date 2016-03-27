@@ -34,6 +34,8 @@ enum
     TYPE_SAPPHIRON              = 16,
     TYPE_KELTHUZAD              = 17,
 
+    MAX_HEIGAN_TRAP_AREAS       = 4,
+    
     NPC_ANUB_REKHAN             = 15956,
     NPC_FAERLINA                = 15953,
 
@@ -155,6 +157,9 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
 
         void Update(uint32 uiDiff);
         
+        // Heigan
+        void DoTriggerHeiganTraps(Creature* pHeigan, uint32 uiAreaIndex);
+        
         // goth
         void SetGothTriggers();
         Creature* GetClosestAnchorForGoth(Creature* pSource, bool bRightSide);
@@ -171,6 +176,8 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
 
         GUIDList m_lGothTriggerList;
         UNORDERED_MAP<ObjectGuid, GothTrigger> m_mGothTriggerMap;
+        
+        GUIDList m_alHeiganTrapGuids[MAX_HEIGAN_TRAP_AREAS];
         
         float m_fChamberCenterX;
         float m_fChamberCenterY;

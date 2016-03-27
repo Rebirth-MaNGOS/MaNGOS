@@ -48,8 +48,12 @@ enum
     SPELL_DECREPIT_FEVER_N  = 29998,
     SPELL_DISRUPTION        = 29310,
     SPELL_TELEPORT          = 30211,
-    SPELL_PLAGUE_CLOUD      = 29350
+    SPELL_PLAGUE_CLOUD      = 29350,    // stops channeling after 6~~ sec
+    
+    MAX_PLAYERS_TELEPORT    = 3
 };
+
+static const float aTunnelLoc[4] = {2905.63f, -3769.96f, 273.62f, 3.13f};
 
 struct MANGOS_DLL_DECL boss_heiganAI : public ScriptedAI
 {
@@ -64,6 +68,7 @@ struct MANGOS_DLL_DECL boss_heiganAI : public ScriptedAI
     uint8 m_uiPhase;
     uint8 m_uiPhaseEruption;
 
+    uint32 m_uiTeleportTimer;
     uint32 m_uiFeverTimer;
     uint32 m_uiDisruptionTimer;
     uint32 m_uiEruptionTimer;
@@ -79,6 +84,7 @@ struct MANGOS_DLL_DECL boss_heiganAI : public ScriptedAI
         m_uiDisruptionTimer = 5000;
         m_uiStartChannelingTimer = 1000;
         m_uiPhaseTimer = m_uiPhase == PHASE_GROUND ? 90000 : 45000;
+        m_uiTeleportTimer = 60000;
     }
 
     void Reset()
@@ -160,6 +166,24 @@ struct MANGOS_DLL_DECL boss_heiganAI : public ScriptedAI
             }
             else
                 m_uiDisruptionTimer -= uiDiff;
+
+            if (m_uiTeleportTimer < uiDiff)
+            {
+                float fX, fY, fZ;
+                // Teleport players in the tunnel
+                for (uint8 i = 0; i < MAX_PLAYERS_TELEPORT; i++)
+                {
+                    // Add check so we won't port a pet
+                    if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                    {
+                        m_creature->GetRandomPoint(aTunnelLoc[0], aTunnelLoc[1], aTunnelLoc[2], 5.0f, fX, fY, fZ);
+                        pTarget->NearTeleportTo(fX, fY, fZ, aTunnelLoc[3]);
+                    }
+                }
+                m_uiTeleportTimer = 70000;
+            }
+            else
+                m_uiTeleportTimer -= uiDiff;
         }
         else                                                //Platform Phase
         {
@@ -180,8 +204,9 @@ struct MANGOS_DLL_DECL boss_heiganAI : public ScriptedAI
             {
                 if (m_uiStartChannelingTimer <=uiDiff)
                 {
-                    DoScriptText(SAY_CHANNELING, m_creature);
+                    DoScriptText(SAY_CHANNELING, m_creature);                    
                     DoCastSpellIfCan(m_creature, SPELL_PLAGUE_CLOUD);
+                    // ToDo: fill the tunnel with poison - required further research
                     m_uiStartChannelingTimer = 0;           // no more
                 }
                 else
@@ -205,6 +230,27 @@ struct MANGOS_DLL_DECL boss_heiganAI : public ScriptedAI
             m_uiTauntTimer -= uiDiff;
 
         DoMeleeAttackIfReady();
+        
+        // Handling of the erruptions, this is not related to melee attack or spell-casting
+        if (!m_pInstance)
+            return;
+
+        // Eruption
+        if (m_uiEruptionTimer < uiDiff)
+        {
+            for (uint8 uiArea = 0; uiArea < MAX_HEIGAN_TRAP_AREAS; ++uiArea)
+            {
+                // Actually this is correct :P
+                if (uiArea == (m_uiPhaseEruption % 6) || uiArea == 6 - (m_uiPhaseEruption % 6))
+                    continue;
+
+                m_pInstance->DoTriggerHeiganTraps(m_creature, uiArea);
+            }
+            m_uiEruptionTimer = m_uiPhase == PHASE_GROUND ? 10000 : 3000;
+            ++m_uiPhaseEruption;
+        }
+        else
+            m_uiEruptionTimer -= uiDiff;
     }
 };
 
