@@ -915,6 +915,7 @@ struct MANGOS_DLL_DECL npc_jezelle_pruittAI : public ScriptedAI
 {
     npc_jezelle_pruittAI(Creature* pCreature) : ScriptedAI(pCreature) 
     { 
+        m_bEvent = false;
         Reset(); 
     }
 
@@ -1127,6 +1128,7 @@ struct MANGOS_DLL_DECL npc_apothecary_keeverAI : public ScriptedAI
 {
     npc_apothecary_keeverAI(Creature* pCreature) : ScriptedAI(pCreature) 
     { 
+        m_bEvent = false;
         Reset(); 
     }
 
