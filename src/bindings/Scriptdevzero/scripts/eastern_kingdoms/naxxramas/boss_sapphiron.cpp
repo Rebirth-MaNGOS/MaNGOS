@@ -510,11 +510,37 @@ CreatureAI* GetAI_boss_sapphiron(Creature* pCreature)
     return new boss_sapphironAI(pCreature);
 }
 
+// not working, its a trap and doesn't trigger this script
+bool GOUse_go_sapphiron_birth(Player* pPlayer, GameObject* pGo)
+{
+    ScriptedInstance* pInstance = (ScriptedInstance*)pGo->GetInstanceData();
+    
+    if (!pInstance)
+        return true; 
+
+    if (pInstance->GetData(TYPE_SAPPHIRON) != NOT_STARTED)
+        return true;
+
+    // If already summoned return (safety check)
+    if (pInstance->GetSingleCreatureFromStorage(NPC_SAPPHIRON, true))
+        return true;
+    
+    // Set data to special and allow the Go animation to proceed
+    pInstance->SetData(TYPE_SAPPHIRON, SPECIAL);
+    
+    return false;
+}
+
 void AddSC_boss_sapphiron()
 {
     Script* pNewscript;
     pNewscript = new Script;
     pNewscript->Name = "boss_sapphiron";
     pNewscript->GetAI = &GetAI_boss_sapphiron;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "go_sapphiron_birth";
+    pNewscript->pGOUse = &GOUse_go_sapphiron_birth;
     pNewscript->RegisterSelf();
 }

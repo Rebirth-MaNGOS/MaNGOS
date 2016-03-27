@@ -27,7 +27,8 @@ EndScriptData */
 instance_naxxramas::instance_naxxramas(Map* pMap) : ScriptedInstance(pMap),
     m_fChamberCenterX(0.0f),
     m_fChamberCenterY(0.0f),
-    m_fChamberCenterZ(0.0f)
+    m_fChamberCenterZ(0.0f),
+    m_uiSapphSpawnTimer(0)
 {
     Initialize();
 }
@@ -35,6 +36,19 @@ instance_naxxramas::instance_naxxramas(Map* pMap) : ScriptedInstance(pMap),
 void instance_naxxramas::Initialize()
 {
     memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
+}
+
+void instance_naxxramas::OnPlayerEnter(Player* pPlayer)
+{
+    // Function only used to summon Sapphiron in case of server reload
+    if (GetData(TYPE_SAPPHIRON) != SPECIAL)
+        return;
+
+    // Check if already summoned
+    if (GetSingleCreatureFromStorage(NPC_SAPPHIRON, true))
+        return;
+
+    pPlayer->SummonCreature(NPC_SAPPHIRON, aSapphPositions[0], aSapphPositions[1], aSapphPositions[2], aSapphPositions[3], TEMPSUMMON_DEAD_DESPAWN, 0);
 }
 
 void instance_naxxramas::OnCreatureCreate(Creature* pCreature)
@@ -160,6 +174,12 @@ void instance_naxxramas::OnObjectCreate(GameObject* pGo)
     }
 
 	m_mGoEntryGuidStore[pGo->GetEntry()] = pGo->GetObjectGuid();
+}
+
+void instance_naxxramas::OnCreatureDeath(Creature* pCreature)
+{
+    if (pCreature->GetEntry() == NPC_MR_BIGGLESWORTH && m_auiEncounter[TYPE_KELTHUZAD] != DONE)
+        DoOrSimulateScriptTextForThisInstance(SAY_KELTHUZAD_CAT_DIED, NPC_KELTHUZAD);
 }
 
 bool instance_naxxramas::IsEncounterInProgress() const
@@ -291,6 +311,10 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             m_auiEncounter[13] = uiData;
             if (uiData == DONE)
                 DoUseDoorOrButton(GO_KELTHUZAD_WATERFALL_DOOR);
+            
+             // Start Sapph summoning process
+            if (uiData == SPECIAL)
+                m_uiSapphSpawnTimer = 22000;
             break;
         case TYPE_KELTHUZAD:
             switch(uiData)
@@ -328,7 +352,7 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             break;
     }
 
-    if (uiData == DONE)
+    if (uiData == DONE || (uiData == SPECIAL && uiType == TYPE_SAPPHIRON))
     {
         OUT_SAVE_INST_DATA;
 
@@ -407,6 +431,22 @@ uint32 instance_naxxramas::GetData(uint32 uiType)
             return m_auiEncounter[14];
     }
     return 0;
+}
+
+void instance_naxxramas::Update(uint32 uiDiff)
+{
+    if (m_uiSapphSpawnTimer)
+    {
+        if (m_uiSapphSpawnTimer <= uiDiff)
+        {
+            if (Player* pPlayer = GetPlayerInMap())
+                pPlayer->SummonCreature(NPC_SAPPHIRON, aSapphPositions[0], aSapphPositions[1], aSapphPositions[2], aSapphPositions[3], TEMPSUMMON_DEAD_DESPAWN, 0);
+
+            m_uiSapphSpawnTimer = 0;
+        }
+        else
+            m_uiSapphSpawnTimer -= uiDiff;
+    }
 }
 
 void instance_naxxramas::SetGothTriggers()

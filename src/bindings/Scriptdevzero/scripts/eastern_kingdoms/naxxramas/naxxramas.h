@@ -9,6 +9,9 @@ enum
 {
     MAX_ENCOUNTER               = 15,
 
+    // Kel'Thuzad
+    SAY_KELTHUZAD_CAT_DIED      = -1533089,
+    
     TYPE_ANUB_REKHAN            = 1,
     TYPE_FAERLINA               = 2,
     TYPE_MAEXXNA                = 3,
@@ -42,6 +45,10 @@ enum
     NPC_THANE                   = 16064,
     NPC_BLAUMEUX                = 16065,
     NPC_RIVENDARE               = 30549,
+    
+    NPC_SAPPHIRON               = 15989,
+    NPC_KELTHUZAD               = 15990,
+    NPC_MR_BIGGLESWORTH         = 16998,
 
     // Gothik
     NPC_GOTHIK                  = 16060,
@@ -122,6 +129,8 @@ struct Loc
     float x, y, z, o;
 };
 
+static const float aSapphPositions[4] = {3521.48f, -5234.87f, 137.626f, 4.53329f};
+
 class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
 {
     public:
@@ -132,8 +141,11 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
 
         bool IsEncounterInProgress() const;
 
+        void OnPlayerEnter(Player* pPlayer);
         void OnCreatureCreate(Creature* pCreature);
         void OnObjectCreate(GameObject* pGo);
+        
+        void OnCreatureDeath(Creature* pCreature);
 
         void SetData(uint32 uiType, uint32 uiData);
         uint32 GetData(uint32 uiType);
@@ -141,6 +153,8 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
         const char* Save() { return strInstData.c_str(); }
         void Load(const char* chrIn);
 
+        void Update(uint32 uiDiff);
+        
         // goth
         void SetGothTriggers();
         Creature* GetClosestAnchorForGoth(Creature* pSource, bool bRightSide);
@@ -157,10 +171,12 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
 
         GUIDList m_lGothTriggerList;
         UNORDERED_MAP<ObjectGuid, GothTrigger> m_mGothTriggerMap;
-
+        
         float m_fChamberCenterX;
         float m_fChamberCenterY;
         float m_fChamberCenterZ;
+        
+        uint32 m_uiSapphSpawnTimer;
 };
 
 #endif
