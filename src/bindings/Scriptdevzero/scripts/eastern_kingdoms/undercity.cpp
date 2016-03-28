@@ -580,6 +580,7 @@ struct MANGOS_DLL_DECL npc_brother_malachAI : public ScriptedAI
 {
     npc_brother_malachAI(Creature* pCreature) : ScriptedAI(pCreature) 
     { 
+        m_bEvent = false;
         Reset(); 
     }
 
@@ -1335,6 +1336,204 @@ CreatureAI* GetAI_npc_apothecary_keever(Creature* pCreature)
 }
 
 /*######
+## npc_theresa
+######*/
+
+enum
+{
+    NPC_GERARD_ABERNATHY = 5696,
+    
+    NPC_LEONA_THARPE = 5699,    
+    NPC_JOANNA_WHITEHALL = 5698,
+    
+    NPC_FATHER_LANKESTER = 4607
+};
+
+const int aTexts[6][4]
+{
+    {-1720236, -1720237, -1720238, -1720239},
+    {-1720240, -1720241, -1720242, -1720243},
+    {-1720244, -1720245, -1720246, -1720247},
+    {-1720248, -1720249, -1720250, -1720251},
+    {-1720252, -1720253, -1720254, -1720255},
+    {-1720256, -1720257, -1720258, -1720259}
+};
+
+struct MANGOS_DLL_DECL npc_theresaAI : public ScriptedAI
+{
+    npc_theresaAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        m_bEvent = false;
+        Reset(); 
+    }
+
+    uint8 m_uiSpeechStep;
+    uint32 m_uiSpeechTimer;
+    
+    uint32 m_uiEventTimer;
+    int rpEvent;
+
+    bool m_bEvent;
+
+    void Reset()
+    {
+        if(!m_bEvent)
+        {
+            m_uiSpeechStep = 1;
+            m_uiSpeechTimer = 0;
+            m_uiEventTimer = urand(10000, 60000);
+        }
+    }
+    
+    void ToggleWalk()
+    {
+        if(m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == WAYPOINT_MOTION_TYPE)
+            m_creature->GetMotionMaster()->MoveIdle();
+        else
+            m_creature->GetMotionMaster()->MoveWaypoint();
+    }
+    
+    void MovementInform(uint32 /*uiMotiontype*/, uint32 uiPointId)
+    {
+        if(uiPointId == 13)
+            m_uiSpeechTimer = 1000;
+        else if(uiPointId == 26)
+        {
+            m_uiSpeechTimer = 1000;
+            ToggleWalk();
+        }
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiEventTimer <= uiDiff)
+        {
+            if(!m_bEvent)
+            {
+                m_bEvent = true;
+                m_uiSpeechTimer = 1000;
+                m_uiSpeechStep = 1;
+                rpEvent = urand(0,5);
+            }
+            // start event again after 7-13 min
+            m_uiEventTimer = urand(420000, 780000);
+        }
+        else
+            m_uiEventTimer -= uiDiff;
+        
+        if (m_uiSpeechTimer && m_bEvent)
+        {
+            if(!m_uiSpeechStep)
+                return;
+        
+            if(m_uiSpeechTimer <= uiDiff)
+            {
+                Creature* pGerard = GetClosestCreatureWithEntry(m_creature, NPC_GERARD_ABERNATHY, 100.0f);
+                Creature* pLeona = GetClosestCreatureWithEntry(m_creature, NPC_LEONA_THARPE, 100.0f);
+                Creature* pJoanna = GetClosestCreatureWithEntry(m_creature, NPC_JOANNA_WHITEHALL, 100.0f);
+                Creature* pLankester = GetClosestCreatureWithEntry(m_creature, NPC_FATHER_LANKESTER, 10.0f);
+                
+                switch(m_uiSpeechStep)
+                {                   
+                    case 1:         
+                        if(pGerard)
+                        {
+                            pGerard->MonsterSay("Theresa, take this to Father Lankester.", LANG_GUTTERSPEAK, NULL);
+                            pGerard->HandleEmote(EMOTE_ONESHOT_TALK);
+                        }
+                        m_uiSpeechTimer = 3000;
+                        break;
+                    case 2:                        
+                        m_creature->MonsterSay("Yes my Lord.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 1000;
+                        break;                        
+                    case 3:                        
+                        ToggleWalk();
+                        m_uiSpeechTimer = 15000;
+                        break;
+                    case 4:
+                        if(pGerard)
+                            DoScriptText(aTexts[rpEvent][0], pGerard, NULL);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 5:
+                        if(pLeona)
+                            DoScriptText(aTexts[rpEvent][1], pLeona, NULL);
+                        m_uiSpeechTimer = 10000;
+                        break;
+                    case 6:                        
+                        if(pGerard)
+                            DoScriptText(aTexts[rpEvent][2], pGerard, NULL);
+                        m_uiSpeechTimer = 6000;
+                        break;
+                    case 7:                        
+                        if(pJoanna)
+                            DoScriptText(aTexts[rpEvent][3], pJoanna, NULL);
+                        m_uiSpeechTimer = 120000; // long timer, handled at wp point
+                        break;
+                    case 8:
+                        m_creature->MonsterSay("My lord Abernathy sends this to you.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 8000;
+                        break;
+                    case 9:
+                        if(pLankester)
+                        {
+                            pLankester->MonsterSay("Ugh! What is that scoundrel doing sending his vermin to me? Get out of my sight before I take what is left of your life. And take this with you!", LANG_GUTTERSPEAK, NULL);
+                            pLankester->HandleEmote(EMOTE_ONESHOT_EXCLAMATION);
+                        }
+                        m_uiSpeechTimer = 8000;
+                        break;
+                    case 10:                        
+                        m_creature->MonsterSay("Yes my Lord.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 1000;
+                        break;
+                    case 11:           
+                        // while walking
+                        m_uiSpeechTimer = 120000;
+                        break;
+                    case 12:
+                        m_creature->MonsterSay("My Lord. From Father Lankester.", LANG_GUTTERSPEAK, NULL);
+                        m_creature->HandleEmote(EMOTE_ONESHOT_TALK);
+                        m_uiSpeechTimer = 2000;
+                        break;
+                    case 13:
+                        m_creature->GetMotionMaster()->MoveTargetedHome();
+                        m_uiSpeechTimer = 4000;
+                        break;
+                    case 14:
+                        if(pGerard)
+                        {
+                            pGerard->MonsterSay("Why thank you, my pet.", LANG_GUTTERSPEAK, NULL);
+                            pGerard->HandleEmote(EMOTE_ONESHOT_TALK);
+                        }
+                        m_bEvent = false;
+                        break;
+                    /*default:
+                        m_uiSpeechStep = 0;
+                        return;*/
+                }
+                ++m_uiSpeechStep;
+            }
+            else
+                m_uiSpeechTimer -= uiDiff;
+        }
+
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_theresa(Creature* pCreature)
+{
+    return new npc_theresaAI(pCreature);
+}
+
+/*######
 ## AddSC
 ######*/
 
@@ -1390,5 +1589,10 @@ void AddSC_undercity()
     pNewscript = new Script;
     pNewscript->Name = "npc_apothecary_keever";
     pNewscript->GetAI = &GetAI_npc_apothecary_keever;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_theresa";
+    pNewscript->GetAI = &GetAI_npc_theresa;
     pNewscript->RegisterSelf(); 
 }
