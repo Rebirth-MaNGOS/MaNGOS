@@ -2109,7 +2109,7 @@ public:
 		// List for points for manual movemap generation.
 		std::vector<Point3D> m_MmapPoints;
 
-        void SetQuestMultiplier(uint32 mpl) { m_questMultiplier = mpl > 3 ? 1 : mpl; }
+        void SetQuestMultiplier(uint32 mpl) { m_questMultiplier = mpl > 5 ? 1 : mpl; }
         uint32 GetQuestMultiplier() { return m_questMultiplier; }
 
     protected:
