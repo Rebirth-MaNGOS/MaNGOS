@@ -32,6 +32,7 @@
 #include "revision_nr.h"
 #include "Util.h"
 #include "BugReportMgr.h"
+#include "BattleGroundMgr.h"
 
 bool ChatHandler::HandleBugReportCount(char* /*args*/)
 {
@@ -204,16 +205,9 @@ bool ChatHandler::HandleQuestMultiplierCommand(char* args)
     {
         if(chr)
         {
-            if(chr->GetQuestMultiplier() > 1)
-            {
-                PSendSysMessage("Your current quest EXP multiplier is set to %u. This is not the blizzlike setting. You can change the multiplier by using the command '.questexp 1-5'", chr->GetQuestMultiplier());
-            }
-            else
-            {
-                PSendSysMessage("Your current quest EXP multiplier is set to %u. This is the blizzlike setting. You can change the multiplier by using the command '.questexp 1-5'", chr->GetQuestMultiplier());
-            }
+                PSendSysMessage("Your current quest exp multiplier is set to %u. You can change the multiplier by using the command '.questexp 1-5'", chr->GetQuestMultiplier());
         }
-        
+
         return true;
     }
 
@@ -223,8 +217,7 @@ bool ChatHandler::HandleQuestMultiplierCommand(char* args)
 
         if(quest_exp < 1 || quest_exp > 5)
         {
-            PSendSysMessage("Invalid value. You must use a value between 1 and 5, for example: '.questexp 2'.");
-            return true;
+            return false;
         }
         
         if(chr)
@@ -234,15 +227,7 @@ bool ChatHandler::HandleQuestMultiplierCommand(char* args)
             CharacterDatabase.BeginTransaction();
             chr->SaveQuestExpRateToDB();
             CharacterDatabase.CommitTransaction();
-
-            if(chr->GetQuestMultiplier() > 1)
-            {
-                PSendSysMessage("Your current quest EXP multiplier has been set to %u. This is not the blizzlike setting. You can change the multiplier by using the command '.questexp 1-5'", chr->GetQuestMultiplier());
-            }
-            else
-            {
-                PSendSysMessage("Your current quest EXP multiplier has been set to %u. This is the blizzlike setting. You can change the multiplier by using the command '.questexp 1-5'", chr->GetQuestMultiplier());
-            }
+            PSendSysMessage("Your current quest exp multiplier has been set to %u. You can change the multiplier by using the command '.questexp 1-5'", chr->GetQuestMultiplier());
         }
     }
 
