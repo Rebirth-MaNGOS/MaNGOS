@@ -7074,7 +7074,7 @@ void Player::CastItemCombatSpell(Unit* Target, WeaponAttackType attType)
                                 // Set a flag that allows us to identify that we can use to see that the attacks are, in fact, extra atttacks.
                                 m_NoMoreProcs = true;
                                 --m_extraAttacks;
-                                AttackerStateUpdate(Target,BASE_ATTACK,false);
+                                AttackerStateUpdate(Target,BASE_ATTACK,true);
                                 m_NoMoreProcs = false;
                             }
                             break;

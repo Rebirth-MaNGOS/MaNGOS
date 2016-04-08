@@ -2237,7 +2237,7 @@ void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool ex
     uint32 extraAttacks = m_extraAttacks;
 
     // melee attack spell casted at main hand attack only
-    if (attType == BASE_ATTACK && m_currentSpells[CURRENT_MELEE_SPELL])
+    if (attType == BASE_ATTACK && m_currentSpells[CURRENT_MELEE_SPELL] && !extra)
     {
         m_currentSpells[CURRENT_MELEE_SPELL]->cast();
 
@@ -3583,7 +3583,7 @@ bool Unit::IsNonMeleeSpellCasted(bool withDelayed, bool skipChanneled, bool skip
         (m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_FINISHED) &&
         (withDelayed || m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_DELAYED) &&
         m_currentSpells[CURRENT_GENERIC_SPELL]->m_spellInfo->Effect[EFFECT_INDEX_0] != SPELL_EFFECT_SUMMON_CHANGE_ITEM &&
-        m_currentSpells[CURRENT_GENERIC_SPELL]->m_spellInfo->Id != 17364)
+        m_currentSpells[CURRENT_GENERIC_SPELL]->m_spellInfo->DmgClass != SPELL_DAMAGE_CLASS_MELEE)
         return true;
 
     // channeled spells may be delayed, but they are still considered casted
