@@ -3434,6 +3434,10 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
                     (IsProfessionSkill(pSkill->id) || _spell_idx->second->racemask != 0))
                     continue;
 
+                // Shamans should not have their weapon skill removed when respeccing talents.
+                if(getClass() == CLASS_SHAMAN && (pSkill->id == SKILL_2H_AXES || pSkill->id == SKILL_2H_MACES))
+                    continue;
+
                 SetSkill(pSkill->id, 0, 0);
             }
         }
@@ -7070,7 +7074,7 @@ void Player::CastItemCombatSpell(Unit* Target, WeaponAttackType attType)
                                 // Set a flag that allows us to identify that we can use to see that the attacks are, in fact, extra atttacks.
                                 m_NoMoreProcs = true;
                                 --m_extraAttacks;
-                                AttackerStateUpdate(Target,BASE_ATTACK,false);
+                                AttackerStateUpdate(Target,BASE_ATTACK,true);
                                 m_NoMoreProcs = false;
                             }
                             break;
@@ -9740,6 +9744,10 @@ InventoryResult Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, boo
             if (type == INVTYPE_2HWEAPON)
             {
                 if (eslot != EQUIPMENT_SLOT_MAINHAND)
+                    return EQUIP_ERR_ITEM_CANT_BE_EQUIPPED;
+
+                // Spell Id: 16269 - Two-handed axes and maces (Enhancement shamans)
+                if(getClass() == CLASS_SHAMAN && !HasSpell(16269) && pItem->GetProto()->SubClass != ITEM_SUBCLASS_WEAPON_STAFF)
                     return EQUIP_ERR_ITEM_CANT_BE_EQUIPPED;
 
                 // offhand item must can be stored in inventory for offhand item and it also must be unequipped
