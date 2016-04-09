@@ -88,10 +88,10 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     {
         m_uiForceSubmergeTimer = 5000;
         m_bForceSubmerge = false;
-        m_uiSweepTimer = urand(5000, 10000);
-        m_uiSandBlastTimer = urand(4000, 8000);
-        m_uiSubmergeTimer = 90000;//urand(90000, 150000);		
-        m_uiBackTimer = 10000;//urand(30000, 45000);
+        m_uiSweepTimer = 41000;                   // Verified
+        m_uiSandBlastTimer = urand(20000, 23000); // Verified
+        m_uiSubmergeTimer = 90000;                // Verified
+        m_uiBackTimer = urand(30000, 45000);      // Seems valid
         m_uiBirthTimer = 0;
         m_uiChangeTargetTimer = urand(5000, 8000);
         m_uiSpawnTimer = urand(10000, 20000);
@@ -233,7 +233,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         m_creature->setFaction(34); // not quite friendly because it stops combat if he is 35
 
         m_bossState = BOSS_STATE_SUBMERGE;
-        m_uiBackTimer = 10000;//urand(30000, 45000);			// for testing purposes, change back after
+        m_uiBackTimer = urand(30000, 45000);			// for testing purposes, change back after
         SpawnDirtMound();
     }      
 
@@ -259,7 +259,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                 m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);
 
             m_bossState = BOSS_STATE_NORMAL;
-            m_uiSubmergeTimer = 90000;//urand(60000, 120000);
+            m_uiSubmergeTimer = 90000;
 
             RemoveDirtMounds(0);
         }
