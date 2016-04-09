@@ -611,7 +611,10 @@ void Map::Update(const uint32 &t_diff)
         {
             if (!pCreature->isInCombat() && !pCreature->IsInEvadeMode() &&
                 pCreature->GetDefaultMovementType() != WAYPOINT_MOTION_TYPE)
-                continue;
+            {
+                // Only keep creatures that should be updated in the list.
+                m_continentRemoveQueue.push(pCreature->GetObjectGuid());
+            }
         }
 
         //lets update mobs/objects in ALL visible cells around player!
@@ -645,7 +648,12 @@ void Map::Update(const uint32 &t_diff)
         m_continentMobs.remove(guid);
 
     while (m_continentAddQueue.try_pop(guid))
-        m_continentMobs.push_back(guid);
+    {
+        if (std::find(m_continentMobs.begin(), m_continentMobs.end(), guid) == m_continentMobs.end())
+        {
+            m_continentMobs.push_back(guid);
+        }
+    }
 
     // Send world objects and item update field changes
     SendObjectUpdates();

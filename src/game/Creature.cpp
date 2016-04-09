@@ -218,8 +218,10 @@ void Creature::AddToWorld()
         GetMap()->GetObjectsStore().insert<Creature>(GetObjectGuid(), (Creature*)this);
 
         // Mobs on the continents are added to their own list
-        // so they're always updated when in combat or patrolling.
-        if (GetMap()->GetId() == 1 || GetMap()->GetId() == 0)
+        // so they're always updated patrolling.
+        // Mobs not patrolling are handled dynamically.
+        if ((GetMap()->GetId() == 1 || GetMap()->GetId() == 0) &&
+            GetDefaultMovementType() != WAYPOINT_MOTION_TYPE)
         {
             GetMap()->AddToContinent(this);
         }

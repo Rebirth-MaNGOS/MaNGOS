@@ -5444,7 +5444,10 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
     {
         // set position before any AI calls/assistance
         if(GetTypeId()==TYPEID_UNIT)
+        {
             ((Creature*)this)->SetCombatStartPosition(GetPositionX(), GetPositionY(), GetPositionZ());
+            ((Creature*)this)->GetMap()->AddToContinent(this);
+        }
     }
 
     // Set our target
