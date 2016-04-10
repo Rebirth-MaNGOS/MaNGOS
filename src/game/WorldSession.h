@@ -273,6 +273,7 @@ class MANGOS_DLL_SPEC WorldSession
 
         uint32 GetLatency() const { return m_latency; }
         void SetLatency(uint32 latency) { m_latency = m_latency * 0.50f + latency * 0.50f; }
+        void ResetMovementTimeDelta() { m_movementTimeDelta = 0; }
         uint32 getDialogStatus(Player *pPlayer, Object* questgiver, uint32 defstatus);
 
     public:                                                 // opcodes handlers
@@ -677,6 +678,7 @@ class MANGOS_DLL_SPEC WorldSession
         LocaleConstant m_sessionDbcLocale;
         int m_sessionDbLocaleIndex;
         uint32 m_latency;
+        int32 m_movementTimeDelta;                          // Variable used to increase world timer resolution for movement handling.
         uint32 m_Tutorials[8];
         TutorialDataState m_tutorialState;
         ACE_Based::LockedQueue<WorldPacket*, ACE_Thread_Mutex> _recvQueue;

@@ -149,8 +149,6 @@ void MovementOpcodeDeliverer::Visit(CameraMapType& m)
             
             if (WorldSession* session = owner->GetSession())
             {
-                i_movement_info.UpdateTime(i_initial_timestamp + 175 + session->GetLatency());
-                
                 WorldPacket data(i_received_movement->GetOpcode(), uint16(i_received_movement->size() + 2));
                 data << i_mover_guid;             // write guid
                 i_movement_info.Write(data);      // write data

@@ -891,6 +891,7 @@ int WorldSocket::HandlePing (WorldPacket& recvPacket)
         if (m_Session)
 		{
             m_Session->SetLatency (latency);
+            m_Session->ResetMovementTimeDelta();
 		}
         else
         {
