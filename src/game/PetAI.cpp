@@ -100,6 +100,31 @@ void PetAI::AttackStart(Unit *u)
 
 void PetAI::ResetToHome()
 {
+    Unit* pOwner = m_creature->GetCharmerOrOwner();
+
+    if(pOwner && pOwner->GetTypeId() != TYPEID_PLAYER)
+    {
+        if(!pOwner->isDead() && pOwner->isInCombat())
+            return;
+        
+        if(!pOwner->isDead() && !pOwner->isInCombat())
+        {
+            m_creature->RemoveAllAuras();
+            m_creature->DeleteThreatList();
+            m_creature->CombatStop(true);
+
+            if (m_creature->isAlive())
+                m_creature->GetMotionMaster()->MoveTargetedHome();
+
+            m_creature->SetLootRecipient(NULL);
+        }
+        else if(pOwner->isDead())
+            m_creature->ForcedDespawn();
+    }
+}
+
+void PetAI::Reset()
+{
 }
 
 bool PetAI::IsVisible(Unit *pl) const
