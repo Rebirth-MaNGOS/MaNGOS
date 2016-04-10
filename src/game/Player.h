@@ -1669,6 +1669,8 @@ public:
         bool HasSkill(uint32 skill) const;
         void learnSkillRewardedSpells(uint32 id, uint32 value);
 
+        void SaveMaceAndAxeSkillToDB();
+
         WorldLocation& GetTeleportDest() { return m_teleport_dest; }
         bool IsBeingTeleported() const { return mSemaphoreTeleport_Near || mSemaphoreTeleport_Far; }
         bool IsBeingTeleportedNear() const { return mSemaphoreTeleport_Near; }
@@ -2165,6 +2167,7 @@ public:
         void _LoadBGData(QueryResult* result);
         void _LoadIntoDataField(const char* data, uint32 startOffset, uint32 count);
         bool _LoadQuestExpRate(QueryResult *result);
+        void _LoadAxeMaceSkill();
 
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
@@ -2318,6 +2321,9 @@ public:
         float  m_summon_x;
         float  m_summon_y;
         float  m_summon_z;
+
+        // Weapon skill
+        bool hasSavedSkill;
     public:
 
         // Ritual of summoning
