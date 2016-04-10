@@ -5423,6 +5423,9 @@ void Spell::EffectAddExtraAttacks(SpellEffectIndex /*eff_idx*/)
     if(!unitTarget || !unitTarget->isAlive())
         return;
 
+    if(unitTarget->m_extraAttacks != 0)
+        return;
+
     if (m_spellInfo->Id == 20178) //reckoning
     {
         if (unitTarget->m_extraAttacks < 4)
@@ -5430,6 +5433,18 @@ void Spell::EffectAddExtraAttacks(SpellEffectIndex /*eff_idx*/)
     }
     else if (!unitTarget->m_extraAttacks)
         unitTarget->m_extraAttacks = damage;
+
+    for(int i = unitTarget->m_extraAttacks; i > 0; --i) // Extra attacks should happen instantly
+    {
+        if (unitTarget->m_extraAttacks > 0)
+        {
+            // Set a flag that allows us to identify that we can use to see that the attacks are, in fact, extra atttacks.
+            unitTarget->setNoMoreProcs(true);// = true;
+            unitTarget->m_extraAttacks--;
+            unitTarget->AttackerStateUpdate(m_caster->getVictim(),BASE_ATTACK,true);
+            unitTarget->setNoMoreProcs(false);// = false;
+        }
+    }
 }
 
 void Spell::EffectParry(SpellEffectIndex /*eff_idx*/)

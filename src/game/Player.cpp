@@ -7074,26 +7074,15 @@ void Player::CastItemCombatSpell(Unit* Target, WeaponAttackType attType)
 
             ApplySpellMod(spellInfo->Id,SPELLMOD_CHANCE_OF_SUCCESS, chance);
 
+            if(spellInfo->Id == 8236)
+                chance = 100.0f;
+
             if (roll_chance_f(chance))
             {
                 if (IsPositiveSpell(spellInfo->Id))
                 {
-                    CastSpell(this, spellInfo->Id, true, item);
-                    for (int i = 0; i < MAX_EFFECT_INDEX; i++)  //instantly do extra attacks, not on next swing!
-                    {
-                        if (spellInfo->Effect[i] == SPELL_EFFECT_ADD_EXTRA_ATTACKS)
-                        {
-                            if (m_extraAttacks > 0)
-                            {
-                                // Set a flag that allows us to identify that we can use to see that the attacks are, in fact, extra atttacks.
-                                m_NoMoreProcs = true;
-                                --m_extraAttacks;
-                                AttackerStateUpdate(Target,BASE_ATTACK,true);
-                                m_NoMoreProcs = false;
-                            }
-                            break;
-                        }
-                    }
+                    if(!m_NoMoreProcs)
+                        CastSpell(this, spellInfo->Id, true, item);
                 }
                 else
                     CastSpell(Target, spellInfo->Id, true, item);
