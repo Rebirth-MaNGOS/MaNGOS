@@ -5434,16 +5434,19 @@ void Spell::EffectAddExtraAttacks(SpellEffectIndex /*eff_idx*/)
     else if (!unitTarget->m_extraAttacks)
         unitTarget->m_extraAttacks = damage;
 
-    for(int i = unitTarget->m_extraAttacks; i > 0; --i) // Extra attacks should happen instantly
+    if(unitTarget->GetTypeId() == TYPEID_PLAYER)
     {
-        if (unitTarget->m_extraAttacks > 0)
+        for(int i = unitTarget->m_extraAttacks; i > 0; --i) // Extra attacks should happen instantly
         {
-            // Set a flag that allows us to identify that we can use to see that the attacks are, in fact, extra atttacks.
-            unitTarget->setNoMoreProcs(true);// = true;
-            unitTarget->m_extraAttacks--;
-            if(unitTarget->getVictim())
-                unitTarget->AttackerStateUpdate(unitTarget->getVictim(),BASE_ATTACK,true);
-            unitTarget->setNoMoreProcs(false);// = false;
+            if (unitTarget->m_extraAttacks > 0)
+            {
+                // Set a flag that allows us to identify that we can use to see that the attacks are, in fact, extra atttacks.
+                unitTarget->setNoMoreProcs(true);// = true;
+                unitTarget->m_extraAttacks--;
+                if(unitTarget->getVictim())
+                    unitTarget->AttackerStateUpdate(unitTarget->getVictim(),BASE_ATTACK,true);
+                unitTarget->setNoMoreProcs(false);// = false;
+            }
         }
     }
 }
