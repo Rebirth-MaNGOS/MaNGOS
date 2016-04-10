@@ -7074,9 +7074,6 @@ void Player::CastItemCombatSpell(Unit* Target, WeaponAttackType attType)
 
             ApplySpellMod(spellInfo->Id,SPELLMOD_CHANCE_OF_SUCCESS, chance);
 
-            if(spellInfo->Id == 8236)
-                chance = 100.0f;
-
             if (roll_chance_f(chance))
             {
                 if (IsPositiveSpell(spellInfo->Id))
