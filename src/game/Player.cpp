@@ -546,6 +546,8 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
     m_ChatTeam = ALLIANCE;
 
     m_bCanMove = true;
+
+    hasSavedSkill = false;
 }
 
 Player::~Player ()
@@ -3305,6 +3307,12 @@ void Player::learnSpell(uint32 spell_id, bool dependent)
                 learnSpell(i->second, false);
         }
     }
+
+    if(spell_id == 16269)
+    {
+        hasSavedSkill = false;
+        _LoadAxeMaceSkill();
+    }
 }
 
 void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
@@ -3417,6 +3425,7 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
     {
         // not ranked skills
         SkillLineAbilityMapBounds bounds = sSpellMgr.GetSkillLineAbilityMapBounds(spell_id);
+        
 
         for(SkillLineAbilityMap::const_iterator _spell_idx = bounds.first; _spell_idx != bounds.second; ++_spell_idx)
         {
@@ -3434,9 +3443,14 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
                     (IsProfessionSkill(pSkill->id) || _spell_idx->second->racemask != 0))
                     continue;
 
-                // Shamans should not have their weapon skill removed when respeccing talents.
-                if(getClass() == CLASS_SHAMAN && (pSkill->id == SKILL_2H_AXES || pSkill->id == SKILL_2H_MACES))
-                    continue;
+                // We save Shamans 2-handed mace & axe skill to DB, it should not be reset when respeccing.
+                if(getClass() == CLASS_SHAMAN && (pSkill->id == SKILL_2H_AXES || pSkill->id == SKILL_2H_MACES) && !hasSavedSkill)
+                {
+                    CharacterDatabase.BeginTransaction();
+                    SaveMaceAndAxeSkillToDB();
+                    CharacterDatabase.CommitTransaction();
+                    hasSavedSkill = true;
+                }
 
                 SetSkill(pSkill->id, 0, 0);
             }
@@ -15582,6 +15596,30 @@ bool Player::_LoadQuestExpRate(QueryResult *result)
 
 }
 
+void Player::_LoadAxeMaceSkill()
+{
+    QueryResult *result = CharacterDatabase.PQuery("SELECT axe, mace FROM character_axemaceskill WHERE guid = '%u'",GetGUIDLow());
+    uint32 m_weaponSkills[2] = {1, 1};
+
+    if(result)
+    {
+        Field *fields = result->Fetch();
+
+        if(fields[0].GetUInt32() > 0 && fields[0].GetUInt32() <= 305)
+            m_weaponSkills[0] = fields[0].GetUInt32();
+
+        if(fields[1].GetUInt32() > 0 && fields[1].GetUInt32() <= 300)
+            m_weaponSkills[1] = fields[1].GetUInt32();
+
+        if(m_weaponSkills[0] >= 6 && getRace() == RACE_ORC)
+            m_weaponSkills[0] = m_weaponSkills[0] - 5;
+
+        SetSkill(SKILL_2H_AXES,  m_weaponSkills[0], GetMaxSkillValueForLevel());
+        SetSkill(SKILL_2H_MACES, m_weaponSkills[1], GetMaxSkillValueForLevel());
+        delete result;
+    }
+}
+
 bool Player::_LoadHomeBind(QueryResult *result)
 {
     PlayerInfo const *info = sObjectMgr.GetPlayerInfo(getRace(), getClass());
@@ -15867,6 +15905,14 @@ void Player::SaveQuestExpRateToDB()
     SqlStatement stmt = CharacterDatabase.CreateStatement(updateQuestExpRate, "REPLACE INTO character_questexprate (rate, guid) VALUES (?, ?)");
     stmt.PExecute(GetQuestMultiplier(), GetGUIDLow());
 }
+
+void Player::SaveMaceAndAxeSkillToDB()
+{
+    static SqlStatementID updateMaceAndAxeSkill;
+    SqlStatement stmt = CharacterDatabase.CreateStatement(updateMaceAndAxeSkill, "REPLACE INTO character_axemaceskill (axe, mace, guid) VALUES (?, ?, ?)");
+    stmt.PExecute(GetSkillValue(SKILL_2H_AXES), GetSkillValue(SKILL_2H_MACES), GetGUIDLow());
+}
+
 
 void Player::_SaveActions()
 {
