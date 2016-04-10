@@ -5436,7 +5436,7 @@ void Spell::EffectAddExtraAttacks(SpellEffectIndex /*eff_idx*/)
 
     for(int i = unitTarget->m_extraAttacks; i > 0; --i) // Extra attacks should happen instantly
     {
-        if (unitTarget->m_extraAttacks > 0))
+        if (unitTarget->m_extraAttacks > 0)
         {
             // Set a flag that allows us to identify that we can use to see that the attacks are, in fact, extra atttacks.
             unitTarget->setNoMoreProcs(true);// = true;
