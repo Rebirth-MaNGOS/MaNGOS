@@ -1557,6 +1557,9 @@ public:
         // Event handler
         EventProcessor m_Events;
 
+        bool getNoMoreProcs() { return m_NoMoreProcs; }
+        void setNoMoreProcs(bool mproc) { m_NoMoreProcs = mproc; }
+
         // stat system
         bool HandleStatModifier(UnitMods unitMod, UnitModifierType modifierType, float amount, bool apply);
         void SetModifierValue(UnitMods unitMod, UnitModifierType modifierType, float value) { m_auraModifiersGroup[unitMod][modifierType] = value; }
