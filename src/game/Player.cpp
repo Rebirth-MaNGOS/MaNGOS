@@ -9746,10 +9746,6 @@ InventoryResult Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, boo
                 if (eslot != EQUIPMENT_SLOT_MAINHAND)
                     return EQUIP_ERR_ITEM_CANT_BE_EQUIPPED;
 
-                // Spell Id: 16269 - Two-handed axes and maces (Enhancement shamans)
-                if(getClass() == CLASS_SHAMAN && !HasSpell(16269) && pItem->GetProto()->SubClass != ITEM_SUBCLASS_WEAPON_STAFF)
-                    return EQUIP_ERR_ITEM_CANT_BE_EQUIPPED;
-
                 // offhand item must can be stored in inventory for offhand item and it also must be unequipped
                 Item *offItem = GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND );
                 ItemPosCountVec off_dest;
