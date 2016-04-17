@@ -506,8 +506,11 @@ namespace MMAP
         }
 
         uint32 mapId = queryUnit->GetMapId();
-	const dtNavMeshQuery *query = GetNavMeshQuery(mapId, queryUnit->GetInstanceId());
-	dtQueryFilter filter;
+        const dtNavMeshQuery *query = GetNavMeshQuery(mapId, queryUnit->GetInstanceId());
+        if (!query)
+            return false;
+
+        dtQueryFilter filter;
 
         uint32 flags = 0;
         if (canWalk)
