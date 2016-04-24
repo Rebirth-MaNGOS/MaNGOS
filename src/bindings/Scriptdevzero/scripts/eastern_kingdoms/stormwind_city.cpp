@@ -441,7 +441,7 @@ struct MANGOS_DLL_DECL npc_lord_gregor_lescovarAI : public npc_escortAI
 			pMarzon->UpdateVisibilityAndView();
 			pMarzon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE);
 			pMarzon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
-			pMarzon->AI()->DoCastSpellIfCan(Marzon, 1784);
+			pMarzon->AI()->DoCastSpellIfCan(pMarzon, 1784);
 		}
 
 		// Stormwind Royal Guards (Garden)
@@ -617,7 +617,7 @@ struct MANGOS_DLL_DECL npc_lord_gregor_lescovarAI : public npc_escortAI
                     Creature* pGuard2 = m_creature->GetMap()->GetCreature(GardenRoyalGuard[2]);
                     Creature* pMarzon = m_creature->GetMap()->GetCreature(Marzon);
                     Creature* pTyrion = m_creature->GetMap()->GetCreature(Tyrion);
-                    
+
 					switch (EventPhase)
 					{
 						case 1:
@@ -943,45 +943,57 @@ struct MANGOS_DLL_DECL npc_tyrion_spybotAI : public npc_escortAI
 				switch (EventPhase)
 				{
                     case 0:
-                        m_fDefaultScaleSize = m_creature->GetFloatValue(OBJECT_FIELD_SCALE_X);
-				        m_creature->SetDisplayId(6703);
-                        m_creature->SetEntry(NPC_TYRIONA);
-                        m_creature->SetObjectScale(1.0f);
-                        m_creature->UpdateVisibilityAndView();
-                        CanWalk = true;
-                        break;
+                        {
+                            m_fDefaultScaleSize = m_creature->GetFloatValue(OBJECT_FIELD_SCALE_X);
+                            m_creature->SetDisplayId(6703);
+                            m_creature->SetEntry(NPC_TYRIONA);
+                            m_creature->SetObjectScale(1.0f);
+                            m_creature->UpdateVisibilityAndView();
+                            CanWalk = true;
+                            break;
+                        }
 					case 1:
-						if (pGuard1)
-						{
-                            DoScriptText(SAY_ROYAL_GUARD_1, pGuard1);
-							m_creature->SetFacingToObject(pGuard1);
-						}
-						EventTimer = 5000;
-						++EventPhase;
-						CanWalk = false;
-						break;
+                        {
+                            if (pGuard1)
+                            {
+                                DoScriptText(SAY_ROYAL_GUARD_1, pGuard1);
+                                m_creature->SetFacingToObject(pGuard1);
+                            }
+                            EventTimer = 5000;
+                            ++EventPhase;
+                            CanWalk = false;
+                            break;
+                        }
 					case 2:
-                        DoScriptText(SAY_TYRIONA_2, m_creature);
-						if (pGuard1)
-							pGuard1->HandleEmote(EMOTE_ONESHOT_KNEEL);
-						if (pGuard2)
-							pGuard2->HandleEmote(EMOTE_ONESHOT_KNEEL);
-						++EventPhase; // 3 = nothing (It's OK)
-						CanWalk = true;
-						break;
+                        {
+                            DoScriptText(SAY_TYRIONA_2, m_creature);
+                            if (pGuard1)
+                                pGuard1->HandleEmote(EMOTE_ONESHOT_KNEEL);
+                            if (pGuard2)
+                                pGuard2->HandleEmote(EMOTE_ONESHOT_KNEEL);
+                            ++EventPhase; // 3 = nothing (It's OK)
+                            CanWalk = true;
+                            break;
+                        }
 					case 4:
-						if (LordGregor)
-                            DoScriptText(SAY_GREGOR_1, LordGregor);
-						EventTimer = 5000;
-						++EventPhase;
-						CanWalk = false;
-						break;
+                        {
+                            Creature* pLordGregor = m_creature->GetMap()->GetCreature(LordGregor);
+                            if (pLordGregor)
+                                DoScriptText(SAY_GREGOR_1, pLordGregor);
+
+                            EventTimer = 5000;
+                            ++EventPhase;
+                            CanWalk = false;
+                            break;
+                        }
 					case 5:
-                        DoScriptText(SAY_TYRIONA_4, m_creature);
-						EventTimer = 5000;
-						++EventPhase;
-						CanWalk = false;
-						break;
+                        {
+                            DoScriptText(SAY_TYRIONA_4, m_creature);
+                            EventTimer = 5000;
+                            ++EventPhase;
+                            CanWalk = false;
+                            break;
+                        }
 					case 6:
                         {
 						    Player* pPlayer = GetPlayerForEscort();
@@ -1001,20 +1013,29 @@ struct MANGOS_DLL_DECL npc_tyrion_spybotAI : public npc_escortAI
 						    break;
                         }
                     case 7:
-                        CanWalk = true;
-                        break;
+                        {
+                            CanWalk = true;
+                            break;
+                        }
                     case 8:
-                        DoCast(m_creature, 1784);
-                        m_creature->SetDisplayId(1159);
-                        m_creature->SetEntry(NPC_TYRIONS_SPYBOT);
-                        m_creature->UpdateVisibilityAndView();
-                        m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-                        EventTimer = 3000;
-                        EventPhase = 9;
-                        CanWalk = false;
-                        break;
+                        {
+                            DoCast(m_creature, 1784);
+                            m_creature->SetDisplayId(1159);
+                            m_creature->SetEntry(NPC_TYRIONS_SPYBOT);
+                            m_creature->UpdateVisibilityAndView();
+                            m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                            EventTimer = 3000;
+                            EventPhase = 9;
+                            CanWalk = false;
+                            break;
+                        }
                     case 9:
-                        CanWalk = true;
+                        {
+                            CanWalk = true;
+                            break;
+                        }
+
+                    default:
                         break;
 				}
 			}
