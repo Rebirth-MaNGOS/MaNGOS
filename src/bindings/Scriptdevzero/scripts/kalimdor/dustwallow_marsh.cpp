@@ -800,7 +800,7 @@ struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
 						m_uiSpeechTimer = 3000;
 						break;
 					case 2:					// archmage cast spell on hendel
-						if (npc_archmage_tervoshAI* pTervoshAI = dynamic_cast<npc_archmage_tervoshAI*>(pTervosh->AI()))
+						if (pTervosh)
 							pTervosh->CastSpell(m_creature, SPELL_ENCAGE, false);
 						m_uiSpeechTimer = 3000;
 						break;
@@ -814,7 +814,7 @@ struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
 						m_uiSpeechTimer = 1000;
 						break;
 					case 5:						// cast spell to "teleport" hendel, then give quest credit FIND A SPELL WITH SHORTER CAST, 1sec~~! Full cast for now
-						if (npc_archmage_tervoshAI* pTervoshAI = dynamic_cast<npc_archmage_tervoshAI*>(pTervosh->AI()))
+						if (pTervosh)
 							pTervosh->CastSpell(pTervosh, SPELL_CAST_VISUAL, true);
 						m_uiSpeechTimer = 5000;
 						break;
@@ -850,13 +850,13 @@ struct MANGOS_DLL_DECL npc_private_hendelAI : public ScriptedAI
 						m_uiSpeechTimer = 5000;
 						break;
 					case 11:
-						if (npc_lady_jaina_proudmooreAI* pJainaAI = dynamic_cast<npc_lady_jaina_proudmooreAI*>(pJaina->AI()))
+						if (pJaina)
 							pJaina->CastSpell(pJaina, SPELL_IVUS_TELEPORT_VISUAL, false);
 						
-						if (npc_painedAI* pPainedAI = dynamic_cast<npc_painedAI*>(pPained->AI()))
+						if (pPained)
 							pPained->CastSpell(pPained, SPELL_IVUS_TELEPORT_VISUAL, false);
 
-						if (npc_archmage_tervoshAI* pTervoshAI = dynamic_cast<npc_archmage_tervoshAI*>(pTervosh->AI()))
+						if (pTervosh)
 							pTervosh->CastSpell(pTervosh, SPELL_IVUS_TELEPORT_VISUAL, false);
 
 						m_uiSpeechTimer = 2000;
