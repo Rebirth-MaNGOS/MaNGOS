@@ -85,7 +85,7 @@ struct MANGOS_DLL_DECL boss_zum_rahAI : public ScriptedAI
 		for(std::list<GameObject*>::iterator i = pList.begin(); i != pList.end(); ++i)
 		{
 			GameObject* pTemp = *i;
-			if(pTemp->GetGoState() == GO_STATE_ACTIVE)
+			if(pTemp && pTemp->GetGoState() == GO_STATE_ACTIVE)
 				pTemp->SetGoState(GO_STATE_READY);
 		}
 	}
@@ -139,7 +139,7 @@ struct MANGOS_DLL_DECL boss_zum_rahAI : public ScriptedAI
 				for(std::list<GameObject*>::iterator i = pList.begin(); i != pList.end(); ++i)
 				{
 					pGrave = *i;
-					if(pGrave->GetGoState() == GO_STATE_READY && pGrave->isSpawned())
+					if(pGrave && pGrave->GetGoState() == GO_STATE_READY && pGrave->isSpawned())
 						break;
 				}
 
