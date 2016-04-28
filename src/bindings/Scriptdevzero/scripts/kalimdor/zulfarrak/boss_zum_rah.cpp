@@ -70,24 +70,32 @@ struct MANGOS_DLL_DECL boss_zum_rahAI : public ScriptedAI
 	{
 		std::list<Creature*> ADDList;          
 		GetCreatureListWithEntryInGrid(ADDList,m_creature,NPC_ZOMBIE,100.0f);
-		for(std::list<Creature*>::iterator i = ADDList.begin(); i != ADDList.end(); ++i)
-		{
-			Creature* pTemp = *i;
-			if (pTemp)
-			{
-				pTemp->SetDeathState(JUST_DIED);
-				pTemp->SetHealth(0);
-			}
-		}
+
+        if(!ADDList.empty())
+        {
+		    for(std::list<Creature*>::iterator i = ADDList.begin(); i != ADDList.end(); ++i)
+		    {
+			    Creature* pTemp = *i;
+			    if (pTemp)
+			    {
+				    pTemp->SetDeathState(JUST_DIED);
+				    pTemp->SetHealth(0);
+			    }
+		    }
+        }
 
 		std::list<GameObject*> pList;
 		GetGameObjectListWithEntryInGrid(pList,m_creature,OBJECT_GRAVE,500.0f);
-		for(std::list<GameObject*>::iterator i = pList.begin(); i != pList.end(); ++i)
-		{
-			GameObject* pTemp = *i;
-			if(pTemp && pTemp->GetGoState() == GO_STATE_ACTIVE)
-				pTemp->SetGoState(GO_STATE_READY);
-		}
+
+        if(!pList.empty())
+        {
+		    for(std::list<GameObject*>::iterator i = pList.begin(); i != pList.end(); ++i)
+		    {
+			    GameObject* pTemp = *i;
+			    if(pTemp && pTemp->GetGoState() == GO_STATE_ACTIVE)
+				    pTemp->SetGoState(GO_STATE_READY);
+		    }
+        }
 	}
 
 	 void UpdateAI(const uint32 uiDiff)
@@ -136,21 +144,23 @@ struct MANGOS_DLL_DECL boss_zum_rahAI : public ScriptedAI
 				GameObject* pGrave;
 				std::list<GameObject*> pList;
 				GetGameObjectListWithEntryInGrid(pList,m_creature,OBJECT_GRAVE,30.0f);
-				for(std::list<GameObject*>::iterator i = pList.begin(); i != pList.end(); ++i)
-				{
-					pGrave = *i;
-					if(pGrave && pGrave->GetGoState() == GO_STATE_READY && pGrave->isSpawned())
-						break;
-				}
 
-				if (pGrave && pGrave->GetGoState() == GO_STATE_READY && pGrave->isSpawned())
-				{
-					pGrave->SetGoState(GO_STATE_ACTIVE);
-					pGrave->SetLootState(GO_JUST_DEACTIVATED);
-					if(Creature* pTemp = pGrave->SummonCreature(NPC_ZOMBIE,pGrave->GetPositionX(),pGrave->GetPositionY(),pGrave->GetPositionZ(),0,TEMPSUMMON_CORPSE_DESPAWN,5000))
-						pTemp->SetInCombatWithZone();
-					zombie_timer = urand(15000,30000);
-				}
+                if(!pList.empty())
+                {
+				    for(std::list<GameObject*>::iterator i = pList.begin(); i != pList.end(); ++i)
+				    {
+					    pGrave = *i;
+
+				        if (pGrave && pGrave->GetGoState() == GO_STATE_READY && pGrave->isSpawned())
+				        {
+					        pGrave->SetGoState(GO_STATE_ACTIVE);
+					        pGrave->SetLootState(GO_JUST_DEACTIVATED);
+					        if(Creature* pTemp = pGrave->SummonCreature(NPC_ZOMBIE,pGrave->GetPositionX(),pGrave->GetPositionY(),pGrave->GetPositionZ(),0,TEMPSUMMON_CORPSE_DESPAWN,5000))
+						        pTemp->SetInCombatWithZone();
+					        zombie_timer = urand(15000,30000);
+				        }
+                    }
+                }
 			}
 			else
 				zombie_timer -= uiDiff;
