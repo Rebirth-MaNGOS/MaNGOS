@@ -1149,12 +1149,14 @@ struct MANGOS_DLL_DECL npc_keeper_remulosAI_AQ : public npc_escortAI
         SetEscortPaused(true);
     }
 
-    void JustDied(Unit* /*pKiller*/)
+    void JustDied(Unit* pKiller)
     {
         if (Creature *pEranikus = m_creature->GetMap()->GetCreature(eranikus))
         {
             pEranikus->ForcedDespawn();
         }
+
+        npc_escortAI::JustDied(pKiller);
     }
 
     void UpdateEscortAI(const uint32 uiDiff)
