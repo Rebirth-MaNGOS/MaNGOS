@@ -5568,11 +5568,17 @@ void Unit::RemoveAllAttackers()
     while (!m_attackers.empty())
     {
         AttackerSet::iterator iter = m_attackers.begin();
-        if(!(*iter)->AttackStop())
+       
+        if((*iter))
         {
-            sLog.outError("WORLD: Unit has an attacker that isn't attacking it!");
-            m_attackers.erase(iter);
+            if(!(*iter)->AttackStop())
+            {
+                sLog.outError("WORLD: Unit has an attacker that isn't attacking it!");
+                m_attackers.erase(iter);
+            }
         }
+        else
+            m_attackers.erase(iter);
     }
 }
 
