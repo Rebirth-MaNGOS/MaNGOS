@@ -1106,7 +1106,7 @@ private:
         }
         void _removeAttacker(Unit *pAttacker)               // must be called only from Unit::AttackStop()
 		{
-            m_attackers.erase(pAttacker->GetGUID());
+            m_attackers.erase(pAttacker->GetObjectGuid());
         }
 
 public:
