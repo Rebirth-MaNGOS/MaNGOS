@@ -389,7 +389,7 @@ struct MANGOS_DLL_DECL npc_toogaAI : public FollowerAI
                     if (pPlayer->GetQuestStatus(QUEST_TOOGA) == QUEST_STATUS_INCOMPLETE)
                         pPlayer->GroupEventHappens(QUEST_TOOGA, m_creature);
                 }
-
+                
                 pTorta = pWho;
                 SetFollowComplete(true);
             }
@@ -487,7 +487,11 @@ bool QuestAccept_npc_tooga(Player* pPlayer, Creature* pCreature, const Quest* pQ
     if (pQuest->GetQuestId() == QUEST_TOOGA)
     {
         if (npc_toogaAI* pToogaAI = dynamic_cast<npc_toogaAI*>(pCreature->AI()))
+        {
             pToogaAI->StartFollow(pPlayer, FACTION_ESCORT_N_FRIEND_PASSIVE, pQuest);
+            pCreature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+        }
+
     }
 
     return true;
