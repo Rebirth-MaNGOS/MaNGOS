@@ -687,6 +687,7 @@ struct MANGOS_DLL_DECL boss_maws : public ScriptedAI
         m_uiFrenzyTimer = 25000;
 		m_uiThrashTimer = 15000;
 		m_uiDarkWaterTimer = 5000;
+        m_creature->SetRespawnEnabled(false);
     }
 
 	void SpellHit(Unit* pCaster, SpellEntry const* pSpell) // emote if he enrages
