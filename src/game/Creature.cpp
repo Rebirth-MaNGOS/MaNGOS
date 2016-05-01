@@ -180,7 +180,8 @@ Creature::Creature(CreatureSubtype subtype) :
     m_AlreadyCallAssistance(false), m_AlreadySearchedAssistance(false),
     m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false),
     m_temporaryFactionFlags(TEMPFACTION_NONE), m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL), m_originalEntry(0),
-    m_aggroRangeOverride(0), m_creatureInfo(NULL), m_splineFlags(SPLINEFLAG_WALKMODE), m_formation(NULL), m_inEvadeMode(false), m_evadeResetTimer(0), m_ignoreNonCombatFlags(false)
+    m_aggroRangeOverride(0), m_unreachableTimeout(0), m_creatureInfo(NULL), m_splineFlags(SPLINEFLAG_WALKMODE), m_formation(NULL), 
+    m_inEvadeMode(false), m_evadeResetTimer(0), m_ignoreNonCombatFlags(false)
 {
     m_regenTimer = 200;
     m_valuesCount = UNIT_END;
