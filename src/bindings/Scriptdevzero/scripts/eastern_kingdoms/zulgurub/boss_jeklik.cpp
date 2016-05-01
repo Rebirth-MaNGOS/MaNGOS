@@ -74,7 +74,6 @@ struct MANGOS_DLL_DECL boss_jeklikAI : public ScriptedAI
 	uint32 m_uiSplineTimer;
 
     GUIDList m_uiSummonList;
-	std::list<Creature*> m_lBatRiders;
 
     void Reset()
     {
@@ -144,6 +143,7 @@ struct MANGOS_DLL_DECL boss_jeklikAI : public ScriptedAI
                     //pSummon->ForcedDespawn();
                 }
 
+            std::list<Creature*> m_lBatRiders; 
 			GetCreatureListWithEntryInGrid(m_lBatRiders, m_creature, NPC_SUMMONED_GURUBASHI_BAT_RIDER, 200.f);
 
 			if (!m_lBatRiders.empty())
