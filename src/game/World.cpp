@@ -117,6 +117,8 @@ World::World()
 
     for(int i = 0; i < CONFIG_BOOL_VALUE_COUNT; ++i)
         m_configBoolValues[i] = false;
+
+    m_MaintenanceTimeChecker = 0;
 }
 
 /// World destructor
