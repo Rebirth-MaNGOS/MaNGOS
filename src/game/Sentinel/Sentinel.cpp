@@ -32,6 +32,8 @@ Sentinel::Sentinel(Player* pOwner)
 
 	m_uiDetectionCount = 0;
 
+    m_bIsFlyingOrOnTransport = false;
+
 	DEBUG_LOG("Sentinel: Module created for player %s. Account ID: %u", pOwner->GetName(), pOwner->GetSession()->GetAccountId());
 }
 
