@@ -5568,10 +5568,23 @@ void Unit::RemoveAllAttackers()
     while (!m_attackers.empty())
     {
         AttackerSet::iterator iter = m_attackers.begin();
-        if(!(*iter)->AttackStop())
+       
+        Map* pMap = GetMap();
+
+        if(pMap)
         {
-            sLog.outError("WORLD: Unit has an attacker that isn't attacking it!");
-            m_attackers.erase(iter);
+            Unit *pAttacker = pMap->GetUnit(*iter);
+
+            if(pAttacker)
+            {
+                if(!pAttacker->AttackStop())
+                {
+                    sLog.outError("WORLD: Unit has an attacker that isn't attacking it!");
+                    m_attackers.erase(iter);
+                }
+            }
+            else
+                m_attackers.erase(iter);
         }
     }
 }
@@ -8034,8 +8047,14 @@ bool Unit::SelectHostileTarget()
     {
         for(AttackerSet::const_iterator itr = m_attackers.begin(); itr != m_attackers.end(); ++itr)
         {
-            if ((*itr)->IsInMap(this) && (*itr)->isTargetableForAttack() && (*itr)->isInAccessablePlaceFor((Creature*)this))
-                return false;
+            Map* pMap = GetMap();
+
+            if(pMap)
+            {
+                Unit* pAttacker = pMap->GetUnit(*itr);
+                if (pAttacker && pAttacker->IsInMap(this) && pAttacker->isTargetableForAttack() && pAttacker->isInAccessablePlaceFor((Creature*)this))
+                    return false;
+            }
         }
     }
 
@@ -10162,13 +10181,23 @@ void Unit::StopAttackFaction(uint32 faction_id)
     AttackerSet const& attackers = getAttackers();
     for(AttackerSet::const_iterator itr = attackers.begin(); itr != attackers.end();)
     {
-        if ((*itr)->getFactionTemplateEntry()->faction==faction_id)
+        Map *pMap = GetMap();
+
+        if(pMap)
         {
-            (*itr)->AttackStop();
-            itr = attackers.begin();
+            Unit* pAttacker = pMap->GetUnit(*itr);
+
+            if(pAttacker)
+            {
+                if (pAttacker->getFactionTemplateEntry()->faction==faction_id)
+                {
+                    pAttacker->AttackStop();
+                    itr = attackers.begin();
+                }
+                else
+                    ++itr;
+            }
         }
-        else
-            ++itr;
     }
 
     getHostileRefManager().deleteReferencesForFaction(faction_id);

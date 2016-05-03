@@ -3362,8 +3362,17 @@ void Aura::HandleFeignDeath(bool apply, bool Real)
         Unit::AttackerSet attackers(caster->getAttackers()); // A copy of the list is required since interrupting the spell being cast by the attacker may remove it from the list and cause a segfault if a reference is used.
         if (!attackers.empty())
         {
-            std::for_each(attackers.begin(), attackers.end(), [&](Unit* current_attacker) {
-                current_attacker->InterruptSpellsTargettingUnit(false, caster->GetObjectGuid());
+            std::for_each(attackers.begin(), attackers.end(), [&](ObjectGuid current_attacker) {
+
+                Map *pMap = caster->GetMap();
+
+                if(pMap)
+                {
+                    Unit* pAttacker = pMap->GetUnit(current_attacker);
+
+                    if(pAttacker)
+                        pAttacker->InterruptSpellsTargettingUnit(false, caster->GetObjectGuid());
+                }
             });
         }
 

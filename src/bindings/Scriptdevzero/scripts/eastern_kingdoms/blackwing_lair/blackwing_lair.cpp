@@ -1052,7 +1052,8 @@ struct MANGOS_DLL_DECL mob_blackwing_technicianAI : public ScriptedAI
         {
             for(Unit::AttackerSet::const_iterator itr = m_creature->getAttackers().begin(); itr != m_creature->getAttackers().end(); ++itr)
             {
-                if ((*itr)->IsInMap(m_creature) && (*itr)->isTargetableForAttack() && (*itr)->isInAccessablePlaceFor(m_creature))
+                Unit* pAttacker = m_creature->GetMap()->GetUnit(*itr);
+                if (pAttacker && pAttacker->IsInMap(m_creature) && pAttacker->isTargetableForAttack() && pAttacker->isInAccessablePlaceFor(m_creature))
                     return false;
             }
         }
