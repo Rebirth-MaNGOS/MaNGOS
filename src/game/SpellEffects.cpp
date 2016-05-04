@@ -5423,8 +5423,11 @@ void Spell::EffectAddExtraAttacks(SpellEffectIndex /*eff_idx*/)
     if(!unitTarget || !unitTarget->isAlive())
         return;
 
-    if(unitTarget->m_extraAttacks != 0)
-        return;
+    if(m_spellInfo->Id != 20178)
+    {
+        if(unitTarget->m_extraAttacks != 0)
+            return;
+    }
 
     if (m_spellInfo->Id == 20178) //reckoning
     {
@@ -5434,21 +5437,25 @@ void Spell::EffectAddExtraAttacks(SpellEffectIndex /*eff_idx*/)
     else if (!unitTarget->m_extraAttacks)
         unitTarget->m_extraAttacks = damage;
 
-    if(unitTarget->GetTypeId() == TYPEID_PLAYER)
+    if(m_spellInfo->Id != 20178)
     {
-        if(m_spellInfo->Id != 16361 && m_spellInfo->Id != 8232 && m_spellInfo->Id != 8235 && m_spellInfo->Id != 10484 &&
-            m_spellInfo->Id != 8516 && m_spellInfo->Id != 10608 && m_spellInfo->Id != 10610)
+        if(unitTarget->GetTypeId() == TYPEID_PLAYER)
         {
-            for(int i = unitTarget->m_extraAttacks; i > 0; --i) // Extra attacks should happen instantly
+            if(m_spellInfo->Id != 16361 && m_spellInfo->Id != 8232 && m_spellInfo->Id != 8235 && m_spellInfo->Id != 10484 &&
+                m_spellInfo->Id != 8516 && m_spellInfo->Id != 10608 && m_spellInfo->Id != 10610)
             {
-                if (unitTarget->m_extraAttacks > 0)
+
+                for(int i = unitTarget->m_extraAttacks; i > 0; --i) // Extra attacks should happen instantly
                 {
-                    // Set a flag that allows us to identify that we can use to see that the attacks are, in fact, extra atttacks.
-                    unitTarget->setNoMoreProcs(true);// = true;
-                    unitTarget->m_extraAttacks--;
-                    if(unitTarget->getVictim())
-                        unitTarget->AttackerStateUpdate(unitTarget->getVictim(),BASE_ATTACK,true);
-                    unitTarget->setNoMoreProcs(false);// = false;
+                    if (unitTarget->m_extraAttacks > 0)
+                    {
+                        // Set a flag that allows us to identify that we can use to see that the attacks are, in fact, extra atttacks.
+                        unitTarget->setNoMoreProcs(true);// = true;
+                        unitTarget->m_extraAttacks--;
+                        if(unitTarget->getVictim())
+                            unitTarget->AttackerStateUpdate(unitTarget->getVictim(),BASE_ATTACK,true);
+                        unitTarget->setNoMoreProcs(false);// = false;
+                    }
                 }
             }
         }
