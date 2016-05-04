@@ -1085,12 +1085,15 @@ struct MANGOS_DLL_DECL boss_techbotAI : public ScriptedAI
 
 	void SummonedCreatureJustDied(Creature* pSummoned)
     {
-        switch(pSummoned->GetEntry())
-		{
-			case NPC_DUPE_BUG:	// heal 5% when a dupe bug dies				 
-				m_creature->SetHealth(m_creature->GetHealth()+m_creature->GetMaxHealth()*0.05);
-				break;
-		}
+        if(!m_creature->isDead())
+        {
+            switch(pSummoned->GetEntry())
+		    {
+			    case NPC_DUPE_BUG:	// heal 5% when a dupe bug dies				 
+				    m_creature->SetHealth(m_creature->GetHealth()+m_creature->GetMaxHealth()*0.05);
+				    break;
+		    }
+        }
 	}
 
     void UpdateAI(const uint32 uiDiff)

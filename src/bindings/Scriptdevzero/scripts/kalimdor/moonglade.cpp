@@ -952,7 +952,7 @@ struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
 
     void Reset()
     {
-        m_uiShadowVolleyTimer = urand(1000, 2000);
+        m_uiShadowVolleyTimer = urand(10000, 40000);
         eranikus = m_creature->GetOwnerGuid();
         m_creature->SetRespawnEnabled(false);
     }
@@ -981,7 +981,7 @@ struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
         {
             if (m_uiShadowVolleyTimer <= uiDiff)
             {
-                m_uiShadowVolleyTimer = urand(1000, 2000);
+                m_uiShadowVolleyTimer = urand(10000, 40000);
 
                 DoCast(m_creature, SPELL_SHADOWBOLT_VOLLEY, true);
             }
