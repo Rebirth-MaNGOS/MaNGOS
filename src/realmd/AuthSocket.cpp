@@ -215,6 +215,7 @@ void AuthSocket::OnAccept()
     // The flood protection needs to be turned off as long as we see all login attemps coming
     // from the same address.
   
+    /*
     time_t current_time = time(NULL);
     std::string client_address = get_remote_address();
 
@@ -278,6 +279,7 @@ void AuthSocket::OnAccept()
                 ++b_itr;
         }
     }
+    */
 
 
     BASIC_LOG("Accepting connection from '%s'", get_remote_address().c_str());
