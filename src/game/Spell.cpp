@@ -2979,7 +2979,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     // Make sure the caster is added to the list of attackers when casting a spell against a hostile target.
     Unit* target = m_targets.getUnitTarget();
 
-    if (target && m_caster->IsHostileTo(target) && std::find(target->getAttackers().begin(), target->getAttackers().end(), m_caster->GetObjectGuid()) == target->getAttackers().end()
+    if (target && m_caster->IsHostileTo(target) && std::find(target->getAttackers().begin(), target->getAttackers().end(), m_caster) == target->getAttackers().end()
             && m_caster->getVictim() == NULL && !m_caster->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED))
     {
         if((m_spellInfo->Id != 11578 && m_spellInfo->Id != 100 && m_spellInfo->Id != 6178 && m_spellInfo->Id != 20252

@@ -411,24 +411,15 @@ void WorldSession::LogoutPlayer(bool Save)
             std::set<Player*> aset;
             for(Unit::AttackerSet::const_iterator itr = _player->getAttackers().begin(); itr != _player->getAttackers().end(); ++itr)
             {
-                Map* pMap = _player->GetMap();
-
-                if(pMap)
+                Unit* owner = (*itr)->GetOwner();           // including player controlled case
+                if(owner)
                 {
-                    Unit* pAttacker = pMap->GetUnit(*itr);
-
-                    if(pAttacker)
-                    {
-                        Unit* owner = pAttacker->GetOwner();           // including player controlled case
-                        if(owner)
-                        {
-                            if(owner->GetTypeId()==TYPEID_PLAYER)
-                                aset.insert((Player*)owner);
-                        }
-                        else if(pAttacker->GetTypeId()==TYPEID_PLAYER)
-                                aset.insert((Player*)pAttacker);
-                    }
+                    if(owner->GetTypeId()==TYPEID_PLAYER)
+                        aset.insert((Player*)owner);
                 }
+                else
+                if((*itr)->GetTypeId()==TYPEID_PLAYER)
+                    aset.insert((Player*)(*itr));
             }
 
             // give honor to all attackers from set like group case

@@ -37,7 +37,6 @@
 #include "WorldPacket.h"
 #include "Timer.h"
 #include "TemporaryGameObject.h"
-#include "Map.h"
 #include <list>
 
 enum SpellInterruptFlags
@@ -1011,7 +1010,7 @@ struct SpellProcEventEntry;                                 // used only private
 class MANGOS_DLL_SPEC Unit : public WorldObject
 {
     public:
-        typedef std::set<ObjectGuid> AttackerSet;
+        typedef std::set<Unit*> AttackerSet;
         typedef std::multimap< uint32, SpellAuraHolder*> SpellAuraHolderMap;
         typedef std::pair<SpellAuraHolderMap::iterator, SpellAuraHolderMap::iterator> SpellAuraHolderBounds;
         typedef std::pair<SpellAuraHolderMap::const_iterator, SpellAuraHolderMap::const_iterator> SpellAuraHolderConstBounds;
@@ -1095,41 +1094,25 @@ private:
 		AttackerSet m_attackers;
         void _addAttacker(Unit *pAttacker)                  // must be called only from Unit::Attack(Unit*)
 		{
-            Map* pMap = GetMap();
-
-            if(pMap)
-            {
-                AttackerSet::const_iterator itr = m_attackers.find(pAttacker->GetObjectGuid());
-                if(itr == m_attackers.end())
-                    m_attackers.insert(pAttacker->GetObjectGuid());
-            }
+            AttackerSet::const_iterator itr = m_attackers.find(pAttacker);
+            if(itr == m_attackers.end())
+                m_attackers.insert(pAttacker);
         }
         void _removeAttacker(Unit *pAttacker)               // must be called only from Unit::AttackStop()
 		{
-            m_attackers.erase(pAttacker->GetObjectGuid());
+            m_attackers.erase(pAttacker);
         }
 
 public:
         Unit * getAttackerForHelper()                       // If someone wants to help, who to give them
         {
-            if (getVictim() != nullptr)
+            if (getVictim() != NULL)
                 return getVictim();
 
             if (!m_attackers.empty())
-            {
+                return *(m_attackers.begin());
 
-                Map* pMap = GetMap();
-
-                if(pMap)
-                {
-                    Unit* pHelper = GetMap()->GetUnit(*m_attackers.begin());
-                
-                    return pHelper ? pHelper : nullptr;
-                }
-
-            }
-
-            return nullptr;
+            return NULL;
         }
         bool Attack(Unit *victim, bool meleeAttack);
         void CastStop(uint32 except_spellid = 0);
