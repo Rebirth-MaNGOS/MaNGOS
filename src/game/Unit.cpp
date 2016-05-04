@@ -5577,8 +5577,6 @@ void Unit::RemoveAllAttackers()
                 m_attackers.erase(iter);
             }
         }
-        else
-            m_attackers.erase(iter);
     }
 }
 
