@@ -15710,10 +15710,14 @@ void Player::SaveToDB()
 			sLog.outWarden("The account %u tried to save the character with guid %u that belongs to the account %u.", GetSession()->GetAccountId(), GetGUIDLow(), accountID); 
 			sWorld.SendAntiCheatMessageToGMs(GetSession()->GetPlayerName(), buff);
 
+            delete chkChar;
 			return; // Do not save the character to the wrong account.
 		}
 
+        delete chkChar;
+        chkChar = nullptr;
 	}
+
 
     CharacterDatabase.BeginTransaction();
 
