@@ -1222,6 +1222,8 @@ void ObjectMgr::LoadPathingBarriers()
 
 	 } while (result->NextRow());
 
+     delete result;
+
 	 sLog.outString();
 	 sLog.outString(">> Loaded %lu pathing barriers", (unsigned long) counter);
 }
@@ -1264,6 +1266,8 @@ void ObjectMgr::LoadDebuffPriorities()
 			 mDebuffPriorities[spellId].push_back(overwritten_spellId);
 
 	 } while (result->NextRow());
+
+     delete result;
 
 	 sLog.outString();
 	 sLog.outString(">> Loaded %lu debuff priorities", (unsigned long) counter);
