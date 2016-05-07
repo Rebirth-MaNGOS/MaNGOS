@@ -1003,8 +1003,8 @@ void AddSC_ungoro_crater()
 {
     Script* pNewscript;
 
-    pNewscript = new Script;
-  /*  pNewscript->Name = "mob_simone_the_inconspicuous";
+   /* pNewscript = new Script;
+    pNewscript->Name = "mob_simone_the_inconspicuous";
     pNewscript->GetAI = &GetAI_mob_simone_the_inconspicuous;
     pNewscript->pGossipHello = &GossipHello_mob_simone_the_inconspicuous;
     pNewscript->pGossipSelect = &GossipSelect_mob_simone_the_inconspicuous;
