@@ -43,8 +43,6 @@ BattleGroundWS::~BattleGroundWS()
 
 void BattleGroundWS::Update(uint32 diff)
 {
-    BattleGround::Update(diff);
-
     if (GetStatus() == STATUS_IN_PROGRESS)
     {
         if (m_FlagState[BG_TEAM_ALLIANCE] == BG_WS_FLAG_STATE_WAIT_RESPAWN)
@@ -88,6 +86,10 @@ void BattleGroundWS::Update(uint32 diff)
             }
         }
     }
+
+    // Must be done last since BattleGround::Update
+    // can delete the battleground.
+    BattleGround::Update(diff);
 }
 
 void BattleGroundWS::StartingEventCloseDoors()

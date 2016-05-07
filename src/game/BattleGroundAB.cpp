@@ -46,8 +46,6 @@ BattleGroundAB::~BattleGroundAB()
 
 void BattleGroundAB::Update(uint32 diff)
 {
-    BattleGround::Update(diff);
-
     if (GetStatus() == STATUS_IN_PROGRESS)
     {
         int team_points[BG_TEAMS_COUNT] = { 0, 0 };
@@ -150,6 +148,10 @@ void BattleGroundAB::Update(uint32 diff)
         if (m_TeamScores[BG_TEAM_HORDE] >= BG_AB_MAX_TEAM_SCORE)
             EndBattleGround(HORDE);
     }
+
+    // Must be done last since BattleGround::Update
+    // can delete the battleground.
+    BattleGround::Update(diff);
 }
 
 void BattleGroundAB::StartingEventCloseDoors()

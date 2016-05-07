@@ -227,111 +227,113 @@ void BattleGroundAV::HandleQuestComplete(uint32 questid, Player *player)
 
 void BattleGroundAV::Update(uint32 diff)
 {
-    BattleGround::Update(diff);
 
     if (GetStatus() != STATUS_IN_PROGRESS)
-        return;
-
-    // add points from mine owning, and look if the neutral team can reclaim the mine
-    for(uint8 mine = 0; mine < BG_AV_MAX_MINES; mine++)
     {
-        if (m_Mine_Owner[mine] != BG_AV_TEAM_NEUTRAL)
+        // add points from mine owning, and look if the neutral team can reclaim the mine
+        for(uint8 mine = 0; mine < BG_AV_MAX_MINES; mine++)
         {
-            if (m_Mine_Reclaim_Timer[mine] > diff)
-                m_Mine_Reclaim_Timer[mine] -= diff;
-            else
-                ChangeMineOwner(mine, BG_AV_TEAM_NEUTRAL);
+            if (m_Mine_Owner[mine] != BG_AV_TEAM_NEUTRAL)
+            {
+                if (m_Mine_Reclaim_Timer[mine] > diff)
+                    m_Mine_Reclaim_Timer[mine] -= diff;
+                else
+                    ChangeMineOwner(mine, BG_AV_TEAM_NEUTRAL);
+            }
+        }
+
+        // looks for all timers of the nodes and destroy the building (for graveyards the building wont get destroyed, it goes just to the other team
+        for(BG_AV_Nodes i = BG_AV_NODES_FIRSTAID_STATION; i < BG_AV_NODES_MAX; ++i)
+        {
+            if (m_Nodes[i].State == POINT_ASSAULTED)
+            {
+                if (m_Nodes[i].Timer > diff)
+                    m_Nodes[i].Timer -= diff;
+                else
+                    EventPlayerDestroyedPoint(i);
+            }
+        }
+
+        // Check if any airstrike has been launched. And spawn the gryphons if that's the case.
+        for (int i = 0; i < BG_AV_AIRSTRIKES_MAX; i++)
+        {
+            if (m_bAirstrikeLaunched[i])
+            {
+                SpawnEvent(BG_AV_AIRSTRIKES, i, true, false);
+                m_bAirstrikeLaunched[i] = false;
+            }
+        }
+
+        if (!m_vecBeaconEventQueue.empty())
+        {
+            // Handle queued beacon events.
+            auto event_itr = m_vecBeaconEventQueue.begin();
+            while (event_itr != m_vecBeaconEventQueue.end())
+            {
+                HandleBeaconEvent(*event_itr);
+                event_itr = m_vecBeaconEventQueue.erase(event_itr);
+            }
+        }
+
+        if (!m_BeaconTimerMap.empty())
+        {
+            for (std::pair<uint32, uint32> beacon_timer : m_BeaconTimerMap)
+            {
+                if (beacon_timer.second)
+                {
+                    if (beacon_timer.second <= diff)
+                    {	      
+                        m_BeaconTimerMap[beacon_timer.first] = 0;
+
+                        GameObject* beacon = GetSingleGameObjectFromStorage(beacon_timer.first);
+                        if (beacon)
+                        {
+                            beacon->SetRespawnTime(10 * RESPAWN_ONE_DAY);
+                            beacon->UpdateVisibilityAndView();
+                  
+                            uint32 creature_id;
+                
+                            switch (beacon_timer.first)
+                            {
+                              case BG_AV_BEACON_MULVERICK:
+                                  creature_id = BG_AV_BEACON_BIRD_MULVERICK;
+                                  break;
+                              case BG_AV_BEACON_GUSE:
+                                  creature_id = BG_AV_BEACON_BIRD_GUSE;
+                                  break;
+                              case BG_AV_BEACON_JEZTOR:
+                                  creature_id = BG_AV_BEACON_BIRD_JEZTOR;
+                                  break;
+                              case BG_AV_BEACON_ICHMAN:
+                                  creature_id = BG_AV_BEACON_BIRD_ICHMAN;
+                                  break;
+                              case BG_AV_BEACON_VIPORE:
+                                  creature_id = BG_AV_BEACON_BIRD_VIPORE;
+                                  break;
+                              case BG_AV_BEACON_SLIDORE:
+                                  creature_id = BG_AV_BEACON_BIRD_SLIDORE;
+                                  break;
+                            }
+                
+                            Creature* summoned_bird = beacon->SummonCreature(creature_id, beacon->GetPositionX(), beacon->GetPositionY(), beacon->GetPositionZ() + 60.f, 0.f, TEMPSUMMON_CORPSE_DESPAWN, 0);
+
+                            // Manually call this function to make the bird start patrolling.
+                            if (summoned_bird && summoned_bird->AI())
+                                summoned_bird->AI()->JustRespawned();
+                        }
+            
+                    }
+                    else
+                        m_BeaconTimerMap[beacon_timer.first] -= diff;
+
+                }
+            }
         }
     }
 
-    // looks for all timers of the nodes and destroy the building (for graveyards the building wont get destroyed, it goes just to the other team
-    for(BG_AV_Nodes i = BG_AV_NODES_FIRSTAID_STATION; i < BG_AV_NODES_MAX; ++i)
-    {
-        if (m_Nodes[i].State == POINT_ASSAULTED)
-        {
-            if (m_Nodes[i].Timer > diff)
-                m_Nodes[i].Timer -= diff;
-            else
-                EventPlayerDestroyedPoint(i);
-        }
-    }
-
-    // Check if any airstrike has been launched. And spawn the gryphons if that's the case.
-    for (int i = 0; i < BG_AV_AIRSTRIKES_MAX; i++)
-    {
-        if (m_bAirstrikeLaunched[i])
-        {
-            SpawnEvent(BG_AV_AIRSTRIKES, i, true, false);
-            m_bAirstrikeLaunched[i] = false;
-        }
-    }
-
-    if (!m_vecBeaconEventQueue.empty())
-	{
-		// Handle queued beacon events.
-		auto event_itr = m_vecBeaconEventQueue.begin();
-		while (event_itr != m_vecBeaconEventQueue.end())
-		{
-			HandleBeaconEvent(*event_itr);
-			event_itr = m_vecBeaconEventQueue.erase(event_itr);
-		}
-	}
-
-	if (!m_BeaconTimerMap.empty())
-	{
-		for (std::pair<uint32, uint32> beacon_timer : m_BeaconTimerMap)
-		{
-			if (beacon_timer.second)
-			{
-				if (beacon_timer.second <= diff)
-				{	      
-					m_BeaconTimerMap[beacon_timer.first] = 0;
-
-					GameObject* beacon = GetSingleGameObjectFromStorage(beacon_timer.first);
-					if (beacon)
-					{
-						beacon->SetRespawnTime(10 * RESPAWN_ONE_DAY);
-						beacon->UpdateVisibilityAndView();
-		      
-						uint32 creature_id;
-		    
-						switch (beacon_timer.first)
-						{
-						  case BG_AV_BEACON_MULVERICK:
-							  creature_id = BG_AV_BEACON_BIRD_MULVERICK;
-							  break;
-						  case BG_AV_BEACON_GUSE:
-							  creature_id = BG_AV_BEACON_BIRD_GUSE;
-							  break;
-						  case BG_AV_BEACON_JEZTOR:
-							  creature_id = BG_AV_BEACON_BIRD_JEZTOR;
-							  break;
-						  case BG_AV_BEACON_ICHMAN:
-							  creature_id = BG_AV_BEACON_BIRD_ICHMAN;
-							  break;
-						  case BG_AV_BEACON_VIPORE:
-							  creature_id = BG_AV_BEACON_BIRD_VIPORE;
-							  break;
-						  case BG_AV_BEACON_SLIDORE:
-							  creature_id = BG_AV_BEACON_BIRD_SLIDORE;
-							  break;
-						}
-		    
-						Creature* summoned_bird = beacon->SummonCreature(creature_id, beacon->GetPositionX(), beacon->GetPositionY(), beacon->GetPositionZ() + 60.f, 0.f, TEMPSUMMON_CORPSE_DESPAWN, 0);
-
-						// Manually call this function to make the bird start patrolling.
-						if (summoned_bird && summoned_bird->AI())
-							summoned_bird->AI()->JustRespawned();
-					}
-		
-				}
-				else
-					m_BeaconTimerMap[beacon_timer.first] -= diff;
-
-			}
-		}
-	}
-
+    // Must be done last since BattleGround::Update
+    // can delete the battleground.
+    BattleGround::Update(diff);
 }
 
 void BattleGroundAV::StartingEventCloseDoors()
