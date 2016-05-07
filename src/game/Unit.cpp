@@ -298,6 +298,13 @@ Unit::~Unit()
     for (std::pair<const uint32, SpellAuraHolder*> holderPair : m_spellAuraHolders)
         delete holderPair.second;
 
+    // Cleanup for any remaining mods.
+    for (std::list<Aura*> modList : m_modAuras)
+    {
+        for (Aura* aura : modList)
+            delete aura;
+    }
+
     // those should be already removed at "RemoveFromWorld()" call
     MANGOS_ASSERT(m_gameObj.size() == 0);
     MANGOS_ASSERT(m_dynObjGUIDs.size() == 0);
