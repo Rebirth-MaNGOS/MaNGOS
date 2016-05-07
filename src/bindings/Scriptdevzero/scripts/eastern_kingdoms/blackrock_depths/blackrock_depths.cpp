@@ -2400,12 +2400,6 @@ void AddSC_blackrock_depths()
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;
-    pNewScript->Name = "npc_commander_gorshak";
-    pNewScript->GetAI = &GetAI_npc_commander_gorshak;
-    pNewScript->pQuestAcceptNPC = &QuestAccept_npc_commander_gorshak;
-    pNewScript->RegisterSelf();
-
-    pNewScript = new Script;
     pNewScript->Name = "go_shadowforge_lock";
     pNewScript->pGOUse = &GOUse_go_shadowforge_lock;
     pNewScript->RegisterSelf();
