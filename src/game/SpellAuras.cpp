@@ -285,9 +285,6 @@ Aura::Aura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBas
 
 Aura::~Aura()
 {
-    // Make sure to delete any spellmod the aura has
-    // when it is destroyed.
-    delete m_spellmod;
 }
 
 AreaAura::AreaAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target,
