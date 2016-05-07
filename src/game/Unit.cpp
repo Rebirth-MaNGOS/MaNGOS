@@ -292,8 +292,11 @@ Unit::~Unit()
         }
     }
 
-    if (m_charmInfo)
-        delete m_charmInfo;
+    delete m_charmInfo;
+
+    // Cleanup for AuraHolders when a Unit is destroyed.
+    for (std::pair<const uint32, SpellAuraHolder*> holderPair : m_spellAuraHolders)
+        delete holderPair.second;
 
     // those should be already removed at "RemoveFromWorld()" call
     MANGOS_ASSERT(m_gameObj.size() == 0);
