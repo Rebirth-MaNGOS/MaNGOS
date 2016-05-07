@@ -705,7 +705,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     player_caster->CastSpell(player_caster, 13003, true); // If there are no attackers we shrink the player.
                 else
                 {
-                    std::for_each(attackers.begin(), attackers.end(), [&](ObjectGuid current_attacker)
+                    std::for_each(attackers.begin(), attackers.end(), [&](Unit* current_attacker)
                     {
                         uint32 spellId;
 
@@ -714,15 +714,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         else
                             spellId = 13003;                        // 2 % chance to shrink all attackers.
 
-                        Map* pMap = m_caster->GetMap();
-
-                        if(pMap)
-                        {
-                            Unit* pAttacker = pMap->GetUnit(current_attacker);
-
-                            if(pAttacker)
-                                pAttacker->CastSpell(pAttacker, spellId, true);
-                        }
+                        current_attacker->CastSpell(current_attacker, spellId, true);
                     });
                 }
             }
@@ -4922,16 +4914,8 @@ void Spell::EffectSanctuary(SpellEffectIndex /*eff_idx*/)
         // Interrup all spells being cast against the player.
         Unit::AttackerSet const& attackers = m_caster->getAttackers();
         if (!attackers.empty())
-            std::for_each(attackers.begin(), attackers.end(), [&](ObjectGuid current_attacker) {
-
-                Map* pMap = m_caster->GetMap();
-
-                if(pMap)
-                {
-                    Unit *pAttacker = pMap->GetUnit(current_attacker);
-                    if(pAttacker)
-                        pAttacker->InterruptSpellsTargettingUnit(false, m_caster->GetObjectGuid());
-                }
+            std::for_each(attackers.begin(), attackers.end(), [&](Unit* current_attacker) {
+            current_attacker->InterruptSpellsTargettingUnit(false, m_caster->GetObjectGuid());
         });
     }
 }

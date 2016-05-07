@@ -112,3 +112,6 @@ if(PCH)
     endif()
   endif()
 endif()
+
+# concurrent_queue is used in Map.cpp
+target_link_libraries(game ${TBB_LIBRARIES})
