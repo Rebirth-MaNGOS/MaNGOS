@@ -84,6 +84,7 @@ void CreatureGroupManager::LoadCreatureFormations()
         sLog.outErrorDb(" ...an error occured while loading the table creature_formations (maybe it doesn't exist ?)\n"); 
         return; 
     } 
+    delete result;
  
     // Get group data 
     result = WorldDatabase.Query("SELECT leaderGUID, memberGUID, dist, angle, groupAI FROM creature_formations ORDER BY leaderGUID"); 
@@ -136,6 +137,8 @@ void CreatureGroupManager::LoadCreatureFormations()
                 delete group_member; 
                 continue; 
             } 
+
+            delete result1;
  
             result1 = WorldDatabase.PQuery("SELECT guid FROM creature WHERE guid = %u", memberGUID); 
             if (!result1) 
@@ -157,6 +160,14 @@ void CreatureGroupManager::LoadCreatureFormations()
     sLog.outString(">> Loaded %u creatures in formations", total_records); 
     sLog.outString(); 
 } 
+
+CreatureGroupManager::~CreatureGroupManager()
+{
+    for (std::pair<const uint32, FormationInfo*> groupMemberPair : CreatureGroupMap)
+        delete groupMemberPair.second;
+
+    CreatureGroupMap.clear();
+}
  
 void CreatureGroup::AddMember(Creature* member) 
 { 

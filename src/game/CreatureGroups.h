@@ -38,6 +38,8 @@ class CreatureGroupManager
         void AddCreatureToGroup(uint32 group_id, Creature* creature); 
         void RemoveCreatureFromGroup(CreatureGroup* group, Creature* creature); 
         void LoadCreatureFormations(); 
+
+        ~CreatureGroupManager();
 }; 
  
 typedef UNORDERED_MAP<uint32/*memberDBGUID*/, FormationInfo*>   CreatureGroupInfoType; 
