@@ -27,6 +27,7 @@
 #include "../../dep/recastnavigation/Detour/Include/DetourNavMeshQuery.h"
 #include "Unit.h"
 
+#include <mutex>
 
 //  memory management
 inline void* dtCustomAlloc(int size, dtAllocHint /*hint*/)
@@ -96,6 +97,9 @@ namespace MMAP
 
             MMapDataSet loadedMMaps;
             uint32 loadedTiles;
+
+            // Mutex for protecting access to the shared map store.
+            std::mutex m_MapMutex;
     };
 
     // static class

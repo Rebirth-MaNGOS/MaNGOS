@@ -29,6 +29,7 @@
 #include "CellImpl.h"
 #include "Corpse.h"
 #include "ObjectMgr.h"
+#include "tbb/parallel_for_each.h"
 
 #define CLASS_LOCK MaNGOS::ClassLevelLockable<MapManager, ACE_Recursive_Thread_Mutex>
 INSTANTIATE_SINGLETON_2(MapManager, CLASS_LOCK);
@@ -221,8 +222,13 @@ MapManager::Update(uint32 diff)
     if( !i_timer.Passed() )
         return;
 
-    for(MapMapType::iterator iter=i_maps.begin(); iter != i_maps.end(); ++iter)
-        iter->second->Update((uint32)i_timer.GetCurrent());
+    // TODO: The threading of map updating is highly experimental. It is very likely
+    // that it will cause the server to hang or otherwise crash. Keep an eye on it!
+
+    /*for(MapMapType::iterator iter=i_maps.begin(); iter != i_maps.end(); ++iter)
+        iter->second->Update((uint32)i_timer.GetCurrent());*/
+
+    tbb::parallel_for_each(i_maps, [&](std::pair<const MapID, Map*>& mapPair) { mapPair.second->Update((uint32)i_timer.GetCurrent()); });
 
     for (TransportSet::iterator iter = m_Transports.begin(); iter != m_Transports.end(); ++iter)
     {

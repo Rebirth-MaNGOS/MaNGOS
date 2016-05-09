@@ -148,6 +148,8 @@ namespace MMAP
 
     bool MMapManager::loadMap(uint32 mapId, int32 x, int32 y)
     {
+        std::lock_guard<std::mutex> guard(m_MapMutex);
+
         // make sure the mmap is loaded and ready to load tiles
         if(!loadMapData(mapId))
             return false;
@@ -231,6 +233,8 @@ namespace MMAP
 
     bool MMapManager::unloadMap(uint32 mapId, int32 x, int32 y)
     {
+        std::lock_guard<std::mutex> guard(m_MapMutex);
+
         // check if we have this map loaded
         if (loadedMMaps.find(mapId) == loadedMMaps.end())
         {
@@ -274,6 +278,8 @@ namespace MMAP
 
     bool MMapManager::unloadMap(uint32 mapId)
     {
+        std::lock_guard<std::mutex> guard(m_MapMutex);
+
         if (loadedMMaps.find(mapId) == loadedMMaps.end())
         {
             // file may not exist, therefore not loaded
@@ -305,6 +311,8 @@ namespace MMAP
 
     bool MMapManager::unloadMapInstance(uint32 mapId, uint32 instanceId)
     {
+        std::lock_guard<std::mutex> guard(m_MapMutex);
+
         // check if we have this map loaded
         if (loadedMMaps.find(mapId) == loadedMMaps.end())
         {
@@ -331,6 +339,8 @@ namespace MMAP
 
     dtNavMesh const* MMapManager::GetNavMesh(uint32 mapId)
     {
+        std::lock_guard<std::mutex> guard(m_MapMutex);
+
         if (loadedMMaps.find(mapId) == loadedMMaps.end())
             return NULL;
 
@@ -339,6 +349,8 @@ namespace MMAP
 
     dtNavMeshQuery const* MMapManager::GetNavMeshQuery(uint32 mapId, uint32 instanceId)
     {
+        std::lock_guard<std::mutex> guard(m_MapMutex);
+
         if (loadedMMaps.find(mapId) == loadedMMaps.end())
             return NULL;
 
