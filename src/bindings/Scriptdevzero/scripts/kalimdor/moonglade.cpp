@@ -446,6 +446,7 @@ enum eranikus
     BOSS_ERANIKUS       = 15491,
     SPELL_SHADOWBOLT_VOLLEY = 27646,
     SPELL_MASS_HEAL = 25839,
+    SPELL_AURA_OF_FEAR = 28313,
     NPC_TYRANDE = 15633,
     NPC_MOON_PRIESTESS = 15634,
 
@@ -943,7 +944,7 @@ CreatureAI* GetAI_boss_eranikus_tyrant_of_the_dream(Creature* pCreature)
 struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
 {
     mob_nightmare_phantasm(Creature* pCreature) : ScriptedAI(pCreature)
-    {
+    {        
         Reset();
     }
 
@@ -969,6 +970,12 @@ struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
                 }
             }
         }
+    }
+    
+    void Aggro(Unit* /*pWho*/)
+    {
+        // cast aura on aggro since it gets removed when they reset
+        m_creature->CastSpell(m_creature, SPELL_AURA_OF_FEAR, true);
     }
 
     void UpdateAI(const uint32 uiDiff)
