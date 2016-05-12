@@ -51,7 +51,6 @@ struct MANGOS_DLL_DECL boss_buruAI : public ScriptedAI			// Should hit for 750~~
     {
         m_pInstance = (instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData();
 		m_creature->RemoveAurasAtMechanicImmunity(MECHANIC_STUN, 25900);
-		m_creature->CastSpell(m_creature, SPELL_THORNS, true);
         Reset();
     }
 
@@ -81,6 +80,8 @@ struct MANGOS_DLL_DECL boss_buruAI : public ScriptedAI			// Should hit for 750~~
         m_uiSpeedTimer = 5000;
         m_uiCreepingPlagueTimer = 6000;
 		m_lPlayers.clear();
+
+		m_creature->CastSpell(m_creature, SPELL_THORNS, true);
 
 		if (m_creature->HasAura(SPELL_BURU_TRANSFORM))
 			m_creature->RemoveAurasDueToSpell(SPELL_BURU_TRANSFORM);
