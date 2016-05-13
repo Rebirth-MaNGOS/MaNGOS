@@ -969,6 +969,22 @@ GameObject* GameObject::LookupFishingHoleAround(float range)
     return ok;
 }
 
+float GameObject::GetInteractionDistance()
+{
+    switch (GetGoType())
+    {
+        // TODO: find out how the client calculates the maximal usage distance to spellless working
+        // gameobjects like mailboxes - 10.0 is just an arbitrary chosen number.
+        case GAMEOBJECT_TYPE_MAILBOX:
+            return 10.f;
+        case GAMEOBJECT_TYPE_FISHINGHOLE:
+        case GAMEOBJECT_TYPE_FISHINGNODE:
+            return 20.f + CONTACT_DISTANCE; // max spell range
+        default:
+            return INTERACTION_DISTANCE;
+    }
+}
+
 void GameObject::ResetDoorOrButton()
 {
     if (m_lootState == GO_READY || m_lootState == GO_JUST_DEACTIVATED)
@@ -2067,3 +2083,4 @@ time_t GameObject::GetChestRestockTime()
 {
     return m_currentChestRestockTime;
 }
+
