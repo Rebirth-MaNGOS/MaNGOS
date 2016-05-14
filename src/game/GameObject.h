@@ -682,6 +682,8 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         GameObject* LookupFishingHoleAround(float range);
 
+        float GetInteractionDistance();
+
         GridReference<GameObject> &GetGridRef() { return m_gridRef; }
 
         GameObjectModel* m_model;

@@ -221,7 +221,7 @@ struct MANGOS_DLL_DECL npc_grayhoof_valthalak_triggerAI : public Scripted_NoMove
                 if (m_pInstance->GetData(TYPE_MOR_GRAYHOOF) == NOT_STARTED)
                 {
                     m_pInstance->SetData(TYPE_MOR_GRAYHOOF, IN_PROGRESS);
-                    if (Creature* pMor = DoSpawnCreature(NPC_MOR_GRAYHOOF, 0, 0, 0, 0, TEMPSUMMON_DEAD_DESPAWN, 30000))
+                    if (Creature* pMor = DoSpawnCreature(NPC_MOR_GRAYHOOF, 0, 0, 0, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 300000))
                         pMor->AI()->AttackStart(pWho);
                 }
                 break;
@@ -229,7 +229,7 @@ struct MANGOS_DLL_DECL npc_grayhoof_valthalak_triggerAI : public Scripted_NoMove
                 if (m_pInstance->GetData(TYPE_LORD_VALTHALAK) == NOT_STARTED)
                 {
                     m_pInstance->SetData(TYPE_LORD_VALTHALAK, IN_PROGRESS);
-                    if (Creature* pValthalak = DoSpawnCreature(NPC_LORD_VALTHALAK, 0, 0, 0, 0, TEMPSUMMON_DEAD_DESPAWN, 30000))
+                    if (Creature* pValthalak = DoSpawnCreature(NPC_LORD_VALTHALAK, 0, 0, 0, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 300000))
                         pValthalak->AI()->AttackStart(pWho);
                 }
                 break;

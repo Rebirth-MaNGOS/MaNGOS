@@ -73,8 +73,6 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
     DEBUG_LOG( "WORLD: Recvd CMSG_WHO Message" );
     //recv_data.hexlike();
 
-    uint32 clientcount = 0;
-
     uint32 level_min, level_max, racemask, classmask, zones_count, str_count;
     uint32 zoneids[10];                                     // 10 is client limit
     std::string player_name, guild_name;
@@ -138,9 +136,12 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
     bool allowTwoSideWhoList = sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_WHO_LIST);
     AccountTypes gmLevelInWhoList = (AccountTypes)sWorld.getConfig(CONFIG_UINT32_GM_LEVEL_IN_WHO_LIST);
 
+    uint32 matchcount = 0;
+    uint32 displaycount = 0;
+
     WorldPacket data( SMSG_WHO, 50 );                       // guess size
-    data << uint32(clientcount);                            // clientcount place holder, listed count
-    data << uint32(clientcount);                            // clientcount place holder, online count
+    data << uint32(matchcount);                            // clientcount place holder, listed count
+    data << uint32(displaycount);                            // clientcount place holder, online count
 
     // TODO: Guard Player map
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
@@ -238,6 +239,13 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
         if (!s_show)
             continue;
 
+        // 49 is the maximum player count sent to clients
+        ++matchcount;
+        if (matchcount > 49)
+            continue;
+
+        ++displaycount;
+
 		if (itr->second->isGameMaster())
 		{
 			pname = "<GM>";
@@ -250,15 +258,10 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
         data << uint32( class_ );                           // player class
         data << uint32( race );                             // player race
         data << uint32( pzoneid );                          // player zone id
-
-        // 50 is maximum player count sent to client
-        if ((++clientcount) == 49)
-            break;
     }
 
-    uint32 count = m.size();
-    data.put( 0, clientcount );                             // insert right count, listed count
-    data.put( 4, count > 49 ? count : clientcount );        // insert right count, online count
+    data.put(0, displaycount);
+    data.put(4, matchcount);
 
     SendPacket(&data);
     DEBUG_LOG( "WORLD: Send SMSG_WHO Message" );
@@ -913,9 +916,6 @@ void WorldSession::HandleFeatherFallAck(WorldPacket &recv_data)
 
 void WorldSession::HandleMoveUnRootAck(WorldPacket& recv_data)
 {
-    // no used
-    recv_data.rpos(recv_data.wpos());                       // prevent warnings spam
-/*
     ObjectGuid guid;
     recv_data >> guid;
 
@@ -930,16 +930,20 @@ void WorldSession::HandleMoveUnRootAck(WorldPacket& recv_data)
 
     recv_data.read_skip<uint32>();                          // unk
 
-    MovementInfo movementInfo;
-    ReadMovementInfo(recv_data, &movementInfo);
-*/
+    if (_player->isDead() && !_player->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
+    {
+        sWorld.SendAntiCheatMessageToGMs(_player->GetName(), "The player tried to unroot while dead and not a ghost. This is an exploit attempt!");
+        sLog.outWarden("The player %s tried to unroot while dead.", _player->GetName());
+        return;
+    }
+
+    SetRooted(false);
+
+    recv_data.rpos(recv_data.wpos());                       // prevent warnings spam
 }
 
 void WorldSession::HandleMoveRootAck(WorldPacket& recv_data)
 {
-    // no used
-    recv_data.rpos(recv_data.wpos());                       // prevent warnings spam
-/*
     ObjectGuid guid;
     recv_data >> guid;
 
@@ -954,9 +958,10 @@ void WorldSession::HandleMoveRootAck(WorldPacket& recv_data)
 
     recv_data.read_skip<uint32>();                          // unk
 
-    MovementInfo movementInfo;
-    ReadMovementInfo(recv_data, &movementInfo);
-*/
+    // This player should be rooted according to the client.
+    SetRooted(true);
+
+    recv_data.rpos(recv_data.wpos());                       // prevent warnings spam
 }
 
 void WorldSession::HandleSetActionBarTogglesOpcode(WorldPacket& recv_data)

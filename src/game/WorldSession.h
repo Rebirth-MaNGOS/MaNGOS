@@ -263,6 +263,9 @@ class MANGOS_DLL_SPEC WorldSession
 
         void DoLootRelease(ObjectGuid lguid);
 
+        void SetRooted(bool rooted) { m_bIsRooted = rooted; }
+        bool IsRooted() { return m_bIsRooted; }
+
         // Account mute time
         time_t m_muteTime;
 
@@ -682,6 +685,8 @@ class MANGOS_DLL_SPEC WorldSession
         uint32 m_Tutorials[8];
         TutorialDataState m_tutorialState;
         ACE_Based::LockedQueue<WorldPacket*, ACE_Thread_Mutex> _recvQueue;
+
+        bool m_bIsRooted; // Keeps track if the client is rooted via HandleMoveUnRootAck/HandleMoveRootAck.
 };
 #endif
 /// @}

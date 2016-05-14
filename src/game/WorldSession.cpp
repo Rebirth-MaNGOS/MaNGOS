@@ -90,7 +90,7 @@ m_muteTime(mute_time),
 _player(NULL), m_Socket(sock),_security(sec), _accountId(id), m_Warden(NULL), _logoutTime(0),
 m_inQueue(false), m_playerLoading(false), m_playerLogout(false), m_playerRecentlyLogout(false), m_playerSave(false),
 m_sessionDbcLocale(sWorld.GetAvailableDbcLocale(locale)), m_sessionDbLocaleIndex(sObjectMgr.GetIndexForLocale(locale)),
-m_latency(0), m_movementTimeDelta(0), m_tutorialState(TUTORIALDATA_UNCHANGED)
+m_latency(0), m_movementTimeDelta(0), m_tutorialState(TUTORIALDATA_UNCHANGED), m_bIsRooted(false)
 {
     if (sock)
     {
@@ -368,6 +368,9 @@ void WorldSession::LogoutPlayer(bool Save)
 
     m_playerLogout = true;
     m_playerSave = Save;
+
+    // A player should be unrooted on logout.
+    m_bIsRooted = false;
 
     if (_player)
     {

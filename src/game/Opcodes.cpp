@@ -757,7 +757,7 @@ void Opcodes::BuildOpcodeList()
     /*[-ZERO] Need check 0x2C1*/  StoreOpcode( MSG_PETITION_RENAME,               "MSG_PETITION_RENAME",              STATUS_LOGGEDIN,  PROCESS_THREADUNSAFE, &WorldSession::HandlePetitionRenameOpcode       );
     /*[-ZERO] Need check 0x2C2*/  StoreOpcode( SMSG_INIT_WORLD_STATES,            "SMSG_INIT_WORLD_STATES",           STATUS_NEVER,     PROCESS_INPLACE,      &WorldSession::Handle_ServerSide                );
     /*[-ZERO] Need check 0x2C3*/  StoreOpcode( SMSG_UPDATE_WORLD_STATE,           "SMSG_UPDATE_WORLD_STATE",          STATUS_NEVER,     PROCESS_INPLACE,      &WorldSession::Handle_ServerSide                );
-    /*[-ZERO] Need check 0x2C4*/  StoreOpcode( CMSG_ITEM_NAME_QUERY,              "CMSG_ITEM_NAME_QUERY",             STATUS_LOGGEDIN,  PROCESS_THREADUNSAFE, &WorldSession::HandleItemNameQueryOpcode        );
+    /*[-ZERO] Need check 0x2C4*/  StoreOpcode( CMSG_ITEM_NAME_QUERY,              "CMSG_ITEM_NAME_QUERY",             STATUS_AUTHED,  PROCESS_THREADUNSAFE, &WorldSession::HandleItemNameQueryOpcode        );
     /*[-ZERO] Need check 0x2C5*/  StoreOpcode( SMSG_ITEM_NAME_QUERY_RESPONSE,     "SMSG_ITEM_NAME_QUERY_RESPONSE",    STATUS_NEVER,     PROCESS_INPLACE,      &WorldSession::Handle_ServerSide                );
     /*[-ZERO] Need check 0x2C6*/  StoreOpcode( SMSG_PET_ACTION_FEEDBACK,          "SMSG_PET_ACTION_FEEDBACK",         STATUS_NEVER,     PROCESS_INPLACE,      &WorldSession::Handle_ServerSide                );
     /*[-ZERO] Need check 0x2C7*/  StoreOpcode( CMSG_CHAR_RENAME,                  "CMSG_CHAR_RENAME",                 STATUS_AUTHED,    PROCESS_THREADUNSAFE, &WorldSession::HandleCharRenameOpcode           );

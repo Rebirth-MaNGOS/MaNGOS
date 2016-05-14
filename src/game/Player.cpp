@@ -1186,6 +1186,62 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         m_nextMailDelivereTime = 0;
     }
 
+     ////////////////////////////////////////////////////////
+     ///
+     /// Fly hack.
+     ///
+     /// TODO: Really check this here?
+     ///
+     ////////////////////////////////////////////////////////
+     if(!GetTerrain()->IsInWater(GetPositionX(), GetPositionY(), GetPositionZ()) && HasMovementFlag(MovementFlags::MOVEFLAG_SWIMMING)) // Flyhack
+     {
+         GetSession()->KickPlayer();//>LogoutPlayer(false);
+         return;
+     }
+ 
+     ////////////////////////////////////////////////////////
+     ///
+     /// Water walking hack.
+     ///
+     /// TODO: Possibly more water walking auras (?). Really check this here?
+     ///       11319 - Elixir of water walking
+     ///       546   - Shaman water walking spell
+     ///
+     ////////////////////////////////////////////////////////
+     if(!HasAura(11319) && !HasAura(546) && HasMovementFlag(MovementFlags::MOVEFLAG_WATER_WALK) && isAlive())
+     {
+         GetSession()->KickPlayer();
+         return;
+     }
+ 
+     ////////////////////////////////////////////////////////
+     ///
+     /// Levitate hack.
+     ///
+     /// TODO: Possibly more levitate auras (?). Really check this here?
+     ///       27986 - Priest levitate spell
+     ///
+     ////////////////////////////////////////////////////////
+     if(!HasAura(27986) && HasMovementFlag(MovementFlags::MOVEFLAG_LEVITATE))
+     {
+         GetSession()->KickPlayer();
+         return;
+     }
+ 
+     ////////////////////////////////////////////////////////
+     ///
+     /// Slowfall hack.
+     ///
+     /// TODO: Possibly more slowfall auras (?). Really check this here?
+     ///       12438 - Mage slow fall spell
+     ///
+     ////////////////////////////////////////////////////////
+     if(!HasAura(12438) && HasMovementFlag(MovementFlags::MOVEFLAG_FEATHER_FALL))
+     {
+         GetSession()->KickPlayer();
+         return;
+     }
+
     /********************** CHARGE TRIALS ********************************************************/
 
     if(!m_isCharging && m_chargeTimer)
@@ -2283,22 +2339,8 @@ GameObject* Player::GetGameObjectIfCanInteractWith(ObjectGuid guid, uint32 gameo
     {
         if (uint32(go->GetGoType()) == gameobject_type || gameobject_type == MAX_GAMEOBJECT_TYPE)
         {
-            float maxdist;
-            switch(go->GetGoType())
-            {
-                // TODO: find out how the client calculates the maximal usage distance to spellless working
-                // gameobjects like mailboxes - 10.0 is a just an abitrary choosen number
-                case GAMEOBJECT_TYPE_MAILBOX:
-                    maxdist = 10.0f;
-                    break;
-                case GAMEOBJECT_TYPE_FISHINGHOLE:
-                    maxdist = 20.0f+CONTACT_DISTANCE;       // max spell range
-                    break;
-                default:
-                    maxdist = INTERACTION_DISTANCE;
-                    break;
-            }
 
+            float maxdist = go->GetInteractionDistance();
             if (go->IsWithinDistInMap(this, maxdist) && go->isSpawned())
                 return go;
 
@@ -16757,6 +16799,14 @@ void Player::BuildPlayerChat(WorldPacket *data, uint8 msgtype, const std::string
 
 void Player::Say(const std::string& text, const uint32 language)
 {
+    if (isDead())
+    {
+        sWorld.SendAntiCheatMessageToGMs(GetName(), "The player tried to speak while dead. This is an exploit attempt!");
+        sLog.outWarden("The player %s tried to speak while dead. This is an exploit attempt!", GetName());
+
+        return;
+    }
+
     WorldPacket data(SMSG_MESSAGECHAT, 100);
     BuildPlayerChat(&data, CHAT_MSG_SAY, text, language);
     SendMessageToSetInRange(&data,sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY),true);
