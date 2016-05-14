@@ -276,20 +276,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     /* extract packet */
     MovementInfo movementInfo;
     movementInfo.Read(recv_data);
-
-    // If the mover is supposed to be rooted we simply 
-    // force the position not to change.
-    if (IsRooted() && opcode != MSG_MOVE_START_TURN_RIGHT && opcode != MSG_MOVE_START_TURN_LEFT &&
-        opcode != MSG_MOVE_SET_FACING && opcode != MSG_MOVE_STOP_TURN)
-    {
-        float x, y, z, o;
-        o = mover->GetOrientation();
-        mover->GetPosition(x, y, z);
-
-        mover->NearTeleportTo(x, y, z, o);
-        
-        return;
-    }
     
     // If the packages are arriving quicker than the tick rate we use the difference in client
     // time to figure out which time the packages should be updated with.
