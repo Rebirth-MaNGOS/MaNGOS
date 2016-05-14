@@ -5836,6 +5836,11 @@ SpellCastResult Spell::CheckCast(bool strict)
         }
     }
 
+
+    // A dead player should not be able to cast spells.
+    if (m_caster->isDead())
+        return SPELL_FAILED_CASTER_DEAD;
+
     // all ok
     return SPELL_CAST_OK;
 }
