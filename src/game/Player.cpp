@@ -16799,6 +16799,14 @@ void Player::BuildPlayerChat(WorldPacket *data, uint8 msgtype, const std::string
 
 void Player::Say(const std::string& text, const uint32 language)
 {
+    if (isDead())
+    {
+        sWorld.SendAntiCheatMessageToGMs(GetName(), "The player tried to speak while dead. This is an exploit attempt!");
+        sLog.outWarden("The player %s tried to speak while dead. This is an exploit attempt!", GetName());
+
+        return;
+    }
+
     WorldPacket data(SMSG_MESSAGECHAT, 100);
     BuildPlayerChat(&data, CHAT_MSG_SAY, text, language);
     SendMessageToSetInRange(&data,sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY),true);
