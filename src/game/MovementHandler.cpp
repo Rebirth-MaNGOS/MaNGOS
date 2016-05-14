@@ -279,7 +279,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 
     // If the mover is supposed to be rooted we simply 
     // force the position not to change.
-    if (IsRooted())
+    if (IsRooted() && opcode != MSG_MOVE_START_TURN_RIGHT && opcode != MSG_MOVE_START_TURN_LEFT &&
+        opcode != MSG_MOVE_SET_FACING)
     {
         float x, y, z, o;
         o = mover->GetOrientation();
