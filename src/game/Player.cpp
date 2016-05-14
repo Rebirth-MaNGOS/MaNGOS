@@ -1186,62 +1186,6 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         m_nextMailDelivereTime = 0;
     }
 
-    ////////////////////////////////////////////////////////
-    ///
-    /// Fly hack.
-    ///
-    /// TODO: Really check this here?
-    ///
-    ////////////////////////////////////////////////////////
-    if(!GetTerrain()->IsInWater(GetPositionX(), GetPositionY(), GetPositionZ()) && HasMovementFlag(MovementFlags::MOVEFLAG_SWIMMING)) // Flyhack
-    {
-        GetSession()->KickPlayer();//>LogoutPlayer(false);
-        return;
-    }
-
-    ////////////////////////////////////////////////////////
-    ///
-    /// Water walking hack.
-    ///
-    /// TODO: Possibly more water walking auras (?). Really check this here?
-    ///       11319 - Elixir of water walking
-    ///       546   - Shaman water walking spell
-    ///
-    ////////////////////////////////////////////////////////
-    if(!HasAura(11319) && !HasAura(546) && HasMovementFlag(MovementFlags::MOVEFLAG_WATER_WALK) && isAlive())
-    {
-        GetSession()->KickPlayer();
-        return;
-    }
-
-    ////////////////////////////////////////////////////////
-    ///
-    /// Levitate hack.
-    ///
-    /// TODO: Possibly more levitate auras (?). Really check this here?
-    ///       27986 - Priest levitate spell
-    ///
-    ////////////////////////////////////////////////////////
-    if(!HasAura(27986) && HasMovementFlag(MovementFlags::MOVEFLAG_LEVITATE))
-    {
-        GetSession()->KickPlayer();
-        return;
-    }
-
-    ////////////////////////////////////////////////////////
-    ///
-    /// Slowfall hack.
-    ///
-    /// TODO: Possibly more slowfall auras (?). Really check this here?
-    ///       12438 - Mage slow fall spell
-    ///
-    ////////////////////////////////////////////////////////
-    if(!HasAura(12438) && HasMovementFlag(MovementFlags::MOVEFLAG_FEATHER_FALL))
-    {
-        GetSession()->KickPlayer();
-        return;
-    }
-
     /********************** CHARGE TRIALS ********************************************************/
 
     if(!m_isCharging && m_chargeTimer)
@@ -1254,7 +1198,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
                 {
                     target->GetMotionMaster()->SuspendChaseMovement();
                     target->GetMotionMaster()->ResumeChaseMovement();
-                }   
+                }
             }
 
             m_chargeTimer = 0;
@@ -17603,7 +17547,7 @@ void Player::ProhibitSpellSchool(SpellSchoolMask idSchoolMask, uint32 unTimeMs )
 void Player::InitDataForForm(bool reapplyMods)
 {
     ShapeshiftForm form = GetShapeshiftForm();
-    
+
     switch(form)
     {
         case FORM_CAT:
