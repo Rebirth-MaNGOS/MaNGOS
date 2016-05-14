@@ -5836,9 +5836,8 @@ SpellCastResult Spell::CheckCast(bool strict)
         }
     }
 
-
-    // A dead player should not be able to cast spells.
-    if (m_caster->isDead())
+    // A dead player should not be able to open things.
+    if (m_spellInfo->Id == 3365 && m_caster->isDead())
         return SPELL_FAILED_CASTER_DEAD;
 
     // all ok
