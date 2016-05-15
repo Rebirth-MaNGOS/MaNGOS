@@ -1185,7 +1185,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         // It will be recalculate at mailbox open (for unReadMails important non-0 until mailbox open, it also will be recalculated)
         m_nextMailDelivereTime = 0;
     }
-
+/*
      ////////////////////////////////////////////////////////
      ///
      /// Fly hack.
@@ -1241,7 +1241,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
          GetSession()->KickPlayer();
          return;
      }
-
+*/
     /********************** CHARGE TRIALS ********************************************************/
 
     if(!m_isCharging && m_chargeTimer)
