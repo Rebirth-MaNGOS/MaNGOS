@@ -446,7 +446,8 @@ enum eranikus
     BOSS_ERANIKUS       = 15491,
     SPELL_SHADOWBOLT_VOLLEY = 27646,
     SPELL_MASS_HEAL = 25839,
-    SPELL_AURA_OF_FEAR = 28313,
+    SPELL_AURA_OF_FEAR = 25820,
+    SPELL_AURA_OF_FEAR_CAST = 26641,
     NPC_TYRANDE = 15633,
     NPC_MOON_PRIESTESS = 15634,
 
@@ -948,11 +949,13 @@ struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
         Reset();
     }
 
+    uint32 m_uiFearTimer;   // fear auras not working so manually cast on a random amount of players within range
     uint32 m_uiShadowVolleyTimer;
     ObjectGuid eranikus;
 
     void Reset()
     {
+        m_uiFearTimer = urand(15000, 40000);
         m_uiShadowVolleyTimer = urand(10000, 40000);
         eranikus = m_creature->GetOwnerGuid();
         m_creature->SetRespawnEnabled(false);
@@ -972,12 +975,6 @@ struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
         }
     }
     
-    void Aggro(Unit* /*pWho*/)
-    {
-        // cast aura on aggro since it gets removed when they reset
-        m_creature->CastSpell(m_creature, SPELL_AURA_OF_FEAR, true);
-    }
-
     void UpdateAI(const uint32 uiDiff)
     {
 
@@ -995,7 +992,35 @@ struct MANGOS_DLL_DECL mob_nightmare_phantasm : public ScriptedAI
             else
                 m_uiShadowVolleyTimer -= uiDiff;
         }
+        
+        if(m_uiFearTimer)
+        {
+            if (m_uiFearTimer <= uiDiff)
+            {
+                const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
 
+                if(!threatList.empty())
+                {
+                    uint32 rndm_counter = urand(5,22);
+                    for (HostileReference *currentReference : threatList)
+                    {
+                        Unit *target = currentReference->getTarget();
+                        if (target && target->GetTypeId() == TYPEID_PLAYER && target->GetDistance(m_creature) < 50.0f)
+                        {   
+                            
+                            short fearCount;
+                            m_creature->CastSpell(target, SPELL_AURA_OF_FEAR_CAST, true);
+                            ++fearCount;
+                            if(rndm_counter == fearCount)
+                                break;
+                        }                           
+                    }
+                }
+                m_uiFearTimer = urand(15000, 40000);
+            }
+            else
+                m_uiFearTimer -= uiDiff;
+        }
         DoMeleeAttackIfReady();
     }
 };
