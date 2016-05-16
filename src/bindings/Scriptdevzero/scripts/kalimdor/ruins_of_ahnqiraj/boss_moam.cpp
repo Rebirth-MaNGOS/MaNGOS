@@ -155,12 +155,12 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
 
 					if(!threatList.empty())
 					{
+                        uint32 rndm_counter = urand(2,6);
 						for (HostileReference *currentReference : threatList)
 						{
 							Unit *target = currentReference->getTarget();
 							if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 40.0f)
-							{	
-								uint32 rndm_counter = urand(2,6);
+							{									
 								m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
 								++m_uiDrain_count;
 								if(rndm_counter == m_uiDrain_count)
