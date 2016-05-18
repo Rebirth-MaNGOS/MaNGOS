@@ -1380,6 +1380,37 @@ CreatureAI* GetAI_flesh_tentacle(Creature* pCreature)
     return new flesh_tentacleAI(pCreature);
 }
 
+// 26224 - knockback
+// 26221 - summon spell, not used
+// Trigger ID: 4033
+bool AreaTrigger_stomach_knockback(Player* pPlayer, const AreaTriggerEntry* pTrigger)
+{
+    if (Creature* pTriggerCreature = pPlayer->SummonCreature(15800, pTrigger->x, pTrigger->y,
+                                                             pTrigger->z, 0,
+                                                             TEMPSUMMON_TIMED_DESPAWN, 10000))
+    {
+        pTriggerCreature->CastSpell(pTriggerCreature, 26092, true);
+        pPlayer->KnockBackFrom(pTriggerCreature, 1.f, 56.f);
+    }
+
+    return true;
+}
+
+// Trigger ID: 4034
+bool AreaTrigger_stomach_teleport(Player* pPlayer, const AreaTriggerEntry* /*pTrigger*/)
+{
+    // Teleport each player out
+    pPlayer->NearTeleportTo(-8570.f, 1991.f, 100.4, rand()%6);
+
+    // Cast knockback on them
+    pPlayer->KnockBackFrom(pPlayer, 24.f, 5.f);
+
+    // Remove the acid debuff
+    pPlayer->RemoveAurasDueToSpell(SPELL_DIGESTIVE_ACID);
+
+    return true;
+}
+
 void AddSC_boss_cthun()
 {
     Script* pNewScript;
@@ -1418,5 +1449,15 @@ void AddSC_boss_cthun()
     pNewScript = new Script;
     pNewScript->Name = "mob_giant_flesh_tentacle";
     pNewScript->GetAI = &GetAI_flesh_tentacle;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "area_trigger_cthun_stomach_knockback";
+    pNewScript->pAreaTrigger = &AreaTrigger_stomach_knockback;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "area_trigger_cthun_stomach_teleport";
+    pNewScript->pAreaTrigger = &AreaTrigger_stomach_teleport;
     pNewScript->RegisterSelf();
 }
