@@ -93,7 +93,8 @@ struct MANGOS_DLL_DECL boss_huhuranAI : public ScriptedAI
         //NoxiousPoison_Timer
         if (NoxiousPoison_Timer < diff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_NOXIOUSPOISON);
+            if (Unit* target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
+                DoCastSpellIfCan(target,SPELL_NOXIOUSPOISON);
             NoxiousPoison_Timer = urand(12000, 24000);
         }else NoxiousPoison_Timer -= diff;
 
