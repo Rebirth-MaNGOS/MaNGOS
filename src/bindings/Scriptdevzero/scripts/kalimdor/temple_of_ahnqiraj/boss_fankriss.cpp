@@ -129,11 +129,11 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
             if (SpawnHatchlings_Timer< diff)
             {
                 Unit* target = NULL;
-                target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0);
+                target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,1);
                 if (target && target->GetTypeId() == TYPEID_PLAYER)
                 {
                     DoCastSpellIfCan(target, SPELL_ROOT);
-
+                    
                     if (m_creature->getThreatManager().getThreat(target))
                         m_creature->getThreatManager().modifyThreatPercent(target, -100);
 
