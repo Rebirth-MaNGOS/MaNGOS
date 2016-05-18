@@ -74,6 +74,21 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         }
         DoCast(m_creature->getVictim(), SPELL_POISON_CLOUD, true);
     }
+
+    void ResetToHome()
+    {
+        Creature* pVem = m_pInstance->GetSingleCreatureFromStorage(NPC_VEM);
+        Creature* pYauj = m_pInstance->GetSingleCreatureFromStorage(NPC_YAUJ);
+
+        if(pVem && pVem->isDead())
+            pVem->Respawn();
+
+        if(pYauj && pYauj->isDead())
+            pYauj->Respawn();
+        
+        ScriptedAI::ResetToHome();
+    }
+
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
@@ -135,6 +150,20 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         Enrage_Timer = 120000;
 
         Enraged = false;
+    }
+
+    void ResetToHome()
+    {
+        Creature* pKri = m_pInstance->GetSingleCreatureFromStorage(NPC_KRI);
+        Creature* pYauj = m_pInstance->GetSingleCreatureFromStorage(NPC_YAUJ);
+
+        if(pKri && pKri->isDead())
+            pKri->Respawn();
+
+        if(pYauj && pYauj->isDead())
+            pYauj->Respawn();
+
+        ScriptedAI::ResetToHome();
     }
 
     void JustDied(Unit* /*Killer*/)
@@ -209,6 +238,20 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         Check_Timer = 2000;
 
         VemDead = false;
+    }
+
+    void ResetToHome()
+    {
+        Creature* pKri = m_pInstance->GetSingleCreatureFromStorage(NPC_KRI);
+        Creature* pVem = m_pInstance->GetSingleCreatureFromStorage(NPC_VEM);
+
+        if(pKri && pKri->isDead())
+            pKri->Respawn();
+
+        if(pVem && pVem->isDead())
+            pVem->Respawn();
+
+        ScriptedAI::ResetToHome();
     }
 
     void JustDied(Unit* /*Killer*/)
