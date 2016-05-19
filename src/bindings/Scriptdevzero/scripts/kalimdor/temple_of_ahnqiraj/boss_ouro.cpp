@@ -161,8 +161,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
         SpawnWormBase();
 
-        if(Player* pPlayer = GetPlayerAtMinimumRange(5))
-            m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);      
+        // aoe if anyone is within 5yrds
+        CastAoeGroundRupture();
 
         m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
     }
@@ -176,7 +176,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             if(Creature* pDirtMound = m_creature->SummonCreature(NPC_DIRT_MOUND, fX + frand(-5,5), 
                         fY + frand(-5,5), fZ + 1, 0, TEMPSUMMON_TIMED_DESPAWN, 45000, false))
             {
-                pDirtMound->SetRespawnDelay(-10);				// to stop them from randomly respawning
+                pDirtMound->SetRespawnEnabled(false);				// to stop them from randomly respawning
                 m_lDirtMounds.push_back(pDirtMound->GetObjectGuid());
             }
         }
@@ -254,9 +254,9 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             m_creature->UpdateVisibilityAndView();
 
             m_uiBirthTimer = BIRTH_TIME;
-
-            if(Player* pPlayer = GetPlayerAtMinimumRange(5))
-                m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);
+            
+            // make ground rupture aoe
+            CastAoeGroundRupture();
 
             m_bossState = BOSS_STATE_NORMAL;
             m_uiSubmergeTimer = 90000;
@@ -394,6 +394,21 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             dynamic_cast<TemporaryGameObject*>(m_creature->GetMap()->GetGameObject(m_WormBase));
         if (pWormBase)
             pWormBase->Delete();
+    }
+    
+    void CastAoeGroundRupture()
+    {
+        const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+        
+        if(!threatList.empty())
+        {
+            for (HostileReference *currentReference : threatList)
+            {
+                Unit *target = currentReference->getTarget();
+                if (target && target->GetTypeId() == TYPEID_PLAYER && target->GetDistance(m_creature) < 6.0f)                    
+                    m_creature->CastSpell(target, SPELL_GROUND_RUPTURE, true);                        
+            }
+        }
     }
 
     void UpdateAI(const uint32 uiDiff)
