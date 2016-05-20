@@ -339,9 +339,11 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
         {
             case NPC_OBSIDIAN_DESTROYER:
                 m_uiFullManaSpell = SPELL_PURGE;
+                m_bIsEradicator = false;
                 break;
             case NPC_OBSIDIAN_ERADICATOR:
                 m_uiFullManaSpell = SPELL_SHOCK_BLAST;
+                m_bIsEradicator = true;
                 break;
         }
         Reset();
@@ -349,9 +351,12 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
 
 	uint32 m_uiManaDrainTimer;
     uint32 m_uiFullManaSpell;;
+    bool m_bIsEradicator;
+    short m_uiDrain_count;
     
     void Reset() 
     {
+        m_uiDrain_count = 0;
 		m_uiManaDrainTimer = 10000;
 		m_creature->SetPower(POWER_MANA, 0);
         m_creature->SetMaxPower(POWER_MANA, 0);
@@ -359,7 +364,29 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
 
 	void Aggro(Unit* /*pWho*/)
     {
+        // Combat so we have everyone on threat list for mana drain
+        m_creature->SetInCombatWithZone();
+        
         m_creature->SetMaxPower(POWER_MANA, m_creature->GetCreatureInfo()->maxmana);
+        if(m_bIsEradicator)
+        {
+            const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+            
+            if(!threatList.empty())
+            {
+                for (HostileReference *currentReference : threatList)
+                {
+                    Unit *target = currentReference->getTarget();
+                    if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 30.0f)
+                    {
+                        m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
+                        ++m_uiDrain_count;
+                        if(m_uiDrain_count == 16)
+                            break;
+                    }
+                }
+            }
+        }
     }
 
 	void JustDied(Unit* /*pKiller*/)
