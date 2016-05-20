@@ -322,6 +322,10 @@ enum eObsidianDestroyer
 {
     SPELL_PURGE       = 25756,
 	SPELL_DRAIN_MANA  = 25755,
+    SPELL_DRAIN_MANA_VISUAL  = 26639,
+    
+    SPELL_SHOCK_BLAST = 26458,
+    NPC_OBSIDIAN_ERADICATOR = 15262,
 
 	SMALL_OBSIDIAN_CHUNK = 181068,
 	LARGE_OBSIDIAN_CHUNK = 181069,
@@ -331,11 +335,21 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
 {
     mob_obsidian_destroyerAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
+        switch(m_creature->GetEntry())
+        {
+            case NPC_OBSIDIAN_DESTROYER:
+                m_uiFullManaSpell = SPELL_PURGE;
+                break;
+            case NPC_OBSIDIAN_ERADICATOR:
+                m_uiFullManaSpell = SPELL_SHOCK_BLAST;
+                break;
+        }
         Reset();
     }
 
 	uint32 m_uiManaDrainTimer;
-
+    uint32 m_uiFullManaSpell;;
+    
     void Reset() 
     {
 		m_uiManaDrainTimer = 10000;
@@ -360,6 +374,12 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
 			pChunk->SetLootState(GO_READY);	
             pChunk->SetOwnerGuid(ObjectGuid());
 		}
+    }
+    
+    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_DRAIN_MANA)
+            pTarget->CastSpell(m_creature,SPELL_DRAIN_MANA_VISUAL, true);               // animation for mana drain
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -386,7 +406,7 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
 			m_uiManaDrainTimer -= uiDiff;
 
 		if (m_creature->GetPower(POWER_MANA) == m_creature->GetMaxPower(POWER_MANA))
-			DoCastSpellIfCan(m_creature, SPELL_PURGE);
+			DoCastSpellIfCan(m_creature, m_uiFullManaSpell);
 
         DoMeleeAttackIfReady(); 
     }
