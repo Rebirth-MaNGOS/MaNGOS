@@ -150,6 +150,12 @@ void instance_temple_of_ahnqiraj::Load(const char* chrIn)
     OUT_LOAD_INST_DATA_COMPLETE;
 }
 
+void instance_temple_of_ahnqiraj::OnPlayerDeath(Player* pPlayer)
+{
+    // Remove the Digestive Acid.
+    pPlayer->RemoveAurasDueToSpell(26476, nullptr, AURA_REMOVE_BY_DEFAULT);
+}
+
 uint32 instance_temple_of_ahnqiraj::GetData(uint32 uiType)
 {
     switch(uiType)
