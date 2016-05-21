@@ -322,6 +322,10 @@ enum eObsidianDestroyer
 {
     SPELL_PURGE       = 25756,
 	SPELL_DRAIN_MANA  = 25755,
+    SPELL_DRAIN_MANA_VISUAL  = 26639,
+    
+    SPELL_SHOCK_BLAST = 26458,
+    NPC_OBSIDIAN_ERADICATOR = 15262,
 
 	SMALL_OBSIDIAN_CHUNK = 181068,
 	LARGE_OBSIDIAN_CHUNK = 181069,
@@ -331,13 +335,28 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
 {
     mob_obsidian_destroyerAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
+        switch(m_creature->GetEntry())
+        {
+            case NPC_OBSIDIAN_DESTROYER:
+                m_uiFullManaSpell = SPELL_PURGE;
+                m_bIsEradicator = false;
+                break;
+            case NPC_OBSIDIAN_ERADICATOR:
+                m_uiFullManaSpell = SPELL_SHOCK_BLAST;
+                m_bIsEradicator = true;
+                break;
+        }
         Reset();
     }
 
 	uint32 m_uiManaDrainTimer;
-
+    uint32 m_uiFullManaSpell;;
+    bool m_bIsEradicator;
+    short m_uiDrain_count;
+    
     void Reset() 
     {
+        m_uiDrain_count = 0;
 		m_uiManaDrainTimer = 10000;
 		m_creature->SetPower(POWER_MANA, 0);
         m_creature->SetMaxPower(POWER_MANA, 0);
@@ -345,21 +364,67 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
 
 	void Aggro(Unit* /*pWho*/)
     {
+        // Combat so we have everyone on threat list for mana drain
+        m_creature->SetInCombatWithZone();
+        
         m_creature->SetMaxPower(POWER_MANA, m_creature->GetCreatureInfo()->maxmana);
+        if(m_bIsEradicator)
+        {
+            const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+            
+            if(!threatList.empty())
+            {
+                for (HostileReference *currentReference : threatList)
+                {
+                    Unit *target = currentReference->getTarget();
+                    if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 30.0f)
+                    {
+                        m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
+                        ++m_uiDrain_count;
+                        if(m_uiDrain_count == 16)
+                            break;
+                    }
+                }
+            }
+        }
     }
 
 	void JustDied(Unit* /*pKiller*/)
     {
 		float x, y, z;
         m_creature->GetClosePoint(x, y, z, 1.0f, 2.0f);
-		// spawn a random obsidian
-		int Size = urand(0,1);
-		if(GameObject* pChunk = m_creature->SummonGameObject((Size>0?SMALL_OBSIDIAN_CHUNK:LARGE_OBSIDIAN_CHUNK),0, x, y, z, 0,GO_STATE_ACTIVE))
-		{		
-			pChunk->SetGoState(GO_STATE_READY);
-			pChunk->SetLootState(GO_READY);	
-            pChunk->SetOwnerGuid(ObjectGuid());
-		}
+        
+        // spawn a random obsidian
+        short Size = urand(0,1);
+        short Drop = urand(0,1);
+       
+        if(Drop > 0)
+        {
+            if(!m_bIsEradicator)
+            {
+                if(GameObject* pChunk = m_creature->SummonGameObject(SMALL_OBSIDIAN_CHUNK,3600000, x, y, z, 0,GO_STATE_ACTIVE))
+                {       
+                    pChunk->SetGoState(GO_STATE_READY);
+                    pChunk->SetLootState(GO_READY); 
+                    pChunk->SetOwnerGuid(ObjectGuid());
+                }
+            }            
+            else 
+            {
+                if(GameObject* pChunk = m_creature->SummonGameObject((Size>0?SMALL_OBSIDIAN_CHUNK:LARGE_OBSIDIAN_CHUNK),3600000, x, y, z, 0,GO_STATE_ACTIVE))
+                {		
+                    pChunk->SetGoState(GO_STATE_READY);
+                    pChunk->SetLootState(GO_READY);	
+                    pChunk->SetOwnerGuid(ObjectGuid());
+                }
+            }
+        }
+    }
+    
+    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_DRAIN_MANA)
+            pTarget->CastSpell(m_creature,SPELL_DRAIN_MANA_VISUAL, true);               // animation for mana drain
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -386,7 +451,7 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
 			m_uiManaDrainTimer -= uiDiff;
 
 		if (m_creature->GetPower(POWER_MANA) == m_creature->GetMaxPower(POWER_MANA))
-			DoCastSpellIfCan(m_creature, SPELL_PURGE);
+			DoCastSpellIfCan(m_creature, m_uiFullManaSpell);
 
         DoMeleeAttackIfReady(); 
     }

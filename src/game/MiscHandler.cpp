@@ -930,13 +930,6 @@ void WorldSession::HandleMoveUnRootAck(WorldPacket& recv_data)
 
     recv_data.read_skip<uint32>();                          // unk
 
-    if (_player->isDead() && !_player->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
-    {
-        sWorld.SendAntiCheatMessageToGMs(_player->GetName(), "The player tried to unroot while dead and not a ghost. This is an exploit attempt!");
-        sLog.outWarden("The player %s tried to unroot while dead.", _player->GetName());
-        return;
-    }
-
     SetRooted(false);
 
     recv_data.rpos(recv_data.wpos());                       // prevent warnings spam

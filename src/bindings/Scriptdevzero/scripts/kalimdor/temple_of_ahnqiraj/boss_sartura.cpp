@@ -36,6 +36,8 @@ enum
     // Guard Spell
     SPELL_WHIRLWIND_ADD         = 26038,
     SPELL_KNOCKBACK             = 26027,
+    
+    NPC_SARTURAS_ROYAL_GUARD = 15984
 };
 
 struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
@@ -67,6 +69,7 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
         m_bAggroReset = false;
         m_bIsEnraged = false;
         m_bIsEnragedHard = false;
+        RespawnGuards();
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -82,6 +85,23 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
     void JustDied(Unit* /*pKiller*/)
     {
         DoScriptText(SAY_DEATH, m_creature);
+    }
+    
+    void RespawnGuards()
+    {        
+        // Respawn Guards 
+        // long range so players won't exploit it by killing adds and then pulling boss far away and reset it to do the boss without adds
+        std::list<Creature*> m_lRoyalGuards;
+        GetCreatureListWithEntryInGrid(m_lRoyalGuards, m_creature, NPC_SARTURAS_ROYAL_GUARD, 250.f); 
+
+        if (!m_lRoyalGuards.empty())
+        {
+            for(std::list<Creature*>::iterator itr = m_lRoyalGuards.begin(); itr != m_lRoyalGuards.end(); ++itr)
+            {
+                if ((*itr) && !(*itr)->isAlive())
+                    (*itr)->Respawn();
+            }
+        }        
     }
 
     void UpdateAI(const uint32 uiDiff)

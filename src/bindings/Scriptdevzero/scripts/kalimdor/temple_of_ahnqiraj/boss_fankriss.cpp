@@ -87,6 +87,21 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
         if (Spawn && pVictim)
             Spawn->AI()->AttackStart(pVictim);
     }
+    
+    void CastCleaveMortalWound()
+    {
+        const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+        
+        if(!threatList.empty())
+        {
+            for (HostileReference *currentReference : threatList)
+            {
+                Unit *target = currentReference->getTarget();
+                if (target && target->GetTypeId() == TYPEID_PLAYER && m_creature->isInFrontInMap(target, 8.f, (PI / 180) * 90) && m_creature->CanReachWithMeleeAttack(target))
+                    m_creature->CastSpell(target, SPELL_MORTAL_WOUND, true);                        
+            }
+        }
+    }
 
     void UpdateAI(const uint32 diff)
     {
@@ -97,7 +112,7 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
         //MortalWound_Timer
         if (MortalWound_Timer < diff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_MORTAL_WOUND);
+            CastCleaveMortalWound();
             MortalWound_Timer = urand(10000, 20000);
         }else MortalWound_Timer -= diff;
 

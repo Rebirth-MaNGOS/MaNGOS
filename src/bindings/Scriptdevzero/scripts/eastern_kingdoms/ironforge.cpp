@@ -74,7 +74,8 @@ struct MANGOS_DLL_DECL npc_deeprun_ratAI : public FollowerAI
         {
             if (m_creature->IsWithinDistInMap(pWho, 10.0f) && !HasFollowState(STATE_FOLLOW_COMPLETE))
             {
-                if (GetLeaderForFollower()->GetQuestStatus(QUEST_ROUNDUP) == QUEST_STATUS_COMPLETE)
+                Player* pLeader = GetLeaderForFollower();
+                if (pLeader && pLeader->GetQuestStatus(QUEST_ROUNDUP) == QUEST_STATUS_COMPLETE)
                 {
                     m_uiTimer = 30000;
                     SetFollowComplete(true);

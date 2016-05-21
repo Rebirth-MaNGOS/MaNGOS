@@ -155,335 +155,6 @@ struct MANGOS_DLL_DECL flesh_tentacleAI : public ScriptedAI
     void JustDied(Unit* killer);
 };
 
-struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
-{
-    eye_of_cthunAI(Creature* pCreature) : ScriptedAI(pCreature)
-    {
-        SetCombatMovement(false);
-
-        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        if (!m_pInstance)
-            error_log("SD2: No Instance eye_of_cthunAI");
-
-        Reset();
-    }
-
-    ScriptedInstance* m_pInstance;
-
-    // Global variables
-    uint32 m_uiPhaseTimer;
-
-    // Eye beam phase
-    uint32 m_uiBeamTimer;
-    uint32 m_uiEyeTentacleTimer;
-    uint32 m_uiClawTentacleTimer;
-
-    // Dark Glare phase
-    uint32 m_uiDarkGlareTick;
-    uint32 m_uiDarkGlareTickTimer;
-    float m_fDarkGlareAngle;
-    bool m_bClockWise;
-
-    void Reset()
-    {
-        // Phase information
-        m_uiPhaseTimer = 50000;                             // First dark glare in 50 seconds
-
-        // Eye beam phase 50 seconds
-        m_uiBeamTimer = 3000;
-        m_uiEyeTentacleTimer = 45000;                       // Always spawns 5 seconds before Dark Beam
-        m_uiClawTentacleTimer = 12500;                      // 4 per Eye beam phase (unsure if they spawn durring Dark beam)
-
-        // Dark Beam phase 35 seconds (each tick = 1 second, 35 ticks)
-        m_uiDarkGlareTick = 0;
-        m_uiDarkGlareTickTimer = 1000;
-        m_fDarkGlareAngle = 0;
-        m_bClockWise = false;
-
-        // Reset flags
-        m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
-        m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
-    }
-
-    void JustSummoned(Creature* pSummoned)
-    {
-        if (pSummoned->GetEntry() == MOB_EYE_TENTACLE)
-        {
-            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                pSummoned->AI()->AttackStart(pTarget);
-        }
-    }
-
-    void SpawnEyeTentacle(float x, float y)
-    {
-        m_creature->SummonCreature(MOB_EYE_TENTACLE, m_creature->GetPositionX()+x ,m_creature->GetPositionY()+y, m_creature->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 500);
-    }
-
-    void Aggro(Unit* /*pWho*/)
-    {
-        if (m_pInstance)
-            m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_NORMAL);
-    }
-
-    void ResetToHome()
-    {
-        if (m_pInstance)
-            m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_NOT_STARTED);
-
-        ScriptedAI::ResetToHome();
-    }
-
-    void UpdateAI(const uint32 uiDiff)
-    {
-        // No instance
-        if (!m_pInstance)
-            return;
-
-        if (m_pInstance->GetData(TYPE_CTHUN_PHASE) == PHASE_EYE_NORMAL)
-        {
-            // Check if we have a target
-            if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-                return;
-        }
-
-        switch (m_pInstance->GetData(TYPE_CTHUN_PHASE))
-        {
-            case PHASE_EYE_NORMAL:
-            {
-                // m_uiBeamTimer
-                if (m_uiBeamTimer < uiDiff)
-                {
-                    // SPELL_GREEN_BEAM
-                    if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                    {
-                        m_creature->InterruptNonMeleeSpells(false);
-                        DoCastSpellIfCan(pTarget, SPELL_GREEN_BEAM);
-
-                        // Correctly update our target
-                        m_creature->SetTargetGuid(pTarget->GetObjectGuid());
-                    }
-
-                    //Beam every 3 seconds
-                    m_uiBeamTimer = 3000;
-                }
-                else
-                    m_uiBeamTimer -= uiDiff;
-
-                // m_uiClawTentacleTimer
-                if (m_uiClawTentacleTimer < uiDiff)
-                {
-                    if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                    {
-                        // Spawn claw tentacle on the random target
-                        if (Creature* pSummoned = m_creature->SummonCreature(MOB_CLAW_TENTACLE, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 500))
-                            pSummoned->AI()->AttackStart(pTarget);
-                    }
-
-                    // One claw tentacle every 12.5 seconds
-                    m_uiClawTentacleTimer = 12500;
-                }
-                else
-                    m_uiClawTentacleTimer -= uiDiff;
-
-                // m_uiEyeTentacleTimer
-                if (m_uiEyeTentacleTimer < uiDiff)
-                {
-                    //Spawn the 8 Eye Tentacles in the corret spots
-                    SpawnEyeTentacle(0, 20);                //south
-                    SpawnEyeTentacle(10, 10);               //south west
-                    SpawnEyeTentacle(20, 0);                //west
-                    SpawnEyeTentacle(10, -10);              //north west
-
-                    SpawnEyeTentacle(0, -20);               //north
-                    SpawnEyeTentacle(-10, -10);             //north east
-                    SpawnEyeTentacle(-20, 0);               // east
-                    SpawnEyeTentacle(-10, 10);              // south east
-
-                    // No point actually putting a timer here since
-                    // These shouldn't trigger agian until after phase shifts
-                    m_uiEyeTentacleTimer = 45000;
-                }
-                else
-                    m_uiEyeTentacleTimer -= uiDiff;
-
-                // m_uiPhaseTimer
-                if (m_uiPhaseTimer < uiDiff)
-                {
-                    //Switch to Dark Beam
-                    m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_DARK_GLARE);
-
-                    m_creature->InterruptNonMeleeSpells(false);
-					Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-					// Cast the rotation spell
-                    if (DoCastSpellIfCan(m_creature, SPELL_ROTATE_TRIGGER) == CAST_OK)
-                    {
-                        // Remove the target focus but allow the boss to face the current victim
-                        m_creature->SetTargetGuid(ObjectGuid());
-						if(pTarget)
-							m_creature->SetFacingToObject(pTarget);
-
-					}
-                    //// Select random target for dark beam to start on
-                    //if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                    //{
-                    //    // Correctly update our target
-                    //    m_creature->SetTargetGuid(pTarget->GetObjectGuid());
-
-                    //    // Face our target
-                    //    m_fDarkGlareAngle = m_creature->GetAngle(pTarget);
-                    //    m_uiDarkGlareTickTimer = 1000;
-                    //    m_uiDarkGlareTick = 0;
-                    //    m_bClockWise = urand(0, 1);
-                    //}
-
-                    // Add red coloration to C'thun
-                    DoCastSpellIfCan(m_creature, SPELL_RED_COLORATION);
-
-                    // Freeze animation
-
-                    // Darkbeam for 35 seconds
-                    m_uiPhaseTimer = 35000;
-                }
-                else
-                    m_uiPhaseTimer -= uiDiff;
-
-                break;
-            }
-            case PHASE_EYE_DARK_GLARE:
-            {
-                //// Dark Glare
-                //if (m_uiDarkGlareTick < 35)
-                //{
-                //    if (m_uiDarkGlareTickTimer < uiDiff)
-                //    {
-                //        // Remove any target
-                //        m_creature->SetTargetGuid(ObjectGuid());
-
-                //        // Set angle and cast
-                //        m_creature->SetOrientation(m_fDarkGlareAngle + (m_bClockWise ? 1 : -1) * ((float)m_uiDarkGlareTick*M_PI_F/35));
-
-                //        m_creature->StopMoving();
-
-                //        // Actual dark glare cast, maybe something missing here?
-                //        DoCastSpellIfCan(m_creature, SPELL_DARK_GLARE);
-
-                //        // Increase tick
-                //        ++m_uiDarkGlareTick;
-
-                //        // 1 second per tick
-                //        m_uiDarkGlareTickTimer = 1000;
-                //    }
-                //    else
-                //        m_uiDarkGlareTickTimer -= uiDiff;
-                //}
-
-                // m_uiPhaseTimer
-                if (m_uiPhaseTimer < uiDiff)
-                {
-                    // Switch to Eye Beam
-                    m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_NORMAL);
-
-                    m_uiBeamTimer = 3000;
-                    m_uiEyeTentacleTimer = 45000;               //Always spawns 5 seconds before Dark Beam
-                    m_uiClawTentacleTimer = 12500;              //4 per Eye beam phase (unsure if they spawn durring Dark beam)
-
-                    m_creature->InterruptNonMeleeSpells(false);
-
-                    // Remove Red coloration from C'thun
-                    m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
-					// Remove rotation auras
-                    m_creature->RemoveAurasDueToSpell(SPELL_ROTATE_360_LEFT);
-                    m_creature->RemoveAurasDueToSpell(SPELL_ROTATE_360_RIGHT);
-
-                    // Freeze animation
-                    m_creature->SetUInt32Value(UNIT_FIELD_FLAGS, 0);
-
-                    // Eye Beam for 50 seconds
-                    m_uiPhaseTimer = 50000;
-                }
-                else
-                    m_uiPhaseTimer -= uiDiff;
-
-                break;
-            }
-            // Transition phase
-            case PHASE_TRANSITION:
-            {
-                // Remove any target
-                m_creature->SetTargetGuid(ObjectGuid());
-                m_creature->SetHealth(0);
-
-                // Do not kill yet, to be able to reset on evade
-                break;
-            }
-
-            // Dead phase
-            case PHASE_FINISH:
-            {
-                m_creature->DealDamage(m_creature, m_creature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
-                return;
-            }
-        }
-    }
-
-    void DamageTaken(Unit* pDealer, uint32& uiDamage)
-    {
-        // No instance
-        if (!m_pInstance)
-            return;
-
-        switch (m_pInstance->GetData(TYPE_CTHUN_PHASE))
-        {
-            case PHASE_EYE_NORMAL:
-            case PHASE_EYE_DARK_GLARE:
-            {
-                // Only if it will kill
-                if (uiDamage < m_creature->GetHealth())
-                    return;
-
-                // Fake death in phase 0 or 1 (green beam or dark glare phase)
-                m_creature->InterruptNonMeleeSpells(false);
-
-                // Remove Red coloration from c'thun
-                m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
-
-                // Reset to normal emote state and prevent select and attack
-                m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
-
-                // Remove Target field
-                m_creature->SetTargetGuid(ObjectGuid());
-
-                // Death animation/ respawning;
-                m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_TRANSITION);
-                // Ensure CThun is in combat
-                if (Creature* pCThun = m_pInstance->GetSingleCreatureFromStorage(NPC_CTHUN))
-                    pCThun->AI()->AttackStart(pDealer);
-
-                m_creature->SetHealth(0);
-                uiDamage = 0;
-
-                m_creature->InterruptNonMeleeSpells(true);
-                m_creature->RemoveAllAuras();
-
-                break;
-            }
-            case PHASE_FINISH:
-            {
-                // Allow death here
-                return;
-            }
-
-            default:
-            {
-                // Prevent death in this phase
-                uiDamage = 0;
-                return;
-            }
-            break;
-        }
-    }
-};
-
 struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
 {
     cthunAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -517,6 +188,7 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
     uint32 m_uiStomachEnterVisTimer;
 
     ObjectGuid m_stomachEnterTargetGuid;
+    ObjectGuid m_eyeGuid;
 
     // Stomach map, bool = true then in stomach
     typedef UNORDERED_MAP<ObjectGuid, bool> StomachMap;
@@ -540,12 +212,23 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         m_uiStomachEnterVisTimer = 0;                       // Always 3.5 seconds after Stomach Enter Timer
         m_stomachEnterTargetGuid.Clear();                   // Target to be teleported to stomach
 
+        if (Creature* pEye = m_creature->GetMap()->GetCreature(m_eyeGuid))
+            pEye->Respawn();
+        m_eyeGuid.Clear();
+
         // Clear players in stomach and outside
         m_mStomachMap.clear();
 
         // Reset flags
         m_creature->RemoveAurasDueToSpell(SPELL_TRANSFORM);
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+    }
+
+    void StartSecondPhase(ObjectGuid eyeGuid, Unit* target)
+    {
+        AttackStart(target);
+
+        m_eyeGuid = eyeGuid;
     }
 
     void JustSummoned(Creature* pSummoned)
@@ -970,6 +653,320 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
     }
 };
 
+struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
+{
+    eye_of_cthunAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        SetCombatMovement(false);
+
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        if (!m_pInstance)
+            error_log("SD2: No Instance eye_of_cthunAI");
+
+        Reset();
+    }
+
+    ScriptedInstance* m_pInstance;
+
+    // Global variables
+    uint32 m_uiPhaseTimer;
+
+    // Eye beam phase
+    uint32 m_uiBeamTimer;
+    uint32 m_uiEyeTentacleTimer;
+    uint32 m_uiClawTentacleTimer;
+
+    // Dark Glare phase
+    uint32 m_uiDarkGlareTick;
+    uint32 m_uiDarkGlareTickTimer;
+    float m_fDarkGlareAngle;
+    bool m_bClockWise;
+
+    void Reset()
+    {
+        // Phase information
+        m_uiPhaseTimer = 50000;                             // First dark glare in 50 seconds
+
+        // Eye beam phase 50 seconds
+        m_uiBeamTimer = 3000;
+        m_uiEyeTentacleTimer = 45000;                       // Always spawns 5 seconds before Dark Beam
+        m_uiClawTentacleTimer = 12500;                      // 4 per Eye beam phase (unsure if they spawn durring Dark beam)
+
+        // Dark Beam phase 35 seconds (each tick = 1 second, 35 ticks)
+        m_uiDarkGlareTick = 0;
+        m_uiDarkGlareTickTimer = 1000;
+        m_fDarkGlareAngle = 0;
+        m_bClockWise = false;
+
+        // Reset flags
+        m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
+        m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+    }
+
+    void JustSummoned(Creature* pSummoned)
+    {
+        if (pSummoned->GetEntry() == MOB_EYE_TENTACLE)
+        {
+            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                pSummoned->AI()->AttackStart(pTarget);
+        }
+    }
+
+    void SpawnEyeTentacle(float x, float y)
+    {
+        m_creature->SummonCreature(MOB_EYE_TENTACLE, m_creature->GetPositionX()+x ,m_creature->GetPositionY()+y, m_creature->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 500);
+    }
+
+    void Aggro(Unit* /*pWho*/)
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_NORMAL);
+    }
+
+    void ResetToHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_NOT_STARTED);
+
+        ScriptedAI::ResetToHome();
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        // No instance
+        if (!m_pInstance)
+            return;
+
+        if (m_pInstance->GetData(TYPE_CTHUN_PHASE) == PHASE_EYE_NORMAL)
+        {
+            // Check if we have a target
+            if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+                return;
+        }
+
+        switch (m_pInstance->GetData(TYPE_CTHUN_PHASE))
+        {
+            case PHASE_EYE_NORMAL:
+            {
+                // m_uiBeamTimer
+                if (m_uiBeamTimer < uiDiff)
+                {
+                    // SPELL_GREEN_BEAM
+                    if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    {
+                        m_creature->InterruptNonMeleeSpells(false);
+                        DoCastSpellIfCan(pTarget, SPELL_GREEN_BEAM);
+
+                        // Correctly update our target
+                        m_creature->SetTargetGuid(pTarget->GetObjectGuid());
+                    }
+
+                    //Beam every 3 seconds
+                    m_uiBeamTimer = 3000;
+                }
+                else
+                    m_uiBeamTimer -= uiDiff;
+
+                // m_uiClawTentacleTimer
+                if (m_uiClawTentacleTimer < uiDiff)
+                {
+                    if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    {
+                        // Spawn claw tentacle on the random target
+                        if (Creature* pSummoned = m_creature->SummonCreature(MOB_CLAW_TENTACLE, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 500))
+                            pSummoned->AI()->AttackStart(pTarget);
+                    }
+
+                    // One claw tentacle every 12.5 seconds
+                    m_uiClawTentacleTimer = 12500;
+                }
+                else
+                    m_uiClawTentacleTimer -= uiDiff;
+
+                // m_uiEyeTentacleTimer
+                if (m_uiEyeTentacleTimer < uiDiff)
+                {
+                    //Spawn the 8 Eye Tentacles in the corret spots
+                    SpawnEyeTentacle(0, 20);                //south
+                    SpawnEyeTentacle(10, 10);               //south west
+                    SpawnEyeTentacle(20, 0);                //west
+                    SpawnEyeTentacle(10, -10);              //north west
+
+                    SpawnEyeTentacle(0, -20);               //north
+                    SpawnEyeTentacle(-10, -10);             //north east
+                    SpawnEyeTentacle(-20, 0);               // east
+                    SpawnEyeTentacle(-10, 10);              // south east
+
+                    // No point actually putting a timer here since
+                    // These shouldn't trigger agian until after phase shifts
+                    m_uiEyeTentacleTimer = 45000;
+                }
+                else
+                    m_uiEyeTentacleTimer -= uiDiff;
+
+                // m_uiPhaseTimer
+                if (m_uiPhaseTimer < uiDiff)
+                {
+                    //Switch to Dark Beam
+                    m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_DARK_GLARE);
+
+                    m_creature->InterruptNonMeleeSpells(false);
+					Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+					// Cast the rotation spell
+                    if (DoCastSpellIfCan(m_creature, SPELL_ROTATE_TRIGGER) == CAST_OK)
+                    {
+                        // Remove the target focus but allow the boss to face the current victim
+                        m_creature->SetTargetGuid(ObjectGuid());
+						if(pTarget)
+							m_creature->SetFacingToObject(pTarget);
+
+					}
+                    //// Select random target for dark beam to start on
+                    //if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    //{
+                    //    // Correctly update our target
+                    //    m_creature->SetTargetGuid(pTarget->GetObjectGuid());
+
+                    //    // Face our target
+                    //    m_fDarkGlareAngle = m_creature->GetAngle(pTarget);
+                    //    m_uiDarkGlareTickTimer = 1000;
+                    //    m_uiDarkGlareTick = 0;
+                    //    m_bClockWise = urand(0, 1);
+                    //}
+
+                    // Add red coloration to C'thun
+                    DoCastSpellIfCan(m_creature, SPELL_RED_COLORATION);
+
+                    // Freeze animation
+
+                    // Darkbeam for 35 seconds
+                    m_uiPhaseTimer = 35000;
+                }
+                else
+                    m_uiPhaseTimer -= uiDiff;
+
+                break;
+            }
+            case PHASE_EYE_DARK_GLARE:
+            {
+                //// Dark Glare
+                //if (m_uiDarkGlareTick < 35)
+                //{
+                //    if (m_uiDarkGlareTickTimer < uiDiff)
+                //    {
+                //        // Remove any target
+                //        m_creature->SetTargetGuid(ObjectGuid());
+
+                //        // Set angle and cast
+                //        m_creature->SetOrientation(m_fDarkGlareAngle + (m_bClockWise ? 1 : -1) * ((float)m_uiDarkGlareTick*M_PI_F/35));
+
+                //        m_creature->StopMoving();
+
+                //        // Actual dark glare cast, maybe something missing here?
+                //        DoCastSpellIfCan(m_creature, SPELL_DARK_GLARE);
+
+                //        // Increase tick
+                //        ++m_uiDarkGlareTick;
+
+                //        // 1 second per tick
+                //        m_uiDarkGlareTickTimer = 1000;
+                //    }
+                //    else
+                //        m_uiDarkGlareTickTimer -= uiDiff;
+                //}
+
+                // m_uiPhaseTimer
+                if (m_uiPhaseTimer < uiDiff)
+                {
+                    // Switch to Eye Beam
+                    m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_NORMAL);
+
+                    m_uiBeamTimer = 3000;
+                    m_uiEyeTentacleTimer = 45000;               //Always spawns 5 seconds before Dark Beam
+                    m_uiClawTentacleTimer = 12500;              //4 per Eye beam phase (unsure if they spawn durring Dark beam)
+
+                    m_creature->InterruptNonMeleeSpells(false);
+
+                    // Remove Red coloration from C'thun
+                    m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
+					// Remove rotation auras
+                    m_creature->RemoveAurasDueToSpell(SPELL_ROTATE_360_LEFT);
+                    m_creature->RemoveAurasDueToSpell(SPELL_ROTATE_360_RIGHT);
+
+                    // Freeze animation
+                    m_creature->SetUInt32Value(UNIT_FIELD_FLAGS, 0);
+
+                    // Eye Beam for 50 seconds
+                    m_uiPhaseTimer = 50000;
+                }
+                else
+                    m_uiPhaseTimer -= uiDiff;
+
+                break;
+            }
+        }
+    }
+
+    void DamageTaken(Unit* pDealer, uint32& uiDamage)
+    {
+        // No instance
+        if (!m_pInstance)
+            return;
+
+        switch (m_pInstance->GetData(TYPE_CTHUN_PHASE))
+        {
+            case PHASE_EYE_NORMAL:
+            case PHASE_EYE_DARK_GLARE:
+            {
+                // Only if it will kill
+                if (uiDamage < m_creature->GetHealth())
+                    return;
+
+                // Fake death in phase 0 or 1 (green beam or dark glare phase)
+                m_creature->InterruptNonMeleeSpells(false);
+
+                // Remove Red coloration from c'thun
+                m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
+
+                // Reset to normal emote state and prevent select and attack
+                m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+
+                // Remove Target field
+                m_creature->SetTargetGuid(ObjectGuid());
+
+                // Death animation/ respawning;
+                m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_TRANSITION);
+                // Ensure CThun is in combat
+                if (Creature* pCThun = m_pInstance->GetSingleCreatureFromStorage(NPC_CTHUN))
+                {
+                    cthunAI* pAI = dynamic_cast<cthunAI*>(pCThun->AI());
+                    if (pAI)
+                        pAI->StartSecondPhase(m_creature->GetObjectGuid(), pDealer);
+                }
+
+                m_creature->InterruptNonMeleeSpells(true);
+                m_creature->RemoveAllAuras();
+
+                break;
+            }
+            case PHASE_FINISH:
+            {
+                // Allow death here
+                return;
+            }
+
+            default:
+            {
+                // Prevent death in this phase
+                uiDamage = 0;
+                return;
+            }
+            break;
+        }
+    }
+};
+
+
 struct MANGOS_DLL_DECL eye_tentacleAI : public ScriptedAI
 {
     eye_tentacleAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -1380,6 +1377,78 @@ CreatureAI* GetAI_flesh_tentacle(Creature* pCreature)
     return new flesh_tentacleAI(pCreature);
 }
 
+struct npc_cthun_stomach_exit_triggerAI : public ScriptedAI
+{
+    npc_cthun_stomach_exit_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+
+        Reset();
+    }
+
+    uint32 m_uiKnockbackTimer;
+    uint32 m_uiSecondKnockbackTimer;
+    ObjectGuid m_targetPlayerGuid;
+
+    void Reset()
+    {
+        m_uiKnockbackTimer = 0;
+        m_uiSecondKnockbackTimer = 0;
+        m_targetPlayerGuid = ObjectGuid();
+    }
+
+    void StartFirstKnockback(ObjectGuid targetGuid)
+    {
+        m_targetPlayerGuid = targetGuid;
+
+        m_uiKnockbackTimer = 3000;
+        m_creature->CastSpell(m_creature, 26092, true);
+    }
+
+    void StartSecondKnockback(ObjectGuid targetGuid)
+    {
+        m_targetPlayerGuid = targetGuid;
+
+        m_uiSecondKnockbackTimer = 100;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiKnockbackTimer)
+        {
+            if (m_uiKnockbackTimer <= uiDiff)
+            {
+                Player* pPlayer = m_creature->GetMap()->GetPlayer(m_targetPlayerGuid);
+                if (pPlayer && m_creature->GetDistance2d(pPlayer) <= 5.f)
+                    pPlayer->KnockBackFrom(pPlayer, 0.f, 56.f);
+
+                m_uiKnockbackTimer = 0;
+            }
+            else
+                m_uiKnockbackTimer -= uiDiff;
+        }
+
+        if (m_uiSecondKnockbackTimer)
+        {
+            if (m_uiSecondKnockbackTimer <= uiDiff)
+            {
+                Player* pPlayer = m_creature->GetMap()->GetPlayer(m_targetPlayerGuid);
+                if (pPlayer)
+                    pPlayer->KnockBackFrom(pPlayer, 24.f, 24.f);
+
+                m_uiSecondKnockbackTimer = 0;
+            }
+            else
+                m_uiSecondKnockbackTimer -= uiDiff;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_cthun_stomach_exit_triggerAI(Creature* pCreature)
+{
+    return new npc_cthun_stomach_exit_triggerAI(pCreature);
+}
+
 // 26224 - knockback
 // 26221 - summon spell, not used
 // Trigger ID: 4033
@@ -1389,24 +1458,32 @@ bool AreaTrigger_stomach_knockback(Player* pPlayer, const AreaTriggerEntry* pTri
                                                              pTrigger->z, 0,
                                                              TEMPSUMMON_TIMED_DESPAWN, 10000))
     {
-        pTriggerCreature->CastSpell(pTriggerCreature, 26092, true);
-        pPlayer->KnockBackFrom(pTriggerCreature, 1.f, 56.f);
+       npc_cthun_stomach_exit_triggerAI* pAI = dynamic_cast<npc_cthun_stomach_exit_triggerAI*>(pTriggerCreature->AI());
+       if (pAI)
+          pAI->StartFirstKnockback(pPlayer->GetObjectGuid()); 
     }
 
     return true;
 }
 
 // Trigger ID: 4034
-bool AreaTrigger_stomach_teleport(Player* pPlayer, const AreaTriggerEntry* /*pTrigger*/)
+bool AreaTrigger_stomach_teleport(Player* pPlayer, const AreaTriggerEntry* pTrigger)
 {
     // Teleport each player out
     pPlayer->NearTeleportTo(-8570.f, 1991.f, 100.4, rand()%6);
 
-    // Cast knockback on them
-    pPlayer->KnockBackFrom(pPlayer, 24.f, 5.f);
-
     // Remove the acid debuff
     pPlayer->RemoveAurasDueToSpell(SPELL_DIGESTIVE_ACID);
+
+    if (Creature* pTriggerCreature = pPlayer->SummonCreature(15800, pTrigger->x, pTrigger->y,
+                                                             pTrigger->z, 0,
+                                                             TEMPSUMMON_TIMED_DESPAWN, 10000))
+    {
+       npc_cthun_stomach_exit_triggerAI* pAI = dynamic_cast<npc_cthun_stomach_exit_triggerAI*>(pTriggerCreature->AI());
+       if (pAI)
+          pAI->StartSecondKnockback(pPlayer->GetObjectGuid()); 
+    }
+
 
     return true;
 }
@@ -1449,6 +1526,11 @@ void AddSC_boss_cthun()
     pNewScript = new Script;
     pNewScript->Name = "mob_giant_flesh_tentacle";
     pNewScript->GetAI = &GetAI_flesh_tentacle;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "npc_cthun_stomach_exit_trigger";
+    pNewScript->GetAI = &GetAI_npc_cthun_stomach_exit_triggerAI;
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;
