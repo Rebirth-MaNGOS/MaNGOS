@@ -15,6 +15,7 @@ enum
     TYPE_CTHUN_PHASE            = 3,
 
     // NPC_SKERAM               = 15263,
+    NPC_YAUJ                    = 15543,
     NPC_KRI                     = 15511,
     NPC_VEM                     = 15544,
     NPC_VEKLOR                  = 15276,

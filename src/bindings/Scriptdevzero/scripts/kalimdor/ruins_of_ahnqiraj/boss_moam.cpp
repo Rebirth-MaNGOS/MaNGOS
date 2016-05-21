@@ -88,6 +88,16 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_MOAM, DONE);
+        
+        float x, y, z;
+        m_creature->GetClosePoint(x, y, z, 1.0f, 2.0f);
+        // spawn a large obsidian chunk
+        if(GameObject* pChunk = m_creature->SummonGameObject(181069,3600000, x, y, z, 0,GO_STATE_ACTIVE))
+        {       
+            pChunk->SetGoState(GO_STATE_READY);
+            pChunk->SetLootState(GO_READY); 
+            pChunk->SetOwnerGuid(ObjectGuid());
+        }
     }
 
 	void JustSummoned(Creature* pSummoned)

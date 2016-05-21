@@ -209,7 +209,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         {
             DoCast(m_creature, SPELL_ENRAGE, true);
             Enraged = true;
-        }else Charge_Timer -= diff;
+        }else Enrage_Timer -= diff;
 
         DoMeleeAttackIfReady();
     }
