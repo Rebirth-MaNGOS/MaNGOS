@@ -110,6 +110,7 @@ ObjectGuid SummonSmallPortal(Creature* creature)
     if (Unit* pPortal = creature->SummonCreature(MOB_SMALL_PORTAL, x, y, z, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
     {
         pPortal->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+        pPortal->SetOwnerGuid(creature->GetObjectGuid());
         return pPortal->GetObjectGuid();
     }
 
@@ -123,6 +124,7 @@ ObjectGuid SummonGiantPortal(Creature* creature)
     if (Unit* pPortal = creature->SummonCreature(MOB_GIANT_PORTAL, x, y, z, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
     {
         pPortal->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+        pPortal->SetOwnerGuid(creature->GetObjectGuid());
         return pPortal->GetObjectGuid();
     }
 
@@ -153,6 +155,23 @@ struct MANGOS_DLL_DECL flesh_tentacleAI : public ScriptedAI
     void UpdateAI(const uint32 diff);
 
     void JustDied(Unit* killer);
+};
+
+struct MANGOS_DLL_DECL portalAI : public ScriptedAI
+{
+    portalAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+    }
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 /*uiDiff*/)
+    {
+        if (!m_creature->GetCharmerOrOwner() || m_creature->GetCharmerOrOwner()->isDead())
+            m_creature->ForcedDespawn();
+    }
 };
 
 struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
@@ -1377,6 +1396,11 @@ CreatureAI* GetAI_flesh_tentacle(Creature* pCreature)
     return new flesh_tentacleAI(pCreature);
 }
 
+CreatureAI* GetAI_portal(Creature* pCreature)
+{
+    return new portalAI(pCreature);
+}
+
 struct npc_cthun_stomach_exit_triggerAI : public ScriptedAI
 {
     npc_cthun_stomach_exit_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -1526,6 +1550,11 @@ void AddSC_boss_cthun()
     pNewScript = new Script;
     pNewScript->Name = "mob_giant_flesh_tentacle";
     pNewScript->GetAI = &GetAI_flesh_tentacle;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "mob_tentacle_portal";
+    pNewScript->GetAI = &GetAI_portal;
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;
