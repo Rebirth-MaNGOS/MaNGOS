@@ -5680,6 +5680,11 @@ void Aura::PeriodicTick()
             deathRayAura->AddCumulativeEffect(pdamage);  // Add to the total amount of damage done for the final damage calculations.;
 
         }
+        else if (spellProto->Id == 26476) // Digestive Acid in C'Thun's stomach.
+        {
+            // Digestive Acid reapplies itself on every tick.
+            target->CastSpell(target, 26476, true);
+        }
 
         PartialResistInfo partial = pCaster->MagicSpellPartialResistResult(target,spellProto);
         target->CalculateDamageAbsorbAndResist(pCaster, GetSpellSchoolMask(spellProto), DOT, pdamage, &absorb, &resist, !(spellProto->AttributesEx2 & SPELL_ATTR_EX2_CANT_REFLECTED),partial);
