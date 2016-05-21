@@ -44,9 +44,6 @@ struct MANGOS_DLL_DECL boss_huhuranAI : public ScriptedAI
     uint32 NoxiousPoison_Timer;
     uint32 FrenzyBack_Timer;
 
-    bool Frenzy;
-    bool Berserk;
-
     void Reset()
     {
         Frenzy_Timer = urand(25000, 35000);
@@ -55,9 +52,6 @@ struct MANGOS_DLL_DECL boss_huhuranAI : public ScriptedAI
         PoisonBolt_Timer = 4000;
         NoxiousPoison_Timer = urand(10000, 20000);
         FrenzyBack_Timer = 15000;
-
-        Frenzy = false;
-        Berserk = false;
     }
 
     void UpdateAI(const uint32 diff)
@@ -67,14 +61,16 @@ struct MANGOS_DLL_DECL boss_huhuranAI : public ScriptedAI
             return;
 
         //Frenzy_Timer
-        if (!Frenzy && Frenzy_Timer < diff)
+        if(!m_creature->HasAura(SPELL_BERSERK))
         {
-            DoCastSpellIfCan(m_creature, SPELL_FRENZY);
-            DoScriptText(EMOTE_GENERIC_FRENZY_KILL, m_creature);
-            Frenzy = true;
-            PoisonBolt_Timer = 3000;
-            Frenzy_Timer = urand(25000, 35000);
-        }else Frenzy_Timer -= diff;
+            if (Frenzy_Timer < diff)
+            {
+                DoCastSpellIfCan(m_creature, SPELL_FRENZY);
+                DoScriptText(EMOTE_GENERIC_FRENZY_KILL, m_creature);
+                PoisonBolt_Timer = 3000;
+                Frenzy_Timer = urand(25000, 35000);
+            }else Frenzy_Timer -= diff;
+        }
 
         // Wyvern Timer
         if (Wyvern_Timer < diff)
@@ -99,7 +95,7 @@ struct MANGOS_DLL_DECL boss_huhuranAI : public ScriptedAI
         }else NoxiousPoison_Timer -= diff;
 
         //PoisonBolt only if frenzy or berserk
-        if (Frenzy || Berserk)
+        if (m_creature->HasAura(SPELL_FRENZY) || m_creature->HasAura(SPELL_BERSERK))
         {
             if (PoisonBolt_Timer < diff)
             {
@@ -108,20 +104,11 @@ struct MANGOS_DLL_DECL boss_huhuranAI : public ScriptedAI
             }else PoisonBolt_Timer -= diff;
         }
 
-        //FrenzyBack_Timer
-        if (Frenzy && FrenzyBack_Timer < diff)
-        {
-            m_creature->InterruptNonMeleeSpells(false);
-            Frenzy = false;
-            FrenzyBack_Timer = 15000;
-        }else FrenzyBack_Timer -= diff;
-
-        if (!Berserk && m_creature->GetHealthPercent() < 31.0f)
+        if (!m_creature->HasAura(SPELL_BERSERK) && m_creature->GetHealthPercent() < 31.0f)
         {
             m_creature->InterruptNonMeleeSpells(false);
             DoScriptText(EMOTE_GENERIC_BERSERK, m_creature);
             DoCastSpellIfCan(m_creature, SPELL_BERSERK);
-            Berserk = true;
         }
 
         DoMeleeAttackIfReady();

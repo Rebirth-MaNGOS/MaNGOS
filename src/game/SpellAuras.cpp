@@ -1415,7 +1415,12 @@ void Aura::TriggerSpell()
             if (!triggerTarget->IsWithinDist(GetTarget(),max_range))
                 return;
 
-            break;
+            Unit* caster = GetCaster();
+            if (!caster)
+                return;
+
+            caster->CastSpell(triggerTarget, 16856, true);
+            return;
         }
         case 1010:                                      // Curse of Idiocy
         {
@@ -6706,6 +6711,21 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
             spellId4 = 26592;
             break;
         }
+        case 26180:
+        {
+            if(!apply && m_removeMode == AURA_REMOVE_BY_DISPEL)
+            {
+                Unit* pTarget = GetTarget();
+                Unit* pCaster = GetCaster();
+
+                if(pTarget && pCaster)
+                {
+                    pTarget->DealDamage(pTarget, 3000, NULL, SPELL_DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NATURE, NULL, true);
+                    pCaster->SendSpellNonMeleeDamageLog(pTarget, 26180, 3000, SPELL_SCHOOL_MASK_NATURE, 0, 0, false, 0, false);
+                }
+            }
+            break;
+        }  
         default:
             return;
         }
