@@ -1099,8 +1099,8 @@ void Player::HandleDrowning(uint32 time_diff)
 
                 if (m_MirrorTimerFlags&UNDERWATER_INLAVA)
                     EnvironmentalDamage(DAMAGE_LAVA, damage);
-                else if (GetZoneId() != 1497) // Slime in Undercity shouldn't do damage.
-                    EnvironmentalDamage(DAMAGE_SLIME, damage);
+                else if (GetZoneId() != 1497 && GetMapId() != 531) // Slime in Undercity shouldn't do damage, neither should
+                    EnvironmentalDamage(DAMAGE_SLIME, damage);     // the slime at C'Thun.
             }
         }
     }
