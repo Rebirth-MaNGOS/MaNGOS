@@ -2119,7 +2119,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
 
                 while (itr != targetUnitMap.end())
                 {
-                    if (itrC > 15)
+                    if (itrC > 15 || (*itr)->GetTypeId() != TYPEID_PLAYER)
                         itr = targetUnitMap.erase(itr);
                     else
                     {
@@ -3831,6 +3831,7 @@ void Spell::SendCastResult(Player* caster, SpellEntry const* spellInfo, SpellCas
     {
         data << uint8(2); // status = fail
         data << uint8(result);                                  // problem
+
         switch (result)
         {
         case SPELL_FAILED_REQUIRES_SPELL_FOCUS:
@@ -3839,9 +3840,9 @@ void Spell::SendCastResult(Player* caster, SpellEntry const* spellInfo, SpellCas
         case SPELL_FAILED_REQUIRES_AREA:
             /* [-ZERO]    // hardcode areas limitation case     switch(spellInfo->Id)
                 {
-                    default:                                    // default case             data << uint32(spellInfo->AreaId);
+                    default:                                    // default case             
                         break;
-                } */
+                }*/
             break;
         case SPELL_FAILED_EQUIPPED_ITEM_CLASS:
             data << uint32(spellInfo->EquippedItemClass);
