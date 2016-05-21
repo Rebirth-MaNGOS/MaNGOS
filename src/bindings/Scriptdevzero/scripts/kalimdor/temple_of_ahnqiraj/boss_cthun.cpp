@@ -238,7 +238,8 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         m_eyeGuid.Clear();
 
         // Clear players in stomach and outside
-        m_pInstance->GetStomachMap().clear();
+        if (m_pInstance)
+            m_pInstance->GetStomachMap().clear();
 
         // Reset flags
         m_creature->RemoveAurasDueToSpell(SPELL_TRANSFORM);
@@ -268,7 +269,7 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
 
     Player* SelectRandomNotStomach()
     {
-        if (m_pInstance->GetStomachMap().empty())
+        if (!m_pInstance || m_pInstance->GetStomachMap().empty())
             return NULL;
 
         std::vector<Player*> vTempTargets;
