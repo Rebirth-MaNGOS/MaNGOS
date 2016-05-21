@@ -904,23 +904,6 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
 
                 break;
             }
-            // Transition phase
-            case PHASE_TRANSITION:
-            {
-                // Remove any target
-                m_creature->SetTargetGuid(ObjectGuid());
-                m_creature->SetHealth(0);
-
-                // Do not kill yet, to be able to reset on evade
-                break;
-            }
-
-            // Dead phase
-            case PHASE_FINISH:
-            {
-                m_creature->DealDamage(m_creature, m_creature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
-                return;
-            }
         }
     }
 
