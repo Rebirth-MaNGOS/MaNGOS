@@ -38,6 +38,7 @@ enum
     MOB_CLAW_TENTACLE               = 15725,
     MOB_EYE_TENTACLE                = 15726,
     MOB_SMALL_PORTAL                = 15904,
+    MOB_CTHUN_PORTAL                = 15896,
 
     SPELL_GREEN_BEAM                = 26134,
     //SPELL_DARK_GLARE                = 26029,
@@ -183,6 +184,13 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         m_pInstance = dynamic_cast<instance_temple_of_ahnqiraj*>(pCreature->GetInstanceData());
         if (!m_pInstance)
             error_log("SD2: No Instance eye_of_cthunAI");
+
+        float x, y, z;
+        m_creature->GetPosition(x, y, z);
+        Unit* pPortal = m_creature->SummonCreature(MOB_CTHUN_PORTAL, x, y, z, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+        if (pPortal)
+            pPortal->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+
 
         Reset();
     }
@@ -466,7 +474,10 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
                             for (StomachMap::iterator itr = m_pInstance->GetStomachMap().begin(); itr != m_pInstance->GetStomachMap().end(); ++itr)
                             {
                                 if (Player* pPlayer = m_creature->GetMap()->GetPlayer(itr->first))
+                                {
+                                    pPlayer->RemoveAurasDueToSpell(SPELL_DIGESTIVE_ACID, nullptr, AURA_REMOVE_BY_DEFAULT);
                                     m_creature->DealDamage(pPlayer, pPlayer->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+                                }
                             }
                             ResetToHome();
                             return;
