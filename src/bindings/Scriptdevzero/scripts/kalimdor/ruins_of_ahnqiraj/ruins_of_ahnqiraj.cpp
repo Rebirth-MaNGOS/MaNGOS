@@ -393,14 +393,32 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
     {
 		float x, y, z;
         m_creature->GetClosePoint(x, y, z, 1.0f, 2.0f);
-		// spawn a random obsidian
-		int Size = urand(0,1);
-		if(GameObject* pChunk = m_creature->SummonGameObject((Size>0?SMALL_OBSIDIAN_CHUNK:LARGE_OBSIDIAN_CHUNK),3600000, x, y, z, 0,GO_STATE_ACTIVE))
-		{		
-			pChunk->SetGoState(GO_STATE_READY);
-			pChunk->SetLootState(GO_READY);	
-            pChunk->SetOwnerGuid(ObjectGuid());
-		}
+        
+        // spawn a random obsidian
+        short Size = urand(0,1);
+        short Drop = urand(0,1);
+       
+        if(Drop > 0)
+        {
+            if(!m_bIsEradicator)
+            {
+                if(GameObject* pChunk = m_creature->SummonGameObject(SMALL_OBSIDIAN_CHUNK,3600000, x, y, z, 0,GO_STATE_ACTIVE))
+                {       
+                    pChunk->SetGoState(GO_STATE_READY);
+                    pChunk->SetLootState(GO_READY); 
+                    pChunk->SetOwnerGuid(ObjectGuid());
+                }
+            }            
+            else 
+            {
+                if(GameObject* pChunk = m_creature->SummonGameObject((Size>0?SMALL_OBSIDIAN_CHUNK:LARGE_OBSIDIAN_CHUNK),3600000, x, y, z, 0,GO_STATE_ACTIVE))
+                {		
+                    pChunk->SetGoState(GO_STATE_READY);
+                    pChunk->SetLootState(GO_READY);	
+                    pChunk->SetOwnerGuid(ObjectGuid());
+                }
+            }
+        }
     }
     
     void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
