@@ -40,6 +40,8 @@ enum CThunPhase
     PHASE_FINISH                = 6,
 };
 
+typedef UNORDERED_MAP<ObjectGuid, bool> StomachMap;
+
 class MANGOS_DLL_DECL instance_temple_of_ahnqiraj : public ScriptedInstance
 {
     public:
@@ -58,11 +60,17 @@ class MANGOS_DLL_DECL instance_temple_of_ahnqiraj : public ScriptedInstance
         const char* Save() { return m_strInstData.c_str(); }
         void Load(const char* chrIn);
 
+        // Map for storing players in C'Thun's stomach.
+        StomachMap& GetStomachMap() { return m_mStomachMap; }
+
     private:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
         std::string m_strInstData;
 
         uint32 m_uiBugTrioDeathCount;
+        
+        // Stomach map, bool = true then in stomach
+        StomachMap m_mStomachMap;
 };
 
 #endif

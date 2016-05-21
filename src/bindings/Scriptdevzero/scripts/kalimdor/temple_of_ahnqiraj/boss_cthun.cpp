@@ -38,6 +38,7 @@ enum
     MOB_CLAW_TENTACLE               = 15725,
     MOB_EYE_TENTACLE                = 15726,
     MOB_SMALL_PORTAL                = 15904,
+    MOB_CTHUN_PORTAL                = 15896,
 
     SPELL_GREEN_BEAM                = 26134,
     //SPELL_DARK_GLARE                = 26029,
@@ -110,6 +111,7 @@ ObjectGuid SummonSmallPortal(Creature* creature)
     if (Unit* pPortal = creature->SummonCreature(MOB_SMALL_PORTAL, x, y, z, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
     {
         pPortal->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+        pPortal->SetOwnerGuid(creature->GetObjectGuid());
         return pPortal->GetObjectGuid();
     }
 
@@ -123,6 +125,7 @@ ObjectGuid SummonGiantPortal(Creature* creature)
     if (Unit* pPortal = creature->SummonCreature(MOB_GIANT_PORTAL, x, y, z, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 0))
     {
         pPortal->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+        pPortal->SetOwnerGuid(creature->GetObjectGuid());
         return pPortal->GetObjectGuid();
     }
 
@@ -155,20 +158,44 @@ struct MANGOS_DLL_DECL flesh_tentacleAI : public ScriptedAI
     void JustDied(Unit* killer);
 };
 
+struct MANGOS_DLL_DECL portalAI : public ScriptedAI
+{
+    portalAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+    }
+
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 /*uiDiff*/)
+    {
+        if (!m_creature->GetCharmerOrOwner() || m_creature->GetCharmerOrOwner()->isDead())
+            m_creature->ForcedDespawn();
+    }
+};
+
 struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
 {
     cthunAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
 
-        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        m_pInstance = dynamic_cast<instance_temple_of_ahnqiraj*>(pCreature->GetInstanceData());
         if (!m_pInstance)
             error_log("SD2: No Instance eye_of_cthunAI");
+
+        float x, y, z;
+        m_creature->GetPosition(x, y, z);
+        Unit* pPortal = m_creature->SummonCreature(MOB_CTHUN_PORTAL, x, y, z, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+        if (pPortal)
+            pPortal->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+
 
         Reset();
     }
 
-    ScriptedInstance* m_pInstance;
+    instance_temple_of_ahnqiraj* m_pInstance;
 
     // Out of combat whisper timer
     uint32 m_uiWisperTimer;
@@ -183,16 +210,11 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
     uint8 m_uiFleshTentaclesKilled;
     uint32 m_uiGiantClawTentacleTimer;
     uint32 m_uiGiantEyeTentacleTimer;
-    uint32 m_uiStomachAcidTimer;
     uint32 m_uiStomachEnterTimer;
     uint32 m_uiStomachEnterVisTimer;
 
     ObjectGuid m_stomachEnterTargetGuid;
     ObjectGuid m_eyeGuid;
-
-    // Stomach map, bool = true then in stomach
-    typedef UNORDERED_MAP<ObjectGuid, bool> StomachMap;
-    StomachMap m_mStomachMap;
 
     void Reset()
     {
@@ -207,7 +229,6 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         m_uiFleshTentaclesKilled = 0;
         m_uiGiantClawTentacleTimer = 15000;                 // 15 seconds into body phase (1 min repeat)
         m_uiGiantEyeTentacleTimer = 45000;                  // 15 seconds into body phase (1 min repeat)
-        m_uiStomachAcidTimer = 4000;                        // Every 4 seconds
         m_uiStomachEnterTimer = 10000;                      // Every 10 seconds
         m_uiStomachEnterVisTimer = 0;                       // Always 3.5 seconds after Stomach Enter Timer
         m_stomachEnterTargetGuid.Clear();                   // Target to be teleported to stomach
@@ -217,7 +238,8 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         m_eyeGuid.Clear();
 
         // Clear players in stomach and outside
-        m_mStomachMap.clear();
+        if (m_pInstance)
+            m_pInstance->GetStomachMap().clear();
 
         // Reset flags
         m_creature->RemoveAurasDueToSpell(SPELL_TRANSFORM);
@@ -247,14 +269,14 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
 
     Player* SelectRandomNotStomach()
     {
-        if (m_mStomachMap.empty())
+        if (!m_pInstance || m_pInstance->GetStomachMap().empty())
             return NULL;
 
         std::vector<Player*> vTempTargets;
-        vTempTargets.reserve(m_mStomachMap.size());
+        vTempTargets.reserve(m_pInstance->GetStomachMap().size());
 
         // Get all players in map
-        for (StomachMap::const_iterator itr = m_mStomachMap.begin(); itr != m_mStomachMap.end(); ++itr)
+        for (StomachMap::const_iterator itr = m_pInstance->GetStomachMap().begin(); itr != m_pInstance->GetStomachMap().end(); ++itr)
         {
             // Check for valid player
             Player* pPlayer = m_creature->GetMap()->GetPlayer(itr->first);
@@ -323,14 +345,14 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
                     m_creature->SetInCombatWithZone();
 
                     // Place all units in threat list on outside of stomach
-                    m_mStomachMap.clear();
+                    m_pInstance->GetStomachMap().clear();
 
                     ThreatList const& tList = m_creature->getThreatManager().getThreatList();
                     for (ThreatList::const_iterator i = tList.begin();i != tList.end(); ++i)
                     {
                         // Outside stomach, only players
                         if ((*i)->getUnitGuid().IsPlayer())
-                            m_mStomachMap[(*i)->getUnitGuid()] = false;
+                            m_pInstance->GetStomachMap()[(*i)->getUnitGuid()] = false;
                     }
 
                     // Spawn 2 flesh tentacles
@@ -380,7 +402,7 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
                     DoCastSpellIfCan(m_creature, SPELL_RED_COLORATION, CAST_TRIGGERED);
 
                     // Kick all players out of stomach
-                    for (StomachMap::iterator itr = m_mStomachMap.begin(); itr != m_mStomachMap.end(); ++itr)
+                    for (StomachMap::iterator itr = m_pInstance->GetStomachMap().begin(); itr != m_pInstance->GetStomachMap().end(); ++itr)
                     {
                         // Check for valid player
                         Player* pPlayer = m_creature->GetMap()->GetPlayer(itr->first);
@@ -403,50 +425,13 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
                     return;
                 }
 
-                // Stomach acid
-                if (m_uiStomachAcidTimer < uiDiff)
-                {
-                    // Apply aura to all players in stomach
-                    for (StomachMap::iterator itr = m_mStomachMap.begin(); itr != m_mStomachMap.end(); ++itr)
-                    {
-                        // Check for valid player
-                        Player* pPlayer = m_creature->GetMap()->GetPlayer(itr->first);
-
-                        // Only apply to units in stomach
-                        if (pPlayer && itr->second == true)
-                        {
-                            // Cast digestive acid on them
-                            DoCastSpellIfCan(pPlayer, SPELL_DIGESTIVE_ACID, CAST_TRIGGERED);
-
-                            // Check if player should be kicked from stomach
-                            if (pPlayer->IsWithinDist3d(KICK_X, KICK_Y, KICK_Z, 10.0f))
-                            {
-                                // Teleport each player out
-                                DoTeleportPlayer(pPlayer, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ()+10, rand()%6);
-
-                                // Cast knockback on them
-                                DoCastSpellIfCan(pPlayer, SPELL_EXIT_STOMACH_KNOCKBACK, CAST_TRIGGERED);
-
-                                // Remove the acid debuff
-                                pPlayer->RemoveAurasDueToSpell(SPELL_DIGESTIVE_ACID);
-
-                                itr->second = false;
-                            }
-                        }
-                    }
-
-                    m_uiStomachAcidTimer = 4000;
-                }
-                else
-                    m_uiStomachAcidTimer -= uiDiff;
-
                 // Stomach Enter Timer
                 if (m_uiStomachEnterTimer < uiDiff)
                 {
                     if (Player* pTarget = SelectRandomNotStomach())
                     {
                         // Set target in stomach
-                        m_mStomachMap[pTarget->GetObjectGuid()] = true;
+                        m_pInstance->GetStomachMap()[pTarget->GetObjectGuid()] = true;
                         pTarget->InterruptNonMeleeSpells(false);
                         pTarget->CastSpell(pTarget, SPELL_MOUTH_TENTACLE, true, NULL, NULL, m_creature->GetObjectGuid());
                         m_stomachEnterTargetGuid = pTarget->GetObjectGuid();
@@ -464,14 +449,19 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
                     {
                         // Check for valid player
                         if (Player* pPlayer = m_creature->GetMap()->GetPlayer(m_stomachEnterTargetGuid))
+                        {
                             DoTeleportPlayer(pPlayer, STOMACH_X, STOMACH_Y, STOMACH_Z, STOMACH_O);
+
+                            // Cast Digestive Acid on the player.
+                            m_creature->CastSpell(pPlayer, SPELL_DIGESTIVE_ACID, true);
+                        }
 
                         m_stomachEnterTargetGuid.Clear();
                         m_uiStomachEnterVisTimer = 0;
 
                         // Note that actually C'Thun cannot be soloed, so kill all players, if no player left outside of stomach
                         bool bKillAllPlayer = true;
-                        for (StomachMap::iterator itr = m_mStomachMap.begin(); itr != m_mStomachMap.end(); ++itr)
+                        for (StomachMap::iterator itr = m_pInstance->GetStomachMap().begin(); itr != m_pInstance->GetStomachMap().end(); ++itr)
                         {
                             Player* pPlayer = m_creature->GetMap()->GetPlayer(itr->first);
                             if (itr->second == false && pPlayer)
@@ -482,10 +472,13 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
                         }
                         if (bKillAllPlayer)
                         {
-                            for (StomachMap::iterator itr = m_mStomachMap.begin(); itr != m_mStomachMap.end(); ++itr)
+                            for (StomachMap::iterator itr = m_pInstance->GetStomachMap().begin(); itr != m_pInstance->GetStomachMap().end(); ++itr)
                             {
                                 if (Player* pPlayer = m_creature->GetMap()->GetPlayer(itr->first))
+                                {
+                                    pPlayer->RemoveAurasDueToSpell(SPELL_DIGESTIVE_ACID, nullptr, AURA_REMOVE_BY_DEFAULT);
                                     m_creature->DealDamage(pPlayer, pPlayer->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+                                }
                             }
                             ResetToHome();
                             return;
@@ -1377,6 +1370,11 @@ CreatureAI* GetAI_flesh_tentacle(Creature* pCreature)
     return new flesh_tentacleAI(pCreature);
 }
 
+CreatureAI* GetAI_portal(Creature* pCreature)
+{
+    return new portalAI(pCreature);
+}
+
 struct npc_cthun_stomach_exit_triggerAI : public ScriptedAI
 {
     npc_cthun_stomach_exit_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -1475,6 +1473,11 @@ bool AreaTrigger_stomach_teleport(Player* pPlayer, const AreaTriggerEntry* pTrig
     // Remove the acid debuff
     pPlayer->RemoveAurasDueToSpell(SPELL_DIGESTIVE_ACID);
 
+    // Remove the player from the map of players in C'Thun's stomach.
+    instance_temple_of_ahnqiraj* pInstance = dynamic_cast<instance_temple_of_ahnqiraj*>(pPlayer->GetInstanceData());
+    if (pInstance)
+        pInstance->GetStomachMap()[pPlayer->GetObjectGuid()] = false;
+
     if (Creature* pTriggerCreature = pPlayer->SummonCreature(15800, pTrigger->x, pTrigger->y,
                                                              pTrigger->z, 0,
                                                              TEMPSUMMON_TIMED_DESPAWN, 10000))
@@ -1526,6 +1529,11 @@ void AddSC_boss_cthun()
     pNewScript = new Script;
     pNewScript->Name = "mob_giant_flesh_tentacle";
     pNewScript->GetAI = &GetAI_flesh_tentacle;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "mob_tentacle_portal";
+    pNewScript->GetAI = &GetAI_portal;
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;
