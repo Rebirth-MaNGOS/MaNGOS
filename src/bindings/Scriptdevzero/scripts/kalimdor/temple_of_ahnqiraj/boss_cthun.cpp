@@ -1380,6 +1380,78 @@ CreatureAI* GetAI_flesh_tentacle(Creature* pCreature)
     return new flesh_tentacleAI(pCreature);
 }
 
+struct npc_cthun_stomach_exit_triggerAI : public ScriptedAI
+{
+    npc_cthun_stomach_exit_triggerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+
+        Reset();
+    }
+
+    uint32 m_uiKnockbackTimer;
+    uint32 m_uiSecondKnockbackTimer;
+    ObjectGuid m_targetPlayerGuid;
+
+    void Reset()
+    {
+        m_uiKnockbackTimer = 0;
+        m_uiSecondKnockbackTimer = 0;
+        m_targetPlayerGuid = ObjectGuid();
+    }
+
+    void StartFirstKnockback(ObjectGuid targetGuid)
+    {
+        m_targetPlayerGuid = targetGuid;
+
+        m_uiKnockbackTimer = 3000;
+        m_creature->CastSpell(m_creature, 26092, true);
+    }
+
+    void StartSecondKnockback(ObjectGuid targetGuid)
+    {
+        m_targetPlayerGuid = targetGuid;
+
+        m_uiSecondKnockbackTimer = 100;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiKnockbackTimer)
+        {
+            if (m_uiKnockbackTimer <= uiDiff)
+            {
+                Player* pPlayer = m_creature->GetMap()->GetPlayer(m_targetPlayerGuid);
+                if (pPlayer && m_creature->GetDistance2d(pPlayer) <= 5.f)
+                    pPlayer->KnockBackFrom(pPlayer, 0.f, 56.f);
+
+                m_uiKnockbackTimer = 0;
+            }
+            else
+                m_uiKnockbackTimer -= uiDiff;
+        }
+
+        if (m_uiSecondKnockbackTimer)
+        {
+            if (m_uiSecondKnockbackTimer <= uiDiff)
+            {
+                Player* pPlayer = m_creature->GetMap()->GetPlayer(m_targetPlayerGuid);
+                if (pPlayer)
+                    pPlayer->KnockBackFrom(pPlayer, 24.f, 24.f);
+
+                m_uiSecondKnockbackTimer = 0;
+            }
+            else
+                m_uiSecondKnockbackTimer -= uiDiff;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_cthun_stomach_exit_triggerAI(Creature* pCreature)
+{
+    return new npc_cthun_stomach_exit_triggerAI(pCreature);
+}
+
 // 26224 - knockback
 // 26221 - summon spell, not used
 // Trigger ID: 4033
@@ -1389,24 +1461,32 @@ bool AreaTrigger_stomach_knockback(Player* pPlayer, const AreaTriggerEntry* pTri
                                                              pTrigger->z, 0,
                                                              TEMPSUMMON_TIMED_DESPAWN, 10000))
     {
-        pTriggerCreature->CastSpell(pTriggerCreature, 26092, true);
-        pPlayer->KnockBackFrom(pTriggerCreature, 1.f, 56.f);
+       npc_cthun_stomach_exit_triggerAI* pAI = dynamic_cast<npc_cthun_stomach_exit_triggerAI*>(pTriggerCreature->AI());
+       if (pAI)
+          pAI->StartFirstKnockback(pPlayer->GetObjectGuid()); 
     }
 
     return true;
 }
 
 // Trigger ID: 4034
-bool AreaTrigger_stomach_teleport(Player* pPlayer, const AreaTriggerEntry* /*pTrigger*/)
+bool AreaTrigger_stomach_teleport(Player* pPlayer, const AreaTriggerEntry* pTrigger)
 {
     // Teleport each player out
     pPlayer->NearTeleportTo(-8570.f, 1991.f, 100.4, rand()%6);
 
-    // Cast knockback on them
-    pPlayer->KnockBackFrom(pPlayer, 24.f, 5.f);
-
     // Remove the acid debuff
     pPlayer->RemoveAurasDueToSpell(SPELL_DIGESTIVE_ACID);
+
+    if (Creature* pTriggerCreature = pPlayer->SummonCreature(15800, pTrigger->x, pTrigger->y,
+                                                             pTrigger->z, 0,
+                                                             TEMPSUMMON_TIMED_DESPAWN, 10000))
+    {
+       npc_cthun_stomach_exit_triggerAI* pAI = dynamic_cast<npc_cthun_stomach_exit_triggerAI*>(pTriggerCreature->AI());
+       if (pAI)
+          pAI->StartSecondKnockback(pPlayer->GetObjectGuid()); 
+    }
+
 
     return true;
 }
@@ -1449,6 +1529,11 @@ void AddSC_boss_cthun()
     pNewScript = new Script;
     pNewScript->Name = "mob_giant_flesh_tentacle";
     pNewScript->GetAI = &GetAI_flesh_tentacle;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "npc_cthun_stomach_exit_trigger";
+    pNewScript->GetAI = &GetAI_npc_cthun_stomach_exit_triggerAI;
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;
