@@ -83,7 +83,14 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
         short Drop = urand(0,1);
        // 50% drop chance
         if(Drop > 0)
-            m_creature->SummonGameObject(LARGE_OBSIDIAN_CHUNK, 3600000, x, y, z, 0);
+        {
+            if(GameObject* pChunk = m_creature->SummonGameObject(LARGE_OBSIDIAN_CHUNK,3600000, x, y, z, 0,GO_STATE_ACTIVE))
+            {       
+                pChunk->SetGoState(GO_STATE_READY);
+                pChunk->SetLootState(GO_READY); 
+                pChunk->SetOwnerGuid(ObjectGuid());
+            }
+        }
     }
 
     // this way will make it quite possible that sentinels get the same buff as others, need to fix that, it should be one unique each
