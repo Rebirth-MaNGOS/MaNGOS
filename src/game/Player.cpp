@@ -18146,8 +18146,11 @@ inline void BeforeVisibilityDestroy(T* /*t*/, Player* /*p*/)
 template<>
 inline void BeforeVisibilityDestroy<Creature>(Creature* t, Player* p)
 {
-    if (p->GetPetGuid() == t->GetObjectGuid() && ((Creature*)t)->IsPet())
+    if (p->GetPetGuid() == t->GetObjectGuid() && ((Creature*)t)->IsPet() &&
+        t->GetOwner() == p)
+    {
         ((Pet*)t)->Unsummon(PET_SAVE_REAGENTS);
+    }
 }
 
 void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* target)
