@@ -36,6 +36,7 @@ class MANGOS_DLL_DECL PetAI : public CreatureAI
         void MoveInLineOfSight(Unit *);
         void AttackStart(Unit *);
         void ResetToHome();
+        void Reset();
         void AttackedBy(Unit*);
         bool IsVisible(Unit *) const;
 

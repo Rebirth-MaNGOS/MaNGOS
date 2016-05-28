@@ -644,6 +644,12 @@ void Pet::Update(uint32 update_diff, uint32 diff)
 					return;
 				}
 			}
+
+            Unit* pMaster = GetOwner();
+
+            if(pMaster && pMaster->GetTypeId() != TYPEID_PLAYER)
+                SelectHostileTarget();
+
 			break;
 		}
 	default:
