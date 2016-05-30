@@ -2073,6 +2073,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     if ((spellInfo_1->Id == 3166 && sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 1459) || 
         (spellInfo_2->Id == 3166 && sSpellMgr.GetFirstSpellInChain(spellInfo_1->Id) == 1459))
             return true;
+            
+    // Juju Guilde should not stack with Arcane Intellect 
+    if ((spellInfo_1->Id == 16327 && sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 1459) || 
+        (spellInfo_2->Id == 16327 && sSpellMgr.GetFirstSpellInChain(spellInfo_1->Id) == 1459))
+            return true;
 
     // Juju Guilde should not stack with Elixir of Wisdom.
     if ((spellInfo_1->Id == 3166 && sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 16327) || 
@@ -2092,6 +2097,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     // Juju Guile should not stack with Exlixir of Greater Intellect
     if ((spellInfo_1->Id == 16327 && spellInfo_2->Id == 11396) || 
         (spellInfo_2->Id == 16327 && spellInfo_1->Id == 11396))
+            return true;
+            
+    // Juju Guile should not stack with Arcane Brilliance
+    if ((spellInfo_1->Id == 16327 && spellInfo_2->Id == 23028) || 
+        (spellInfo_2->Id == 16327 && spellInfo_1->Id == 23028))
             return true;
 
     // Arcane Brilliance should not stack with Elixir of Greater Intellect
@@ -2131,6 +2141,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
         }
     }
     
+    // Juju Might should not stack with Winterfall Firewater        
+    if ((spellInfo_1->Id == 16329 && spellInfo_2->Id == 17038) || 
+    (spellInfo_2->Id == 16329 && spellInfo_1->Id == 17038))
+        return true;
+        
     // Beer that shouldn't stack
     if(spellInfo_1->Id == 22789 || spellInfo_1->Id == 20875|| spellInfo_1->Id == 25722
         || spellInfo_1->Id == 25804 || spellInfo_1->Id == 25037)
