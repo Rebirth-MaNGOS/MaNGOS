@@ -2116,6 +2116,21 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
         (spellInfo_1->Id == 17628  && spellInfo_2->Id == 11390))
         return false;
     
+    // Elixir of Giants, Brute force and Juju power(str) shouldn't stack
+    // TODO, Giants can't be overwritten by Juju even tho Juju has higher stats and Giants can't overwrite Juju
+    if(spellInfo_1->Id == 11405 || spellInfo_1->Id == 17537|| spellInfo_1->Id == 16323)
+    {
+        switch(spellInfo_2->Id)
+        {
+        case 11405:
+        case 17537:
+        case 16323:
+            return true;
+        default:
+            break;
+        }
+    }
+    
     // Beer that shouldn't stack
     if(spellInfo_1->Id == 22789 || spellInfo_1->Id == 20875|| spellInfo_1->Id == 25722
         || spellInfo_1->Id == 25804 || spellInfo_1->Id == 25037)
