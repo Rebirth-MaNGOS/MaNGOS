@@ -2166,6 +2166,25 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             break;
         }
     }
+    
+    // inspiration(priest) and ancestral fortitude(shaman) shouldn't stack, with each other or different ranks
+    // TODO, r1 overwrites r3 and so on, this shouldn't be the case
+     if(spellInfo_1->Id == 14893 || spellInfo_1->Id == 15357 || spellInfo_1->Id == 15359 
+         || spellInfo_1->Id == 16177 || spellInfo_1->Id == 16236 || spellInfo_1->Id == 16237)
+    {
+        switch(spellInfo_2->Id)
+        {
+        case 14893:
+        case 15357:
+        case 15359:
+        case 16177:
+        case 16236:
+        case 16237:
+            return true;
+        default:
+            break;
+        }
+    }
         
     // Specific spell family spells
     switch(spellInfo_1->SpellFamilyName)
