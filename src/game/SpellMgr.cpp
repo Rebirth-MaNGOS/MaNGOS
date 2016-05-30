@@ -2146,6 +2146,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     (spellInfo_2->Id == 16329 && spellInfo_1->Id == 17038))
         return true;
         
+    // Spirit of Zanza should not stack with Lung Juice Cocktail
+    if ((spellInfo_1->Id == 24382 && spellInfo_2->Id == 10668) || 
+    (spellInfo_2->Id == 24382 && spellInfo_1->Id == 10668))
+        return true;
+            
     // Beer that shouldn't stack
     if(spellInfo_1->Id == 22789 || spellInfo_1->Id == 20875|| spellInfo_1->Id == 25722
         || spellInfo_1->Id == 25804 || spellInfo_1->Id == 25037)
