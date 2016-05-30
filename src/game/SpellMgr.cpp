@@ -2132,7 +2132,41 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             break;
         }
     }
-
+    
+    // Food buffs that shouldn't stack
+    if(spellInfo_1->Id == 25661 || spellInfo_1->Id == 24799 || spellInfo_1->Id == 25941 
+        || spellInfo_1->Id == 25694 || spellInfo_1->Id == 22730 || spellInfo_1->Id ==  18194 
+        || spellInfo_1->Id ==  18222 || spellInfo_1->Id ==  18192 || spellInfo_1->Id ==  18193 
+        || spellInfo_1->Id ==  23697 || spellInfo_1->Id ==  18141 || spellInfo_1->Id ==  18125 
+        || spellInfo_1->Id ==  18191 || spellInfo_1->Id ==  19710 || spellInfo_1->Id ==  19709 
+        || spellInfo_1->Id ==  19708 || spellInfo_1->Id ==  19706 || spellInfo_1->Id ==  19705)
+    {
+        switch(spellInfo_2->Id)
+        {
+        case 18141: // blessed sunfruit juice
+        case 18125: // blessed sunfruit
+        case 18191: // windblossom berries
+        case 18192: // grilled squid
+        case 18193: // hot smoked bass
+        case 18194: // nightfin soup
+        case 18222: //poached sunscale salmon
+        case 19705: // 2 stam, 2 spirit 
+        case 19706: // 4 stam, 4 spirit 
+        case 19708: // 6 stam, 6 spirit            
+        case 19709: // 8 stam, 8 spirit 
+        case 19710: // 12 stam, 12 spirit                 
+        case 22730: // runn tum tuber surprise       
+        case 23697: // bottled alterac spring water
+        case 24799:  //smoked desert dumplings                  
+        case 25661: // dirge's kickin' chimaerok chops
+        case 25694: // smoked sagefish
+        case 25941:  // sagefish delight      
+            return true;
+        default:
+            break;
+        }
+    }
+        
     // Specific spell family spells
     switch(spellInfo_1->SpellFamilyName)
     {
