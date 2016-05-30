@@ -351,7 +351,6 @@ bool IsNoStackAuraDueToAura(uint32 spellId_1, uint32 spellId_2)
         (spellInfo_1->Id == 17628  && spellInfo_2->Id == 11390))
         return false;
 
-
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
     {
         for (int32 j = 0; j < MAX_EFFECT_INDEX; ++j)
@@ -2116,6 +2115,23 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
         (spellInfo_2->Id == 17628  && spellInfo_1->Id == 11390) ||
         (spellInfo_1->Id == 17628  && spellInfo_2->Id == 11390))
         return false;
+    
+    // Beer that shouldn't stack
+    if(spellInfo_1->Id == 22789 || spellInfo_1->Id == 20875|| spellInfo_1->Id == 25722
+        || spellInfo_1->Id == 25804 || spellInfo_1->Id == 25037)
+    {
+        switch(spellInfo_2->Id)
+        {
+        case 22789: // Gordok Green Grog
+        case 20875: // Rumsey Rum
+        case 25722: // Rumsey Rum Dark
+        case 25804: // Rumsey Rum Black Label
+        case 25037: // Rumsey Rum Light
+            return true;
+        default:
+            break;
+        }
+    }
 
     // Specific spell family spells
     switch(spellInfo_1->SpellFamilyName)
@@ -2584,7 +2600,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Windfury weapon
                 if (spellInfo_1->SpellIconID==220 && spellInfo_2->SpellIconID==220 &&
                     !spellInfo_1->IsFitToFamilyMask(spellInfo_2->SpellFamilyFlags))
-                    return false;
+                    return false;               
             }
             // Bloodlust and Bloodthirst (multi-family check)
             if (spellInfo_1->Id == 2825 && spellInfo_2->SpellIconID == 38 && spellInfo_2->SpellVisual == 0)
