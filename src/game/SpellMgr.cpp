@@ -2093,6 +2093,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     if ((spellInfo_1->Id == 17535 && spellInfo_2->Id == 16327) || 
         (spellInfo_2->Id == 17535 && spellInfo_1->Id == 16327))
             return true;
+            
+    // Divine spirit, Prayer of spirit, elixir of sages and crystal force shouldn't stack        
+    if((spellInfo_1->Id == 15231 || spellInfo_1->Id == 17535 || (spellInfo_1->Id == 27681 || sSpellMgr.GetFirstSpellInChain(spellInfo_1->Id) == 14752)) &&
+        (spellInfo_2->Id == 15231 || spellInfo_2->Id == 17535 || (spellInfo_2->Id == 27681 || sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 14752)))
+        return true;
 
     // Juju Guile should not stack with Exlixir of Greater Intellect
     if ((spellInfo_1->Id == 16327 && spellInfo_2->Id == 11396) || 
