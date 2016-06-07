@@ -123,7 +123,7 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
             }
         }
 
-        m_creature->GenericTextEmote("Anubisath Sentinel shares his powersr with his brethren.", nullptr, false);
+        m_creature->GenericTextEmote("Anubisath Sentinel shares his powers with his brethren.", nullptr, false);
     }
 
     // this way will make it quite possible that sentinels get the same buff as others, need to fix that, it should be one unique each
@@ -234,6 +234,19 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
 
         if (m_lAssistList.size() != MAX_BUDDY)
             error_log("SD2: npc_anubisath_sentinel found too few/too many buddies, expected %u.", MAX_BUDDY);
+    }
+    
+    void SpellHit(Unit* pCaster, SpellEntry const* pSpell)
+    {                                    
+        // make it immune to taunt if it is given knock away on aggro,
+        if(pSpell->Id == SPELL_PERIODIC_KNOCK_AWAY)
+            MakeTauntImmune();
+    }
+    
+    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_PERIODIC_KNOCK_AWAY && pTarget->GetTypeId() == TYPEID_PLAYER)
+            m_creature->getThreatManager().modifyThreatPercent(pTarget, -30);               //added threat reduction        
     }
 
     void UpdateAI(const uint32 uiDiff)
