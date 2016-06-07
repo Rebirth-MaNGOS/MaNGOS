@@ -2951,6 +2951,22 @@ CreatureAI* GetAI_npc_merithra(Creature* pCreature)
     return new npc_merithraAI(pCreature);
 }
 
+bool OnQuestRewarded_npc_merithra(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+    if (pQuest->GetQuestId() == 8790)
+    {
+        if(pPlayer)
+        {
+            // set quest status to not started (will updated in DB at next save)
+            pPlayer->SetQuestStatus(8790, QUEST_STATUS_NONE);
+
+            // reset rewarded for restart repeatable quest
+            pPlayer->getQuestStatusMap()[8790].m_rewarded = false;
+        }
+    }
+    return true;
+}
+
 struct MANGOS_DLL_DECL npc_arygosAI: public npc_dragon_flightAI 
 {
     npc_arygosAI(Creature* pCreature) : npc_dragon_flightAI(pCreature) {}
@@ -2971,6 +2987,22 @@ struct MANGOS_DLL_DECL npc_arygosAI: public npc_dragon_flightAI
 CreatureAI* GetAI_npc_arygos(Creature* pCreature)
 {
     return new npc_arygosAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_arygos(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+    if (pQuest->GetQuestId() == 8789)
+    {
+        if(pPlayer)
+        {
+            // set quest status to not started (will updated in DB at next save)
+            pPlayer->SetQuestStatus(8789, QUEST_STATUS_NONE);
+
+            // reset rewarded for restart repeatable quest
+            pPlayer->getQuestStatusMap()[8789].m_rewarded = false;
+        }
+    }
+    return true;
 }
 
 struct MANGOS_DLL_DECL npc_caelestraszAI: public npc_dragon_flightAI 
@@ -3863,11 +3895,13 @@ void AddSC_silithus()
     pNewscript = new Script;
     pNewscript->Name = "npc_merithra";
     pNewscript->GetAI = &GetAI_npc_merithra;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_merithra;
     pNewscript->RegisterSelf();
 
     pNewscript = new Script;
     pNewscript->Name = "npc_arygos";
     pNewscript->GetAI = &GetAI_npc_arygos;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_arygos;
     pNewscript->RegisterSelf();
 
     pNewscript = new Script;

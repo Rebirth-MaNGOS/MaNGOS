@@ -5668,6 +5668,8 @@ void Aura::PeriodicTick()
             // 5..8 ticks have normal tick damage
         }
 
+        PartialResistInfo partial = pCaster->MagicSpellPartialResistResult(target,spellProto);
+
         // Engineering Gnomish Death Ray damage calculations.
         if (spellProto->Id == 13493)
         {
@@ -5689,9 +5691,9 @@ void Aura::PeriodicTick()
         {
             // Digestive Acid reapplies itself on every tick.
             target->CastSpell(target, 26476, true);
+            partial = PARTIAL_RESIST_NONE;
         }
 
-        PartialResistInfo partial = pCaster->MagicSpellPartialResistResult(target,spellProto);
         target->CalculateDamageAbsorbAndResist(pCaster, GetSpellSchoolMask(spellProto), DOT, pdamage, &absorb, &resist, !(spellProto->AttributesEx2 & SPELL_ATTR_EX2_CANT_REFLECTED),partial);
 
         DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s attacked %s for %u dmg inflicted by %u",

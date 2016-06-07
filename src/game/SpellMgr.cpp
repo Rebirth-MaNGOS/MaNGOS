@@ -351,7 +351,6 @@ bool IsNoStackAuraDueToAura(uint32 spellId_1, uint32 spellId_2)
         (spellInfo_1->Id == 17628  && spellInfo_2->Id == 11390))
         return false;
 
-
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
     {
         for (int32 j = 0; j < MAX_EFFECT_INDEX; ++j)
@@ -2074,6 +2073,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     if ((spellInfo_1->Id == 3166 && sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 1459) || 
         (spellInfo_2->Id == 3166 && sSpellMgr.GetFirstSpellInChain(spellInfo_1->Id) == 1459))
             return true;
+            
+    // Juju Guilde should not stack with Arcane Intellect 
+    if ((spellInfo_1->Id == 16327 && sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 1459) || 
+        (spellInfo_2->Id == 16327 && sSpellMgr.GetFirstSpellInChain(spellInfo_1->Id) == 1459))
+            return true;
 
     // Juju Guilde should not stack with Elixir of Wisdom.
     if ((spellInfo_1->Id == 3166 && sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 16327) || 
@@ -2089,10 +2093,20 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     if ((spellInfo_1->Id == 17535 && spellInfo_2->Id == 16327) || 
         (spellInfo_2->Id == 17535 && spellInfo_1->Id == 16327))
             return true;
+            
+    // Divine spirit, Prayer of spirit, elixir of sages and crystal force shouldn't stack        
+    if((spellInfo_1->Id == 15231 || spellInfo_1->Id == 17535 || (spellInfo_1->Id == 27681 || sSpellMgr.GetFirstSpellInChain(spellInfo_1->Id) == 14752)) &&
+        (spellInfo_2->Id == 15231 || spellInfo_2->Id == 17535 || (spellInfo_2->Id == 27681 || sSpellMgr.GetFirstSpellInChain(spellInfo_2->Id) == 14752)))
+        return true;
 
     // Juju Guile should not stack with Exlixir of Greater Intellect
     if ((spellInfo_1->Id == 16327 && spellInfo_2->Id == 11396) || 
         (spellInfo_2->Id == 16327 && spellInfo_1->Id == 11396))
+            return true;
+            
+    // Juju Guile should not stack with Arcane Brilliance
+    if ((spellInfo_1->Id == 16327 && spellInfo_2->Id == 23028) || 
+        (spellInfo_2->Id == 16327 && spellInfo_1->Id == 23028))
             return true;
 
     // Arcane Brilliance should not stack with Elixir of Greater Intellect
@@ -2116,7 +2130,102 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
         (spellInfo_2->Id == 17628  && spellInfo_1->Id == 11390) ||
         (spellInfo_1->Id == 17628  && spellInfo_2->Id == 11390))
         return false;
-
+    
+    // Elixir of Giants, Brute force and Juju power(str) shouldn't stack
+    // TODO, Giants can't be overwritten by Juju even tho Juju has higher stats and Giants can't overwrite Juju
+    if(spellInfo_1->Id == 11405 || spellInfo_1->Id == 17537|| spellInfo_1->Id == 16323)
+    {
+        switch(spellInfo_2->Id)
+        {
+        case 11405:
+        case 17537:
+        case 16323:
+            return true;
+        default:
+            break;
+        }
+    }
+    
+    // Juju Might should not stack with Winterfall Firewater        
+    if ((spellInfo_1->Id == 16329 && spellInfo_2->Id == 17038) || 
+    (spellInfo_2->Id == 16329 && spellInfo_1->Id == 17038))
+        return true;
+        
+    // Spirit of Zanza should not stack with Lung Juice Cocktail
+    if ((spellInfo_1->Id == 24382 && spellInfo_2->Id == 10668) || 
+    (spellInfo_2->Id == 24382 && spellInfo_1->Id == 10668))
+        return true;
+            
+    // Beer that shouldn't stack
+    if(spellInfo_1->Id == 22789 || spellInfo_1->Id == 20875|| spellInfo_1->Id == 25722
+        || spellInfo_1->Id == 25804 || spellInfo_1->Id == 25037)
+    {
+        switch(spellInfo_2->Id)
+        {
+        case 22789: // Gordok Green Grog
+        case 20875: // Rumsey Rum
+        case 25722: // Rumsey Rum Dark
+        case 25804: // Rumsey Rum Black Label
+        case 25037: // Rumsey Rum Light
+            return true;
+        default:
+            break;
+        }
+    }
+    
+    // Food buffs that shouldn't stack
+    if(spellInfo_1->Id == 25661 || spellInfo_1->Id == 24799 || spellInfo_1->Id == 25941 
+        || spellInfo_1->Id == 25694 || spellInfo_1->Id == 22730 || spellInfo_1->Id ==  18194 
+        || spellInfo_1->Id ==  18222 || spellInfo_1->Id ==  18192 || spellInfo_1->Id ==  18193 
+        || spellInfo_1->Id ==  23697 || spellInfo_1->Id ==  18141 || spellInfo_1->Id ==  18125 
+        || spellInfo_1->Id ==  18191 || spellInfo_1->Id ==  19710 || spellInfo_1->Id ==  19709 
+        || spellInfo_1->Id ==  19708 || spellInfo_1->Id ==  19706 || spellInfo_1->Id ==  19705)
+    {
+        switch(spellInfo_2->Id)
+        {
+        case 18141: // blessed sunfruit juice
+        case 18125: // blessed sunfruit
+        case 18191: // windblossom berries
+        case 18192: // grilled squid
+        case 18193: // hot smoked bass
+        case 18194: // nightfin soup
+        case 18222: //poached sunscale salmon
+        case 19705: // 2 stam, 2 spirit 
+        case 19706: // 4 stam, 4 spirit 
+        case 19708: // 6 stam, 6 spirit            
+        case 19709: // 8 stam, 8 spirit 
+        case 19710: // 12 stam, 12 spirit                 
+        case 22730: // runn tum tuber surprise       
+        case 23697: // bottled alterac spring water
+        case 24799:  //smoked desert dumplings                  
+        case 25661: // dirge's kickin' chimaerok chops
+        case 25694: // smoked sagefish
+        case 25941:  // sagefish delight      
+            return true;
+        default:
+            break;
+        }
+    }
+    
+    // inspiration(priest) and ancestral fortitude(shaman) shouldn't stack, with each other or different ranks
+    // TODO, r1 overwrites r3 and so on, this shouldn't be the case
+     if(spellInfo_1->Id == 14893 || spellInfo_1->Id == 15357 || spellInfo_1->Id == 15359 
+         || spellInfo_1->Id == 16177 || spellInfo_1->Id == 16236 || spellInfo_1->Id == 16237)
+    {
+        switch(spellInfo_2->Id)
+        {
+        case 14893:
+        case 15357:
+        case 15359:
+        case 16177:
+        case 16236:
+        case 16237:
+            return true;
+        default:
+            break;
+        }
+    }
+        
     // Specific spell family spells
     switch(spellInfo_1->SpellFamilyName)
     {
@@ -2584,7 +2693,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Windfury weapon
                 if (spellInfo_1->SpellIconID==220 && spellInfo_2->SpellIconID==220 &&
                     !spellInfo_1->IsFitToFamilyMask(spellInfo_2->SpellFamilyFlags))
-                    return false;
+                    return false;               
             }
             // Bloodlust and Bloodthirst (multi-family check)
             if (spellInfo_1->Id == 2825 && spellInfo_2->SpellIconID == 38 && spellInfo_2->SpellVisual == 0)

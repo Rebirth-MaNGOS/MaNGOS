@@ -80,6 +80,9 @@ enum
     MOB_GIANT_EYE_TENTACLE          = 15334,
     MOB_FLESH_TENTACLE              = 15802,
     MOB_GIANT_PORTAL                = 15910,
+
+    MODEL_BASE_NORMAL               = 15787,
+    MODEL_BASE_TRANSFORMED          = 15786
 };
 
 //Stomach Teleport positions
@@ -222,7 +225,7 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         m_uiWisperTimer = 90000;
 
         // Phase information
-        m_uiPhaseTimer = 10000;                             // Emerge in 10 seconds
+        m_uiPhaseTimer = 5000;                             // Emerge in 10 seconds
 
         // Body Phase
         m_uiEyeTentacleTimer = 30000;
@@ -243,6 +246,7 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
 
         // Reset flags
         m_creature->RemoveAurasDueToSpell(SPELL_TRANSFORM);
+        m_creature->SetDisplayId(MODEL_BASE_NORMAL);
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
     }
 
@@ -336,6 +340,7 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
 
                     // Switch to C'thun model
                     m_creature->InterruptNonMeleeSpells(false);
+                    m_creature->SetDisplayId(MODEL_BASE_TRANSFORMED);
                     DoCastSpellIfCan(m_creature, SPELL_TRANSFORM);
                     m_creature->SetHealth(m_creature->GetMaxHealth());
 
