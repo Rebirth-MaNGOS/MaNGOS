@@ -49,16 +49,6 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
     npc_anubisath_sentinelAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_lAssistList.clear();
-        m_spellList.clear();
-        m_spellList.push_back(SPELL_PERIODIC_MANA_BURN);
-        m_spellList.push_back(SPELL_MENDING);
-        m_spellList.push_back(SPELL_PERIODIC_SHADOW_STORM);
-        m_spellList.push_back(SPELL_PERIODIC_THUNDERCLAP);
-        m_spellList.push_back(SPELL_MORTAL_STRIKE);
-        m_spellList.push_back(SPELL_FIRE_ARCANE_REFLECT);
-        m_spellList.push_back(SPELL_SHADOW_FROST_REFLECT);
-        m_spellList.push_back(SPELL_PERIODIC_KNOCK_AWAY);
-        m_spellList.push_back(SPELL_THORNS);
         Reset();
     }
 
@@ -73,6 +63,16 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
     {
         m_uiMyAbility = 0;
         m_bEnraged = false;
+        m_spellList.clear();
+        m_spellList.push_back(SPELL_PERIODIC_MANA_BURN);
+        m_spellList.push_back(SPELL_MENDING);
+        m_spellList.push_back(SPELL_PERIODIC_SHADOW_STORM);
+        m_spellList.push_back(SPELL_PERIODIC_THUNDERCLAP);
+        m_spellList.push_back(SPELL_MORTAL_STRIKE);
+        m_spellList.push_back(SPELL_FIRE_ARCANE_REFLECT);
+        m_spellList.push_back(SPELL_SHADOW_FROST_REFLECT);
+        m_spellList.push_back(SPELL_PERIODIC_KNOCK_AWAY);
+        m_spellList.push_back(SPELL_THORNS);
     }
 
     void JustReachedHome()
@@ -145,10 +145,13 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
 
                         if(pAnubAi)
                         {
-                            std::random_shuffle(m_spellList.begin(), m_spellList.end());
-                            uint32 m_spell = m_spellList.front();
-                            pAnubAi->DoTransferAbility(m_spell);
-                            m_spellList.erase(std::remove(m_spellList.begin(), m_spellList.end(), m_spell), m_spellList.end());
+                            if(!m_spellList.empty())
+                            {
+                                std::random_shuffle(m_spellList.begin(), m_spellList.end());
+                                uint32 m_spell = m_spellList.front();
+                                pAnubAi->DoTransferAbility(m_spell);
+                                m_spellList.erase(std::remove(m_spellList.begin(), m_spellList.end(), m_spell), m_spellList.end());
+                            }
                         }
                     }
                 }
