@@ -73,6 +73,7 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
         m_spellList.push_back(SPELL_SHADOW_FROST_REFLECT);
         m_spellList.push_back(SPELL_PERIODIC_KNOCK_AWAY);
         m_spellList.push_back(SPELL_THORNS);
+        TauntImmune(false);
     }
 
     void JustReachedHome()
@@ -239,17 +240,23 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
             error_log("SD2: npc_anubisath_sentinel found too few/too many buddies, expected %u.", MAX_BUDDY);
     }
     
+    void TauntImmune(bool apply) // own function so we can remove it on reset
+    {
+        m_creature->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_ATTACK_ME, apply);
+        m_creature->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TAUNT, apply);
+    }
+    
     void SpellHit(Unit* pCaster, SpellEntry const* pSpell)
     {                                    
         // make it immune to taunt if it is given knock away on aggro,
-        if(pSpell->Id == SPELL_PERIODIC_KNOCK_AWAY)
-            MakeTauntImmune();
+        if(pSpell->Id == SPELL_PERIODIC_KNOCK_AWAY)            
+            TauntImmune(true);
     }
     
     void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
     {
         if (pSpell->Id == SPELL_PERIODIC_KNOCK_AWAY && pTarget->GetTypeId() == TYPEID_PLAYER)
-            m_creature->getThreatManager().modifyThreatPercent(pTarget, -30);               //added threat reduction        
+            m_creature->getThreatManager().modifyThreatPercent(pTarget, -25);               //added threat reduction        
     }
 
     void UpdateAI(const uint32 uiDiff)
