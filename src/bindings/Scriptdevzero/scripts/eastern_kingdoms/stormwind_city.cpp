@@ -2138,6 +2138,7 @@ struct MANGOS_DLL_DECL npc_squire_roweAI : public npc_escortAI
 {
     npc_squire_roweAI(Creature* pCreature) : npc_escortAI(pCreature)
     {
+        m_uiReginaldWindsorGUID.Clear();
         Reset();
     }
 
@@ -2149,7 +2150,6 @@ struct MANGOS_DLL_DECL npc_squire_roweAI : public npc_escortAI
     {
         m_uiChangeStandStateTimer = 3500;
         bStandStateChanged = false;
-		m_uiReginaldWindsorGUID.Clear();
     }
 
     void WaypointReached(uint32 uiPointId)
@@ -2212,26 +2212,29 @@ bool GossipHello_npc_squire_rowe(Player* pPlayer, Creature* pCreature)
         {
             if (Creature* pReginaldWindsor = pCreature->GetMap()->GetCreature(pEscortAI->m_uiReginaldWindsorGUID))
             {
-                if (npc_reginald_windsorAI* pWindsorEscortAI = dynamic_cast<npc_reginald_windsorAI*>(pReginaldWindsor->AI()))
+                if(pReginaldWindsor->GetEntry() == NPC_REGINALD_WINDSOR)
                 {
-                    if (!pWindsorEscortAI->HasEscortState(STATE_ESCORT_ESCORTING) && !pWindsorEscortAI->HasEscortState(STATE_ESCORT_PAUSED))
+                    if (npc_reginald_windsorAI* pWindsorEscortAI = dynamic_cast<npc_reginald_windsorAI*>(pReginaldWindsor->AI()))
                     {
-                        // Prepare GUID variable for new value.
-                        pReginaldWindsor->StopMoving();
-                        if (pReginaldWindsor->isInCombat())
-                            pReginaldWindsor->CombatStop();
-                        pReginaldWindsor->RemoveFromWorld();
-						pEscortAI->m_uiReginaldWindsorGUID.Clear();
-                        pWindsorEscortAI = NULL;
+                        if (!pWindsorEscortAI->HasEscortState(STATE_ESCORT_ESCORTING) && !pWindsorEscortAI->HasEscortState(STATE_ESCORT_PAUSED))
+                        {
+                            // Prepare GUID variable for new value.
+                            pReginaldWindsor->StopMoving();
+                            if (pReginaldWindsor->isInCombat())
+                                pReginaldWindsor->CombatStop();
+                            pReginaldWindsor->RemoveFromWorld();
+						    pEscortAI->m_uiReginaldWindsorGUID.Clear();
+                            pWindsorEscortAI = NULL;
 
-                        pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Let Marshal Windsor know that I am ready.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
-                        pPlayer->SEND_GOSSIP_MENU(9065, pCreature->GetObjectGuid());  // Windsor is free
+                            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Let Marshal Windsor know that I am ready.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+                            pPlayer->SEND_GOSSIP_MENU(9065, pCreature->GetObjectGuid());  // Windsor is free
+                        }
+                        else
+                            pPlayer->SEND_GOSSIP_MENU(9064, pCreature->GetObjectGuid());  // Windsor is DND
                     }
                     else
-                        pPlayer->SEND_GOSSIP_MENU(9064, pCreature->GetObjectGuid());  // Windsor is DND
+                        error_log("SD0: Stormwind City: GossipHello_npc_squire_rowe: Reginald Windsor exists, but can't get npc_reginald_windsorAI. May be problem!");
                 }
-                else
-                    error_log("SD0: Stormwind City: GossipHello_npc_squire_rowe: Reginald Windsor exists, but can't get npc_reginald_windsorAI. May be problem!");
             }
             else
             {
