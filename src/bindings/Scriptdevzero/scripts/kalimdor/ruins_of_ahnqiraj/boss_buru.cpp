@@ -181,24 +181,21 @@ struct MANGOS_DLL_DECL boss_buruAI : public ScriptedAI			// Should hit for 750~~
         }
     }
 
-    void DamageTaken(Unit* /*pDoneBy*/, uint32& /*uiDamage*/)			// Hatch all eggs at start of p2
-    {
-        if (!m_bIsEnraged && HealthBelowPct(21))
-        {
-			m_creature->SetSpeedRate(MOVE_RUN, 0.30f);
-			m_creature->SetArmor(3795);
-			StopDueToStun(1);			
-			DoResetThreat();
-			m_bIsEnraged = true;
-			HatchEggs();
-        }
-    }
-	
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+        if (!m_bIsEnraged && HealthBelowPct(21)) // hatch all eggs on p2
+        {
+            m_creature->SetSpeedRate(MOVE_RUN, 0.30f);
+            m_creature->SetArmor(3795);
+            StopDueToStun(1);           
+            DoResetThreat();
+            m_bIsEnraged = true;
+            HatchEggs();
+        }
+        
 		if (m_bStun)
 		{
 			if (m_uiRemoveStunTimer <= uiDiff)			
@@ -213,7 +210,7 @@ struct MANGOS_DLL_DECL boss_buruAI : public ScriptedAI			// Should hit for 750~~
 			else
 				m_uiRemoveStunTimer -= uiDiff; 
 		}
-
+		
 		if (m_bIsEnraged)
 		{
             if (m_uiCreepingPlagueTimer <= uiDiff)
