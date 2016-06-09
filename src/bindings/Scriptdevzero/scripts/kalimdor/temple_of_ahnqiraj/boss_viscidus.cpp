@@ -56,6 +56,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     boss_viscidusAI(Creature* pCreature) : ScriptedAI(pCreature) 
     {
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
+        m_creature->CastSpell(m_creature, SPELL_MEMBRANE_VISCIDUS, true); // add dmg reduction
         Reset();
     }
 
