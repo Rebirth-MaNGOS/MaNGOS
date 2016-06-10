@@ -609,6 +609,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         // remove wsg rejuventaion buff from the victim on any damage
         if(pVictim->HasAura(23493))
             pVictim->RemoveAurasDueToSpell(23493);
+        
+        // Summon Black Qiraji Battle Tank should be removed when taking damage
+        if(pVictim->HasAura(25863))
+            pVictim->RemoveAurasDueToSpell(25863);             
     }
     
     // remove affects from attacker at any non-DoT damage (including 0 damage)
