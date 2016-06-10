@@ -85,6 +85,8 @@ struct MANGOS_DLL_DECL boss_buruAI : public ScriptedAI			// Should hit for 750~~
 
 		if (m_creature->HasAura(SPELL_BURU_TRANSFORM))
 			m_creature->RemoveAurasDueToSpell(SPELL_BURU_TRANSFORM);
+        
+        RespawnEggs();
     }
 
     void JustReachedHome()
@@ -140,6 +142,22 @@ struct MANGOS_DLL_DECL boss_buruAI : public ScriptedAI			// Should hit for 750~~
 			}
 		}
 	}
+	
+	void RespawnEggs()
+    {
+        // Respawn eggs 
+        std::list<Creature*> m_lBuruEggs;
+        GetCreatureListWithEntryInGrid(m_lBuruEggs, m_creature, NPC_BURU_EGG, DEFAULT_VISIBILITY_INSTANCE);
+
+        if (!m_lBuruEggs.empty())
+        {
+            for(std::list<Creature*>::iterator itr = m_lBuruEggs.begin(); itr != m_lBuruEggs.end(); ++itr)
+            {
+                if ((*itr) && !(*itr)->isAlive())
+                    (*itr)->Respawn();
+            }
+        }
+    }
 
 	void ChangeTarget()
 	{
