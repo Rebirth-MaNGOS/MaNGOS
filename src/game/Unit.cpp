@@ -7041,6 +7041,16 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
             if (IsNonCombatSpell(spell->m_spellInfo))
                 InterruptSpell(CurrentSpellTypes(i),false);
 
+     // Qiraji Resonating Crystals should be removed upon entering combat(mount)
+     if(enemy->HasAura(25863) || enemy->HasAura(26053) || enemy->HasAura(26054) || enemy->HasAura(26055) || enemy->HasAura(26056))
+     {
+         enemy->RemoveAurasDueToSpell(25863);
+         enemy->RemoveAurasDueToSpell(26053);
+         enemy->RemoveAurasDueToSpell(26054);
+         enemy->RemoveAurasDueToSpell(26055);
+         enemy->RemoveAurasDueToSpell(26056);                 
+     }
+     
     if (creatureNotInCombat)
     {
         // should probably be removed for the attacked (+ it's party/group) only, not global
