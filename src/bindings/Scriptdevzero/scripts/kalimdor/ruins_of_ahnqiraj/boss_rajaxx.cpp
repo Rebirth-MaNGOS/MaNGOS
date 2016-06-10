@@ -306,7 +306,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 break;
         }
     }
-
+    
     void StartEvent()
     {
         if (!m_pInstance)
@@ -390,7 +390,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
-                if (pCreature)
+                if (pCreature && pCreature->isAlive())
                     pCreature->SetFacingTo(BossTurn[pos].o);      
                 i = i + 6;
                 pos++;
@@ -404,7 +404,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
-                if (pCreature)
+                if (pCreature && pCreature->isAlive())
                     pCreature->SetFacingTo(BossTurnBack[pos].o);
                 i = i + 6;
                 pos++;
@@ -418,7 +418,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
-                if (pCreature)
+                if (pCreature && pCreature->isAlive())
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             }            
            
@@ -427,7 +427,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
-                if (pCreature)
+                if (pCreature && pCreature->isAlive())
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             }
             for (short i = 21; i < 28; i++)   // fourth group
@@ -435,7 +435,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
-                if (pCreature)
+                if (pCreature && pCreature->isAlive())
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             }     
             for (short i = 42; i < 49; i++)   // seventh group
@@ -443,7 +443,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
-                if (pCreature)
+                if (pCreature && pCreature->isAlive())
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             }
         }
@@ -454,7 +454,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
-                if (pCreature)
+                if (pCreature && pCreature->isAlive())
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             }                   
            for (short i = 28; i < 35; i++)   // fifth group
@@ -462,7 +462,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
-                if (pCreature)
+                if (pCreature && pCreature->isAlive())
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             }
             for (short i = 35; i < 42; i++)   // sixth group
@@ -470,7 +470,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 Creature* pCreature = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[i]);
 
-                if (pCreature)
+                if (pCreature && pCreature->isAlive())
                     pCreature->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             }        
         }
@@ -479,25 +479,25 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
             Creature* pCreature1 = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[0]);
 
-            if (pCreature1)
+            if (pCreature1 && pCreature1->isAlive())
                 pCreature1->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
                 
             Creature* pCreature3 = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[14]);
 
-            if (pCreature3)
+            if (pCreature3 && pCreature3->isAlive())
                 pCreature3->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
 
             Creature* pCreature4 = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[21]);
 
-            if (pCreature4)
+            if (pCreature4 && pCreature4->isAlive())
                 pCreature4->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             
             Creature* pCreature7 = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[42]);
 
-            if (pCreature7)
+            if (pCreature7 && pCreature7->isAlive())
                 pCreature7->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
         }
           if(Groups == 5)     // attack with rest of the captains 2,5,6
@@ -505,19 +505,19 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
             Creature* pCreature2 = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[7]);
 
-            if (pCreature2)
+            if (pCreature2 && pCreature2->isAlive())
                 pCreature2->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             
             Creature* pCreature5 = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[28]);
 
-            if (pCreature5)
+            if (pCreature5 && pCreature5->isAlive())
                 pCreature5->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
             
             Creature* pCreature6 = m_creature->GetMap()->GetCreature(
                         m_uiSummonList[35]);
 
-            if (pCreature6)
+            if (pCreature6 && pCreature6->isAlive())
                 pCreature6->HandleEmote(EMOTE_ONESHOT_ATTACKUNARMED);
         }
     }
@@ -614,14 +614,26 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
     {
         Loc* waves[7] = { WaveOne, WaveTwo, WaveThree, WaveFour, WaveFive, WaveSix, WaveSeven };
 
+        int DespawnTime;
+        
         for (short j = 0; j < 7; j++)
         {
             // Waves
             for(uint8 i = 0; i < 7; ++i)
             {
-                Creature* pSummon = m_creature->SummonCreature(waves[j][i].id, waves[j][i].x, waves[j][i].y, waves[j][i].z, waves[j][i].o, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000, true);
+                if(i == 0) // captains should despawn after longer, 30 min for now
+                    DespawnTime = 1800000;
+                else
+                    DespawnTime = 1000;
+                
+                Creature* pSummon = m_creature->SummonCreature(waves[j][i].id, waves[j][i].x, waves[j][i].y, waves[j][i].z, waves[j][i].o, TEMPSUMMON_CORPSE_TIMED_DESPAWN, DespawnTime, true);
                 if (pSummon)
+                {
                     m_uiSummonList.push_back(pSummon->GetObjectGuid());
+                    if(i == 0) // set respawn to longer than despawn so they won't respawn or despawn early
+                        pSummon->SetRespawnDelay(3000);
+                    pSummon->SetRespawnEnabled(false);
+                }
             }
         }
     }  
