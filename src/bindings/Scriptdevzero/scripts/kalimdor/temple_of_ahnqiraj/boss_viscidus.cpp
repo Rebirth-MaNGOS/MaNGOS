@@ -55,8 +55,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 {
     boss_viscidusAI(Creature* pCreature) : ScriptedAI(pCreature) 
     {
-        m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
-        m_creature->CastSpell(m_creature, SPELL_MEMBRANE_VISCIDUS, true); // add dmg reduction
+        m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);        
         Reset();
     }
 
@@ -117,6 +116,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         m_lToxinClouds.clear();
         m_creature->SetObjectScale(1.2f);		// has to reset scale here
         m_creature->UpdateModelData();
+        m_creature->CastSpell(m_creature, SPELL_MEMBRANE_VISCIDUS, true); // add dmg reduction
     }
 
     void RemoveAuras()
@@ -327,7 +327,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         {
             pSummoned->CastSpell(m_creature, SPELL_REJOIN_VISCIDUS, true);
             pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
-            pSummoned->ForcedDespawn(50);
+            pSummoned->ForcedDespawn();
         }
     }
 
@@ -462,13 +462,13 @@ struct MANGOS_DLL_DECL boss_glob_of_viscidusAI : public ScriptedAI
     boss_glob_of_viscidusAI(Creature* pCreature) : ScriptedAI(pCreature) 
     {
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
+        m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+        m_creature->CastSpell(m_creature, 26633, true); // cast the speed up
         Reset();
     }
-    uint32 m_uiSpeedUpTimer;
 
     void Reset()
     {
-        m_uiSpeedUpTimer = 500;
     }
 
     void MoveInLineOfSight(Unit* /*pWho*/)
@@ -492,14 +492,6 @@ struct MANGOS_DLL_DECL boss_glob_of_viscidusAI : public ScriptedAI
         //if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         //    return;
 
-        if (m_uiSpeedUpTimer <= uiDiff)				// increase the speed every half a sec
-        {
-			m_creature->UpdateSpeed(MOVE_RUN, m_creature->GetSpeedRate(MOVE_RUN)+0.15f);
-			m_creature->UpdateVisibilityAndView();			// not really helping
-            m_uiSpeedUpTimer = 500;
-        }
-        else
-            m_uiSpeedUpTimer -= uiDiff;
         m_creature->SetTargetGuid(ObjectGuid());				// target self even when someone does dmg
     }
 };
