@@ -33,6 +33,7 @@ instance_temple_of_ahnqiraj::instance_temple_of_ahnqiraj(Map* pMap) : ScriptedIn
 void instance_temple_of_ahnqiraj::Initialize()
 {
     memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
+    m_lAnbDefenderList.clear();
 }
 
 void instance_temple_of_ahnqiraj::OnCreatureCreate (Creature* pCreature)
@@ -49,8 +50,29 @@ void instance_temple_of_ahnqiraj::OnCreatureCreate (Creature* pCreature)
         case NPC_VISCIDUS_DUMMY:
             m_mNpcEntryGuidStore[pCreature->GetEntry()] = pCreature->GetObjectGuid();
             break;
+        case NPC_ANUBISATH_DEFENDER:
+            m_lAnbDefenderList.push_back(pCreature->GetObjectGuid());
+            break;
     }
 }
+
+void instance_temple_of_ahnqiraj::OnCreatureDeath(Creature* pCreature)
+{
+    switch(pCreature->GetEntry())
+    {
+        case NPC_ANUBISATH_DEFENDER:
+        {
+            m_lAnbDefenderList.remove(pCreature->GetObjectGuid());
+
+            if (m_lAnbDefenderList.empty())
+            {
+                 if (GameObject* pEntryDoor = GetSingleGameObjectFromStorage(GO_TWINS_ENTER_DOOR))
+                    pEntryDoor->SetGoState(GO_STATE_ACTIVE);
+            }
+        }
+    }
+}
+       
 
 void instance_temple_of_ahnqiraj::OnObjectCreate(GameObject* pGo)
 {
@@ -61,7 +83,7 @@ void instance_temple_of_ahnqiraj::OnObjectCreate(GameObject* pGo)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
         case GO_TWINS_ENTER_DOOR:
-            pGo->SetGoState(GO_STATE_ACTIVE);
+            pGo->SetGoState(GO_STATE_READY);
             break;
         case GO_TWINS_EXIT_DOOR:
             if (m_auiEncounter[TYPE_TWINS] == DONE)

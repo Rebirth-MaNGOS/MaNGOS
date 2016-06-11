@@ -23,6 +23,8 @@ enum
     NPC_VEKNILASH               = 15275,
     NPC_CTHUN                   = 15727,
     NPC_VISCIDUS_DUMMY = 800109,
+    
+    NPC_ANUBISATH_DEFENDER = 15277,
 
     GO_SKERAM_GATE              = 180636,
     GO_TWINS_ENTER_DOOR         = 180634,
@@ -54,6 +56,8 @@ class MANGOS_DLL_DECL instance_temple_of_ahnqiraj : public ScriptedInstance
         bool IsEncounterInProgress() const;
 
         void OnCreatureCreate(Creature* pCreature);
+        void OnCreatureDeath(Creature* pCreature);
+        
         void OnObjectCreate(GameObject* pGo);
 
         void SetData(uint32 uiType, uint32 uiData);
@@ -72,6 +76,8 @@ class MANGOS_DLL_DECL instance_temple_of_ahnqiraj : public ScriptedInstance
         std::string m_strInstData;
 
         uint32 m_uiBugTrioDeathCount;
+        
+        GUIDList m_lAnbDefenderList;
         
         // Stomach map, bool = true then in stomach
         StomachMap m_mStomachMap;
