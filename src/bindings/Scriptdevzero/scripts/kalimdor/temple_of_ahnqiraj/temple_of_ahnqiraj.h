@@ -18,6 +18,7 @@ enum
     NPC_YAUJ                    = 15543,
     NPC_KRI                     = 15511,
     NPC_VEM                     = 15544,
+    NPC_FANKRISS            = 15510,
     NPC_VEKLOR                  = 15276,
     NPC_VEKNILASH               = 15275,
     NPC_CTHUN                   = 15727,

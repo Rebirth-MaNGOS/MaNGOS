@@ -22,6 +22,7 @@ SDCategory: Temple of Ahn'Qiraj
 EndScriptData */
 
 #include "precompiled.h"
+#include "temple_of_ahnqiraj.h"
 
 #define SOUND_SENTENCE_YOU 8588
 #define SOUND_SERVE_TO     8589
@@ -176,11 +177,60 @@ CreatureAI* GetAI_boss_fankriss(Creature* pCreature)
     return new boss_fankrissAI(pCreature);
 }
 
+/*######
+## npc_fankriss_aggro_dummy
+######*/
+
+struct MANGOS_DLL_DECL npc_fankriss_aggro_dummyAI : public ScriptedAI
+{
+    npc_fankriss_aggro_dummyAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Reset();
+    }
+    
+    ScriptedInstance* m_pInstance;
+
+    void Reset()
+    {
+    }
+
+    void MoveInLineOfSight(Unit* pWho)
+    {
+        if (pWho->GetTypeId() == TYPEID_PLAYER && m_creature->IsWithinDistInMap(pWho, 10.0f) &&  m_creature->IsWithinLOSInMap(pWho))
+        {
+            if(m_pInstance)
+            {
+                Creature* pFankriss = m_pInstance->GetSingleCreatureFromStorage(NPC_FANKRISS);
+                if(pFankriss && pFankriss->isAlive() && !pFankriss->isInCombat())
+                    pFankriss->AI()->AttackStart(pWho);
+            }
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        //Return since we have no target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+    }
+};
+
+CreatureAI* GetAI_npc_fankriss_aggro_dummy(Creature* pCreature)
+{
+    return new npc_fankriss_aggro_dummyAI(pCreature);
+}
+
 void AddSC_boss_fankriss()
 {
     Script *newscript;
     newscript = new Script;
     newscript->Name = "boss_fankriss";
     newscript->GetAI = &GetAI_boss_fankriss;
+    newscript->RegisterSelf();
+    
+    newscript = new Script;
+    newscript->Name = "npc_fankriss_aggro_dummy";
+    newscript->GetAI = &GetAI_npc_fankriss_aggro_dummy;
     newscript->RegisterSelf();
 }
