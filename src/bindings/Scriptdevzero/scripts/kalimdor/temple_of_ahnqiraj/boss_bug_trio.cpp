@@ -507,23 +507,49 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
             {
                 Creature* pKri = m_pInstance->GetSingleCreatureFromStorage(NPC_KRI);
                 Creature* pVem = m_pInstance->GetSingleCreatureFromStorage(NPC_VEM);
-
-                switch(urand(0, 2))
-                {
-                    case 0:
-                        if (pKri)
+                    
+                // First rand for self or other boss, then rand which one of them, if none then heal self
+                int rnd = urand(0,1);
+                int rnd2 = urand(0,1);
+                bool m_bFoundTarget = false;
+                
+                if(rnd == 0)
+                {                         
+                    if(rnd2 == 0)
+                    {
+                        if (pKri && pKri->isAlive() && !m_bFoundTarget)
+                        {
                             DoCastSpellIfCan(pKri, SPELL_HEAL);
-                        break;
-                    case 1:
-                        if (pVem)
+                            m_bFoundTarget = true;
+                        }
+                        else if (pVem && pVem->isAlive() && !m_bFoundTarget)
+                        {
                             DoCastSpellIfCan(pVem, SPELL_HEAL);
-                        break;
-                    case 2:
+                            m_bFoundTarget = true;
+                        }                            
+                    }
+                    if(rnd2 == 1)   // same as above just the other way around
+                    {
+                        if (pVem && pVem->isAlive() && !m_bFoundTarget)
+                        {
+                            DoCastSpellIfCan(pVem, SPELL_HEAL);
+                            m_bFoundTarget = true;
+                        }
+                        else if (pKri && pKri->isAlive() && !m_bFoundTarget)
+                        {
+                            DoCastSpellIfCan(pKri, SPELL_HEAL);
+                            m_bFoundTarget = true;
+                        }                            
+                    }
+                    if(!m_bFoundTarget)
+                    {
                         DoCastSpellIfCan(m_creature, SPELL_HEAL);
-                        break;
-                }
+                        m_bFoundTarget = true;
+                    }
+                }                                 
+                else
+                    DoCastSpellIfCan(m_creature, SPELL_HEAL);
             }
-
             Heal_Timer = urand(15000, 30000);
         }else Heal_Timer -= diff;
 
