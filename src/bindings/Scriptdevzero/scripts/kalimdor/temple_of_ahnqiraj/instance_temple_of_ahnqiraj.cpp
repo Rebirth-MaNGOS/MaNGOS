@@ -25,7 +25,8 @@ EndScriptData */
 #include "temple_of_ahnqiraj.h"
 
 instance_temple_of_ahnqiraj::instance_temple_of_ahnqiraj(Map* pMap) : ScriptedInstance(pMap),
-    m_uiBugTrioDeathCount(0)
+    m_uiBugTrioDeathCount(0),
+    m_bOpenTwinsDoor(false)
 {
     Initialize();
 };
@@ -60,16 +61,24 @@ void instance_temple_of_ahnqiraj::OnCreatureDeath(Creature* pCreature)
 {
     switch(pCreature->GetEntry())
     {
-        case NPC_ANUBISATH_DEFENDER:
+        case NPC_HUHURAN:
         {
-            m_lAnbDefenderList.remove(pCreature->GetObjectGuid());
-
-            if (m_lAnbDefenderList.empty())
-            {
-                 if (GameObject* pEntryDoor = GetSingleGameObjectFromStorage(GO_TWINS_ENTER_DOOR))
-                    pEntryDoor->SetGoState(GO_STATE_ACTIVE);
-            }
+            if(!m_bOpenTwinsDoor)
+                m_bOpenTwinsDoor = true;
+            break;
         }
+        case NPC_ANUBISATH_DEFENDER:
+            m_lAnbDefenderList.remove(pCreature->GetObjectGuid());
+            break;
+        default:
+            break;
+    }
+    
+    // Only open door if Hururan and all defenders are dead
+    if(m_bOpenTwinsDoor && m_lAnbDefenderList.empty())
+    {
+        if (GameObject* pEntryDoor = GetSingleGameObjectFromStorage(GO_TWINS_ENTER_DOOR))
+            pEntryDoor->SetGoState(GO_STATE_ACTIVE);
     }
 }
        

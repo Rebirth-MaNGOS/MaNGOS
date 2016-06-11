@@ -19,6 +19,7 @@ enum
     NPC_KRI                     = 15511,
     NPC_VEM                     = 15544,
     NPC_FANKRISS            = 15510,
+    NPC_HUHURAN             = 15509,
     NPC_VEKLOR                  = 15276,
     NPC_VEKNILASH               = 15275,
     NPC_CTHUN                   = 15727,
@@ -77,6 +78,7 @@ class MANGOS_DLL_DECL instance_temple_of_ahnqiraj : public ScriptedInstance
 
         uint32 m_uiBugTrioDeathCount;
         
+        bool m_bOpenTwinsDoor;
         GUIDList m_lAnbDefenderList;
         
         // Stomach map, bool = true then in stomach
