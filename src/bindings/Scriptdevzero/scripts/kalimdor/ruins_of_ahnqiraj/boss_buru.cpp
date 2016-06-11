@@ -59,7 +59,6 @@ struct MANGOS_DLL_DECL boss_buruAI : public ScriptedAI			// Should hit for 750~~
     bool m_bIsEnraged;
 	bool m_bStun;
 	bool m_bTransform;
-	bool m_bStop;
 
 	uint32 m_uiTransformTimer;
 	uint32 m_uiRemoveStunTimer;
@@ -73,7 +72,7 @@ struct MANGOS_DLL_DECL boss_buruAI : public ScriptedAI			// Should hit for 750~~
     {
         m_bIsEnraged = false;
 		m_bTransform = false;
-		m_bStop = false;
+		m_bStun = false;
         m_creature->RemoveAllAuras();        
         m_creature->SetSpeedRate(MOVE_RUN, 0.45f);
         m_uiDismemberTimer = 5000;
