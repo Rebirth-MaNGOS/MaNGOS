@@ -22,6 +22,7 @@ SDCategory: Temple of Ahn'Qiraj
 EndScriptData */
 
 #include "precompiled.h"
+#include "temple_of_ahnqiraj.h"
 
 enum
 {
@@ -49,15 +50,18 @@ enum
 
     NPC_GLOB_OF_VISCIDUS        = 15667,
     NPC_TOXIN_CLOUD				= 152990
+  //  NPC_VISCIDUS_DUMMY = 800109
 };
 
 struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 {
     boss_viscidusAI(Creature* pCreature) : ScriptedAI(pCreature) 
     {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);        
         Reset();
     }
+    ScriptedInstance* m_pInstance;
 
     bool m_bSlowed1;
     bool m_bSlowed2;
@@ -207,7 +211,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             m_bSlowed2 = true;
         }
 
-        else if(m_uiFrostSpellCounter >= 3 && !m_bFrozen)					// does this emote multiple times?
+        else if(m_uiFrostSpellCounter >= 3 && !m_bFrozen)
         {
             m_bCanDoDamage = false;
             m_bFrozen = true;
@@ -265,7 +269,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
                 m_uiSetInvisTimer = 1700;
                 m_uiGlobSpawnTimer = 4000;			// slight delay before we spawn the adds
-                m_uiSetVisibleTimer = 18000;			// adjust this when adds are spawning/moving correctly
+                m_uiSetVisibleTimer = 17000;			// adjust so that he spawns slightly after all globs despawned
             }
         }
     }
@@ -315,13 +319,17 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     }
 
     void JustSummoned(Creature* pSummoned)
-    {
-        if(pSummoned->GetEntry() == NPC_GLOB_OF_VISCIDUS)
-            pSummoned->GetMotionMaster()->MovePoint(1,-7991.48f,920.19f,-52.91f);		// a point in the middle of the room
+    {       
+        Creature* pDummy = m_pInstance->GetSingleCreatureFromStorage(NPC_VISCIDUS_DUMMY);
+        
+        if(pSummoned->GetEntry() == NPC_GLOB_OF_VISCIDUS && pDummy)
+            pSummoned->GetMotionMaster()->MoveFollow(pDummy, 1.0f, float(M_PI/2));
+            //pSummoned->GetMotionMaster()->MovePoint(1,-7991.48f,920.19f,-52.91f);		// a point in the middle of the room
+        
         pSummoned->SetRespawnEnabled(false);			// make sure they won't respawn
     }
 
-    void SummonedMovementInform(Creature* pSummoned, uint32 uiMotionType, uint32 uiPointId)				// something like this?
+    /*void SummonedMovementInform(Creature* pSummoned, uint32 uiMotionType, uint32 uiPointId)				// something like this?
     {
         if(uiPointId == 1)
         {
@@ -329,7 +337,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
             pSummoned->ForcedDespawn();
         }
-    }
+    }*/
 
     void SummonedCreatureJustDied(Creature* pSummoned)
     {
@@ -461,14 +469,18 @@ struct MANGOS_DLL_DECL boss_glob_of_viscidusAI : public ScriptedAI
 {
     boss_glob_of_viscidusAI(Creature* pCreature) : ScriptedAI(pCreature) 
     {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();        
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NATURE, true);
         m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-        m_creature->CastSpell(m_creature, 26633, true); // cast the speed up
+        m_creature->CastSpell(m_creature, 26633, true); // cast the speed up      
         Reset();
     }
+    ScriptedInstance* m_pInstance;
+    uint32 m_uiTriggerCheck;
 
     void Reset()
     {
+        m_uiTriggerCheck = 500;
     }
 
     void MoveInLineOfSight(Unit* /*pWho*/)
@@ -492,6 +504,24 @@ struct MANGOS_DLL_DECL boss_glob_of_viscidusAI : public ScriptedAI
         //if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         //    return;
 
+        if (m_uiTriggerCheck < uiDiff)
+        {
+            if(m_pInstance)
+            {
+                Creature* pDummy = m_pInstance->GetSingleCreatureFromStorage(NPC_VISCIDUS_DUMMY);
+            
+                if (pDummy && pDummy->IsWithinDistInMap(m_creature, 2.0f))
+                {
+                    m_creature->CastSpell(m_creature, SPELL_REJOIN_VISCIDUS, true);
+                    m_creature->ForcedDespawn();
+                }
+                else
+                    m_uiTriggerCheck = 500;
+            }
+        }
+        else
+            m_uiTriggerCheck -= uiDiff;
+        
         m_creature->SetTargetGuid(ObjectGuid());				// target self even when someone does dmg
     }
 };
