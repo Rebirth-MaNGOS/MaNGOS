@@ -35,11 +35,14 @@ EndScriptData */
 #define SPELL_HEAL      25807
 #define SPELL_FEAR      19408
 
+#define SPELL_STUN       25900
+
 struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
 {
     boss_kriAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        m_creature->RemoveAurasAtMechanicImmunity(MECHANIC_STUN, 25900);
         Reset();
     }
 
@@ -48,6 +51,9 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
     uint32 Cleave_Timer;
     uint32 ToxicVolley_Timer;
     uint32 Check_Timer;
+    
+    bool m_bStun;
+    uint32 m_uiRemoveStunTimer;
 
     bool VemDead;
     bool Death;
@@ -60,6 +66,8 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
 
         VemDead = false;
         Death = false;
+        
+        m_bStun = false;
     }
 
     void JustDied(Unit* /*killer*/)
@@ -73,6 +81,8 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
             m_pInstance->SetData(DATA_BUG_TRIO_DEATH, 1);
         }
         DoCast(m_creature->getVictim(), SPELL_POISON_CLOUD, true);
+        
+        CallEatDeadBoss();
     }
 
     void ResetToHome()
@@ -88,13 +98,76 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         
         ScriptedAI::ResetToHome();
     }
-
-    void UpdateAI(const uint32 diff)
+    
+    void CallEatDeadBoss()
     {
+        Creature* pVem = m_pInstance->GetSingleCreatureFromStorage(NPC_VEM);
+        Creature* pYauj = m_pInstance->GetSingleCreatureFromStorage(NPC_YAUJ);
+        
+        float x, y, z;
+        
+        if(pVem && !pVem->isDead())
+        {
+            m_creature->GetClosePoint(x, y, z, 10.f, 5.f);
+            pVem->SetSpeedRate(MOVE_RUN, 6.f, false);
+            pVem->GetMotionMaster()->MovePoint(1,x,y,z);
+        }
+        
+         if(pYauj && !pYauj->isDead())
+         {
+             m_creature->GetClosePoint(x, y, z, 3.f, 2.f);
+             pYauj->SetSpeedRate(MOVE_RUN, 6.f, false);
+            pYauj->GetMotionMaster()->MovePoint(1,x,y,z);
+         }
+    }
+    
+    void MovementInform(uint32 uiMotionType, uint32 uiPointId)
+    {
+        Creature* pVem = m_pInstance->GetSingleCreatureFromStorage(NPC_VEM);
+        Creature* pYauj = m_pInstance->GetSingleCreatureFromStorage(NPC_YAUJ);
+        if (uiMotionType == POINT_MOTION_TYPE && uiPointId == 3)    
+        {            
+            m_creature->SetFacingToObject(pVem);
+            StopDueToStun();
+        }
+            if (uiMotionType == POINT_MOTION_TYPE && uiPointId == 2)    
+        {            
+            m_creature->SetFacingToObject(pYauj);
+            StopDueToStun();
+        }
+    }
+    
+    void StopDueToStun()
+    {
+        m_bStun = true;
+        m_creature->CastSpell(m_creature, SPELL_STUN, true);
+
+        m_uiRemoveStunTimer = 2000;
+        m_creature->SetSpeedRate(MOVE_RUN, 2.9f, false);
+    }
+    
+    void UpdateAI(const uint32 diff)
+    {        
         //Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+        if (m_bStun)
+        {
+            if (m_uiRemoveStunTimer <= diff)          
+            {
+                m_creature->RemoveAurasDueToSpell(25900);               
+                m_bStun = false;
+                
+                m_creature->GetMotionMaster()->Clear(false);
+                m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim());
+         
+                SetCombatMovement(true);
+            }
+            else
+                m_uiRemoveStunTimer -= diff; 
+        }
+        
         //Cleave_Timer
         if (Cleave_Timer < diff)
         {
@@ -132,6 +205,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
     boss_vemAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        m_creature->RemoveAurasAtMechanicImmunity(MECHANIC_STUN, 25900);
         Reset();
     }
 
@@ -142,6 +216,9 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
     uint32 Enrage_Timer;
 
     bool Enraged;
+    
+    bool m_bStun;
+    uint32 m_uiRemoveStunTimer;
 
     void Reset()
     {
@@ -150,6 +227,8 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         Enrage_Timer = 120000;
 
         Enraged = false;
+        
+        m_bStun = false;
     }
 
     void ResetToHome()
@@ -178,14 +257,78 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
 
             m_pInstance->SetData(DATA_BUG_TRIO_DEATH, 1);
         }
+        CallEatDeadBoss();
+    }
+       
+    void CallEatDeadBoss()
+    {
+        Creature* pKri = m_pInstance->GetSingleCreatureFromStorage(NPC_KRI);
+        Creature* pYauj = m_pInstance->GetSingleCreatureFromStorage(NPC_YAUJ);
+        
+        float x, y, z;
+                         
+        if(pKri && !pKri->isDead())
+        {
+            m_creature->GetClosePoint(x, y, z, 10.f, 5.f);
+            pKri->SetSpeedRate(MOVE_RUN, 6.f, false);
+            pKri->GetMotionMaster()->MovePoint(3,x,y,z);
+        }
+        
+         if(pYauj && !pYauj->isDead())
+         {
+             m_creature->GetClosePoint(x, y, z, 3.f, 2.f);
+             pYauj->SetSpeedRate(MOVE_RUN, 6.f, false);
+            pYauj->GetMotionMaster()->MovePoint(3,x,y,z);
+         }
     }
 
+    void MovementInform(uint32 uiMotionType, uint32 uiPointId)
+    {
+        Creature* pKri = m_pInstance->GetSingleCreatureFromStorage(NPC_KRI);
+        Creature* pYauj = m_pInstance->GetSingleCreatureFromStorage(NPC_YAUJ);
+        if (uiMotionType == POINT_MOTION_TYPE && uiPointId == 1)    
+        {            
+            m_creature->SetFacingToObject(pKri);
+           StopDueToStun();
+        }
+         if (uiMotionType == POINT_MOTION_TYPE && uiPointId == 2)    
+        {            
+            m_creature->SetFacingToObject(pYauj);
+           StopDueToStun();
+        }
+    }
+    
+    void StopDueToStun()
+    {
+        m_bStun = true;
+        m_creature->CastSpell(m_creature, SPELL_STUN, true);
+
+        m_uiRemoveStunTimer = 3000;
+        m_creature->SetSpeedRate(MOVE_RUN, 5.f, false);
+    }    
+    
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
+                      
+        if (m_bStun)
+        {
+            if (m_uiRemoveStunTimer <= diff)          
+            {
+                m_creature->RemoveAurasDueToSpell(25900);               
+                m_bStun = false;
+                
+                m_creature->GetMotionMaster()->Clear(false);
+                m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim());
+         
+                SetCombatMovement(true);
+            }
+            else
+                m_uiRemoveStunTimer -= diff; 
+        }
+    
         //Charge_Timer
         if (Charge_Timer < diff)
         {
@@ -220,6 +363,7 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
     boss_yaujAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        m_creature->RemoveAurasAtMechanicImmunity(MECHANIC_STUN, 25900);
         Reset();
     }
 
@@ -229,6 +373,9 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
     uint32 Fear_Timer;
     uint32 Check_Timer;
 
+    bool m_bStun;
+    uint32 m_uiRemoveStunTimer;
+    
     bool VemDead;
 
     void Reset()
@@ -238,6 +385,7 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         Check_Timer = 2000;
 
         VemDead = false;
+        m_bStun = false;
     }
 
     void ResetToHome()
@@ -245,7 +393,7 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         Creature* pKri = m_pInstance->GetSingleCreatureFromStorage(NPC_KRI);
         Creature* pVem = m_pInstance->GetSingleCreatureFromStorage(NPC_VEM);
 
-        if(pKri && pKri->isDead())
+        if(pKri && pKri->isDead())       
             pKri->Respawn();
 
         if(pVem && pVem->isDead())
@@ -271,6 +419,55 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
             if (Summoned && target)
                 Summoned->AI()->AttackStart(target);
         }
+        CallEatDeadBoss();
+    }
+    
+    void CallEatDeadBoss()
+    {
+        Creature* pKri = m_pInstance->GetSingleCreatureFromStorage(NPC_KRI);
+        Creature* pVem = m_pInstance->GetSingleCreatureFromStorage(NPC_VEM);
+        
+        float x, y, z;
+                         
+        if(pKri && !pKri->isDead())
+        {
+            m_creature->GetClosePoint(x, y, z, 10.f, 5.0f);
+            pKri->SetSpeedRate(MOVE_RUN, 5.f, false);
+            pKri->GetMotionMaster()->MovePoint(2,x,y,z);
+        }
+        
+         if(pVem && !pVem->isDead())
+         {
+             m_creature->GetClosePoint(x, y, z, 3.f, 2.f);
+             pVem->SetSpeedRate(MOVE_RUN, 5.f, false);
+            pVem->GetMotionMaster()->MovePoint(2,x,y,z);
+         }
+    }
+    
+    void MovementInform(uint32 uiMotionType, uint32 uiPointId)
+    {
+        Creature* pKri = m_pInstance->GetSingleCreatureFromStorage(NPC_KRI);
+        Creature* pVem = m_pInstance->GetSingleCreatureFromStorage(NPC_VEM);
+        
+        if (uiMotionType == POINT_MOTION_TYPE && uiPointId == 1)    
+        {            
+            m_creature->SetFacingToObject(pKri);
+           StopDueToStun();
+        }
+         if (uiMotionType == POINT_MOTION_TYPE && uiPointId == 3)    
+        {            
+            m_creature->SetFacingToObject(pVem);
+           StopDueToStun();
+        }
+    }
+    
+    void StopDueToStun()
+    {
+        m_bStun = true;
+        m_creature->CastSpell(m_creature, SPELL_STUN, true);
+
+        m_uiRemoveStunTimer = 2000;
+        m_creature->SetSpeedRate(MOVE_RUN, 2.9f, false);
     }
 
     void UpdateAI(const uint32 diff)
@@ -279,6 +476,22 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+        if (m_bStun)
+        {
+            if (m_uiRemoveStunTimer <= diff)          
+            {
+                m_creature->RemoveAurasDueToSpell(25900);               
+                m_bStun = false;                
+                
+                m_creature->GetMotionMaster()->Clear(false);
+                m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim());
+         
+                SetCombatMovement(true);
+            }
+            else
+                m_uiRemoveStunTimer -= diff; 
+        }
+        
         //Fear_Timer
         if (Fear_Timer < diff)
         {
