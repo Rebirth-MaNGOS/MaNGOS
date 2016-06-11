@@ -175,7 +175,7 @@ void WorldSession::HandlePetAction(WorldPacket& recv_data)
             {
                 Pet* p = (Pet*)pet;
                 if (p->getPetType() == HUNTER_PET)
-                    p->Unsummon(PET_SAVE_AS_DELETED, _player);
+                    p->Unsummon(PET_SAVE_NOT_IN_SLOT, _player);
                 else
                     // dismissing a summoned pet is like killing them (this prevents returning a soulshard...)
                     p->SetDeathState(CORPSE);
