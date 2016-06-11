@@ -50,7 +50,6 @@ enum
 
     NPC_GLOB_OF_VISCIDUS        = 15667,
     NPC_TOXIN_CLOUD				= 152990
-  //  NPC_VISCIDUS_DUMMY = 800109
 };
 
 struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
@@ -324,20 +323,9 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         
         if(pSummoned->GetEntry() == NPC_GLOB_OF_VISCIDUS && pDummy)
             pSummoned->GetMotionMaster()->MoveFollow(pDummy, 1.0f, float(M_PI/2));
-            //pSummoned->GetMotionMaster()->MovePoint(1,-7991.48f,920.19f,-52.91f);		// a point in the middle of the room
         
         pSummoned->SetRespawnEnabled(false);			// make sure they won't respawn
     }
-
-    /*void SummonedMovementInform(Creature* pSummoned, uint32 uiMotionType, uint32 uiPointId)				// something like this?
-    {
-        if(uiPointId == 1)
-        {
-            pSummoned->CastSpell(m_creature, SPELL_REJOIN_VISCIDUS, true);
-            pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
-            pSummoned->ForcedDespawn();
-        }
-    }*/
 
     void SummonedCreatureJustDied(Creature* pSummoned)
     {
@@ -456,6 +444,8 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
                 m_uiToxicCloudTimer -= uiDiff;
 
             DoMeleeAttackIfReady();
+            
+            EnterEvadeIfOutOfCombatArea(uiDiff);
         }
     }
 };

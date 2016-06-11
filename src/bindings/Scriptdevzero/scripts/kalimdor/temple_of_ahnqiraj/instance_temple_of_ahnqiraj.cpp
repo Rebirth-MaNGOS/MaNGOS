@@ -45,6 +45,7 @@ void instance_temple_of_ahnqiraj::OnCreatureCreate (Creature* pCreature)
         case NPC_VEKLOR:
         case NPC_VEKNILASH:
         case NPC_CTHUN:
+        case NPC_VISCIDUS_DUMMY:
             m_mNpcEntryGuidStore[pCreature->GetEntry()] = pCreature->GetObjectGuid();
             break;
     }

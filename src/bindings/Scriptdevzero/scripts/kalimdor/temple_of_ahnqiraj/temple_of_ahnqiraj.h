@@ -21,6 +21,7 @@ enum
     NPC_VEKLOR                  = 15276,
     NPC_VEKNILASH               = 15275,
     NPC_CTHUN                   = 15727,
+    NPC_VISCIDUS_DUMMY = 800109,
 
     GO_SKERAM_GATE              = 180636,
     GO_TWINS_ENTER_DOOR         = 180634,

@@ -569,6 +569,7 @@ enum eBosses
 {
     NPC_BROODLORD   = 12017,
     NPC_HAKKAR      = 14834,
+    NPC_VISCIDUS = 15299
 };
 
 bool ScriptedAI::EnterEvadeIfOutOfCombatArea(const uint32 uiDiff)
@@ -594,6 +595,10 @@ bool ScriptedAI::EnterEvadeIfOutOfCombatArea(const uint32 uiDiff)
         break;
     case NPC_HAKKAR:
         if (fZ > 51.0f)                                 // Hakkar (not move down stairs)
+            return false;
+        break;
+    case NPC_VISCIDUS:                      // Viscidus shouldn't get out of his room
+        if(fZ < -29)
             return false;
         break;
     default:
