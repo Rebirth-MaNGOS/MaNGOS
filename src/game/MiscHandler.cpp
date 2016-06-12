@@ -916,6 +916,9 @@ void WorldSession::HandleFeatherFallAck(WorldPacket &recv_data)
 
 void WorldSession::HandleMoveUnRootAck(WorldPacket& recv_data)
 {
+    // no used
+    recv_data.rpos(recv_data.wpos());                       // prevent warnings spam
+/*
     ObjectGuid guid;
     recv_data >> guid;
 
@@ -930,13 +933,16 @@ void WorldSession::HandleMoveUnRootAck(WorldPacket& recv_data)
 
     recv_data.read_skip<uint32>();                          // unk
 
-    SetRooted(false);
-
-    recv_data.rpos(recv_data.wpos());                       // prevent warnings spam
+    MovementInfo movementInfo;
+    ReadMovementInfo(recv_data, &movementInfo);
+*/
 }
 
 void WorldSession::HandleMoveRootAck(WorldPacket& recv_data)
 {
+    // no used
+    recv_data.rpos(recv_data.wpos());                       // prevent warnings spam
+/*
     ObjectGuid guid;
     recv_data >> guid;
 
@@ -951,10 +957,9 @@ void WorldSession::HandleMoveRootAck(WorldPacket& recv_data)
 
     recv_data.read_skip<uint32>();                          // unk
 
-    // This player should be rooted according to the client.
-    SetRooted(true);
-
-    recv_data.rpos(recv_data.wpos());                       // prevent warnings spam
+    MovementInfo movementInfo;
+    ReadMovementInfo(recv_data, &movementInfo);
+*/
 }
 
 void WorldSession::HandleSetActionBarTogglesOpcode(WorldPacket& recv_data)

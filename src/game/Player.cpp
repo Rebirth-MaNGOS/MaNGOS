@@ -1185,7 +1185,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
         // It will be recalculate at mailbox open (for unReadMails important non-0 until mailbox open, it also will be recalculated)
         m_nextMailDelivereTime = 0;
     }
-
+/*
      ////////////////////////////////////////////////////////
      ///
      /// Fly hack.
@@ -1241,7 +1241,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
          GetSession()->KickPlayer();
          return;
      }
-
+*/
     /********************** CHARGE TRIALS ********************************************************/
 
     if(!m_isCharging && m_chargeTimer)
@@ -18146,8 +18146,11 @@ inline void BeforeVisibilityDestroy(T* /*t*/, Player* /*p*/)
 template<>
 inline void BeforeVisibilityDestroy<Creature>(Creature* t, Player* p)
 {
-    if (p->GetPetGuid() == t->GetObjectGuid() && ((Creature*)t)->IsPet())
+    if (p->GetPetGuid() == t->GetObjectGuid() && ((Creature*)t)->IsPet() &&
+        t->GetOwner() == p)
+    {
         ((Pet*)t)->Unsummon(PET_SAVE_REAGENTS);
+    }
 }
 
 void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* target)

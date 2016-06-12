@@ -4850,6 +4850,17 @@ SpellCastResult Spell::CheckCast(bool strict)
                 else
                     return SPELL_FAILED_BAD_TARGETS;
             }
+
+            // Don't allow players to charm/enslave things that are owned
+            // by other players or NPCs.
+            for (short i = EFFECT_INDEX_0; i < MAX_EFFECT_INDEX; i++)
+            {
+                if (m_spellInfo->EffectApplyAuraName[i] == SPELL_AURA_MOD_CHARM)
+                {
+                    if (target->GetOwner() != nullptr)
+                        return SPELL_FAILED_BAD_TARGETS;
+                }
+            }
         }
 
         if(non_caster_target)
