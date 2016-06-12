@@ -575,6 +575,50 @@ CreatureAI* GetAI_mob_toxin_cloud(Creature* pCreature)
     return new mob_toxin_cloudAI(pCreature);
 }
 
+/*######
+## npc_viscidus_aggro_dummy
+######*/
+
+struct MANGOS_DLL_DECL npc_viscidus_aggro_dummyAI : public ScriptedAI
+{
+    npc_viscidus_aggro_dummyAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Reset();
+    }
+    
+    ScriptedInstance* m_pInstance;
+
+    void Reset()
+    {
+    }
+
+    void MoveInLineOfSight(Unit* pWho)
+    {
+        if (pWho->GetTypeId() == TYPEID_PLAYER && m_creature->IsWithinDistInMap(pWho, 15.0f) &&  m_creature->IsWithinLOSInMap(pWho))
+        {
+            if(m_pInstance)
+            {
+                Creature* pViscidus = m_pInstance->GetSingleCreatureFromStorage(NPC_VISCIDUS);
+                if(pViscidus && pViscidus->isAlive() && !pViscidus->isInCombat())
+                    pViscidus->AI()->AttackStart(pWho);
+            }
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        //Return since we have no target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+    }
+};
+
+CreatureAI* GetAI_npc_viscidus_aggro_dummy(Creature* pCreature)
+{
+    return new npc_viscidus_aggro_dummyAI(pCreature);
+}
+
 void AddSC_boss_viscidus()
 {
     Script* pNewscript;
@@ -592,5 +636,10 @@ void AddSC_boss_viscidus()
     pNewscript = new Script;
     pNewscript->Name = "mob_toxin_cloud";
     pNewscript->GetAI = &GetAI_mob_toxin_cloud;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_viscidus_aggro_dummy";
+    pNewscript->GetAI = &GetAI_npc_viscidus_aggro_dummy;
     pNewscript->RegisterSelf();
 }

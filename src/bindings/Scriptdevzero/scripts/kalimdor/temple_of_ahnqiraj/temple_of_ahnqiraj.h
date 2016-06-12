@@ -20,6 +20,7 @@ enum
     NPC_VEM                     = 15544,
     NPC_FANKRISS            = 15510,
     NPC_HUHURAN             = 15509,
+    NPC_VISCIDUS                = 15299,
     NPC_VEKLOR                  = 15276,
     NPC_VEKNILASH               = 15275,
     NPC_CTHUN                   = 15727,
