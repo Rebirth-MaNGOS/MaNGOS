@@ -1773,6 +1773,9 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case 26180:
             unMaxTargets = 60;
             break;
+        case 26029:                                 // Dark Glare - C'Thun
+            targetMode = TARGET_NARROW_FRONTAL_CONE;
+            break;
         }
         break;
     }
