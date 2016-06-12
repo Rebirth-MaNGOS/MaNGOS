@@ -245,8 +245,13 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         {
             if (!m_bExploded)
             {
-                if (HealthBelowPct(5))			// if Viscidus has less than 5% hp he should die since every glob is 5% hp
+             	// if Viscidus has less than 5% hp he should 
+                // die since every glob is 5% hp   
+                if (HealthBelowPct(5))
+                {
                     KillViscidus();
+                    return;
+                }
                 
                 m_bCanDoDamage = false;
                 m_bExploded = true;
@@ -334,6 +339,13 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     {
         if (pSummoned->GetEntry() == NPC_GLOB_OF_VISCIDUS)
             ++globCounter;
+    }
+
+    void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
+    {
+        // When Viscidus explodes he should ignore any damage done.
+        if (m_bExploded)
+            uiDamage = 0;
     }
 
     void UpdateAI(const uint32 uiDiff)
