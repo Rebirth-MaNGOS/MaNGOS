@@ -3809,6 +3809,90 @@ CreatureAI* GetAI_mob_tortured_druid_sentinel(Creature* pCreature)
     return new mob_tortured_druid_sentinelAI(pCreature);
 }
 
+/*####
+# mob_tenhourwar_generic_rp
+####*/
+
+enum
+{
+    NPC_HIGHLORD_SAURFANG       = 14719,
+    NPC_IRONFORGE_INFANTRYMAN   = 15861,
+    NPC_KALDOREI_MARKSMAN       = 15860,
+    TEXT_SAURFANG               = -1720262,
+    TEXT_INFANTRYMAN            = -1720260,
+    TEXT_MARKSMAN               = -1720261
+};
+
+struct MANGOS_DLL_DECL mob_tenhourwar_generic_rpAI : public ScriptedAI
+{
+    mob_tenhourwar_generic_rpAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        if(IsGameEventActive(54))
+        {
+            switch(m_creature->GetEntry())
+            {
+            case NPC_HIGHLORD_SAURFANG:
+                {
+                m_ripTimer = 10000;
+                m_scriptTextId = TEXT_SAURFANG;
+                break;
+                }
+            case NPC_IRONFORGE_INFANTRYMAN:
+                {
+                m_ripTimer = 30000;
+                m_scriptTextId = TEXT_INFANTRYMAN;
+                break;
+                }
+            case NPC_KALDOREI_MARKSMAN:
+                {
+                m_ripTimer = 30000;
+                m_scriptTextId = TEXT_MARKSMAN;
+                break;
+                }
+            }
+        }
+        else
+        {
+            m_ripTimer = 0;
+            m_scriptTextId = 0;
+        }
+
+        Reset(); 
+    }
+
+    uint32_t m_ripTimer;
+    int32 m_scriptTextId;
+    
+
+    void Reset()
+    {    
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(m_ripTimer)
+        {
+            if(m_ripTimer <= uiDiff)
+            {
+                DoScriptText(m_scriptTextId, m_creature);
+                m_ripTimer = 0;
+            }
+            else
+                m_ripTimer -= uiDiff;
+        }
+
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_tenhourwar_generic_rp(Creature* pCreature)
+{
+    return new mob_tenhourwar_generic_rpAI(pCreature);
+}
+
 void AddSC_silithus()
 {
     Script* pNewscript;
@@ -3950,5 +4034,10 @@ void AddSC_silithus()
     pNewscript = new Script;
     pNewscript->Name = "mob_tortured_druid_sentinel";
     pNewscript->GetAI = &GetAI_mob_tortured_druid_sentinel;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "mob_tenhourwar_generic_rp";
+    pNewscript->GetAI = &GetAI_mob_tenhourwar_generic_rp;
     pNewscript->RegisterSelf();
 }
