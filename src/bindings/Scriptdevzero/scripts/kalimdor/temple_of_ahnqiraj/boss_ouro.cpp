@@ -112,12 +112,6 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         m_lDirtMounds.clear();
     }
 
-        void Aggro(Unit* /*pWho*/) 
-    {
-        if (m_pInstance)
-            m_pInstance->SetData(TYPE_OURO, IN_PROGRESS);
-    }
-
     void JustReachedHome() 
     {
         if (m_pInstance)
@@ -184,6 +178,9 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         CastAoeGroundRupture();
 
         m_creature->CastSpell(m_creature, SPELL_ROOT_SELF, true);
+        
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_OURO, IN_PROGRESS);
     }
 
     void SpawnDirtMound()
