@@ -216,7 +216,8 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
                 SpellCount();			// count incoming spells
             }
         }
-        else if(pSpell->School == SPELL_SCHOOL_NORMAL && m_bFrozen)
+        else if(pSpell->School == SPELL_SCHOOL_NORMAL && m_bFrozen &&
+                pSpell->Id != 5019)
         {
             ++m_uiMeleeCounter;
             MeleeHitCount();		// count incoming melee
