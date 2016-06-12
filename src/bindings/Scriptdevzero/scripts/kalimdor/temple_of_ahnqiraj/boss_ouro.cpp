@@ -60,11 +60,12 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 {
     boss_ouroAI(Creature* pCreature) : ScriptedAI(pCreature) 
     {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
         SetCombatMovement(false);
         m_bossState = BOSS_STATE_NORMAL;
         Reset();
     }
-
+    ScriptedInstance* m_pInstance;
     uint32 m_uiSweepTimer;
     uint32 m_uiSandBlastTimer;
     uint32 m_uiSubmergeTimer;
@@ -111,6 +112,24 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         m_lDirtMounds.clear();
     }
 
+        void Aggro(Unit* /*pWho*/) 
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_OURO, IN_PROGRESS);
+    }
+
+    void JustReachedHome() 
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_OURO, FAIL);
+    }
+
+    void JustDied(Unit* /*pKiller*/) 
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_OURO, DONE);
+    }
+    
     Player* DoGetPlayerInMeleeRangeByThreat()
     {
         std::vector<Player*> tmp_list;

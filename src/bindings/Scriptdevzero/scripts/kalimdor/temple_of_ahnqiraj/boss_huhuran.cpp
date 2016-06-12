@@ -22,6 +22,7 @@ SDCategory: Temple of Ahn'Qiraj
 EndScriptData */
 
 #include "precompiled.h"
+#include "temple_of_ahnqiraj.h"
 
 #define EMOTE_GENERIC_FRENZY_KILL   -1000001
 #define EMOTE_GENERIC_BERSERK       -1000004
@@ -35,15 +36,19 @@ EndScriptData */
 
 struct MANGOS_DLL_DECL boss_huhuranAI : public ScriptedAI
 {
-    boss_huhuranAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
-
+    boss_huhuranAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Reset();        
+    }
+    ScriptedInstance* m_pInstance;
     uint32 Frenzy_Timer;
     uint32 Wyvern_Timer;
     uint32 Spit_Timer;
     uint32 PoisonBolt_Timer;
     uint32 NoxiousPoison_Timer;
     uint32 FrenzyBack_Timer;
-
+   
     void Reset()
     {
         Frenzy_Timer = urand(25000, 35000);
@@ -54,6 +59,24 @@ struct MANGOS_DLL_DECL boss_huhuranAI : public ScriptedAI
         FrenzyBack_Timer = 15000;
     }
 
+    void Aggro(Unit* /*pWho*/) 
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_HUHURAN, IN_PROGRESS);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_HUHURAN, FAIL);
+    }
+
+    void JustDied(Unit* /*pKiller*/)
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_HUHURAN, DONE);
+    }
+    
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
