@@ -28,6 +28,7 @@ EndScriptData */
 #define SPELL_TOXIC_VOLLEY  25812
 #define SPELL_POISON_CLOUD  25786                           //Only Spell with right dmg.
 #define SPELL_ENRAGE        28798                           //Changed cause 25790 is casted on gamers too. Same prob with old explosion of twin emperors.
+#define SPELL_ENRAGE_VEM_DEATH 28747
 
 #define SPELL_CHARGE        26561
 #define SPELL_KNOCKBACK     26027
@@ -69,11 +70,19 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         
         m_bStun = false;
     }
+    
+    void Aggro(Unit* /*pWho*/)
+    {        
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_VEM, IN_PROGRESS);
+    }
 
     void JustDied(Unit* /*killer*/)
     {
         if (m_pInstance)
         {
+            m_pInstance->SetData(TYPE_VEM, DONE);
+            
             if (m_pInstance->GetData(DATA_BUG_TRIO_DEATH) < 2)
                                                             // Unlootable if death
                 m_creature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
@@ -81,7 +90,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
             m_pInstance->SetData(DATA_BUG_TRIO_DEATH, 1);
         }
         DoCast(m_creature->getVictim(), SPELL_POISON_CLOUD, true);
-        
+                
         CallEatDeadBoss();
     }
 
@@ -95,6 +104,9 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
 
         if(pYauj && pYauj->isDead())
             pYauj->Respawn();
+        
+         if (m_pInstance)
+            m_pInstance->SetData(TYPE_VEM, FAIL);
         
         ScriptedAI::ResetToHome();
     }
@@ -189,7 +201,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
             {
                 if (m_pInstance && m_pInstance->GetData(TYPE_VEM) == DONE)
                 {
-                    DoCast(m_creature, SPELL_ENRAGE, true);
+                    DoCast(m_creature, SPELL_ENRAGE_VEM_DEATH, true);
                     VemDead = true;
                 }
                 Check_Timer = 2000;
@@ -230,6 +242,12 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         
         m_bStun = false;
     }
+    
+    void Aggro(Unit* /*pWho*/)
+    {        
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_VEM, IN_PROGRESS);
+    }
 
     void ResetToHome()
     {
@@ -241,6 +259,9 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
 
         if(pYauj && pYauj->isDead())
             pYauj->Respawn();
+        
+          if (m_pInstance)
+            m_pInstance->SetData(TYPE_VEM, FAIL);
 
         ScriptedAI::ResetToHome();
     }
@@ -257,6 +278,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
 
             m_pInstance->SetData(DATA_BUG_TRIO_DEATH, 1);
         }
+                 
         CallEatDeadBoss();
     }
        
@@ -387,6 +409,12 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         VemDead = false;
         m_bStun = false;
     }
+    
+    void Aggro(Unit* /*pWho*/)
+    {        
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_VEM, IN_PROGRESS);
+    }
 
     void ResetToHome()
     {
@@ -398,6 +426,9 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
 
         if(pVem && pVem->isDead())
             pVem->Respawn();
+        
+          if (m_pInstance)
+            m_pInstance->SetData(TYPE_VEM, FAIL);
 
         ScriptedAI::ResetToHome();
     }
@@ -406,6 +437,8 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
     {
         if (m_pInstance)
         {
+            m_pInstance->SetData(TYPE_VEM, DONE);
+            
             if (m_pInstance->GetData(DATA_BUG_TRIO_DEATH) < 2)
                                                             // Unlootable if death
                 m_creature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
@@ -562,7 +595,7 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
                 {
                     if (m_pInstance->GetData(TYPE_VEM) == DONE)
                     {
-                        DoCast(m_creature, SPELL_ENRAGE, true);
+                        DoCast(m_creature, SPELL_ENRAGE_VEM_DEATH, true);
                         VemDead = true;
                     }
                 }

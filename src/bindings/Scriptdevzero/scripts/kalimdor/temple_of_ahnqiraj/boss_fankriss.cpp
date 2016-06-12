@@ -50,8 +50,12 @@ static const BugTunnels aFankrissBugTunnels[7] =
 
 struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
 {
-    boss_fankrissAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
-
+    boss_fankrissAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Reset();        
+    }
+    ScriptedInstance* m_pInstance;
     uint32 MortalWound_Timer;
     uint32 SpawnHatchlings_Timer;
     uint32 SpawnSpawns_Timer;
@@ -60,13 +64,32 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
     int RandY;
 
     Creature* Spawn;
-
+    
     void Reset()
     {
         MortalWound_Timer = urand(10000, 15000);
         SpawnHatchlings_Timer = urand(6000, 12000);
         SpawnSpawns_Timer = urand(15000, 45000);
     }
+    
+    void Aggro(Unit* /*pWho*/)
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_FANKRISS, IN_PROGRESS);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_FANKRISS, FAIL);
+    }
+
+    void JustDied(Unit* /*pKiller*/)
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_FANKRISS, DONE);
+    }
+
 
     void SummonSpawn(Unit* pVictim)
     {

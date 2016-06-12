@@ -7,12 +7,17 @@
 
 enum
 {
-    MAX_ENCOUNTER               = 4,
+    MAX_ENCOUNTER               = 9,
 
     TYPE_SKERAM                 = 0,
     TYPE_VEM                    = 1,
     TYPE_TWINS                  = 2,
     TYPE_CTHUN_PHASE            = 3,
+    TYPE_SARTURA                = 4,
+    TYPE_FANKRISS               = 5,
+    TYPE_VISCIDUS               = 6,
+    TYPE_HUHURAN                = 7,
+    TYPE_OURO                   = 8,
 
     // NPC_SKERAM               = 15263,
     NPC_YAUJ                    = 15543,

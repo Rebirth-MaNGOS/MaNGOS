@@ -151,10 +151,24 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             m_uiMeleeCounter = 0;
         }
     }
+    
+    void Aggro(Unit* /*pWho*/)
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_VISCIDUS, IN_PROGRESS);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_VISCIDUS, FAIL);
+    }
 
     void JustDied(Unit* /*pKiller*/)							// Remove all clouds when he dies
     {
         RemoveToxinClouds();
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_VISCIDUS, DONE);
     }
 
     void RemoveToxinClouds()
