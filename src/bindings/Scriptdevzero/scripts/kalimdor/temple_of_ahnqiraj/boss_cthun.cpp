@@ -893,6 +893,7 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
 
                     // Freeze animation
                     m_creature->SetUInt32Value(UNIT_FIELD_FLAGS, 0);
+                    m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IN_COMBAT);
 
                     // Eye Beam for 50 seconds
                     m_uiPhaseTimer = 50000;
