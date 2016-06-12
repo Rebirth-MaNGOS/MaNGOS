@@ -91,7 +91,7 @@ void instance_temple_of_ahnqiraj::OnObjectCreate(GameObject* pGo)
         case GO_SKERAM_GATE:
             if (m_auiEncounter[TYPE_SKERAM] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
-            break;
+            break;            
         case GO_TWINS_ENTER_DOOR:
             pGo->SetGoState(GO_STATE_READY);
             break;
@@ -109,7 +109,9 @@ void instance_temple_of_ahnqiraj::OnObjectCreate(GameObject* pGo)
 
 bool instance_temple_of_ahnqiraj::IsEncounterInProgress() const
 {
-    // not active in AQ40
+    for(uint8 i = 0; i < MAX_ENCOUNTER; ++i)
+        if (m_auiEncounter[i] == IN_PROGRESS)
+            return true;
     return false;
 }
 
@@ -123,6 +125,13 @@ void instance_temple_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
                 DoUseDoorOrButton(GO_SKERAM_GATE);
             break;
         case TYPE_VEM:
+            m_auiEncounter[uiType] = uiData;
+            break;
+        case TYPE_SARTURA:
+        case TYPE_FANKRISS:
+        case TYPE_VISCIDUS:
+        case TYPE_HUHURAN:
+        case TYPE_OURO:
             m_auiEncounter[uiType] = uiData;
             break;
         case TYPE_TWINS:
@@ -153,7 +162,9 @@ void instance_temple_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
         OUT_SAVE_INST_DATA;
 
         std::ostringstream saveStream;
-        saveStream << m_auiEncounter[0] << " " << m_auiEncounter[1] << " " << m_auiEncounter[2] << " " << m_auiEncounter[3];
+        saveStream << m_auiEncounter[0] << " " << m_auiEncounter[1] << " " << m_auiEncounter[2] << " " << m_auiEncounter[3] << " "
+                   << m_auiEncounter[4] << " " << m_auiEncounter[5] << " " << m_auiEncounter[6] << " " << m_auiEncounter[7] << " "
+                   << m_auiEncounter[8];
 
         m_strInstData = saveStream.str();
 
@@ -173,7 +184,9 @@ void instance_temple_of_ahnqiraj::Load(const char* chrIn)
     OUT_LOAD_INST_DATA(chrIn);
 
     std::istringstream loadStream(chrIn);
-    loadStream >> m_auiEncounter[0] >> m_auiEncounter[1] >> m_auiEncounter[2] >> m_auiEncounter[3];
+    loadStream >> m_auiEncounter[0] >> m_auiEncounter[1] >> m_auiEncounter[2] >> m_auiEncounter[3]
+               >> m_auiEncounter[4] >> m_auiEncounter[5] >> m_auiEncounter[6] >> m_auiEncounter[7]
+               >> m_auiEncounter[8];
 
     for(uint8 i = 0; i < MAX_ENCOUNTER; ++i)
     {
@@ -194,10 +207,24 @@ uint32 instance_temple_of_ahnqiraj::GetData(uint32 uiType)
 {
     switch(uiType)
     {
+        case TYPE_SKERAM:
+            return m_auiEncounter[0];
         case TYPE_VEM:
             return m_auiEncounter[1];
+        case TYPE_TWINS:
+            return m_auiEncounter[2];
         case TYPE_CTHUN_PHASE:
-            return m_auiEncounter[3];;
+            return m_auiEncounter[3];
+        case TYPE_SARTURA:
+            return m_auiEncounter[4];
+        case TYPE_FANKRISS:
+            return m_auiEncounter[5];
+        case TYPE_VISCIDUS:
+            return m_auiEncounter[6];
+        case TYPE_HUHURAN:
+            return m_auiEncounter[7];
+        case TYPE_OURO:
+            return m_auiEncounter[8];
 
         case DATA_BUG_TRIO_DEATH:
             return m_uiBugTrioDeathCount;
