@@ -87,7 +87,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiForceSubmergeTimer = 5000;
+        m_uiForceSubmergeTimer = 10000;
         m_bForceSubmerge = false;
         m_uiSweepTimer = 41000;                   // Verified
         m_uiSandBlastTimer = urand(20000, 23000); // Verified
@@ -357,7 +357,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                     {
                         if(!m_bForceSubmerge)
                         {
-                            m_uiForceSubmergeTimer = 5000;
+                            m_uiForceSubmergeTimer = 10000;
                             m_bForceSubmerge = true;	
                         }
                     }
