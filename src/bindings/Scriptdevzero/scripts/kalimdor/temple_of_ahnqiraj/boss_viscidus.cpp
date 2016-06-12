@@ -192,12 +192,29 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         }
     }
 
-    void SpellHit(Unit* /*pCaster*/, const SpellEntry* pSpell)			// Count every frost spell
+    void SpellHit(Unit* pCaster, const SpellEntry* pSpell)			// Count every frost spell
     {
-        if (pSpell->School == SPELL_SCHOOL_FROST && !m_bFrozen && !m_bExploded)
+        if (!m_bFrozen && !m_bExploded)
         {
-            ++m_uiFrostSpellCounter;
-            SpellCount();			// count incoming spells
+            Player* pPlayer = dynamic_cast<Player*>(pCaster);
+            Item* pItem = nullptr;
+            SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NONE;
+
+            // For getting the spell school of a player wanding.
+            if (pPlayer)
+            {
+                pItem = pPlayer->GetWeaponForAttack(RANGED_ATTACK);
+
+                if (pItem)
+                 schoolMask = GetSchoolMask(pItem->GetProto()->Damage[0].DamageType);
+            }
+
+            if (pSpell->School == SPELL_SCHOOL_FROST || 
+                (pSpell->Id == 5019 && schoolMask == SPELL_SCHOOL_MASK_FROST))
+            {
+                ++m_uiFrostSpellCounter;
+                SpellCount();			// count incoming spells
+            }
         }
         else if(pSpell->School == SPELL_SCHOOL_NORMAL && m_bFrozen)
         {
