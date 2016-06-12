@@ -28,6 +28,7 @@ EndScriptData */
 #define SPELL_TOXIC_VOLLEY  25812
 #define SPELL_POISON_CLOUD  25786                           //Only Spell with right dmg.
 #define SPELL_ENRAGE        28798                           //Changed cause 25790 is casted on gamers too. Same prob with old explosion of twin emperors.
+#define SPELL_ENRAGE_VEM_DEATH 28747
 
 #define SPELL_CHARGE        26561
 #define SPELL_KNOCKBACK     26027
@@ -189,7 +190,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
             {
                 if (m_pInstance && m_pInstance->GetData(TYPE_VEM) == DONE)
                 {
-                    DoCast(m_creature, SPELL_ENRAGE, true);
+                    DoCast(m_creature, SPELL_ENRAGE_VEM_DEATH, true);
                     VemDead = true;
                 }
                 Check_Timer = 2000;
@@ -562,7 +563,7 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
                 {
                     if (m_pInstance->GetData(TYPE_VEM) == DONE)
                     {
-                        DoCast(m_creature, SPELL_ENRAGE, true);
+                        DoCast(m_creature, SPELL_ENRAGE_VEM_DEATH, true);
                         VemDead = true;
                     }
                 }
