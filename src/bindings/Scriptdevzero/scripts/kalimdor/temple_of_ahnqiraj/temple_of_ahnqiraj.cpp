@@ -280,6 +280,116 @@ CreatureAI* GetAI_mob_anubisath_defender(Creature* pCreature)
     return new mob_anubisath_defender(pCreature);
 }
 
+/*######
+## mob_obsidian_nullifier
+######*/
+
+enum eObsidianNullifier
+{
+    SPELL_NULLIFY       = 26552,
+    SPELL_DRAIN_MANA  = 25755,
+    SPELL_DRAIN_MANA_VISUAL  = 26639,
+    SPELL_CLEAVE = 20691
+};
+
+struct MANGOS_DLL_DECL mob_obsidian_nullifierAI : public ScriptedAI
+{
+    mob_obsidian_nullifierAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiManaDrainTimer;
+    uint32 m_uiCleave_Timer;
+    short m_uiDrain_count;
+    
+    void Reset() 
+    {
+        m_uiDrain_count = 0;
+        m_uiManaDrainTimer = 10000;
+        m_uiCleave_Timer = urand(5000, 10000);
+        m_creature->SetPower(POWER_MANA, 0);
+        m_creature->SetMaxPower(POWER_MANA, 0);
+    }
+
+    void Aggro(Unit* /*pWho*/)
+    {
+        // Combat so we have everyone on threat list for mana drain
+        m_creature->SetInCombatWithZone();
+        
+        m_creature->SetMaxPower(POWER_MANA, m_creature->GetCreatureInfo()->maxmana);
+
+        const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+        
+        if(!threatList.empty())
+        {
+            for (HostileReference *currentReference : threatList)
+            {
+                Unit *target = currentReference->getTarget();
+                if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 30.0f)
+                {
+                    m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
+                    ++m_uiDrain_count;
+                    if(m_uiDrain_count == 16)
+                        break;
+                }
+            }
+        }        
+    }
+    
+    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_DRAIN_MANA)
+            pTarget->CastSpell(m_creature,SPELL_DRAIN_MANA_VISUAL, true);               // animation for mana drain
+        // manually set hp to 1 when hit by nullify    
+        if (pSpell->Id == SPELL_NULLIFY && pTarget && pTarget->isAlive())
+            pTarget->SetHealth(1);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // Cleave
+        if (m_uiCleave_Timer < uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_CLEAVE);
+            m_uiCleave_Timer = urand(5000, 8000);
+        }
+        else 
+            m_uiCleave_Timer -= uiDiff;
+        
+        if (m_uiManaDrainTimer <= uiDiff)
+        {
+            const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+
+            if(!threatList.empty())
+            {
+                for (HostileReference *currentReference : threatList)
+                {
+                    Unit *target = currentReference->getTarget();
+                    if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 30.0f)
+                        m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
+                }
+            }
+            m_uiManaDrainTimer = urand(8000, 12000);
+         } 
+        else
+            m_uiManaDrainTimer -= uiDiff;
+
+        if (m_creature->GetPower(POWER_MANA) == m_creature->GetMaxPower(POWER_MANA))
+            DoCastSpellIfCan(m_creature, SPELL_NULLIFY);
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_obsidian_nullifier(Creature* pCreature)
+{
+    return new mob_obsidian_nullifierAI(pCreature);
+}
+
 void AddSC_temple_of_ahnqiraj()
 {
     Script* pNewscript;
@@ -287,5 +397,10 @@ void AddSC_temple_of_ahnqiraj()
     pNewscript = new Script;
     pNewscript->Name = "mob_anubisath_defender";
     pNewscript->GetAI = &GetAI_mob_anubisath_defender;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "mob_obsidian_nullifier";
+    pNewscript->GetAI = &GetAI_mob_obsidian_nullifier;
     pNewscript->RegisterSelf();
 }
