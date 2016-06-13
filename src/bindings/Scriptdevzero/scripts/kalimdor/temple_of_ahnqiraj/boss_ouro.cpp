@@ -76,6 +76,9 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     uint32 m_uiSpawnTimer;
     uint32 m_uiBoulderTimer;
 
+    uint32 m_uiMoundTimer;
+    uint32 m_uiScarabTimer;
+    
     uint8  m_bossState;
 
     bool m_bForceSubmerge;
@@ -87,6 +90,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
     void Reset()
     {
+        m_uiMoundTimer = 20000;
+        m_uiScarabTimer = urand(30000, 45000);
         m_uiForceSubmergeTimer = 10000;
         m_bForceSubmerge = false;
         m_uiSweepTimer = 41000;                   // Verified
@@ -220,7 +225,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         for(uint8 i = 0; i < 2; ++i)
         {
             if(Creature* pDirtMound = m_creature->SummonCreature(NPC_DIRT_MOUND, fX + frand(-5,5), 
-                        fY + frand(-5,5), fZ + 1, 0, TEMPSUMMON_TIMED_DESPAWN, 45000, false))
+                        fY + frand(-5,5), fZ + 1, 0, TEMPSUMMON_TIMED_DESPAWN, 45001, false))
             {
                 pDirtMound->SetRespawnEnabled(false);				// to stop them from randomly respawning
                 m_lDirtMounds.push_back(pDirtMound->GetObjectGuid());
@@ -233,17 +238,22 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     }
 
     void RemoveDirtMounds(int action = 0)		// just the basics for now
-    {
+    {        
+        int amount = 5;
+        if(action == 2)
+            amount = 3;
+        
         for (GUIDList::iterator itr = m_lDirtMounds.begin(); itr != m_lDirtMounds.end(); itr++)
         {
             if (Creature* pDirtMound = m_creature->GetMap()->GetCreature(*itr))
+            {
                 if (pDirtMound->isAlive())
                 {
-                    if (action == 0)
+                    if (action == 0 || action == 2)
                     {
                         float fX, fY, fZ;
                         pDirtMound->GetPosition(fX, fY, fZ);
-                        for (uint8 i = 0; i < 5; ++i)
+                        for (uint8 i = 0; i < amount; ++i)
                         {
                             if (Creature* pScarab = m_creature->SummonCreature(NPC_OURO_SCARAB, 
                                         fX + frand(-5,5),
@@ -252,16 +262,17 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                                         TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,
                                         15000,false))
                             {
-                                if(Player* pPlayer = GetRandomPlayerInCurrentMap(50))
-                                    pScarab->AddThreat(pPlayer,100000.0f);
+                                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                                    pScarab->AI()->AttackStart(pTarget);
                                 pScarab->SetRespawnDelay(-10);				// to stop them from randomly respawning
                             }
                         }	
-                        pDirtMound->ForcedDespawn();		// should be instant despawn?
+                        pDirtMound->ForcedDespawn();		// should be instant despawn?                        
                     }
                     else
                         pDirtMound->ForcedDespawn();		// should be instant despawn?
                 }
+            }
         }
     }
 
@@ -283,7 +294,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         m_creature->setFaction(34); // not quite friendly because it stops combat if he is 35
 
         m_bossState = BOSS_STATE_SUBMERGE;
-        m_uiBackTimer = urand(30000, 45000);			// for testing purposes, change back after
+        m_uiBackTimer = urand(30000, 45000);
         SpawnDirtMound();
     }      
 
@@ -339,7 +350,27 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             }
             else
                 m_uiSubmergeTimer -= uiDiff;
-        }        
+        } 
+        else // enrage phase
+        {
+            if (m_uiMoundTimer <= uiDiff)
+            {
+                SpawnDirtMound();                
+                m_uiScarabTimer = urand(30000, 35000);  // timers longer so they'll be overwritten
+                m_uiMoundTimer = 50000;
+            }
+            else
+                m_uiMoundTimer -= uiDiff;
+
+            if (m_uiScarabTimer <= uiDiff)
+            {
+                RemoveDirtMounds(2);
+                m_uiMoundTimer = 10000;
+                m_uiScarabTimer = 60000;
+            }
+            else
+                m_uiScarabTimer -= uiDiff;
+        }
 
         // Sweep
         if (m_uiSweepTimer < uiDiff)
@@ -414,7 +445,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             // Boulder
             if (m_uiBoulderTimer < uiDiff)
             {
-                DoCastSpellIfCan(m_creature->getVictim(), SPELL_BOULDER);
+                 if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    DoCastSpellIfCan(pTarget, SPELL_BOULDER);
                 m_uiBoulderTimer = 10000;
             }
             else
