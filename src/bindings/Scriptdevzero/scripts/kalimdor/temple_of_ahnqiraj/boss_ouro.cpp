@@ -110,12 +110,39 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
         RemoveDirtMounds(1);			// remove all that would be up after a wipe
         m_lDirtMounds.clear();
+        
+        // respawn the dummy
+        GetGround(0);
+    }
+    
+    void GetGround(int action)
+    {
+        if(action == 0) // spawn dummy
+        {
+            if(m_pInstance)
+            {
+                Creature* pDummy = m_pInstance->GetSingleCreatureFromStorage(NPC_OURO_GROUND);
+            
+                if (pDummy && !pDummy->isAlive())
+                    pDummy->Respawn();
+            }   
+        }
+        if(action == 1) // kill dummy
+        {
+            if(m_pInstance)
+            {
+                Creature* pDummy = m_pInstance->GetSingleCreatureFromStorage(NPC_OURO_GROUND);
+            
+                if (pDummy && pDummy->isAlive() && pDummy->IsWithinDistInMap(m_creature, 5.0f))
+                    pDummy->DealDamage(pDummy, pDummy->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+            }   
+        }
     }
 
     void JustReachedHome() 
     {
         if (m_pInstance)
-            m_pInstance->SetData(TYPE_OURO, FAIL);
+            m_pInstance->SetData(TYPE_OURO, FAIL);       
     }
 
     void JustDied(Unit* /*pKiller*/) 
@@ -167,6 +194,9 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
     void Aggro(Unit* /*pWho*/)
     {
+        // kill the dummy
+        GetGround(1);
+        
         m_creature->SetVisibility(VISIBILITY_ON);
         m_creature->UpdateVisibilityAndView();
 
@@ -194,6 +224,10 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             {
                 pDirtMound->SetRespawnEnabled(false);				// to stop them from randomly respawning
                 m_lDirtMounds.push_back(pDirtMound->GetObjectGuid());
+                
+                // pick one and never change
+                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    pDirtMound->AddThreat(pTarget, 100000.f);
             }
         }
     }
@@ -305,7 +339,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             }
             else
                 m_uiSubmergeTimer -= uiDiff;
-        }
+        }        
 
         // Sweep
         if (m_uiSweepTimer < uiDiff)
@@ -473,16 +507,37 @@ struct MANGOS_DLL_DECL mob_dirt_moundAI : public ScriptedAI				// should they be
     mob_dirt_moundAI(Creature* pCreature) : ScriptedAI(pCreature) 
     { 
         m_creature->CastSpell(m_creature,SPELL_DIRTMOUND_PASSIVE,true);
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
         Reset(); 
     }
 
-    uint32 m_uiRoamTimer;
-    bool m_bCanChangeTarget;
-    uint32 m_uiChangeTargetTimer;
+    void Reset()
+    {        
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        //Return since we have no target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+    }
+};
+
+CreatureAI* GetAI_mob_dirt_mound(Creature* pCreature)
+{
+    return new mob_dirt_moundAI(pCreature);
+}
+
+struct MANGOS_DLL_DECL npc_ouro_groundAI : public ScriptedAI
+{
+    npc_ouro_groundAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    {         
+        Reset(); 
+    }
 
     void Reset()
-    {
-        m_uiRoamTimer = 0;
+    {        
+        m_creature->CastSpell(m_creature,SPELL_DIRTMOUND_PASSIVE,true);
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
     }
 
@@ -490,49 +545,18 @@ struct MANGOS_DLL_DECL mob_dirt_moundAI : public ScriptedAI				// should they be
     {
         // Must to be empty to ignore aggro
     }
-
-    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    
+    void UpdateAI(const uint32 uiDiff)
     {
-        if (pSpell->Id == 26092 && pTarget->GetTypeId() == TYPEID_PLAYER && m_bCanChangeTarget)		
-            ChangeTarget();
-    }
-
-    void ChangeTarget()
-    {
-        if (Unit* pTarget = GetRandomPlayerInCurrentMap(50))
-        {
-            DoResetThreat();
-            m_creature->AddThreat(pTarget,100000.0f);
-            m_creature->SelectHostileTarget();
-            m_uiChangeTargetTimer = 5000;
-            m_bCanChangeTarget = false;
-            m_uiRoamTimer = urand(20000, 30000);			// Reset the 30 sec timer in case the change is due to hitting a player
-        }
-    }
-
-    void UpdateAI(uint32 const uiDiff)
-    {
-        if (m_uiRoamTimer < uiDiff)
-        {
-            ChangeTarget();
-            m_uiRoamTimer = urand(20000, 30000);
-        }
-        else
-            m_uiRoamTimer -= uiDiff;
-
-        if (!m_bCanChangeTarget)
-        {
-            if (m_uiChangeTargetTimer < uiDiff)
-                m_bCanChangeTarget = true;
-            else
-                m_uiChangeTargetTimer -= uiDiff;
-        }
+        //Return since we have no target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
     }
 };
 
-CreatureAI* GetAI_mob_dirt_mound(Creature* pCreature)
+CreatureAI* GetAI_npc_ouro_ground(Creature* pCreature)
 {
-    return new mob_dirt_moundAI(pCreature);
+    return new npc_ouro_groundAI(pCreature);
 }
 
 void AddSC_boss_ouro()
@@ -546,5 +570,10 @@ void AddSC_boss_ouro()
     newscript = new Script;
     newscript->Name = "mob_dirt_mound";
     newscript->GetAI = &GetAI_mob_dirt_mound;
+    newscript->RegisterSelf();
+    
+    newscript = new Script;
+    newscript->Name = "npc_ouro_ground";
+    newscript->GetAI = &GetAI_npc_ouro_ground;
     newscript->RegisterSelf();
 }

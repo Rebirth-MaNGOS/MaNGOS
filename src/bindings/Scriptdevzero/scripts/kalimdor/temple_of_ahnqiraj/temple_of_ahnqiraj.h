@@ -30,6 +30,7 @@ enum
     NPC_VEKNILASH               = 15275,
     NPC_CTHUN                   = 15727,
     NPC_VISCIDUS_DUMMY = 800109,
+    NPC_OURO_GROUND = 157120,
     
     NPC_ANUBISATH_DEFENDER = 15277,
 
