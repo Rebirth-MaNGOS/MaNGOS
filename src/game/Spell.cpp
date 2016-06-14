@@ -543,7 +543,19 @@ void Spell::FillTargetMap()
                     tmpUnitMap.clear();
                     tmpUnitMap.push_back(new_target);
                 }
-
+                // Aura of Command should only heal players with over friendly rep with Cenarion circle
+                if (m_spellInfo->Id == 25516)
+                {            
+                        auto itr = tmpUnitMap.begin();
+                        while (itr != tmpUnitMap.end())
+                        {
+                            Player* current_player = dynamic_cast<Player*>(*itr);
+                            if(current_player && current_player->GetReputationRank(609) < 4)
+                                itr = tmpUnitMap.erase(itr);
+                            else
+                                ++itr;
+                        }
+                }
                 break;
             }
 
