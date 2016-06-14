@@ -260,27 +260,25 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
             {
                 pAndorov->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR);
                 pAndorov->HandleEmoteState(EMOTE_STATE_NONE);
+                
+                // Reward raid with 150 rep if Andorov lives
+                FactionEntry const* pFaction = sFactionStore.LookupEntry(609);
+
+                if(!pFaction)
+                    return;
+
+                Map::PlayerList const& lPlayers = m_pInstance->instance->GetPlayers();
+
+                if (!lPlayers.isEmpty())
+                {
+                    for(Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
+                    {
+                        if (Player* pPlayer = itr->getSource())
+                            pPlayer->GetReputationMgr().ModifyReputation(pFaction, 150);
+                    }
+                }
             }
         }
-        // Reward raid with 150 rep if Andorov lives (temp, will move to Andorov script later)
-        // TODO: make RepMgr functions accessible
-        /*Creature* pAndorov = m_creature->GetMap()->GetCreature(m_pInstance->GetData64(DATA_ANDOROV));
-        if (pAndorov && pAndorov->isAlive())
-        {
-            FactionEntry const* pFaction = sFactionStore.LookupEntry(609);
-
-            if(!pFaction)
-                return;
-
-            Map::PlayerList const& lPlayers = m_pInstance->instance->GetPlayers();
-
-            if (!lPlayers.isEmpty())
-                for(Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
-                {
-                    if (Player* pPlayer = itr->getSource())
-                        pPlayer->GetReputationMgr().ModifyReputation(pFaction, 150);
-                }
-        }*/
     }
 
     void KilledUnit(Unit* pVictim)
