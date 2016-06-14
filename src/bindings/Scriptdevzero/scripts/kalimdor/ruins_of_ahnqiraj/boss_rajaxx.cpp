@@ -342,7 +342,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
             m_pInstance->SetData(TYPE_RAJAXX, NOT_STARTED);
 
         m_uiWaveCount = 0;
-        m_uiEventCheckTimer = 120000;
+        m_uiWaveTimer  = 120000;
         m_uiDeadWaveMemberCount = 0;
         m_uiEventCheckTimer = 2000;
         m_bAndorovEngaged = false;
