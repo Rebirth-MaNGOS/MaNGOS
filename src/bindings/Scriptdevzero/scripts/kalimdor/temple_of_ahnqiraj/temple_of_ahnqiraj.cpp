@@ -105,19 +105,19 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
                 {
                 case 0:
                     m_uiCastAbility = SPELL_PLAGUE;
-                    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_PLAGUE) + "!").c_str(), LANG_UNIVERSAL);
+                  //  m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_PLAGUE) + "!").c_str(), LANG_UNIVERSAL);
                     break;
                 case 1:
-                    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_PERIODIC_THUNDERCLAP) + "!").c_str(), LANG_UNIVERSAL);
+                  //  m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_PERIODIC_THUNDERCLAP) + "!").c_str(), LANG_UNIVERSAL);
                     DoCast(m_creature, SPELL_PERIODIC_THUNDERCLAP, true);
                     break;
                 case 2:
                     DoCast(m_creature, SPELL_FIRE_ARCANE_REFLECT, true);
-                    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_FIRE_ARCANE_REFLECT) + "!").c_str(), LANG_UNIVERSAL);
+                //    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_FIRE_ARCANE_REFLECT) + "!").c_str(), LANG_UNIVERSAL);
                     break;
                 case 3:
                     m_uiEnrageAbility = SPELL_ENRAGE;
-                    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_ENRAGE) + "!").c_str(), LANG_UNIVERSAL);
+                //    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_ENRAGE) + "!").c_str(), LANG_UNIVERSAL);
                     break;
                 case 4:
                     m_uiSummonAbility = SPELL_SUMMON_SWARMER;
@@ -130,19 +130,19 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
                 {
                 case 0:
                     m_uiCastAbility = SPELL_METEOR;
-                    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_METEOR) + "!").c_str(), LANG_UNIVERSAL);
+               //     m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_METEOR) + "!").c_str(), LANG_UNIVERSAL);
                     break;
                 case 1:
                     DoCast(m_creature, SPELL_PERIODIC_SHADOW_STORM, true);
-                    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_PERIODIC_SHADOW_STORM) + "!").c_str(), LANG_UNIVERSAL);
+               //     m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_PERIODIC_SHADOW_STORM) + "!").c_str(), LANG_UNIVERSAL);
                     break;
                 case 2:
-                    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_SHADOW_FROST_REFLECT) + "!").c_str(), LANG_UNIVERSAL);
+               //     m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_SHADOW_FROST_REFLECT) + "!").c_str(), LANG_UNIVERSAL);
                     DoCast(m_creature, SPELL_SHADOW_FROST_REFLECT, true);
                     break;
                 case 3:
                     m_uiEnrageAbility = SPELL_EXPLODE;
-                    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_EXPLODE) + "!").c_str(), LANG_UNIVERSAL);
+               //     m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_EXPLODE) + "!").c_str(), LANG_UNIVERSAL);
                     break;
                 case 4:
                     m_uiSummonAbility = SPELL_SUMMON_WARRIOR;

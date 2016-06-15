@@ -195,7 +195,7 @@ struct MANGOS_DLL_DECL npc_anubisath_sentinelAI : public ScriptedAI
     {
         DoCast(m_creature, ability, true);
 
-        m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(ability) + "!").c_str(), LANG_UNIVERSAL);
+       // m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(ability) + "!").c_str(), LANG_UNIVERSAL);
 
         if(m_uiMyAbility == 0)
             m_uiMyAbility = ability;
