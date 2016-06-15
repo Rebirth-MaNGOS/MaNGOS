@@ -124,13 +124,14 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         }
     }
 
-    void JustDied(Unit* /*Killer*/)
+    void JustDied(Unit* Killer)
     {
         if (Creature* pOtherBoss = GetOtherBoss())
         {
             pOtherBoss->SetHealth(0);
             pOtherBoss->SetDeathState(JUST_DIED);
             pOtherBoss->SetUInt32Value(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+            pOtherBoss->SetLootRecipient(Killer);
 
             if (boss_twinemperorsAI* pOtherAI = dynamic_cast<boss_twinemperorsAI*>(pOtherBoss->AI()))
                 pOtherAI->DontYellWhenDead = true;
