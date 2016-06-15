@@ -194,23 +194,45 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
     void SpellHit(Unit* pCaster, const SpellEntry* pSpell)			// Count every frost spell
     {
-        if (!m_bFrozen && !m_bExploded)
-        {
-            Player* pPlayer = dynamic_cast<Player*>(pCaster);
-            Item* pItem = nullptr;
-            SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NONE;
+        Player* pPlayer = dynamic_cast<Player*>(pCaster);
+        Item* pItem = nullptr;
+        bool isMeleeAttack = false;
+        SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NONE;
 
-            // For getting the spell school of a player wanding.
-            if (pPlayer)
+        // For getting the spell school of a player wanding.
+        // Also for detecting players using melee weapons that do
+        // frost damage.
+        // Currently only checking the first damage type. If
+        // someone reports a weapon with more than one damage type
+        // rewrite this function to be a loop.
+        if (pPlayer)
+        {
+            if (pSpell->Id == 5019)
             {
                 pItem = pPlayer->GetWeaponForAttack(RANGED_ATTACK);
+            }
+            else if (pSpell->School == SPELL_SCHOOL_NORMAL)
+            {
+                isMeleeAttack = true;
+                
+                if (pPlayer->getAttackTimer(BASE_ATTACK) == 0)
+                    pItem = pPlayer->GetWeaponForAttack(BASE_ATTACK);
+                else 
+                    pItem = pPlayer->GetWeaponForAttack(OFF_ATTACK);
+            }
+        }
 
-                if (pItem)
-                 schoolMask = GetSchoolMask(pItem->GetProto()->Damage[0].DamageType);
+        if (!m_bFrozen && !m_bExploded)
+        {
+            if (pItem)
+            {
+                if (isMeleeAttack)
+                    schoolMask = GetSchoolMask(pItem->GetProto()->Damage[1].DamageType);
+                else
+                    schoolMask = GetSchoolMask(pItem->GetProto()->Damage[0].DamageType);
             }
 
-            if (pSpell->School == SPELL_SCHOOL_FROST || 
-                (pSpell->Id == 5019 && schoolMask == SPELL_SCHOOL_MASK_FROST))
+            if (pSpell->School == SPELL_SCHOOL_FROST || schoolMask == SPELL_SCHOOL_MASK_FROST)
             {
                 ++m_uiFrostSpellCounter;
                 SpellCount();			// count incoming spells
