@@ -6105,6 +6105,13 @@ void Aura::PeriodicTick()
     }
     case SPELL_AURA_PERIODIC_TRIGGER_SPELL:
     {
+        
+        // The Berserk spell used by Ouro in AQ40.
+        // Dirt Mound summoning currently handled in Scriptdev. 
+        // TODO: Handle in core some day soon^TM
+        if (GetId() == 26615)
+            return;
+
         TriggerSpell();
 
         // Aura of Nature for the Emerald Dragon.
