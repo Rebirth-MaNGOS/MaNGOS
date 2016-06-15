@@ -3207,6 +3207,13 @@ CreatureAI* GetAI_npc_ahnqiraj_gate_trigger(Creature* pCreature)
     return new npc_ahnqiraj_gate_triggerAI(pCreature);
 }
 
+enum
+{
+    SPELL_ANUBISATH_WARSTOMP       = 11876,
+    SPELL_ANUBISATH_CLEAVE         = 16044,
+    SPELL_ANUBISATH_SMASH          = 18944,
+};
+
 struct npc_colossal_anubisathAI : public npc_patrolAI
 {
     npc_colossal_anubisathAI(Creature* pCreature) : npc_patrolAI(pCreature, 0, true)
@@ -3216,8 +3223,16 @@ struct npc_colossal_anubisathAI : public npc_patrolAI
         StartPatrol(0, false);
     }
 
+    uint32_t m_cleaveTimer;
+    uint32_t m_warstompTimer;
+    uint32_t m_smashTimer;
+
     void Reset()
     {
+        m_cleaveTimer = urand(10000, 15000);
+        m_warstompTimer = urand(15000, 25000);
+        m_smashTimer = urand(15000, 20000);
+        
         npc_patrolAI::Reset();
     }
 
@@ -3227,6 +3242,39 @@ struct npc_colossal_anubisathAI : public npc_patrolAI
         
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+
+        if(m_cleaveTimer)
+        {
+            if(m_cleaveTimer <= uiDiff)
+            {
+                DoCast(m_creature->getVictim(), SPELL_ANUBISATH_CLEAVE, true);
+                m_cleaveTimer = urand(10000, 15000);
+            }
+            else
+                m_cleaveTimer -= uiDiff;
+        }
+
+        if(m_warstompTimer)
+        {
+            if(m_warstompTimer <= uiDiff)
+            {
+                DoCast(m_creature->getVictim(), SPELL_ANUBISATH_WARSTOMP, true);
+                m_warstompTimer = urand(15000, 25000);
+            }
+            else
+                m_warstompTimer -= uiDiff;
+        }
+
+        if(m_smashTimer)
+        {
+            if (m_smashTimer <= uiDiff)
+            {
+                DoCast(m_creature->getVictim(), SPELL_ANUBISATH_SMASH, true);
+                m_smashTimer = urand(15000, 20000);
+            }
+            else
+                m_smashTimer -= uiDiff;
+        }
 
         DoMeleeAttackIfReady();
     }
@@ -3818,9 +3866,13 @@ enum
     NPC_HIGHLORD_SAURFANG       = 14719,
     NPC_IRONFORGE_INFANTRYMAN   = 15861,
     NPC_KALDOREI_MARKSMAN       = 15860,
+    NPC_LEORIC                  = 15868,
+    NPC_LYNORE                  = 15866,
     TEXT_SAURFANG               = -1720262,
     TEXT_INFANTRYMAN            = -1720260,
-    TEXT_MARKSMAN               = -1720261
+    TEXT_MARKSMAN               = -1720261,
+    TEXT_LEORIC                 = -1720263,
+    TEXT_LYNORE                 = -1720264
 };
 
 struct MANGOS_DLL_DECL mob_tenhourwar_generic_rpAI : public ScriptedAI
@@ -3833,21 +3885,33 @@ struct MANGOS_DLL_DECL mob_tenhourwar_generic_rpAI : public ScriptedAI
             {
             case NPC_HIGHLORD_SAURFANG:
                 {
-                m_ripTimer = 10000;
-                m_scriptTextId = TEXT_SAURFANG;
-                break;
+                    m_ripTimer = 10000;
+                    m_scriptTextId = TEXT_SAURFANG;
+                    break;
                 }
             case NPC_IRONFORGE_INFANTRYMAN:
                 {
-                m_ripTimer = 30000;
-                m_scriptTextId = TEXT_INFANTRYMAN;
-                break;
+                    m_ripTimer = 30000;
+                    m_scriptTextId = TEXT_INFANTRYMAN;
+                    break;
                 }
             case NPC_KALDOREI_MARKSMAN:
                 {
-                m_ripTimer = 30000;
-                m_scriptTextId = TEXT_MARKSMAN;
-                break;
+                    m_ripTimer = 30000;
+                    m_scriptTextId = TEXT_MARKSMAN;
+                    break;
+                }
+            case NPC_LEORIC:
+                {
+                    m_ripTimer = 25000;
+                    m_scriptTextId = TEXT_LEORIC;
+                    break;
+                }
+            case NPC_LYNORE:
+                {
+                    m_ripTimer = 25000;
+                    m_scriptTextId = TEXT_LYNORE;
+                    break;
                 }
             }
         }
@@ -3891,6 +3955,84 @@ struct MANGOS_DLL_DECL mob_tenhourwar_generic_rpAI : public ScriptedAI
 CreatureAI* GetAI_mob_tenhourwar_generic_rp(Creature* pCreature)
 {
     return new mob_tenhourwar_generic_rpAI(pCreature);
+}
+
+/*####
+# mob_anubisath_warbringer
+####*/
+
+enum
+{
+    NPC_COLOSSAL_ANUBISATH         = 15755
+};
+
+struct MANGOS_DLL_DECL mob_anubisath_warbringer_AI : public ScriptedAI
+{
+    mob_anubisath_warbringer_AI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        Reset(); 
+    }
+
+    uint32_t m_cleaveTimer;
+    uint32_t m_warstompTimer;
+    uint32_t m_smashTimer;
+
+    void Reset()
+    {    
+        m_cleaveTimer = urand(10000, 15000);
+        m_warstompTimer = urand(15000, 25000);
+
+        if (m_creature->GetEntry() == NPC_COLOSSAL_ANUBISATH)
+        {
+            m_smashTimer = urand(15000, 20000);
+        }
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if(m_cleaveTimer)
+        {
+            if(m_cleaveTimer <= uiDiff)
+            {
+                DoCast(m_creature->getVictim(), SPELL_ANUBISATH_CLEAVE, true);
+                m_cleaveTimer = urand(10000, 15000);
+            }
+            else
+                m_cleaveTimer -= uiDiff;
+        }
+
+        if(m_warstompTimer)
+        {
+            if(m_warstompTimer <= uiDiff)
+            {
+                DoCast(m_creature->getVictim(), SPELL_ANUBISATH_WARSTOMP, true);
+                m_warstompTimer = urand(15000, 25000);
+            }
+            else
+                m_warstompTimer -= uiDiff;
+        }
+
+        if(m_smashTimer)
+        {
+            if (m_smashTimer <= uiDiff)
+            {
+                DoCast(m_creature->getVictim(), SPELL_ANUBISATH_SMASH, true);
+                m_smashTimer = urand(15000, 20000);
+            }
+            else
+                m_smashTimer -= uiDiff;
+        }
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_anubisath_warbringer(Creature* pCreature)
+{
+    return new mob_anubisath_warbringer_AI(pCreature);
 }
 
 void AddSC_silithus()
@@ -4039,5 +4181,10 @@ void AddSC_silithus()
     pNewscript = new Script;
     pNewscript->Name = "mob_tenhourwar_generic_rp";
     pNewscript->GetAI = &GetAI_mob_tenhourwar_generic_rp;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "mob_anubisath_warbringer";
+    pNewscript->GetAI = &GetAI_mob_anubisath_warbringer;
     pNewscript->RegisterSelf();
 }
