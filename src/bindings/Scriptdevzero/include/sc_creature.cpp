@@ -598,7 +598,7 @@ bool ScriptedAI::EnterEvadeIfOutOfCombatArea(const uint32 uiDiff)
             return false;
         break;
     case NPC_VISCIDUS:                      // Viscidus shouldn't get out of his room
-        if(fZ < -29)
+        if(fZ < -34)
             return false;
         break;
     default:
