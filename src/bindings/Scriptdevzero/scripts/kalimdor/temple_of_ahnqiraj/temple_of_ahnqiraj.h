@@ -7,7 +7,7 @@
 
 enum
 {
-    MAX_ENCOUNTER               = 9,
+    MAX_ENCOUNTER               = 10,
 
     TYPE_SKERAM                 = 0,
     TYPE_VEM                    = 1,
@@ -18,6 +18,7 @@ enum
     TYPE_VISCIDUS               = 6,
     TYPE_HUHURAN                = 7,
     TYPE_OURO                   = 8,
+    TYPE_ANUBISATH              = 9,
 
     // NPC_SKERAM               = 15263,
     NPC_YAUJ                    = 15543,
@@ -110,8 +111,7 @@ class MANGOS_DLL_DECL instance_temple_of_ahnqiraj : public ScriptedInstance
         GUIDList m_lSarturaTrash;
         GUIDList m_lHuhuranTrash;
         
-        bool m_bOpenTwinsDoor;
-        GUIDList m_lAnbDefenderList;
+        uint32 m_lAnbDefenderCounter;
         
         // Stomach map, bool = true then in stomach
         StomachMap m_mStomachMap;

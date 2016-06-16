@@ -25,8 +25,7 @@ EndScriptData */
 #include "temple_of_ahnqiraj.h"
 
 instance_temple_of_ahnqiraj::instance_temple_of_ahnqiraj(Map* pMap) : ScriptedInstance(pMap),
-    m_uiBugTrioDeathCount(0),
-    m_bOpenTwinsDoor(false)
+    m_uiBugTrioDeathCount(0)
 {
     Initialize();
 };
@@ -34,7 +33,7 @@ instance_temple_of_ahnqiraj::instance_temple_of_ahnqiraj(Map* pMap) : ScriptedIn
 void instance_temple_of_ahnqiraj::Initialize()
 {
     memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
-    m_lAnbDefenderList.clear();
+    m_lAnbDefenderCounter = 0;
 }
 
 void instance_temple_of_ahnqiraj::OnCreatureCreate (Creature* pCreature)
@@ -54,7 +53,7 @@ void instance_temple_of_ahnqiraj::OnCreatureCreate (Creature* pCreature)
             m_mNpcEntryGuidStore[pCreature->GetEntry()] = pCreature->GetObjectGuid();
             break;
         case NPC_ANUBISATH_DEFENDER:
-            m_lAnbDefenderList.push_back(pCreature->GetObjectGuid());
+            ++m_lAnbDefenderCounter;
             break;
         case OBSIDIAN_ERADICATOR:
         case ANUBISATH_SENTINEL:
@@ -81,21 +80,18 @@ void instance_temple_of_ahnqiraj::OnCreatureDeath(Creature* pCreature)
 {
     switch(pCreature->GetEntry())
     {
-        case NPC_HUHURAN:
-        {
-            if(!m_bOpenTwinsDoor)
-                m_bOpenTwinsDoor = true;
-            break;
-        }
         case NPC_ANUBISATH_DEFENDER:
-            m_lAnbDefenderList.remove(pCreature->GetObjectGuid());
+            --m_lAnbDefenderCounter;
             break;
         default:
             break;
     }
     
     // Only open door if Hururan and all defenders are dead
-    if(m_bOpenTwinsDoor && m_lAnbDefenderList.empty())
+    if(m_lAnbDefenderCounter == 0)
+        SetData(TYPE_ANUBISATH, DONE);
+
+    if (GetData(TYPE_HUHURAN) == DONE && GetData(TYPE_ANUBISATH) == DONE)
     {
         if (GameObject* pEntryDoor = GetSingleGameObjectFromStorage(GO_TWINS_ENTER_DOOR))
             pEntryDoor->SetGoState(GO_STATE_ACTIVE);
@@ -112,7 +108,10 @@ void instance_temple_of_ahnqiraj::OnObjectCreate(GameObject* pGo)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;            
         case GO_TWINS_ENTER_DOOR:
-            pGo->SetGoState(GO_STATE_READY);
+            if (GetData(TYPE_HUHURAN) == DONE && GetData(TYPE_ANUBISATH) == DONE)
+                pGo->SetGoState(GO_STATE_ACTIVE);
+            else
+                pGo->SetGoState(GO_STATE_READY);
             break;
         case GO_TWINS_EXIT_DOOR:
             if (m_auiEncounter[TYPE_TWINS] == DONE)
@@ -247,6 +246,9 @@ void instance_temple_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
         case TYPE_CTHUN_PHASE:
             m_auiEncounter[uiType] = uiData;
             break;
+        case TYPE_ANUBISATH:
+            m_auiEncounter[uiType] = uiData;
+            break;
 
         // The following temporarily datas are not to be saved
         case DATA_BUG_TRIO_DEATH:
@@ -261,7 +263,7 @@ void instance_temple_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
         std::ostringstream saveStream;
         saveStream << m_auiEncounter[0] << " " << m_auiEncounter[1] << " " << m_auiEncounter[2] << " " << m_auiEncounter[3] << " "
                    << m_auiEncounter[4] << " " << m_auiEncounter[5] << " " << m_auiEncounter[6] << " " << m_auiEncounter[7] << " "
-                   << m_auiEncounter[8];
+                   << m_auiEncounter[8] << " " << m_auiEncounter[9];
 
         m_strInstData = saveStream.str();
 
@@ -283,7 +285,7 @@ void instance_temple_of_ahnqiraj::Load(const char* chrIn)
     std::istringstream loadStream(chrIn);
     loadStream >> m_auiEncounter[0] >> m_auiEncounter[1] >> m_auiEncounter[2] >> m_auiEncounter[3]
                >> m_auiEncounter[4] >> m_auiEncounter[5] >> m_auiEncounter[6] >> m_auiEncounter[7]
-               >> m_auiEncounter[8];
+               >> m_auiEncounter[8] >> m_auiEncounter[9];
 
     for(uint8 i = 0; i < MAX_ENCOUNTER; ++i)
     {
@@ -322,6 +324,8 @@ uint32 instance_temple_of_ahnqiraj::GetData(uint32 uiType)
             return m_auiEncounter[7];
         case TYPE_OURO:
             return m_auiEncounter[8];
+        case TYPE_ANUBISATH:
+            return m_auiEncounter[9];
 
         case DATA_BUG_TRIO_DEATH:
             return m_uiBugTrioDeathCount;
