@@ -64,12 +64,17 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
     int RandY;
 
     Creature* Spawn;
+
+    ObjectGuid m_TPTarget;
+    uint32 m_uiRootTimer;
     
     void Reset()
     {
         MortalWound_Timer = urand(10000, 15000);
         SpawnHatchlings_Timer = urand(6000, 12000);
         SpawnSpawns_Timer = urand(15000, 45000);
+        m_TPTarget = ObjectGuid();
+        m_uiRootTimer = 200;
     }
     
     void Aggro(Unit* /*pWho*/)
@@ -171,15 +176,18 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
                 target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,1);
                 if (target && target->GetTypeId() == TYPEID_PLAYER)
                 {
-                    DoCastSpellIfCan(target, SPELL_ROOT);
                     
                     if (m_creature->getThreatManager().getThreat(target))
                         m_creature->getThreatManager().modifyThreatPercent(target, -100);
 
                     uint8 bugTunnel = urand(0,2);
 
-                    DoTeleportPlayer(target, aFankrissBugTunnels[bugTunnel].m_fX, aFankrissBugTunnels[bugTunnel].m_fY, aFankrissBugTunnels[bugTunnel].m_fZ, aFankrissBugTunnels[bugTunnel].m_fO);
-                    
+                    target->NearTeleportTo(aFankrissBugTunnels[bugTunnel].m_fX, 
+                            aFankrissBugTunnels[bugTunnel].m_fY, aFankrissBugTunnels[bugTunnel].m_fZ, 
+                            aFankrissBugTunnels[bugTunnel].m_fO);
+
+                    m_TPTarget = target->GetObjectGuid();
+
                     for(int i = 0; i < 4; ++i)
                     {
                         Creature* Hatchling = m_creature->SummonCreature(15962, aFankrissBugTunnels[bugTunnel].m_fX, aFankrissBugTunnels[bugTunnel].m_fY, aFankrissBugTunnels[bugTunnel].m_fZ, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
@@ -189,6 +197,20 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
                 }
                 SpawnHatchlings_Timer = urand(45000, 60000);
             }else SpawnHatchlings_Timer -= diff;
+        }
+
+        if (m_TPTarget != ObjectGuid())
+        {
+            if (m_uiRootTimer <= diff)
+            {
+                if (Player* pTarget = m_creature->GetMap()->GetPlayer(m_TPTarget))
+                    DoCastSpellIfCan(pTarget, SPELL_ROOT, CAST_TRIGGERED);
+
+                m_TPTarget = ObjectGuid();
+                m_uiRootTimer = 200;
+            }
+            else
+                m_uiRootTimer -= diff;
         }
 
         DoMeleeAttackIfReady();
