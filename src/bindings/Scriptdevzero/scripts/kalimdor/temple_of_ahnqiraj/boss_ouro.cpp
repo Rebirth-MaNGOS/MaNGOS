@@ -22,6 +22,7 @@ SDCategory: Temple of Ahn'Qiraj
 EndScriptData */
 
 #include "precompiled.h"
+#include <vector>
 #include "temple_of_ahnqiraj.h"
 #include "TemporaryGameObject.h"
 
@@ -56,6 +57,8 @@ enum
     BIRTH_TIME              = 250 
 };
 
+float fReset[] = { -9188.45f, 2091.56f, -64.f, 6.f };
+
 struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 {
     boss_ouroAI(Creature* pCreature) : ScriptedAI(pCreature) 
@@ -84,7 +87,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     bool m_bForceSubmerge;
     bool m_bEnraged;
 
-    GUIDList m_lDirtMounds;
+    std::vector<ObjectGuid> m_lDirtMounds;
 
     ObjectGuid m_WormBase;
 
@@ -115,6 +118,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
         RemoveDirtMounds(1);			// remove all that would be up after a wipe
         m_lDirtMounds.clear();
+
+        m_creature->RelocateCreature(fReset[0], fReset[1], fReset[2], fReset[3]);
         
         // respawn the dummy
         GetGround(0);
@@ -222,7 +227,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     {
         float fX, fY, fZ;
         m_creature->GetPosition(fX, fY, fZ);
-        for(uint8 i = 0; i < 2; ++i)
+        for(uint8 i = 0; i < 3; ++i)
         {
             if(Creature* pDirtMound = m_creature->SummonCreature(NPC_DIRT_MOUND, fX + frand(-5,5), 
                         fY + frand(-5,5), fZ + 1, 0, TEMPSUMMON_TIMED_DESPAWN, 45001, false))
@@ -243,37 +248,58 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         if(action == 2)
             amount = 3;
         
-        for (GUIDList::iterator itr = m_lDirtMounds.begin(); itr != m_lDirtMounds.end(); itr++)
+        for (size_t i = 0; i < m_lDirtMounds.size(); i++)
         {
-            if (Creature* pDirtMound = m_creature->GetMap()->GetCreature(*itr))
+            if (Creature* pDirtMound = m_creature->GetMap()->GetCreature(m_lDirtMounds[i]))
             {
-                if (pDirtMound->isAlive())
+                // Spawn bugs for all but the last one.
+                if ((i < m_lDirtMounds.size() - 1) || m_bEnraged)
                 {
-                    if (action == 0 || action == 2)
+                    if (pDirtMound->isAlive())
                     {
-                        float fX, fY, fZ;
-                        pDirtMound->GetPosition(fX, fY, fZ);
-                        for (uint8 i = 0; i < amount; ++i)
+                        if (action == 0 || action == 2)
                         {
-                            if (Creature* pScarab = m_creature->SummonCreature(NPC_OURO_SCARAB, 
-                                        fX + frand(-5,5),
-                                        fY + frand(-5,5),
-                                        fZ, 0,
-                                        TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,
-                                        15000,false))
-                            {
-                                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                                    pScarab->AI()->AttackStart(pTarget);
-                                pScarab->SetRespawnDelay(-10);				// to stop them from randomly respawning
-                            }
-                        }	
-                        pDirtMound->ForcedDespawn();		// should be instant despawn?                        
+                            SpawnNBugs(pDirtMound, amount);
+                            pDirtMound->ForcedDespawn();		// should be instant despawn?                        
+                        }
+                        else
+                            pDirtMound->ForcedDespawn();		// should be instant despawn?
                     }
-                    else
-                        pDirtMound->ForcedDespawn();		// should be instant despawn?
+                }
+                else
+                {
+                    // Move Ouro to the last dirt mound.
+                    float x, y, z;
+                    pDirtMound->GetPosition(x, y, z);
+
+                    m_creature->NearTeleportTo(x, y, z, 0);
+
+                    pDirtMound->ForcedDespawn();		// should be instant despawn?
                 }
             }
         }
+
+        m_lDirtMounds.clear();
+    }
+
+    void SpawnNBugs(Creature* pSummoner, uint32 amount)
+    {
+        float fX, fY, fZ;
+        pSummoner->GetPosition(fX, fY, fZ);
+        for (uint8 i = 0; i < amount; ++i)
+        {
+            if (Creature* pScarab = m_creature->SummonCreature(NPC_OURO_SCARAB, 
+                        fX + frand(-5,5),
+                        fY + frand(-5,5),
+                        fZ, 0,
+                        TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,
+                        15000,false))
+            {
+                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    pScarab->AI()->AttackStart(pTarget);
+                pScarab->SetRespawnDelay(-10);				// to stop them from randomly respawning
+            }
+        }	
     }
 
     void Submerge()
@@ -306,6 +332,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         // Back
         if (m_uiBackTimer < uiDiff)
         {
+            RemoveDirtMounds(0);
+
             m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             m_creature->setFaction(14);	
 
@@ -321,8 +349,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
             m_bossState = BOSS_STATE_NORMAL;
             m_uiSubmergeTimer = 90000;
-
-            RemoveDirtMounds(0);
+            m_uiForceSubmergeTimer = 10000;
         }
         else
             m_uiBackTimer -= uiDiff;
