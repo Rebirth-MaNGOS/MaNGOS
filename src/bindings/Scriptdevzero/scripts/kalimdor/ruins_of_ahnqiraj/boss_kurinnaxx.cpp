@@ -165,7 +165,14 @@ struct MANGOS_DLL_DECL boss_kurinnaxxAI : public ScriptedAI
         if (m_uiSummonPlayerTimer <= uiDiff)
         {
             if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
-                DoCastSpellIfCan(pTarget, SPELL_SUMMON_PLAYER);
+            {
+                float x, y, z;
+                m_creature->GetPosition(x, y, z);
+
+                float o = m_creature->GetOrientation();
+
+                pTarget->NearTeleportTo(x + 9.f * cosf(o), y + 9.f * sinf(o), z + 2.f, 0);
+            }
             m_uiSummonPlayerTimer = urand(8000,10000);
         }
         else
