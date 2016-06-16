@@ -69,6 +69,7 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
     uint32 m_uiPoisonStingerTimer;
     uint32 m_uiStingerSprayTimer;
     uint32 m_uiParalyzeTimer;
+    uint32 m_uiAfterTPParaTimer;
     uint32 m_uiLashTimer;
     uint32 m_uiTrashTimer;
     uint32 m_uiFrenzyTimer;
@@ -78,6 +79,8 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
     ObjectGuid m_uiLarvaTargetGUID;
 	GUIDList m_uiSwarmerGUID;
 
+    ObjectGuid m_TPTarget;
+
     void Reset()
     {
         m_bPhaseTwo = false;
@@ -86,6 +89,8 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         m_uiPoisonStingerTimer = 5000;
         m_uiStingerSprayTimer = urand(10000,20000);
         m_uiParalyzeTimer = urand(35000,45000);
+        m_uiAfterTPParaTimer = 200;
+        m_TPTarget = ObjectGuid();
         m_uiLashTimer = urand(7000,9000);
         m_uiTrashTimer = urand(6000,8000);
         m_uiFrenzyTimer = 0;
@@ -235,11 +240,30 @@ struct MANGOS_DLL_DECL boss_ayamissAI : public ScriptedAI
         if (m_uiParalyzeTimer <= uiDiff)
 		{
             if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                m_creature->CastSpell(pTarget, SPELL_PARALYZE, true);
+            {
+                pTarget->NearTeleportTo(-9716.87f, 1517.79f, 27.467f, 2.73f);
+
+                m_TPTarget = pTarget->GetObjectGuid();
+            }
+
             m_uiParalyzeTimer = urand(15000,20000);
 		}
         else
             m_uiParalyzeTimer -= uiDiff;
+
+        if (m_TPTarget != ObjectGuid())
+        {
+            if (m_uiAfterTPParaTimer <= uiDiff)
+            {
+                if (Player* pTPTarget = m_creature->GetMap()->GetPlayer(m_TPTarget))
+                    m_creature->CastSpell(pTPTarget, SPELL_PARALYZE, true);
+
+                m_TPTarget = ObjectGuid();
+                m_uiAfterTPParaTimer = 200;
+            }
+            else
+                m_uiAfterTPParaTimer -= uiDiff;
+        }
 
         if (!m_bPhaseTwo)
         {
