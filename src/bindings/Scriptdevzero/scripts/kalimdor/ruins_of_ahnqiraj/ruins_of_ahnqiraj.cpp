@@ -123,6 +123,34 @@ struct MANGOS_DLL_DECL mob_anubisath_guardianAI : public ScriptedAI
         }
     }
 
+    void CastMeteorOnRandomTarget()
+    {
+        const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+        std::vector<Unit*> pEligibleTargets;
+
+        pEligibleTargets.clear();
+
+        if(!threatList.empty())
+        {
+            for (HostileReference *currentReference : threatList)
+            {
+                Unit *target = currentReference->getTarget();
+                if (target && target->isAlive())
+                    pEligibleTargets.push_back(target);
+            }
+
+            if(!pEligibleTargets.empty())
+            {
+                std::random_shuffle(pEligibleTargets.begin(), pEligibleTargets.end());
+                Unit *target = pEligibleTargets.front();
+                if (target && target->isAlive())
+                {
+                    m_creature->CastSpell(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), SPELL_METEOR, true);
+                }
+            }
+        }
+    }
+
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -131,7 +159,15 @@ struct MANGOS_DLL_DECL mob_anubisath_guardianAI : public ScriptedAI
         // Meteor or Plague
         if (m_uiSpell1Timer <= uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(), m_uiSpell1);
+            if (m_uiSpell1 == SPELL_PLAGUE)
+            {
+                DoCastSpellIfCan(m_creature->getVictim(), m_uiSpell1);
+            }
+            else
+            {
+                CastMeteorOnRandomTarget();
+            }
+            
             m_uiSpell1Timer = 15000;
         }
         else
