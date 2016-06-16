@@ -60,6 +60,10 @@ void instance_temple_of_ahnqiraj::OnCreatureCreate (Creature* pCreature)
         case ANUBISATH_SENTINEL:
             m_lSkeramTrash.push_back(pCreature->GetObjectGuid());
             break;
+        case VEKNISS_DRONE:
+        case VEKNISS_SOLDIER:
+            m_lFankrissTrash.push_back(pCreature->GetObjectGuid());
+            break;
     }
 }
 
@@ -150,8 +154,29 @@ void instance_temple_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
         case TYPE_VEM:
             m_auiEncounter[uiType] = uiData;
             break;
+        
+        case TYPE_FANKRISS:            
+            m_auiEncounter[uiType] = uiData;
+            if (uiData == DONE)
+            {
+                if (!m_lFankrissTrash.empty())
+                {
+                    for(GUIDList::iterator itr = m_lFankrissTrash.begin(); itr != m_lFankrissTrash.end(); ++itr)
+                    {
+                        if (Creature* pTrash = instance->GetCreature(*itr))
+                        {
+                            pTrash->SetRespawnDelay(604800);
+                            if (!pTrash->isAlive())
+                            {
+                                pTrash->SetRespawnTime(604800);
+                                pTrash->SaveRespawnTime();
+                            }
+                        }
+                    }
+                }
+            }
+            break;
         case TYPE_SARTURA:
-        case TYPE_FANKRISS:
         case TYPE_VISCIDUS:
         case TYPE_HUHURAN:
         case TYPE_OURO:
