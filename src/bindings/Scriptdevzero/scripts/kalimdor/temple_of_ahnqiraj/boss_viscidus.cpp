@@ -248,7 +248,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
 
     void SpellCount()
     {		
-        if(m_uiFrostSpellCounter >= 1 && !m_bSlowed1)		// 100, 150, 200
+        if(m_uiFrostSpellCounter >= 100 && !m_bSlowed1)		// 100, 150, 200
         {
             m_creature->CastSpell(m_creature, SPELL_VISCIDUS_SLOWED_MORE, true);
             m_creature->GenericTextEmote("Viscidus begins to slow.", NULL, false);
@@ -256,7 +256,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             m_bSlowed1 = true;
         }
 
-        else if(m_uiFrostSpellCounter >= 2 && !m_bSlowed2)
+        else if(m_uiFrostSpellCounter >= 150 && !m_bSlowed2)
         {
             m_creature->CastSpell(m_creature, SPELL_VISCIDUS_SLOWED_MORE, true);
             m_creature->GenericTextEmote("Viscidus is freezing up.", NULL, false);
@@ -264,7 +264,7 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             m_bSlowed2 = true;
         }
 
-        else if(m_uiFrostSpellCounter >= 3 && !m_bFrozen)
+        else if(m_uiFrostSpellCounter >= 200 && !m_bFrozen)
         {
             m_bCanDoDamage = false;
             m_bFrozen = true;
@@ -286,20 +286,20 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     
     void MeleeHitCount()
     {
-        if(m_uiMeleeCounter >= 1 && !m_bCracking1)		// 25, 50, 75?
+        if(m_uiMeleeCounter >= 25 && !m_bCracking1)		// 25, 50, 75?
         {
             m_creature->GenericTextEmote("Viscidus begins to crack.", NULL, false);
             m_bCracking1 = true;
         }
 
-        else if(m_uiMeleeCounter >= 2 && !m_bCracking2)
+        else if(m_uiMeleeCounter >= 50 && !m_bCracking2)
         {
             m_creature->GenericTextEmote("Viscidus looks ready to shatter.", NULL, false);
             m_bCracking2 = true;
             m_bSummoned = false;
         }
 
-        else if(m_uiMeleeCounter >= 3 && !m_bExploded)
+        else if(m_uiMeleeCounter >= 75 && !m_bExploded)
         {
             if (!m_bExploded)
             {
@@ -598,6 +598,7 @@ struct MANGOS_DLL_DECL mob_toxin_cloudAI : public ScriptedAI
         SetCombatMovement(false);
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
         m_uiFirstTick = 3000;
+        m_creature->SetLevel(63);
         Reset();
     }
     uint32 m_uiFirstTick;

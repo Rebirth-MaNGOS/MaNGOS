@@ -34,8 +34,25 @@ enum
     
     // Trash
     NPC_ANUBISATH_DEFENDER = 15277,    
+    
+    // Skeram trash
     OBSIDIAN_ERADICATOR = 15262,
     ANUBISATH_SENTINEL = 15264,
+    
+    // Sartura trash
+    QIRAJI_MINDSLAYER = 15247,
+    VEKNISS_WARRIOR = 15230,
+    VEKNISS_GUARDIAN = 15233,
+    
+    // Fankriss trash
+    VEKNISS_SOLDIER = 15229,
+    
+    // Huhuran trash
+    VEKNISS_HIVE_CRAWLER = 15240,
+    VEKNISS_WASP = 15236,
+    VEKNISS_STINGER = 15235,
+    QIRAJI_LASHER = 15249,
+    
 
     GO_SKERAM_GATE              = 180636,
     GO_TWINS_ENTER_DOOR         = 180634,
@@ -89,6 +106,9 @@ class MANGOS_DLL_DECL instance_temple_of_ahnqiraj : public ScriptedInstance
         uint32 m_uiBugTrioDeathCount;
         
         GUIDList m_lSkeramTrash;
+        GUIDList m_lFankrissTrash;
+        GUIDList m_lSarturaTrash;
+        GUIDList m_lHuhuranTrash;
         
         bool m_bOpenTwinsDoor;
         GUIDList m_lAnbDefenderList;
