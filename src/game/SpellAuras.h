@@ -434,6 +434,9 @@ class MANGOS_DLL_SPEC Aura
         SpellAuraHolder* GetHolder() { return m_spellAuraHolder; }
         SpellAuraHolder* GetHolder() const { return m_spellAuraHolder; }
 
+        uint32 GetPeriodicTimer() { return m_periodicTimer; }
+        void SetPeriodicTimer(uint32 timer) { m_periodicTimer = timer; }
+
         bool IsLastAuraOnHolder();
     protected:
         Aura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster = NULL, Item* castItem = NULL);

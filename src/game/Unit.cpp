@@ -3910,8 +3910,8 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
         {
             SpellAuraHolder *foundHolder = iter->second;
 
-            // Aura can stack on self -> Stack it;
-            if (aurSpellInfo->StackAmount)
+            // Aura can stack on self -> Stack it; Ignite 12654 is special.
+            if (aurSpellInfo->StackAmount && aurSpellInfo->Id != 12654)
             {
                 // can be created with >1 stack by some spell mods
                 foundHolder->ModStackAmount(holder->GetStackAmount());

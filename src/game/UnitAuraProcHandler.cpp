@@ -586,6 +586,68 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     }
 
                     triggered_spell_id = 12654;
+
+                    // Handle Ignite stacking.
+                    Aura* pIgniteAura = pVictim->GetAura(triggered_spell_id, EFFECT_INDEX_0);
+                    if (pIgniteAura)
+                    {
+                        uint32 stacks = pIgniteAura->GetStackAmount();
+
+                        // We have [1, 5[ stacks.
+                        if (stacks < 5)
+                        {
+                            // Add the extra Ignite Damage.
+                            // Multiply by stacks to get original damage, then divide
+                            // by the new stack count. This is done because damage is
+                            // multiplied by the amount of stacks.
+                            basepoints[0] = (uint32)((float)(basepoints[0] + pIgniteAura->GetBasePoints() * stacks) / (float)(stacks + 1));
+
+                            uint32 tickTimer = pIgniteAura->GetPeriodicTimer();
+
+                            // Remove the current aura and recast with the new damage.
+                            SpellAuraHolder* pHolder = pIgniteAura->GetHolder();
+                            Unit* pOriginalCaster = nullptr;
+                            if (pHolder)
+                            {
+                                pOriginalCaster = pHolder->GetCaster();
+                                pVictim->RemoveSpellAuraHolder(pHolder, AURA_REMOVE_BY_CANCEL);
+                            }
+
+                            if (pOriginalCaster)
+                            {
+                                pOriginalCaster->CastCustomSpell(target, triggered_spell_id, &basepoints[EFFECT_INDEX_0],
+                                                        nullptr, nullptr, true, nullptr, nullptr);
+
+                            }
+                            else
+                            {
+                                CastCustomSpell(target, triggered_spell_id, &basepoints[EFFECT_INDEX_0],
+                                                        nullptr, nullptr, true, castItem, triggeredByAura);
+                            }
+
+                            Aura* pNewIgniteAura = pVictim->GetAura(triggered_spell_id, EFFECT_INDEX_0);
+                            if (pNewIgniteAura)
+                            {
+                                // Restore the tick timer and stack amount to the new aura.
+                                pNewIgniteAura->SetPeriodicTimer(tickTimer);
+
+                                SpellAuraHolder* pNewHolder = pNewIgniteAura->GetHolder();
+                                if (pNewHolder)
+                                    pNewHolder->SetStackAmount(stacks + 1);
+                            }
+                        }
+                        else if (stacks == 5)
+                        {
+                            // If we are at five stacks we simply refresh the duration.
+                            SpellAuraHolder* pHolder = pIgniteAura->GetHolder();
+                            if (pHolder)
+                                pHolder->SetAuraDuration(pHolder->GetAuraMaxDuration());
+                        }
+
+
+                        return SPELL_AURA_PROC_OK;
+                    }
+
                     break;
                 }
                 // Combustion
