@@ -56,6 +56,10 @@ void instance_temple_of_ahnqiraj::OnCreatureCreate (Creature* pCreature)
         case NPC_ANUBISATH_DEFENDER:
             m_lAnbDefenderList.push_back(pCreature->GetObjectGuid());
             break;
+        case OBSIDIAN_ERADICATOR:
+        case ANUBISATH_SENTINEL:
+            m_lSkeramTrash.push_back(pCreature->GetObjectGuid());
+            break;
     }
 }
 
@@ -123,7 +127,25 @@ void instance_temple_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
         case TYPE_SKERAM:
             m_auiEncounter[uiType] = uiData;
             if (uiData == DONE)
+            {
                 DoUseDoorOrButton(GO_SKERAM_GATE);
+                
+                if (!m_lSkeramTrash.empty())
+                {
+                    for(GUIDList::iterator itr = m_lSkeramTrash.begin(); itr != m_lSkeramTrash.end(); ++itr)
+                    {
+                        if (Creature* pTrash = instance->GetCreature(*itr))
+                        {
+                            pTrash->SetRespawnDelay(604800);
+                            if (!pTrash->isAlive())
+                            {
+                                pTrash->SetRespawnTime(604800);
+                                pTrash->SaveRespawnTime();
+                            }
+                        }
+                    }
+                }
+            }
             break;
         case TYPE_VEM:
             m_auiEncounter[uiType] = uiData;

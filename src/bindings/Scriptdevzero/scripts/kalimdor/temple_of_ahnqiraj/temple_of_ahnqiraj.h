@@ -32,7 +32,10 @@ enum
     NPC_VISCIDUS_DUMMY = 800109,
     NPC_OURO_GROUND = 157120,
     
-    NPC_ANUBISATH_DEFENDER = 15277,
+    // Trash
+    NPC_ANUBISATH_DEFENDER = 15277,    
+    OBSIDIAN_ERADICATOR = 15262,
+    ANUBISATH_SENTINEL = 15264,
 
     GO_SKERAM_GATE              = 180636,
     GO_TWINS_ENTER_DOOR         = 180634,
@@ -81,9 +84,11 @@ class MANGOS_DLL_DECL instance_temple_of_ahnqiraj : public ScriptedInstance
 
     private:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
-        std::string m_strInstData;
+        std::string m_strInstData;                
 
         uint32 m_uiBugTrioDeathCount;
+        
+        GUIDList m_lSkeramTrash;
         
         bool m_bOpenTwinsDoor;
         GUIDList m_lAnbDefenderList;
