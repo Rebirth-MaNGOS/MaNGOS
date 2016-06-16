@@ -39,6 +39,11 @@ enum
     OBSIDIAN_ERADICATOR = 15262,
     ANUBISATH_SENTINEL = 15264,
     
+    // Sartura trash
+    QIRAJI_MINDSLAYER = 15247,
+    VEKNISS_WARRIOR = 15230,
+    VEKNISS_GUARDIAN = 15233,
+    
     // Fankriss adds
     VEKNISS_DRONE = 15300,
     VEKNISS_SOLDIER = 15229,
@@ -96,6 +101,7 @@ class MANGOS_DLL_DECL instance_temple_of_ahnqiraj : public ScriptedInstance
         
         GUIDList m_lSkeramTrash;
         GUIDList m_lFankrissTrash;
+        GUIDList m_lSarturaTrash;
         
         bool m_bOpenTwinsDoor;
         GUIDList m_lAnbDefenderList;
