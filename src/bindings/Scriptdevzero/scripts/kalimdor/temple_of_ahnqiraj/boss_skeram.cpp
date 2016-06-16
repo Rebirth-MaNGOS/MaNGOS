@@ -24,6 +24,7 @@ EndScriptData */
 #include "precompiled.h"
 #include "temple_of_ahnqiraj.h"
 #include "Group.h"
+#include <vector>
 
 #define SAY_AGGRO1                  -1531000
 #define SAY_RANDOM4                  -1531001
@@ -75,6 +76,8 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
     bool IsImage;
     bool Invisible;
 
+    std::vector<ObjectGuid> m_MCVictimList;
+
     void Reset()
     {
         ArcaneExplosion_Timer = urand(6000, 12000);
@@ -94,6 +97,15 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
 
         if (IsImage)
             m_creature->SetDeathState(JUST_DIED);
+
+        // Kill MCed people on reset.
+        for (ObjectGuid guid : m_MCVictimList)
+        {
+            Player* pVictim = m_creature->GetMap()->GetPlayer(guid);
+            if (pVictim && pVictim->HasAura(SPELL_TRUE_FULFILLMENT4, EFFECT_INDEX_0))
+                m_creature->DealDamage(pVictim, pVictim->GetHealth(), nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, true);
+        }
+        m_MCVictimList.clear();
     }
 
     void KilledUnit(Unit* /*victim*/)
@@ -110,6 +122,20 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
             if (m_pInstance)
                 m_pInstance->SetData(TYPE_SKERAM, DONE);
         }
+        
+        // Remove the MC from MCed people. 
+        for (ObjectGuid guid : m_MCVictimList)
+        {
+            if (Player* pVictim = m_creature->GetMap()->GetPlayer(guid))
+            {
+                if (Aura* pAura = pVictim->GetAura(SPELL_TRUE_FULFILLMENT4, EFFECT_INDEX_0))
+                {
+                    pVictim->RemoveAura(pAura, AURA_REMOVE_BY_CANCEL);
+                }
+            }
+
+        }
+        m_MCVictimList.clear();
     }
 
     void Aggro(Unit* /*who*/)
@@ -216,7 +242,10 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
                 Unit *pTarget = GetRandomTargetFromThreatList();
 
                 if(pTarget && pTarget->isAlive())
+                {
                     DoCast(pTarget, SPELL_TRUE_FULFILLMENT4, true);
+                    m_MCVictimList.push_back(pTarget->GetObjectGuid());
+                }
             }
             else
                 FullFillment_Timer -= diff;
