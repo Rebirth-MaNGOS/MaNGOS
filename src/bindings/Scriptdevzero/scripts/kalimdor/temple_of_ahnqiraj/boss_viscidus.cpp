@@ -598,6 +598,7 @@ struct MANGOS_DLL_DECL mob_toxin_cloudAI : public ScriptedAI
         SetCombatMovement(false);
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
         m_uiFirstTick = 3000;
+        m_creature->SetLevel(63);
         Reset();
     }
     uint32 m_uiFirstTick;

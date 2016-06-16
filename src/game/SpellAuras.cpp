@@ -5615,8 +5615,12 @@ void Aura::PeriodicTick()
         PartialResistInfo partialResist;
         SpellMissInfo missInfo = pCaster->SpellHitResult(target, spellProto, partialResist,false);
 
-        if( spellProto->Effect[GetEffIndex()] == SPELL_EFFECT_PERSISTENT_AREA_AURA && missInfo != SPELL_MISS_NONE)
-            return;
+        // Exception for Toxin at Viscidus. Ugly, I know ;(
+        if (spellProto->Id != 25989)
+        {
+            if( spellProto->Effect[GetEffIndex()] == SPELL_EFFECT_PERSISTENT_AREA_AURA && missInfo != SPELL_MISS_NONE)
+                return;
+        }
 
         // Check for immune (not use charges)
         if(target->IsImmunedToDamage(GetSpellSchoolMask(spellProto)))

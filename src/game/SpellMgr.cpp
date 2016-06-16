@@ -665,6 +665,13 @@ bool IsExplicitNegativeTarget(uint32 targetA)
 
 bool IsBinaryEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
 {
+    // Exceptions
+    switch (spellproto->Id)
+    {
+        case 25989: // Toxin at Viscidus.
+            return false;
+    }
+
 	switch (spellproto->Effect[effIndex])
 	{
 	case SPELL_EFFECT_SCHOOL_DAMAGE:
