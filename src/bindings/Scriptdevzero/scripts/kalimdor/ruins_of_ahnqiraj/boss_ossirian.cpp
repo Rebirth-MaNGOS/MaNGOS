@@ -434,7 +434,13 @@ bool GOUse_go_ossirian_crystal(Player* pPlayer, GameObject* pGo)
                    spotList.push_back(index);
                }
 
-               pAI->SpawnCrystal(spotList[urand(0, spotList.size() - 1)]);
+               if (!spotList.empty())
+                   pAI->SpawnCrystal(spotList[urand(0, spotList.size() - 1)]);
+               else // Something went wrong. Clear the crystal list and spawn a random one.
+               {
+                   pAI->m_lCrystalPos.clear();
+                   pAI->SpawnCrystal(urand(0, 9));
+               }
            }
        }
    }
