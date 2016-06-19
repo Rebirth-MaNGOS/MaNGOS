@@ -183,7 +183,6 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
         if (!m_creature->isActiveObject())
             m_creature->SetActiveObjectState(true);
 
-
         m_pInstance = (instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData();
 
         if (m_pInstance)
@@ -303,6 +302,11 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
                 ++m_uiDeadWaveMemberCount;
                 break;
         }
+    }
+    
+    void JustSummoned(Creature* pSummoned)
+    {
+        pSummoned->SetRespawnEnabled(false);
     }
     
     void StartEvent()

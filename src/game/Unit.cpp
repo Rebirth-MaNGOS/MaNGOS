@@ -5861,6 +5861,8 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, Spell* spell, SpellEffectIndex /*ef
 	case 20253:	// Intercept stun rank 1.
 	case 20614:	// Intercept stun rank 2.
 	case 20615:	// Intercept stun rank 3.
+    case 22997: // Plague aq20
+    case 26556: // Plague aq40
     case 23620: // Burning Adrenaline - Vaelastrasz in BWL.
     case 23170: // Brood Affliction: Bronze - Chromaggus in BWL.
     case 23154: //  ---  ||  ---   : Black

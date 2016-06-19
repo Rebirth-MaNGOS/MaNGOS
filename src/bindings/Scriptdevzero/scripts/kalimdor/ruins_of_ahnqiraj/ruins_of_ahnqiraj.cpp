@@ -135,7 +135,7 @@ struct MANGOS_DLL_DECL mob_anubisath_guardianAI : public ScriptedAI
             for (HostileReference *currentReference : threatList)
             {
                 Unit *target = currentReference->getTarget();
-                if (target && target->isAlive())
+                if (target && target->isAlive() && target->GetTypeId() == TYPEID_PLAYER)
                     pEligibleTargets.push_back(target);
             }
 
@@ -143,7 +143,7 @@ struct MANGOS_DLL_DECL mob_anubisath_guardianAI : public ScriptedAI
             {
                 std::random_shuffle(pEligibleTargets.begin(), pEligibleTargets.end());
                 Unit *target = pEligibleTargets.front();
-                if (target && target->isAlive())
+                if (target && target->isAlive() && target->GetTypeId() == TYPEID_PLAYER)
                 {
                     m_creature->CastSpell(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), SPELL_METEOR, true);
                 }
