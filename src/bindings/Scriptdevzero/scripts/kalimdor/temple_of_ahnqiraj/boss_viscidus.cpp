@@ -120,6 +120,9 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         m_creature->SetObjectScale(1.2f);		// has to reset scale here
         m_creature->UpdateModelData();
         m_creature->CastSpell(m_creature, SPELL_MEMBRANE_VISCIDUS, true); // add dmg reduction
+        
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_VISCIDUS, FAIL);
     }
 
     void RemoveAuras()
@@ -156,12 +159,6 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_VISCIDUS, IN_PROGRESS);
-    }
-
-    void JustReachedHome()
-    {
-        if (m_pInstance)
-            m_pInstance->SetData(TYPE_VISCIDUS, FAIL);
     }
 
     void JustDied(Unit* /*pKiller*/)							// Remove all clouds when he dies
