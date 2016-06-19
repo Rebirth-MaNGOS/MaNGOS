@@ -319,7 +319,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         m_creature->CastSpell(m_creature, SPELL_STUN, true);
         //m_creature->addUnitState(UNIT_STAT_STUNNED);
         AfterTeleport = true;
-        AfterTeleportTimer = urand(15000, 20000);
+        AfterTeleportTimer = urand(1500, 2000);
         tspellcasted = false;
     }
 
