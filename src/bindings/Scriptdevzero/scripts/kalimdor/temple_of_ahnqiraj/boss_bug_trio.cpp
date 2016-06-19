@@ -250,8 +250,10 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
             pYauj->Respawn();
         
           if (m_pInstance)
+          {
             m_pInstance->SetData(TYPE_VEM, FAIL);
-
+            m_pInstance->SetData(DATA_BUG_TRIO_DEATH, 0);
+          }
         ScriptedAI::ResetToHome();
     }
 
