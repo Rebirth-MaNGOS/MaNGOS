@@ -142,7 +142,7 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
         if (MortalWound_Timer < diff)
         {
             CastCleaveMortalWound();
-            MortalWound_Timer = urand(10000, 20000);
+            MortalWound_Timer = urand(8000,12000);
         }else MortalWound_Timer -= diff;
 
         //Summon 1-3 Spawns of Fankriss at random time.
