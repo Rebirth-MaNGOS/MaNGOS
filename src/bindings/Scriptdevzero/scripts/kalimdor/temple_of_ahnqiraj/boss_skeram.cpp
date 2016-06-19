@@ -35,7 +35,7 @@ EndScriptData */
 #define SAY_RANDOM3                   -1531006
 #define SAY_DEATH                   -1531007
 
-#define SPELL_ARCANE_EXPLOSION      25679
+#define SPELL_ARCANE_EXPLOSION      26192
 #define SPELL_EARTH_SHOCK           26194
 #define SPELL_TRUE_FULFILLMENT4     785
 #define SPELL_BLINK                 28391
