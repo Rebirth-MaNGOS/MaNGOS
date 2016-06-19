@@ -319,7 +319,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         m_creature->CastSpell(m_creature, SPELL_STUN, true);
         //m_creature->addUnitState(UNIT_STAT_STUNNED);
         AfterTeleport = true;
-        AfterTeleportTimer = urand(1500, 2000);
+        AfterTeleportTimer = urand(15000, 20000);
         tspellcasted = false;
     }
 
@@ -649,12 +649,25 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
             if ((mvic=GetAnyoneCloseEnough(2*ATTACK_DISTANCE, false))!=NULL)
             {
                 m_creature->CastSpell(mvic, SPELL_ARCANEBURST, false);
-                //DoCastSpellIfCan(mvic,SPELL_ARCANEBURST);
                 ArcaneBurst_Timer = 5000;
             }
         }
         else 
             ArcaneBurst_Timer -= diff;
+        
+        // no movement if between 5 and 20 yrds
+        if(m_creature->getVictim() && m_creature->getVictim()->GetDistance(m_creature) > ATTACK_DISTANCE && m_creature->getVictim()->GetDistance(m_creature) < 20.f)
+        {
+            m_creature->GetMotionMaster()->MoveIdle();
+            m_creature->StopMoving();
+        }
+        else
+        {
+            if(Unit* pTarget = m_creature->getVictim())        
+                m_creature->GetMotionMaster()->MoveChase(pTarget);
+            else
+                m_creature->GetMotionMaster()->Clear();
+        }
 
         HandleBugs(diff);
 
@@ -670,6 +683,8 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
             Teleport_Timer -= diff;
 
         CheckEnrage(diff);
+        
+        DoMeleeAttackIfReady();
     }
 };
 
