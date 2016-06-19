@@ -58,6 +58,8 @@ EndScriptData */
 #define SPELL_BLIZZARD              26607
 #define SPELL_ARCANEBURST           568
 
+#define SPELL_STUN              25900
+
 struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
 {
     ScriptedInstance* m_pInstance;
@@ -77,6 +79,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
     boss_twinemperorsAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        m_creature->RemoveAurasAtMechanicImmunity(MECHANIC_STUN, 25900);
     }
 
     void TwinReset()
@@ -90,7 +93,8 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         AfterTeleportTimer = 0;
         Abuse_Bug_Timer = urand(10000, 17000);
         BugsTimer = 2000;
-        m_creature->clearUnitState(UNIT_STAT_STUNNED);
+        //m_creature->clearUnitState(UNIT_STAT_STUNNED);
+        m_creature->RemoveAurasDueToSpell(25900);       
         DontYellWhenDead = false;
         EnrageTimer = 15*60000;
     }
@@ -312,7 +316,8 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         DoStopAttack();
         DoResetThreat();
         DoCastSpellIfCan(m_creature, SPELL_TWIN_TELEPORT_VISUAL);
-        m_creature->addUnitState(UNIT_STAT_STUNNED);
+        m_creature->CastSpell(m_creature, SPELL_STUN, true);
+        //m_creature->addUnitState(UNIT_STAT_STUNNED);
         AfterTeleport = true;
         AfterTeleportTimer = urand(1500, 2000);
         tspellcasted = false;
@@ -324,9 +329,11 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         {
             if (!tspellcasted)
             {
-                m_creature->clearUnitState(UNIT_STAT_STUNNED);
+                m_creature->RemoveAurasDueToSpell(25900);       
+                //m_creature->clearUnitState(UNIT_STAT_STUNNED);
                 DoCastSpellIfCan(m_creature, SPELL_TWIN_TELEPORT);
-                m_creature->addUnitState(UNIT_STAT_STUNNED);
+                //m_creature->addUnitState(UNIT_STAT_STUNNED);
+                m_creature->CastSpell(m_creature, SPELL_STUN, true);
             }
 
             tspellcasted = true;
@@ -334,7 +341,8 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
             if (AfterTeleportTimer < diff)
             {
                 AfterTeleport = false;
-                m_creature->clearUnitState(UNIT_STAT_STUNNED);
+                //m_creature->clearUnitState(UNIT_STAT_STUNNED);
+                m_creature->RemoveAurasDueToSpell(25900);  
                 Unit *nearu = PickNearestPlayer();
                 //DoYell(nearu->GetName(), LANG_UNIVERSAL, 0);
                 AttackStart(nearu);
@@ -403,7 +411,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
             if (c->isDead())
             {
                 c->Respawn();
-                c->setFaction(7);
+                c->SetFactionTemporary(7);
                 c->RemoveAllAuras();
             }
             if (c->GetDistance(m_creature) < dist)
@@ -495,7 +503,7 @@ struct MANGOS_DLL_DECL boss_veknilashAI : public boss_twinemperorsAI
 
     void CastSpellOnBug(Creature *target)
     {
-        target->setFaction(14);
+        target->SetFactionTemporary(14);
 
         DoCastSpellIfCan(target, SPELL_MUTATE_BUG, CAST_TRIGGERED);
     }
@@ -573,11 +581,12 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
 
         //Added. Can be removed if its included in DB.
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, true);
+        m_creature->ApplySpellImmune(25900, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, false);
     }
 
     void CastSpellOnBug(Creature *target)
     {
-        target->setFaction(14);
+        target->SetFactionTemporary(14);
         target->SetPassiveToSpells(true);
         DoCastSpellIfCan(target, SPELL_EXPLODEBUG, CAST_TRIGGERED);
     }
@@ -639,7 +648,8 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
             Unit *mvic;
             if ((mvic=GetAnyoneCloseEnough(2*ATTACK_DISTANCE, false))!=NULL)
             {
-                DoCastSpellIfCan(mvic,SPELL_ARCANEBURST);
+                m_creature->CastSpell(mvic, SPELL_ARCANEBURST, false);
+                //DoCastSpellIfCan(mvic,SPELL_ARCANEBURST);
                 ArcaneBurst_Timer = 5000;
             }
         }
@@ -660,8 +670,6 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
             Teleport_Timer -= diff;
 
         CheckEnrage(diff);
-
-        DoMeleeAttackIfReady();
     }
 };
 
