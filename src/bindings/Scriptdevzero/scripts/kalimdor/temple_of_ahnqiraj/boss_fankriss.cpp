@@ -172,7 +172,7 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
         {
             if (SpawnHatchlings_Timer< diff)
             {
-                Unit* target = NULL;
+                Player* target = NULL;
                 target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,1);
                 if (target && target->GetTypeId() == TYPEID_PLAYER)
                 {
