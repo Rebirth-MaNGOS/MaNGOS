@@ -234,7 +234,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         {
             Unit* pUnit = m_creature->GetMap()->GetUnit((*i)->getUnitGuid());
 
-            if (m_creature->GetCombatDistance(pUnit) < dist)
+            if (pUnit && m_creature->GetCombatDistance(pUnit) < dist)
             {
                 if (!totallyRandom)
                     return pUnit;
