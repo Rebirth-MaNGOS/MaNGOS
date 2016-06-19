@@ -124,7 +124,7 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
             }
         }        
     }
-
+    // Sätt random,1 target utan att ge threat på 5 sek och sedan till top aggro target
     void UpdateAI(const uint32 uiDiff)
     {
         if(!m_bAggroReset)
@@ -132,12 +132,26 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
             if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
                 return;
         }
-
+        
+        if(m_creature->HasAura(SPELL_WHIRLWIND))
+        {
+            m_creature->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, true);                
+            m_bIsWhirlWind = true;
+        }
+        else
+        {
+            m_creature->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, false);
+            m_bIsWhirlWind = false;
+        }
+                
         if (m_bIsWhirlWind)
         {
             // While whirlwind, switch to random targets often
             if (m_uiWhirlWindRandomTimer < uiDiff)
             {
+                DoResetThreat();
+                if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                    m_creature->AddThreat(pTarget, 1000.f);
                 m_uiWhirlWindRandomTimer = urand(3000, 7000);
             }
             else
@@ -145,10 +159,7 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
 
             // End Whirlwind Phase
             if (m_uiWhirlWindEndTimer < uiDiff)
-            {
-                m_bIsWhirlWind = false;
-                m_creature->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, false);
-            }
+                DoResetThreat();
             else
                 m_uiWhirlWindEndTimer -= uiDiff;
         }
@@ -159,10 +170,11 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
             {
                 if (DoCastSpellIfCan(m_creature, SPELL_WHIRLWIND) == CAST_OK)
                 {
-                    m_bIsWhirlWind = true;
+                    DoResetThreat();
+                    if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                        m_creature->AddThreat(pTarget, 1000.f);
                     m_uiWhirlWindEndTimer = 15000;
                     m_uiWhirlWindTimer = urand(25000, 40000);
-                    m_creature->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, true);
                 }
             }
             else
@@ -189,6 +201,8 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
                 {
                     m_bAggroReset = false;
                     m_uiAggroResetEndTimer = 0;
+                    if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_TOPAGGRO, 0))
+                        m_creature->AI()->AttackStart(pTarget);
                     m_uiAggroResetTimer = urand(10000, 15000);
                 }
                 else
@@ -199,13 +213,8 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
                     {
                         if(m_targetSwitch <= uiDiff)
                         {
-                            Unit* pRandom = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1);
-
-                            if(pRandom)
-                            {
-                                m_creature->SetTargetGuid(pRandom->GetObjectGuid());
-                                AttackStart(pRandom);
-                            }
+                            if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                                m_creature->AI()->AttackStart(pTarget);
                             m_targetSwitch = 5000;
                         }
                         else
@@ -264,7 +273,7 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
         m_uiAggroResetEndTimer = 5000;
         m_uiKnockBackTimer = 10000;
         m_targetSwitch = 5000;
-
+        
         m_IsWhirlWind = false;
         m_bAggroReset = false;
 
@@ -285,11 +294,25 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
                 return;
         }
 
+         if(m_creature->HasAura(SPELL_WHIRLWIND))
+        {
+            m_creature->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, true);                
+            m_IsWhirlWind = true;
+        }
+        else
+        {
+            m_creature->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, false);
+            m_IsWhirlWind = false;
+        }
+                
         if (m_IsWhirlWind)
         {
             // While whirlwind, switch to random targets often
             if (m_uiWhirlWindRandomTimer < uiDiff)
             {
+                DoResetThreat();
+                if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                    m_creature->AddThreat(pTarget, 1000.f);
                 m_uiWhirlWindRandomTimer = urand(3000, 7000);
             }
             else
@@ -297,21 +320,30 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
 
             // End Whirlwind Phase
             if (m_uiWhirlWindEndTimer < uiDiff)
+                DoResetThreat();
+            else
+                m_uiWhirlWindEndTimer -= uiDiff;                  
+        }
+        else // if (!m_bIsWhirlWind)
+        {
+            // Knockback nearby enemies
+            if (m_uiKnockBackTimer < uiDiff)
             {
-                m_IsWhirlWind = false;
+                if (DoCastSpellIfCan(m_creature, SPELL_KNOCKBACK) == CAST_OK)
+                    m_uiKnockBackTimer = urand(10000, 20000);
             }
             else
-                m_uiWhirlWindEndTimer -= uiDiff;
-        }
-        else // if (!m_IsWhirlWind)
-        {
+                m_uiKnockBackTimer -= uiDiff;
+            
             // Enter Whirlwind Phase
             if (m_uiWhirlWindTimer < uiDiff)
             {
-                if (DoCastSpellIfCan(m_creature, SPELL_WHIRLWIND_ADD) == CAST_OK)
+                if (DoCastSpellIfCan(m_creature, SPELL_WHIRLWIND) == CAST_OK)
                 {
-                    m_IsWhirlWind = true;
-                    m_uiWhirlWindEndTimer = 8000;
+                    DoResetThreat();
+                    if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                        m_creature->AddThreat(pTarget, 1000.f);
+                    m_uiWhirlWindEndTimer = 15000;
                     m_uiWhirlWindTimer = urand(25000, 40000);
                 }
             }
@@ -325,7 +357,7 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
                 {
                     m_bAggroReset = true;
                     m_uiAggroResetTimer = 0;
-                    m_uiAggroResetEndTimer = 20000;
+                    m_uiAggroResetEndTimer = 10000;
                     m_targetSwitch = 5000;
                 }
                 else
@@ -335,10 +367,12 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
             // Remove remaining taunts, TODO
             if (m_bAggroReset)
             {
-                if (m_uiAggroResetEndTimer <uiDiff)
+                if (m_uiAggroResetEndTimer < uiDiff)
                 {
                     m_bAggroReset = false;
                     m_uiAggroResetEndTimer = 0;
+                    if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_TOPAGGRO, 0))
+                        m_creature->AI()->AttackStart(pTarget);
                     m_uiAggroResetTimer = urand(10000, 15000);
                 }
                 else
@@ -349,13 +383,8 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
                     {
                         if(m_targetSwitch <= uiDiff)
                         {
-                            Unit* pRandom = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1);
-
-                            if(pRandom)
-                            {
-                                m_creature->SetTargetGuid(pRandom->GetObjectGuid());
-                                AttackStart(pRandom);
-                            }
+                            if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                                m_creature->AI()->AttackStart(pTarget);
                             m_targetSwitch = 5000;
                         }
                         else
@@ -363,16 +392,7 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
                     }
                 }
             }
-
-            // Knockback nearby enemies
-            if (m_uiKnockBackTimer < uiDiff)
-            {
-                if (DoCastSpellIfCan(m_creature, SPELL_KNOCKBACK) == CAST_OK)
-                    m_uiKnockBackTimer = urand(10000, 20000);
-            }
-            else
-                m_uiKnockBackTimer -= uiDiff;
-        }
+        }        
 
         // No melee damage while in whirlwind
         if (!m_IsWhirlWind)
