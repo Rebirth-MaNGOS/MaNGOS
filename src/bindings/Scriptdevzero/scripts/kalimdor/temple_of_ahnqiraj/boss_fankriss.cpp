@@ -172,8 +172,18 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
         {
             if (SpawnHatchlings_Timer< diff)
             {
-                Player* target = NULL;
+                Unit* target = NULL;
                 target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,1);
+                
+                // 10 tries to find a player
+                for(int i = 0; i < 10; ++i)
+                {
+                    if(target->GetTypeId() != TYPEID_PLAYER)
+                        target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,1);
+                    else
+                        break;
+                }
+                
                 if (target && target->GetTypeId() == TYPEID_PLAYER)
                 {
                     
