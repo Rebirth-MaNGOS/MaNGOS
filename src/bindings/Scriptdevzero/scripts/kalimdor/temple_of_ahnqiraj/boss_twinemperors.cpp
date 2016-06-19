@@ -222,7 +222,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
             Unit *pOtherBoss = GetOtherBoss();
             if (pOtherBoss && pOtherBoss->IsWithinDist(m_creature, 60.0f))
             {
-                DoCastSpellIfCan(pOtherBoss, SPELL_HEAL_BROTHER);
+                m_creature->CastSpell(pOtherBoss, SPELL_HEAL_BROTHER, true);
                 Heal_Timer = 1000;
             }
         } else Heal_Timer -= diff;
@@ -298,7 +298,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
             float other_o = pOtherBoss->GetOrientation();
 
             pOtherBoss->RelocateCreature(m_creature->GetPositionX(),
-                m_creature->GetPositionY(),    m_creature->GetPositionZ(), m_creature->GetOrientation());
+            m_creature->GetPositionY(),    m_creature->GetPositionZ(), m_creature->GetOrientation());
             pOtherBoss->GetMotionMaster()->MoveIdle();
             m_creature->RelocateCreature(other_x, other_y, other_z, other_o);
             m_creature->GetMotionMaster()->MoveIdle();
@@ -411,7 +411,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
             if (c->isDead())
             {
                 c->Respawn();
-                c->SetFactionTemporary(7);
+                c->SetFactionTemporary(14);
                 c->RemoveAllAuras();
             }
             if (c->GetDistance(m_creature) < dist)
@@ -558,14 +558,14 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
     }
 
     uint32 ShadowBolt_Timer;
-    uint32 ShadowBolt_Cooldown;
-    uint32 ShadowBolt_Counter;
     uint32 Blizzard_Timer;
     uint32 ArcaneBurst_Timer;
     uint32 Scorpions_Timer;
     int Rand;
     int RandX;
     int RandY;
+    
+    bool m_bShadowBolt;
 
     Creature* Summoned;
 
@@ -573,11 +573,10 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
     {
         TwinReset();
         ShadowBolt_Timer = 0;
-        ShadowBolt_Cooldown = 0;
-        ShadowBolt_Counter = urand(1, 3);
         Blizzard_Timer = urand(15000, 20000);
         ArcaneBurst_Timer = 1000;
         Scorpions_Timer = urand(7000, 14000);
+        m_bShadowBolt = true;
 
         //Added. Can be removed if its included in DB.
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, true);
@@ -605,37 +604,21 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
         if (!TryActivateAfterTTelep(diff))
             return;
 
-        if (ShadowBolt_Cooldown <= diff)
-        {
-            if (ShadowBolt_Counter > 0)
-            {
-                //ShadowBolt_Timer
-                if (ShadowBolt_Timer < diff)
-                {
-                    if (DoCastSpellIfCan(m_creature->getVictim(),SPELL_SHADOWBOLT) == CAST_OK)
-                    {
-                        ShadowBolt_Timer = 2000;
-                        --ShadowBolt_Counter;
-                    }
-                }
-                else 
-                    ShadowBolt_Timer -= diff;
-
+  
+            //ShadowBolt_Timer
+            if (ShadowBolt_Timer < diff)
+            {                
+                m_creature->CastSpell(m_creature->getVictim(),SPELL_SHADOWBOLT, false);
+                m_bShadowBolt ? ShadowBolt_Timer = 2200 : ShadowBolt_Timer = 5000;
             }
-            else
-            {
-                ShadowBolt_Counter = urand(1, 3);
-                ShadowBolt_Cooldown = 5000;
-            }
-        }
-        else
-            ShadowBolt_Cooldown -= diff;
-
+            else 
+                ShadowBolt_Timer -= diff;
+        
         //Blizzard_Timer
         if (Blizzard_Timer < diff)
         {
             Unit* target = NULL;
-            target = GetAnyoneCloseEnough(45, true);
+            target = GetAnyoneCloseEnough(40, true);
             if (target)
                 DoCastSpellIfCan(target,SPELL_BLIZZARD);
             Blizzard_Timer = urand(15000, 30000);
@@ -660,6 +643,7 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
         {
             m_creature->GetMotionMaster()->MoveIdle();
             m_creature->StopMoving();
+            m_bShadowBolt = true;
         }
         else
         {
@@ -667,6 +651,7 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
                 m_creature->GetMotionMaster()->MoveChase(pTarget);
             else
                 m_creature->GetMotionMaster()->Clear();
+            m_bShadowBolt = false;
         }
 
         HandleBugs(diff);
