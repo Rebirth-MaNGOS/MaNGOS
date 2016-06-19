@@ -315,8 +315,8 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         m_creature->InterruptNonMeleeSpells(false);
         DoStopAttack();
         DoResetThreat();
-        DoCastSpellIfCan(m_creature, SPELL_TWIN_TELEPORT_VISUAL);
-        m_creature->CastSpell(m_creature, SPELL_STUN, true);
+        m_creature->CastSpell(m_creature, SPELL_TWIN_TELEPORT_VISUAL, true);
+        //m_creature->CastSpell(m_creature, SPELL_STUN, true);
         //m_creature->addUnitState(UNIT_STAT_STUNNED);
         AfterTeleport = true;
         AfterTeleportTimer = urand(1500, 2000);
@@ -331,7 +331,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
             {
                 m_creature->RemoveAurasDueToSpell(25900);       
                 //m_creature->clearUnitState(UNIT_STAT_STUNNED);
-                DoCastSpellIfCan(m_creature, SPELL_TWIN_TELEPORT);
+                m_creature->CastSpell(m_creature, SPELL_TWIN_TELEPORT, false);
                 //m_creature->addUnitState(UNIT_STAT_STUNNED);
                 m_creature->CastSpell(m_creature, SPELL_STUN, true);
             }
