@@ -1935,12 +1935,18 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
             return;
         }
-        case 25185:
+        case 25185:     // Hive'zara itch -> catalyst
         {
             if(target)
             {
                 target->CastSpell(target, 25187, false);
             }
+            return;
+        }
+        case 26077:    // Vekniss itch -> catalyst
+        {
+            if(target)
+                target->CastSpell(target, 26078, false);
             return;
         }
         case 28169:                                     // Mutating Injection
