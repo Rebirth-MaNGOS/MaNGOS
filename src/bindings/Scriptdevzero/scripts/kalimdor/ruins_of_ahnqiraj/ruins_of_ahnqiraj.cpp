@@ -413,13 +413,13 @@ struct MANGOS_DLL_DECL mob_obsidian_destroyerAI : public ScriptedAI
                 for (HostileReference *currentReference : threatList)
                 {
                     Unit *target = currentReference->getTarget();
-                    if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 30.0f)
+                    if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 40.0f)
                     {
                         m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
-                        ++m_uiDrain_count;
-                        if(m_uiDrain_count == 16)
-                            break;
+                        ++m_uiDrain_count;                        
                     }
+                    if(m_uiDrain_count >= 16)
+                            break;
                 }
             }
         }

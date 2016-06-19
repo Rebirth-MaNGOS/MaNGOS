@@ -326,13 +326,13 @@ struct MANGOS_DLL_DECL mob_obsidian_nullifierAI : public ScriptedAI
             for (HostileReference *currentReference : threatList)
             {
                 Unit *target = currentReference->getTarget();
-                if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 30.0f)
+                if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 40.0f)
                 {
                     m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
-                    ++m_uiDrain_count;
-                    if(m_uiDrain_count == 16)
-                        break;
+                    ++m_uiDrain_count;                    
                 }
+                if(m_uiDrain_count >= 16)
+                        break;
             }
         }        
     }
@@ -390,6 +390,84 @@ CreatureAI* GetAI_mob_obsidian_nullifier(Creature* pCreature)
     return new mob_obsidian_nullifierAI(pCreature);
 }
 
+/*######
+## mob_vekniss_stinger
+######*/
+
+enum eVeknissStinger
+{
+    SPELL_STINGER_CHARGE             = 26081,
+    SPELL_STINGER_EMPOWERED_CHARGE   = 26082,
+    SPELL_VEKNISS_CATALYST          = 26078,
+};
+
+struct MANGOS_DLL_DECL mob_vekniss_stingerAI : public ScriptedAI
+{
+    mob_vekniss_stingerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiChargeTimer;
+
+    void Reset() 
+    {       
+        m_uiChargeTimer = 5000;
+    }
+
+    void ChargeRandomTarget()
+    {
+        const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+        std::vector<Unit*> pEligibleTargets;
+
+        pEligibleTargets.clear();
+
+        if(!threatList.empty())
+        {
+            for (HostileReference *currentReference : threatList)
+            {
+                Unit *target = currentReference->getTarget();
+                if (target && target->isAlive() && target->GetDistance(m_creature) <= 25.0f && target->GetDistance(m_creature) >= 5.0f)
+                    pEligibleTargets.push_back(target);
+            }
+
+            if(!pEligibleTargets.empty())
+            {
+                std::random_shuffle(pEligibleTargets.begin(), pEligibleTargets.end());
+                Unit *target = pEligibleTargets.front();
+                if (target && target->isAlive())
+                {
+                    if(target->HasAura(SPELL_VEKNISS_CATALYST))
+                        DoCast(target, SPELL_STINGER_EMPOWERED_CHARGE, true);
+                    else
+                        DoCast(target, SPELL_STINGER_CHARGE, true);
+                }
+            }
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if (m_uiChargeTimer <= uiDiff)
+        {
+            ChargeRandomTarget();
+            m_uiChargeTimer = 5000;
+        } 
+        else
+            m_uiChargeTimer -= uiDiff;
+
+        DoMeleeAttackIfReady(); 
+    }
+};
+
+CreatureAI* GetAI_mob_vekniss_stinger(Creature* pCreature)
+{
+    return new mob_vekniss_stingerAI(pCreature);
+}
+
 void AddSC_temple_of_ahnqiraj()
 {
     Script* pNewscript;
@@ -402,5 +480,10 @@ void AddSC_temple_of_ahnqiraj()
     pNewscript = new Script;
     pNewscript->Name = "mob_obsidian_nullifier";
     pNewscript->GetAI = &GetAI_mob_obsidian_nullifier;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "mob_vekniss_stinger";
+    pNewscript->GetAI = &GetAI_mob_vekniss_stinger;
     pNewscript->RegisterSelf();
 }

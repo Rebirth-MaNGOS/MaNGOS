@@ -103,7 +103,10 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
 	void JustSummoned(Creature* pSummoned)
     {
 		if (pSummoned->GetEntry() == NPC_MANA_FIEND)
+        {
 			pSummoned->CastSpell(pSummoned,SPELL_IVUS_TELEPORT_VISUAL,true);	
+            pSummoned->SetInCombatWithZone();
+        }
 		pSummoned->SetRespawnEnabled(false);
 	}
 
@@ -120,7 +123,7 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
 
 		if (m_uiCheckoutManaTimer <= uiDiff)
         {
-			m_uiCheckoutManaTimer = 2000;
+			m_uiCheckoutManaTimer = 500;
 			if (m_creature->GetPower(POWER_MANA) == m_creature->GetMaxPower(POWER_MANA))
 			{
 				if(m_creature->HasAura(SPELL_ENERGIZE))
@@ -162,20 +165,22 @@ struct MANGOS_DLL_DECL boss_moamAI : public ScriptedAI
                 if (m_uiManaDrainTimer <= uiDiff)
                 {
 					const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
-
+                    
+                    uint32 rndm_counter = urand(2,6);
+                    m_uiDrain_count = 0;
+                    
 					if(!threatList.empty())
-					{
-                        uint32 rndm_counter = urand(2,6);
+					{                        
 						for (HostileReference *currentReference : threatList)
 						{
 							Unit *target = currentReference->getTarget();
 							if (target && target->GetTypeId() == TYPEID_PLAYER && target->getPowerType() == POWER_MANA && target->GetDistance(m_creature) < 40.0f)
 							{									
 								m_creature->CastSpell(target, SPELL_DRAIN_MANA, true);
-								++m_uiDrain_count;
-								if(rndm_counter == m_uiDrain_count)
-									break;
-							}							
+								++m_uiDrain_count;								
+							}			
+							if(rndm_counter <= m_uiDrain_count)
+                                    break;
 						}
 					}
 					
