@@ -338,6 +338,9 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
 
             tspellcasted = true;
 
+            m_creature->GetMotionMaster()->MoveIdle();
+            m_creature->StopMoving();
+            
             if (AfterTeleportTimer < diff)
             {
                 AfterTeleport = false;
