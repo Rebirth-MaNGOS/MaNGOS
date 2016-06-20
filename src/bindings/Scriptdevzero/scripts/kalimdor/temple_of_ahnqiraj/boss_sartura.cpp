@@ -198,7 +198,7 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
             
             if (m_uiSunderTimer < uiDiff)
             {
-                m_creature->CastSpell(m_creature, SPELL_SUNDERING_CLEAVE, false);
+                m_creature->CastSpell(m_creature->getVictim(), SPELL_SUNDERING_CLEAVE, false);
                 m_uiSunderTimer = 5000;
             }
             else
