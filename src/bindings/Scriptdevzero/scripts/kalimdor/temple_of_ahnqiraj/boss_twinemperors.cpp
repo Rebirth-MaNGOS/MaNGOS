@@ -498,7 +498,7 @@ struct MANGOS_DLL_DECL boss_veknilashAI : public boss_twinemperorsAI
         Scarabs_Timer = urand(7000, 14000);
 
         //Added. Can be removed if its included in DB.
-        m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_MAGIC, true);
+        m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_SPELL, true);
     }
 
     void CastSpellOnBug(Creature *target)
