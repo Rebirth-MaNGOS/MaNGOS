@@ -62,6 +62,11 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
     int Rand;
     int RandX;
     int RandY;
+    
+    uint32 m_uiHealthSpawnAdd;
+    bool m_b1add;
+    bool m_b2add;
+    bool m_b3add;
 
     Creature* Spawn;
 
@@ -75,6 +80,11 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
         SpawnSpawns_Timer = urand(15000, 45000);
         m_TPTarget = ObjectGuid();
         m_uiRootTimer = 200;
+        m_uiHealthSpawnAdd = urand(88,96);
+        
+        m_b1add = false;
+        m_b2add = false;
+        m_b3add = false;
     }
     
     void Aggro(Unit* /*pWho*/)
@@ -145,27 +155,29 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
             MortalWound_Timer = urand(8000,12000);
         }else MortalWound_Timer -= diff;
 
-        //Summon 1-3 Spawns of Fankriss at random time.
-        if (SpawnSpawns_Timer < diff)
+        if(m_creature->GetHealthPercent() <= m_uiHealthSpawnAdd && !m_b1add)
         {
-            switch(urand(0, 2))
-            {
-                case 0:
-                    SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
-                    break;
-                case 1:
-                    SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
-                    SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
-                    break;
-                case 2:
-                    SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
-                    SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
-                    SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
-                    break;
-            }
-            SpawnSpawns_Timer = urand(30000, 60000);
-        }else SpawnSpawns_Timer -= diff;
-
+            SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
+            m_b1add = true;            
+        }
+            
+        if(m_creature->GetHealthPercent() <= (m_uiHealthSpawnAdd - 1) && !m_b2add)
+        {
+            SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
+            m_b2add = true;            
+        }
+        
+        if(m_creature->GetHealthPercent() <= (m_uiHealthSpawnAdd - 2) && !m_b3add)
+        {
+            SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
+            m_b3add = true;         
+                        
+            m_uiHealthSpawnAdd = m_creature->GetHealthPercent() - urand(5,15);
+            m_b1add = false;            
+            m_b2add = false;
+            m_b3add = false;
+        }
+                 
         // Teleporting Random Target to one of the three tunnels and spawn 4 hatchlings near the gamer.
         //We will only telport if fankriss has more than 3% of hp so teleported gamers can always loot.
         if (m_creature->GetHealthPercent() > 3.0f)
@@ -178,7 +190,7 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
                 // 10 tries to find a player
                 for(int i = 0; i < 10; ++i)
                 {
-                    if(target->GetTypeId() != TYPEID_PLAYER)
+                    if(target && target->GetTypeId() != TYPEID_PLAYER)
                         target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,1);
                     else
                         break;
@@ -198,7 +210,7 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
 
                     m_TPTarget = target->GetObjectGuid();
 
-                    for(int i = 0; i < 4; ++i)
+                    for(int i = 0; i < 7; ++i)
                     {
                         Creature* Hatchling = m_creature->SummonCreature(15962, aFankrissBugTunnels[bugTunnel].m_fX, aFankrissBugTunnels[bugTunnel].m_fY, aFankrissBugTunnels[bugTunnel].m_fZ, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
                         if (Hatchling)
