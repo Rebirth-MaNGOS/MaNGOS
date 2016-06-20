@@ -56,6 +56,8 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
         IsImage = false;
+        m_bStop = false;
+        
         Reset();
     }
 
@@ -75,7 +77,10 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
     bool Images25;
     bool IsImage;
     bool Invisible;
-
+    
+    bool m_bStop;
+    uint32 m_uiStopTimer;    
+    
     std::vector<ObjectGuid> m_MCVictimList;
 
     void Reset()
@@ -85,6 +90,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
         FullFillment_Timer = 15000;
         Blink_Timer = urand(8000, 20000);
         Invisible_Timer = 500;
+        m_uiStopTimer = 2000;
         m_uiRandomYellTimer = urand(600000, 1800000);
 
         Images75 = false;
@@ -190,6 +196,22 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+        if(m_bStop)
+        {
+            m_creature->GetMotionMaster()->MoveIdle();
+            m_creature->StopMoving();
+            
+            if (m_uiStopTimer < diff)
+                m_bStop = false;
+            else 
+                m_uiStopTimer -= diff;
+        }
+        else
+        {
+            if(Unit* pTarget = m_creature->getVictim())        
+                m_creature->GetMotionMaster()->MoveChase(pTarget);
+        }
+        
         //ArcaneExplosion_Timer
         if (ArcaneExplosion_Timer < diff)
         {
@@ -257,6 +279,8 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
             m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             m_creature->SetVisibility(VISIBILITY_OFF);
             DoStopAttack();
+            m_bStop = true;
+            m_uiStopTimer = 2000;
             //DoCastSpellIfCan(m_creature, SPELL_BLINK);
             switch(urand(0, 2))
             {
@@ -305,8 +329,8 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
                 Invisible = false;
             }else Invisible_Timer -= diff;
         }
-
-        DoMeleeAttackIfReady();
+        if(!m_bStop)
+            DoMeleeAttackIfReady();
     }
 
     void DoSplit(int atPercent /* 75 50 25 */)
@@ -343,6 +367,8 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
         m_creature->GetMap()->CreatureRelocation(m_creature, bossc->x, bossc->y, bossc->z, bossc->r);
 
         Invisible = true;
+        m_bStop = true;
+        m_uiStopTimer = 2000;
         DoResetThreat();
         DoStopAttack();
 
@@ -362,7 +388,10 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
             Image1->SetHealth(m_creature->GetHealth() / 5);
 
             if (boss_skeramAI* pImageAI = dynamic_cast<boss_skeramAI*>(Image1->AI()))
+            {
                 pImageAI->IsImage = true;
+                pImageAI->m_bStop = true;
+            }
 
             if (target)
                 Image1->AI()->AttackStart(target);
@@ -375,7 +404,10 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
             Image2->SetHealth(m_creature->GetHealth() / 5);
 
             if (boss_skeramAI* pImageAI = dynamic_cast<boss_skeramAI*>(Image2->AI()))
+            {
                 pImageAI->IsImage = true;
+                pImageAI->m_bStop = true;
+            }
 
             if (target)
                 Image2->AI()->AttackStart(target);
