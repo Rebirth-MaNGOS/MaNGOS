@@ -210,12 +210,51 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
 
                     m_TPTarget = target->GetObjectGuid();
 
-                    for(int i = 0; i < 7; ++i)
+                    int a = urand(3,7);
+                    for(int i = 0; i < a; ++i)
                     {
-                        Creature* Hatchling = m_creature->SummonCreature(15962, aFankrissBugTunnels[bugTunnel].m_fX, aFankrissBugTunnels[bugTunnel].m_fY, aFankrissBugTunnels[bugTunnel].m_fZ, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+                        Creature* Hatchling = m_creature->SummonCreature(15962, aFankrissBugTunnels[0].m_fX, aFankrissBugTunnels[0].m_fY, aFankrissBugTunnels[0].m_fZ, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+                         if (Hatchling)
+                        {                                  
+                            if(bugTunnel == 0)
+                                Hatchling->AI()->AttackStart(target);
+                            else
+                            {
+                                if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
+                                    Hatchling->AI()->AttackStart(pTarget);
+                            }
+                        }                        
+                    }                    
+                    a = urand(3,7);
+                    for(int i = 0; i < a; ++i)
+                    {
+                        Creature* Hatchling = m_creature->SummonCreature(15962, aFankrissBugTunnels[1].m_fX, aFankrissBugTunnels[1].m_fY, aFankrissBugTunnels[1].m_fZ, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
                         if (Hatchling)
-                            Hatchling->AI()->AttackStart(target);
+                        {                                  
+                            if(bugTunnel == 1)
+                                Hatchling->AI()->AttackStart(target);
+                            else
+                            {
+                                if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
+                                    Hatchling->AI()->AttackStart(pTarget);
+                            }
+                        }
                     }
+                    a = urand(3,7);
+                    for(int i = 0; i < a; ++i)
+                    {
+                        Creature* Hatchling = m_creature->SummonCreature(15962, aFankrissBugTunnels[2].m_fX, aFankrissBugTunnels[2].m_fY, aFankrissBugTunnels[2].m_fZ, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
+                        if (Hatchling)
+                        {                                  
+                            if(bugTunnel == 2)
+                                Hatchling->AI()->AttackStart(target);
+                            else
+                            {
+                                if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
+                                    Hatchling->AI()->AttackStart(pTarget);
+                            }
+                        }
+                    }                    
                 }
                 SpawnHatchlings_Timer = urand(45000, 60000);
             }else SpawnHatchlings_Timer -= diff;
