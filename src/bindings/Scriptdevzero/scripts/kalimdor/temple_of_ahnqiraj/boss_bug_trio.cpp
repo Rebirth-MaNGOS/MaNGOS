@@ -76,8 +76,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         if (m_pInstance)
         {            
             if (m_pInstance->GetData(DATA_BUG_TRIO_DEATH) < 2)
-                                                            // Unlootable if death
-                m_creature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+                m_creature->SetLootRecipient(NULL);
 
             m_pInstance->SetData(DATA_BUG_TRIO_DEATH, 1);
         }
@@ -138,6 +137,19 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         }
     }
     
+    void RemoveCorpses()
+    {
+        Creature* pVem = m_pInstance->GetSingleCreatureFromStorage(NPC_VEM);
+        Creature* pYauj = m_pInstance->GetSingleCreatureFromStorage(NPC_YAUJ);
+        
+        if(pVem && !pVem->isAlive() && pVem->IsCorpse())
+            pVem->RemoveCorpse();
+        
+        if(pYauj && !pYauj->isAlive() && pYauj->IsCorpse())
+            pYauj->RemoveCorpse();
+    }
+    
+    
     void StopDueToStun()
     {
         m_bStun = true;
@@ -157,6 +169,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         {
             if (m_uiRemoveStunTimer <= diff)          
             {
+                RemoveCorpses();
                 m_creature->RemoveAurasDueToSpell(25900);               
                 m_bStun = false;
                 
@@ -230,6 +243,9 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         Enraged = false;
         
         m_bStun = false;
+        
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_VEM, FAIL);
     }
     
     void Aggro(Unit* /*pWho*/)
@@ -263,7 +279,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
 
             // Unlootable if death
             if (m_pInstance->GetData(DATA_BUG_TRIO_DEATH) < 2)
-                m_creature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+                m_creature->SetLootRecipient(NULL);
 
             m_pInstance->SetData(DATA_BUG_TRIO_DEATH, 1);
         }
@@ -309,6 +325,18 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         }
     }
     
+    void RemoveCorpses()
+    {
+        Creature* pKri = m_pInstance->GetSingleCreatureFromStorage(NPC_KRI);
+        Creature* pYauj = m_pInstance->GetSingleCreatureFromStorage(NPC_YAUJ);
+        
+        if(pKri && !pKri->isAlive() && pKri->IsCorpse())
+            pKri->RemoveCorpse();
+        
+        if(pYauj && !pYauj->isAlive() && pYauj->IsCorpse())
+            pYauj->RemoveCorpse();
+    }
+    
     void StopDueToStun()
     {
         m_bStun = true;
@@ -328,6 +356,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         {
             if (m_uiRemoveStunTimer <= diff)          
             {
+                RemoveCorpses();
                 m_creature->RemoveAurasDueToSpell(25900);               
                 m_bStun = false;
                 
@@ -418,8 +447,8 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         if (m_pInstance)
         {            
             if (m_pInstance->GetData(DATA_BUG_TRIO_DEATH) < 2)
-                                                            // Unlootable if death
-                m_creature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+                m_creature->SetLootRecipient(NULL);
+
             m_pInstance->SetData(DATA_BUG_TRIO_DEATH, 1);
         }
 
@@ -470,6 +499,18 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
             m_creature->SetFacingToObject(pVem);
            StopDueToStun();
         }
+    }
+    
+    void RemoveCorpses()
+    {
+        Creature* pKri = m_pInstance->GetSingleCreatureFromStorage(NPC_KRI);
+        Creature* pVem = m_pInstance->GetSingleCreatureFromStorage(NPC_VEM);
+        
+        if(pKri && !pKri->isAlive() && pKri->IsCorpse())
+            pKri->RemoveCorpse();
+        
+        if(pVem && !pVem->isAlive() && pVem->IsCorpse())
+            pVem->RemoveCorpse();
     }
     
     void StopDueToStun()
