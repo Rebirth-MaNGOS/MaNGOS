@@ -162,6 +162,8 @@ void instance_temple_of_ahnqiraj::SetData(uint32 uiType, uint32 uiData)
             break;
         case TYPE_VEM:
             m_auiEncounter[uiType] = uiData;
+            if (uiData == FAIL)
+                m_uiBugTrioDeathCount = 0;                
             break;
         case TYPE_SARTURA:
             m_auiEncounter[uiType] = uiData;
