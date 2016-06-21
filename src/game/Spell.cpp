@@ -2211,7 +2211,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 if (!pCreature || pCreature->isDead() || pCreature->HasAura(m_spellInfo->Id) ||
                     pCreature->GetEntry() != filterCreature)
                 {
-                    itr = tempTargetUnitMap.erase(itr);
+                    itr = targetUnitMap.erase(itr);
                 }
                 else
                     ++itr;
