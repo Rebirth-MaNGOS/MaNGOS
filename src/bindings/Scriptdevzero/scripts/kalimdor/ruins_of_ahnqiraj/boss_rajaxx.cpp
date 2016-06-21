@@ -185,7 +185,7 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
 
         m_pInstance = (instance_ruins_of_ahnqiraj*)pCreature->GetInstanceData();
 
-        if (m_pInstance && m_pInstance->GetData(TYPE_RAJAXX) != DONE)
+        if (m_pInstance)
             m_pInstance->SetData(TYPE_RAJAXX, NOT_STARTED);
 
         m_bHasEnraged = false;
@@ -614,12 +614,8 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
 
     void SummonArmy()
     {
-        if (m_pInstance)
-        {
-            if(m_pInstance->GetData(TYPE_RAJAXX) == DONE)
-                return;
-        }
-        else
+        // Do not summon an army if dead.
+        if (!m_creature->isAlive())
             return;
 
         Loc* waves[7] = { WaveOne, WaveTwo, WaveThree, WaveFour, WaveFive, WaveSix, WaveSeven };
