@@ -109,14 +109,14 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         if(pVem && !pVem->isDead())
         {
             m_creature->GetClosePoint(x, y, z, 10.f, 5.f);
-            pVem->SetSpeedRate(MOVE_RUN, 6.f, false);
+         //   pVem->SetSpeedRate(MOVE_RUN, 6.f, false);
             pVem->GetMotionMaster()->MovePoint(1,x,y,z);
         }
         
          if(pYauj && !pYauj->isDead())
          {
              m_creature->GetClosePoint(x, y, z, 3.f, 2.f);
-             pYauj->SetSpeedRate(MOVE_RUN, 6.f, false);
+          //   pYauj->SetSpeedRate(MOVE_RUN, 6.f, false);
             pYauj->GetMotionMaster()->MovePoint(1,x,y,z);
          }
     }
@@ -156,7 +156,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         m_creature->CastSpell(m_creature, SPELL_STUN, true);
 
         m_uiRemoveStunTimer = 2000;
-        m_creature->SetSpeedRate(MOVE_RUN, 2.9f, false);
+   //     m_creature->SetSpeedRate(MOVE_RUN, 2.9f, false);
     }
     
     void UpdateAI(const uint32 diff)
@@ -297,14 +297,14 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         if(pKri && !pKri->isDead())
         {
             m_creature->GetClosePoint(x, y, z, 10.f, 5.f);
-            pKri->SetSpeedRate(MOVE_RUN, 6.f, false);
+          //  pKri->SetSpeedRate(MOVE_RUN, 6.f, false);
             pKri->GetMotionMaster()->MovePoint(3,x,y,z);
         }
         
          if(pYauj && !pYauj->isDead())
          {
              m_creature->GetClosePoint(x, y, z, 3.f, 2.f);
-             pYauj->SetSpeedRate(MOVE_RUN, 6.f, false);
+        //     pYauj->SetSpeedRate(MOVE_RUN, 6.f, false);
             pYauj->GetMotionMaster()->MovePoint(3,x,y,z);
          }
     }
@@ -343,7 +343,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         m_creature->CastSpell(m_creature, SPELL_STUN, true);
 
         m_uiRemoveStunTimer = 3000;
-        m_creature->SetSpeedRate(MOVE_RUN, 5.f, false);
+     //   m_creature->SetSpeedRate(MOVE_RUN, 5.f, false);
     }    
     
     void UpdateAI(const uint32 diff)
@@ -472,14 +472,14 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         if(pKri && !pKri->isDead())
         {
             m_creature->GetClosePoint(x, y, z, 10.f, 5.0f);
-            pKri->SetSpeedRate(MOVE_RUN, 5.f, false);
+        //    pKri->SetSpeedRate(MOVE_RUN, 5.f, false);
             pKri->GetMotionMaster()->MovePoint(2,x,y,z);
         }
         
          if(pVem && !pVem->isDead())
          {
              m_creature->GetClosePoint(x, y, z, 3.f, 2.f);
-             pVem->SetSpeedRate(MOVE_RUN, 5.f, false);
+       //      pVem->SetSpeedRate(MOVE_RUN, 5.f, false);
             pVem->GetMotionMaster()->MovePoint(2,x,y,z);
          }
     }
@@ -519,7 +519,7 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         m_creature->CastSpell(m_creature, SPELL_STUN, true);
 
         m_uiRemoveStunTimer = 2000;
-        m_creature->SetSpeedRate(MOVE_RUN, 2.9f, false);
+       // m_creature->SetSpeedRate(MOVE_RUN, 2.9f, false);
     }
 
     void UpdateAI(const uint32 diff)
