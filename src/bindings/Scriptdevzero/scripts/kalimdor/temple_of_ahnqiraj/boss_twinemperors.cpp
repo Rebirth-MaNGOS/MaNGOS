@@ -231,18 +231,18 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
     Unit *GetAnyoneCloseEnough(float dist, bool totallyRandom)
     {
         int cnt = 0;
-        std::list<HostileReference*> candidates;
+        std::list<Unit*> candidates;
 
         ThreatList const& tList = m_creature->getThreatManager().getThreatList();
-        for (ThreatList::const_iterator i = tList.begin();i != tList.end(); ++i)
+        for (HostileReference *currentReference : tList)
         {
-            Unit* pUnit = m_creature->GetMap()->GetUnit((*i)->getUnitGuid());
+            Unit* pUnit = currentReference->getTarget();
 
             if (pUnit && m_creature->GetCombatDistance(pUnit) < dist)
             {
                 if (!totallyRandom)
                     return pUnit;
-                candidates.push_back((*i));
+                candidates.push_back(pUnit);
                 ++cnt;
             }
         }
@@ -251,9 +251,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
         for (int randomi = rand() % cnt; randomi > 0; randomi --)
             candidates.pop_front();
 
-        Unit *ret = m_creature->GetMap()->GetUnit(candidates.front()->getUnitGuid());
-        candidates.clear();
-        return ret;
+        return candidates.front();
     }
 
     Unit *PickNearestPlayer()
