@@ -4614,6 +4614,12 @@ SpellCastResult Spell::CheckCast(bool strict)
             return SPELL_FAILED_NOT_READY;
     }
 
+    // AQ legendary mount should not be usable in combat
+    if (m_spellInfo->Id == 26656 && m_caster->isInCombat())
+    {
+        return SPELL_FAILED_AFFECTING_COMBAT;
+    }
+
     // check global cooldown
     if (strict && !m_IsTriggeredSpell && HasGlobalCooldown())
         return SPELL_FAILED_NOT_READY;
