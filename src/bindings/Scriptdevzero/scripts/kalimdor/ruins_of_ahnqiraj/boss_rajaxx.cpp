@@ -614,6 +614,14 @@ struct MANGOS_DLL_DECL boss_rajaxxAI : public ScriptedAI
 
     void SummonArmy()
     {
+        if (m_pInstance)
+        {
+            if(m_pInstance->GetData(TYPE_RAJAXX) == DONE)
+                return;
+        }
+        else
+            return;
+
         Loc* waves[7] = { WaveOne, WaveTwo, WaveThree, WaveFour, WaveFive, WaveSix, WaveSeven };
 
         int DespawnTime;
