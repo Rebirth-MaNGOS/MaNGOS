@@ -670,7 +670,7 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
 
         CheckEnrage(diff);
         
-        DoMeleeAttackIfReady();
+     //   DoMeleeAttackIfReady();
     }
 };
 
