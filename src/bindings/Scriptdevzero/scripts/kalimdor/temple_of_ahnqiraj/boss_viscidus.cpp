@@ -318,11 +318,24 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
                 // Clear the target to prevent him from rotating.
                 m_creature->SetTargetGuid(ObjectGuid());
 
-                // Set his health to zero to trigger the death animation.
+                // Save his health
                 m_health = m_creature->GetHealth();
-                m_creature->SetHealth(0);
 
-                m_uiSetInvisTimer = 1700;
+                // Summon another Viscidus that we blow up. This to
+                // avoid the raid killing the original if we set his
+                // health to zero to blow him up.
+                float x, y, z;
+                m_creature->GetPosition(x, y, z);
+                Creature* pSummoned = m_creature->SummonCreature(m_creature->GetEntry(), x, y, z, m_creature->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN, 2200, false);
+                if (pSummoned)
+                {
+                    pSummoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                    pSummoned->SetObjectScale(m_creature->GetObjectScale());
+                    pSummoned->UpdateModelData();
+                    m_creature->DealDamage(pSummoned, pSummoned->GetHealth() + 1, nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, true);
+                }
+
+                m_uiSetInvisTimer = 100;
                 m_uiGlobSpawnTimer = 4000;			// slight delay before we spawn the adds
                 m_uiSetVisibleTimer = 17000;			// adjust so that he spawns slightly after all globs despawned
             }
@@ -334,7 +347,6 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         if (Visible == 0)
         {
             m_creature->SetVisibility(VISIBILITY_OFF);	
-            m_creature->SetHealth(m_health);
             m_creature->SetUInt32Value(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_NONE);
         }
         else if (Visible == 1)
