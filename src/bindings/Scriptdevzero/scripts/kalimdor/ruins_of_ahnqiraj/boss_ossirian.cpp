@@ -192,6 +192,9 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
             if (pGo)
                 pGo->Delete(true);
         }
+
+        m_lCrystalPos.clear();
+        m_lCrystalList.clear();
     }
 
 	void SetResistances(int School = 0, int Value = 0)
