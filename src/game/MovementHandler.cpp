@@ -267,10 +267,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         return;
     }
 
-    // If the player is mind-controlled it shouldn't be able to control anything.
-    Player* sessionPlayer = GetPlayer();
-    Unit* charmer = sessionPlayer->GetCharmer();
-    if (sessionPlayer && charmer && charmer->GetObjectGuid() == mover->GetObjectGuid() && !sessionPlayer->CanMove())
+    // If the player is mind-controlled we return.
+    if (_player->GetCharmer() && mover->GetTypeId() == TYPEID_UNIT)
         return;
 
     /* extract packet */
