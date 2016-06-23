@@ -248,6 +248,10 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
             {
                 m_uiCastTimer = urand(5000, 10000);
                 CastOnRandomTarget();
+
+                // Recheck target after random cast.
+                if (!m_creature->SelectHostileTarget() || !m_creature->getVictim() || m_bExploding)
+                    return;
             }
             else
                 m_uiCastTimer -= uiDiff;

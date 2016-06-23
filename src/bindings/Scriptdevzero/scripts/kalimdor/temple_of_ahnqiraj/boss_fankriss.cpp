@@ -129,17 +129,24 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
     
     void CastCleaveMortalWound()
     {
+        std::vector<Unit*> targetList;
         const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
         
+        // Make sure NOT to cast the spell while iterating the threat list.
+        // Casting a spell on a new target switches target and will change
+        // the threat list while it is being iterated, thus causing a crash.
         if(!threatList.empty())
         {
             for (HostileReference *currentReference : threatList)
             {
                 Unit *target = currentReference->getTarget();
                 if (target && target->GetTypeId() == TYPEID_PLAYER && m_creature->isInFrontInMap(target, 8.f, (PI / 180) * 90) && m_creature->CanReachWithMeleeAttack(target))
-                    m_creature->CastSpell(target, SPELL_MORTAL_WOUND, true);                        
+                    targetList.push_back(target);
             }
         }
+
+        for (Unit* target : targetList)
+            m_creature->CastSpell(target, SPELL_MORTAL_WOUND, true);
     }
 
     void UpdateAI(const uint32 diff)
@@ -153,6 +160,11 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
         {
             CastCleaveMortalWound();
             MortalWound_Timer = urand(8000,12000);
+
+            // Recheck the target after having cast on multiple people.
+            if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+                return;
+
         }else MortalWound_Timer -= diff;
 
         if(m_creature->GetHealthPercent() <= m_uiHealthSpawnAdd && !m_b1add)

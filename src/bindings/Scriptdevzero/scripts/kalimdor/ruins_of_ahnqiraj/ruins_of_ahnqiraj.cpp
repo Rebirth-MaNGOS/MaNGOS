@@ -166,6 +166,14 @@ struct MANGOS_DLL_DECL mob_anubisath_guardianAI : public ScriptedAI
             else
             {
                 CastMeteorOnRandomTarget();
+
+                // When we cast on a random target we change the
+                // target of the mob. Recheck targets to avoid crash.
+                if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+                {
+                    m_uiSpell1Timer = 15000;
+                    return;
+                }
             }
             
             m_uiSpell1Timer = 15000;
