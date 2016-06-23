@@ -155,19 +155,19 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
             MortalWound_Timer = urand(8000,12000);
         }else MortalWound_Timer -= diff;
 
-        if(m_creature->GetHealthPercent() <= m_uiHealthSpawnAdd && !m_b1add)
+        if(m_creature->GetHealthPercent() <= m_uiHealthSpawnAdd && !m_b1add && m_creature->GetHealthPercent() > 6)
         {
             SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
             m_b1add = true;            
         }
             
-        if(m_creature->GetHealthPercent() <= (m_uiHealthSpawnAdd - 1) && !m_b2add)
+        if(m_creature->GetHealthPercent() <= (m_uiHealthSpawnAdd - 1) && !m_b2add && m_creature->GetHealthPercent() > 6)
         {
             SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
             m_b2add = true;            
         }
         
-        if(m_creature->GetHealthPercent() <= (m_uiHealthSpawnAdd - 2) && !m_b3add)
+        if(m_creature->GetHealthPercent() <= (m_uiHealthSpawnAdd - 2) && !m_b3add && m_creature->GetHealthPercent() > 6)
         {
             SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
             m_b3add = true;         
