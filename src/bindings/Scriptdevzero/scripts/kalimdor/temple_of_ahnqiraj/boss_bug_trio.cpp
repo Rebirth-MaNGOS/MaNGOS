@@ -238,7 +238,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
     {
         Charge_Timer = urand(15000, 27000);
         KnockBack_Timer = urand(8000, 20000);
-        Enrage_Timer = 120000;
+        Enrage_Timer = 1200000;
 
         Enraged = false;
         
