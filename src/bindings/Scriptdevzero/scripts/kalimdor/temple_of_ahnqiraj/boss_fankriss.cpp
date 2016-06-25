@@ -59,6 +59,8 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
     uint32 MortalWound_Timer;
     uint32 SpawnHatchlings_Timer;
     uint32 SpawnSpawns_Timer;
+    uint32 m_secondSpawn;
+    uint32 m_extraSpawns;
     int Rand;
     int RandX;
     int RandY;
@@ -81,6 +83,9 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
         m_TPTarget = ObjectGuid();
         m_uiRootTimer = 200;
         m_uiHealthSpawnAdd = urand(88,96);
+
+        m_secondSpawn = 0;
+        m_extraSpawns = 0;
         
         m_b1add = false;
         m_b2add = false;
@@ -155,27 +160,32 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
             MortalWound_Timer = urand(8000,12000);
         }else MortalWound_Timer -= diff;
 
-        if(m_creature->GetHealthPercent() <= m_uiHealthSpawnAdd && !m_b1add && m_creature->GetHealthPercent() > 6)
+        if(m_creature->GetHealthPercent() <= m_uiHealthSpawnAdd && m_creature->GetHealthPercent() > 6)
         {
             SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
-            m_b1add = true;            
+            m_uiHealthSpawnAdd = m_creature->GetHealthPercent() - urand(15,20);
+
+            m_extraSpawns = urand(0,2);
+
+            if(m_extraSpawns > 0)
+                m_secondSpawn = 5000;
         }
-            
-        if(m_creature->GetHealthPercent() <= (m_uiHealthSpawnAdd - 1) && !m_b2add && m_creature->GetHealthPercent() > 6)
+
+        if(m_secondSpawn)
         {
-            SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
-            m_b2add = true;            
-        }
-        
-        if(m_creature->GetHealthPercent() <= (m_uiHealthSpawnAdd - 2) && !m_b3add && m_creature->GetHealthPercent() > 6)
-        {
-            SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
-            m_b3add = true;         
-                        
-            m_uiHealthSpawnAdd = m_creature->GetHealthPercent() - urand(5,15);
-            m_b1add = false;            
-            m_b2add = false;
-            m_b3add = false;
+            if(m_secondSpawn <= diff)
+            {
+                SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
+
+                --m_extraSpawns;
+
+                if(m_extraSpawns != 0)
+                    m_secondSpawn = 5000;
+                else
+                    m_secondSpawn = 0;
+            }
+            else
+                m_secondSpawn -= diff;
         }
                  
         // Teleporting Random Target to one of the three tunnels and spawn 4 hatchlings near the gamer.
