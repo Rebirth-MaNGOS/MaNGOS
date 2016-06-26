@@ -400,6 +400,9 @@ bool GOUse_go_ossirian_crystal(Player* pPlayer, GameObject* pGo)
     if (!pPlayer)
         return false;
 
+    if (pGo->HasFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE + GO_FLAG_INTERACT_COND))
+            return true;
+
     pGo->SummonCreature(7080, 
             pGo->GetPositionX(),
             pGo->GetPositionY(),
@@ -448,7 +451,7 @@ bool GOUse_go_ossirian_crystal(Player* pPlayer, GameObject* pGo)
        }
    }
 
-    //pGo->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE + GO_FLAG_INTERACT_COND); // clicked crystal become unclickable
+    pGo->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE + GO_FLAG_INTERACT_COND); // clicked crystal become unclickable
     pGo->SetGoState(GO_STATE_ACTIVE);
     pGo->SetRespawnTime(5); // despawn after 5 secs
     
