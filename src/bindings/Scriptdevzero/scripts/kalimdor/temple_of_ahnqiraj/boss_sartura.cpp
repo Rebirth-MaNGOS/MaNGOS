@@ -130,107 +130,73 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
     // Sätt random,1 target utan att ge threat på 5 sek och sedan till top aggro target
     void UpdateAI(const uint32 uiDiff)
     {
-        if(!m_bAggroReset)
+        if (!m_bAggroReset)
         {
             if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
                 return;
         }
         
-        if(m_creature->HasAura(SPELL_WHIRLWIND))
+        if (m_creature->HasAura(SPELL_WHIRLWIND))
         {
-            m_creature->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, true);                
+            m_creature->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, true);    
+
+            if (!m_uiWhirlWindTimer)
+                m_uiWhirlWindTimer = 30000;
+      
             m_bIsWhirlWind = true;
+
+            if (m_targetSwitch)
+            {
+                if(m_targetSwitch <= uiDiff)
+                {
+                    DoResetThreat();
+                    if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                        m_creature->AddThreat(pTarget, 1000.f);
+
+                    m_targetSwitch = 3000;
+                }
+                else
+                    m_targetSwitch -= uiDiff;
+            }
         }
         else
         {
-            m_creature->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, false);
-            m_bIsWhirlWind = false;
-        }
-                
-        if (m_bIsWhirlWind)
-        {
-            // While whirlwind, switch to random targets often
-            if (m_uiWhirlWindRandomTimer < uiDiff)
+            if (m_targetSwitch)
             {
-                DoResetThreat();
-                if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
-                    m_creature->AddThreat(pTarget, 1000.f);
-                m_uiWhirlWindRandomTimer = urand(3000, 7000);
-            }
-            else
-                m_uiWhirlWindRandomTimer -= uiDiff;
-
-            // End Whirlwind Phase
-            if (m_uiWhirlWindEndTimer < uiDiff)
-                DoResetThreat();
-            else
-                m_uiWhirlWindEndTimer -= uiDiff;
-        }
-        else // if (!m_bIsWhirlWind)
-        {
-            // Enter Whirlwind Phase
-            if (m_uiWhirlWindTimer < uiDiff)
-            {                
-                m_creature->CastSpell(m_creature, SPELL_WHIRLWIND, true);
-                
-                DoResetThreat();
-                if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
-                    m_creature->AddThreat(pTarget, 1000.f);
-                m_uiWhirlWindEndTimer = 15000;
-                m_uiWhirlWindTimer = m_uiWhirlWindEndTimer + urand(8000, 12000);
-            }
-            else
-                m_uiWhirlWindTimer -= uiDiff;
-
-            // Aquire a new target sometimes
-            if(m_uiAggroResetTimer)
-            {
-                if (m_uiAggroResetTimer < uiDiff)
+                if(m_targetSwitch <= uiDiff)
                 {
-                    m_bAggroReset = true;
-                    m_uiAggroResetTimer = 0;
-                    m_uiAggroResetEndTimer = 10000;
-                    m_targetSwitch = 5000;
+                    DoResetThreat();
+                    if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
+                        m_creature->AddThreat(pTarget, 1000.f);
+
+                    m_targetSwitch = urand(8000, 13000);
                 }
                 else
-                    m_uiAggroResetTimer -= uiDiff;
+                    m_targetSwitch -= uiDiff;
             }
-            
+
+            m_creature->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, false);
+
+            if (m_uiWhirlWindTimer)
+            {
+                if (m_uiWhirlWindTimer <= uiDiff)
+                {
+                    m_creature->CastSpell(m_creature, SPELL_WHIRLWIND, true);
+                    m_uiWhirlWindTimer = 0;
+                }
+                else
+                    m_uiWhirlWindTimer -= uiDiff;
+            }
+
             if (m_uiSunderTimer < uiDiff)
             {
                 m_creature->CastSpell(m_creature->getVictim(), SPELL_SUNDERING_CLEAVE, false);
-                m_uiSunderTimer = 5000;
+                m_uiSunderTimer = 2000;
             }
             else
                 m_uiSunderTimer -= uiDiff;
 
-            if (m_bAggroReset)
-            {
-                if (m_uiAggroResetEndTimer < uiDiff)
-                {
-                    m_bAggroReset = false;
-                    m_uiAggroResetEndTimer = 0;
-                    if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_TOPAGGRO, 0))
-                        m_creature->AI()->AttackStart(pTarget);
-                    m_uiAggroResetTimer = urand(10000, 15000);
-                }
-                else
-                {
-                    m_uiAggroResetEndTimer -= uiDiff;
-
-                    if(m_targetSwitch)
-                    {
-                        if(m_targetSwitch <= uiDiff)
-                        {
-                            if(Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1))
-                                m_creature->AI()->AttackStart(pTarget);
-                            m_targetSwitch = 5000;
-                        }
-                        else
-                            m_targetSwitch -= uiDiff;
-                    }
-                }
-            }
+            DoMeleeAttackIfReady();
         }
 
         // If she is 20% enrage
@@ -251,10 +217,6 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
             else
                 m_uiEnrageHardTimer -= uiDiff;
         }
-
-        // No melee damage while in whirlwind
-        if (!m_bIsWhirlWind)
-            DoMeleeAttackIfReady();
     }
 };
 
@@ -361,7 +323,7 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
             // Aquire a new target sometimes
             if(m_uiAggroResetTimer)
             {
-                if (m_uiAggroResetTimer < uiDiff)
+                if (m_uiAggroResetTimer <= uiDiff)
                 {
                     m_bAggroReset = true;
                     m_uiAggroResetTimer = 0;
