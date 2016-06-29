@@ -7058,6 +7058,7 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
                 case 23427:
                 case 23436:
                 case 23414:
+                case 25991:
                     break;
                 default:
                     if (!target->IsWithinLOSInMap(caster))
