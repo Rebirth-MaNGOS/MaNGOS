@@ -60,12 +60,12 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
     uint32 SpawnHatchlings_Timer;
     uint32 SpawnSpawns_Timer;
     uint32 m_secondSpawn;
-    uint32 m_extraSpawns;
+    int32 m_extraSpawns;
     int Rand;
     int RandX;
     int RandY;
     
-    uint32 m_uiHealthSpawnAdd;
+    int32 m_uiHealthSpawnAdd;
     bool m_b1add;
     bool m_b2add;
     bool m_b3add;
@@ -179,7 +179,7 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
 
                 --m_extraSpawns;
 
-                if(m_extraSpawns != 0)
+                if(m_extraSpawns > 0)
                     m_secondSpawn = 5000;
                 else
                     m_secondSpawn = 0;
