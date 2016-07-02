@@ -561,6 +561,92 @@ CreatureAI* GetAI_mob_qiraji_mindslayer(Creature* pCreature)
     return new mob_qiraji_mindslayerAI(pCreature);
 }
 
+/*######
+## mob_qiraji_mindslayer
+######*/
+
+enum
+{
+    SPELL_WHIRLWIND         = 26038,
+    SPELL_FRENZY            = 26041,
+    SPELL_KNOCKBACK         = 10101,
+    SPELL_SLAYER_CLEAVE     = 25174
+};
+
+struct MANGOS_DLL_DECL mob_qiraji_slayerAI : public ScriptedAI
+{
+    mob_qiraji_slayerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiWhirlwindTimer;
+    uint32 m_uiFrenzyTimer;
+    uint32 m_uiKnockbackTimer;
+    uint32 m_uiCleaveTimer;
+
+    void Reset()
+    {
+        m_uiWhirlwindTimer = urand(15000, 20000);
+        m_uiFrenzyTimer = urand(10000, 12000);
+        m_uiKnockbackTimer = urand(20000, 25000);
+        m_uiCleaveTimer = urand(3000, 5000);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if (m_creature->HasAura(SPELL_WHIRLWIND))
+            return;
+
+        // Whirlwind
+        if (m_uiWhirlwindTimer < uiDiff)
+        {
+            DoCast(m_creature, SPELL_WHIRLWIND, true);
+            m_uiWhirlwindTimer = urand(15000, 20000);
+        }
+        else
+            m_uiWhirlwindTimer -= uiDiff;
+
+        // Frenzy
+        if (m_uiFrenzyTimer < uiDiff)
+        {
+            DoCast(m_creature, SPELL_FRENZY, true);
+            m_uiFrenzyTimer = urand(8000, 10000);
+        }
+        else
+            m_uiFrenzyTimer -= uiDiff;
+
+        // Knockback
+        if (m_uiKnockbackTimer < uiDiff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_KNOCKBACK, false);
+            m_uiKnockbackTimer = urand(15000, 20000);
+        }
+        else
+            m_uiKnockbackTimer -= uiDiff;
+
+        // Cleave
+        if (m_uiCleaveTimer < uiDiff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_CLEAVE, false);
+            m_uiCleaveTimer = urand(3000, 5000);
+        }
+        else
+            m_uiCleaveTimer -= uiDiff;
+
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_qiraji_slayer(Creature* pCreature)
+{
+    return new mob_qiraji_slayerAI(pCreature);
+}
+
 void AddSC_temple_of_ahnqiraj()
 {
     Script* pNewscript;
@@ -583,5 +669,10 @@ void AddSC_temple_of_ahnqiraj()
     pNewscript = new Script;
     pNewscript->Name = "mob_qiraji_mindslayer";
     pNewscript->GetAI = &GetAI_mob_qiraji_mindslayer;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "mob_qiraji_slayer";
+    pNewscript->GetAI = &GetAI_mob_qiraji_slayer;
     pNewscript->RegisterSelf();
 }
