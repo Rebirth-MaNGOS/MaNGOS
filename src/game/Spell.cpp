@@ -7047,6 +7047,11 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
                 {
                 case 19703:			// Lucifron's Curse
                 case 19702:			// Impending Doom
+                case 25177:         // Ossirian's Weakness spell (fire)
+                case 25178:         // Ossirian's Weakness spell (frost)
+                case 25180:         // Ossirian's Weakness spell (nature)
+                case 25181:         // Ossirian's Weakness spell (arcane
+                case 25183:         // Ossirian's Weakness spell (shadow)
                 case 28599:			// Shadowbolt Volley
                 case 22682:			// Shadow Flame debuff
                 case 23410:			// Nefarian's class calls.
@@ -7058,7 +7063,7 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
                 case 23427:
                 case 23436:
                 case 23414:
-                case 25991:
+                case 25991:         // Viscidus poison bolt volley
                     break;
                 default:
                     if (!target->IsWithinLOSInMap(caster))
