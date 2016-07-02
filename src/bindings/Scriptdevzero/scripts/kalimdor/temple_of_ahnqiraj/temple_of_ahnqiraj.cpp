@@ -562,7 +562,7 @@ CreatureAI* GetAI_mob_qiraji_mindslayer(Creature* pCreature)
 }
 
 /*######
-## mob_qiraji_mindslayer
+## mob_qiraji_slayer
 ######*/
 
 enum
@@ -647,6 +647,83 @@ CreatureAI* GetAI_mob_qiraji_slayer(Creature* pCreature)
     return new mob_qiraji_slayerAI(pCreature);
 }
 
+/*######
+## mob_qiraji_champion
+######*/
+
+enum
+{
+    SPELL_VENGEANCE             = 25164,
+    SPELL_FRIGHTENING_SHOUT     = 19134,
+    SPELL_CHAMPION_KNOCKBACK    = 11130
+};
+
+struct MANGOS_DLL_DECL mob_qiraji_championAI : public ScriptedAI
+{
+    mob_qiraji_championAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiWhirlwindTimer;
+    uint32 m_uiFrighteningShoutTimer;
+    uint32 m_uiKnockbackTimer;
+    uint32 m_uiCleaveTimer;
+
+    void Reset()
+    {
+        m_uiWhirlwindTimer = urand(15000, 20000);
+        m_uiFrighteningShoutTimer = urand(14000, 18000);
+        m_uiKnockbackTimer = urand(20000, 25000);
+        m_uiCleaveTimer = urand(3000, 5000);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // Frightening Shout
+        if (m_uiFrighteningShoutTimer < uiDiff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_FRIGHTENING_SHOUT, true);
+            m_uiFrighteningShoutTimer = urand(14000, 18000);
+        }
+        else
+            m_uiFrighteningShoutTimer -= uiDiff;
+
+        // Knockback
+        if (m_uiKnockbackTimer < uiDiff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_CHAMPION_KNOCKBACK, false);
+            m_uiKnockbackTimer = urand(11000, 14000);
+        }
+        else
+            m_uiKnockbackTimer -= uiDiff;
+
+        // Cleave
+        if (m_uiCleaveTimer < uiDiff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_CLEAVE, false);
+            m_uiCleaveTimer = urand(3000, 5000);
+        }
+        else
+            m_uiCleaveTimer -= uiDiff;
+
+        if (m_creature->isAlive() && !m_creature->HasAura(SPELL_VENGEANCE) && m_creature->GetHealthPercent() < 20.0f)
+        {
+            DoCast(m_creature, SPELL_VENGEANCE, true);
+        }
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_qiraji_champion(Creature* pCreature)
+{
+    return new mob_qiraji_championAI(pCreature);
+}
+
 void AddSC_temple_of_ahnqiraj()
 {
     Script* pNewscript;
@@ -674,5 +751,10 @@ void AddSC_temple_of_ahnqiraj()
     pNewscript = new Script;
     pNewscript->Name = "mob_qiraji_slayer";
     pNewscript->GetAI = &GetAI_mob_qiraji_slayer;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "mob_qiraji_champion";
+    pNewscript->GetAI = &GetAI_mob_qiraji_champion;
     pNewscript->RegisterSelf();
 }
