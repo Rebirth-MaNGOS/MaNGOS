@@ -472,6 +472,95 @@ CreatureAI* GetAI_mob_vekniss_stinger(Creature* pCreature)
     return new mob_vekniss_stingerAI(pCreature);
 }
 
+/*######
+## mob_qiraji_mindslayer
+######*/
+
+enum
+{
+    SPELL_MANA_BURN             = 29310,
+    SPELL_MANA_BURN_ON_DEATH    = 26049,
+    SPELL_MIND_BLAST            = 26048,
+    SPELL_MIND_FLAY             = 26044,
+    SPELL_MIND_CONTROL          = 26079
+};
+
+struct MANGOS_DLL_DECL mob_qiraji_mindslayerAI : public ScriptedAI
+{
+    mob_qiraji_mindslayerAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiManaBurnTimer;
+    uint32 m_uiMindBlastTimer;
+    uint32 m_uiMindFlayTimer;
+    uint32 m_uiMindControlTimer;
+
+    void Reset()
+    {
+        m_uiManaBurnTimer = urand(8000, 15000);
+        m_uiMindBlastTimer = urand(5000, 10000);
+        m_uiMindFlayTimer = urand(15000, 20000);
+        m_uiMindControlTimer = urand(15000, 18000);
+    }
+
+    void JustDied(Unit* /*pKiller*/)
+    {
+        DoCast(m_creature, SPELL_MANA_BURN_ON_DEATH, true);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // Mana Burn
+        if (m_uiManaBurnTimer < uiDiff)
+        {
+            DoCast(m_creature, SPELL_MANA_BURN, true);
+            m_uiManaBurnTimer = urand(13000, 16000);
+        }
+        else
+            m_uiManaBurnTimer -= uiDiff;
+
+        // Mind Blast
+        if (m_uiMindBlastTimer < uiDiff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_MIND_BLAST, true);
+            m_uiMindBlastTimer = urand(4000, 6000);
+        }
+        else
+            m_uiMindBlastTimer -= uiDiff;
+
+        // Mind Flay
+        if (m_uiMindFlayTimer < uiDiff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_MIND_FLAY, true);
+            m_uiMindFlayTimer = urand(12000, 17000);
+        }
+        else
+            m_uiMindFlayTimer -= uiDiff;
+
+        // Mind Control
+        if (m_uiMindControlTimer < uiDiff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_MIND_CONTROL, true);
+            m_uiMindControlTimer = urand(15000, 18000);
+        }
+        else
+            m_uiMindControlTimer -= uiDiff;
+
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_mob_qiraji_mindslayer(Creature* pCreature)
+{
+    return new mob_qiraji_mindslayerAI(pCreature);
+}
+
 void AddSC_temple_of_ahnqiraj()
 {
     Script* pNewscript;
@@ -489,5 +578,10 @@ void AddSC_temple_of_ahnqiraj()
     pNewscript = new Script;
     pNewscript->Name = "mob_vekniss_stinger";
     pNewscript->GetAI = &GetAI_mob_vekniss_stinger;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "mob_qiraji_mindslayer";
+    pNewscript->GetAI = &GetAI_mob_qiraji_mindslayer;
     pNewscript->RegisterSelf();
 }
