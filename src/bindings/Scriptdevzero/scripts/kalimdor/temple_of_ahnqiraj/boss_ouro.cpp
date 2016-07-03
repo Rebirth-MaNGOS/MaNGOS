@@ -518,11 +518,11 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             {
                 Unit *target = currentReference->getTarget();
                 if (target && target->GetTypeId() == TYPEID_PLAYER && target->GetDistance(m_creature) < 6.0f)                    
-                    targetList.push_back(target)
+                    targetList.push_back(target);
             }
 
             for (Unit* target : targetList)
-                    m_creature->CastSpell(target, SPELL_GROUND_RUPTURE, true);                        
+                m_creature->CastSpell(target, SPELL_GROUND_RUPTURE, true);                        
         }
     }
 
