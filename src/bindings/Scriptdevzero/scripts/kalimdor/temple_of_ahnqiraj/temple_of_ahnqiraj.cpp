@@ -724,6 +724,43 @@ CreatureAI* GetAI_mob_qiraji_champion(Creature* pCreature)
     return new mob_qiraji_championAI(pCreature);
 }
 
+/*######
+## npc_andorgos
+######*/
+
+bool GossipHello_npc_andorgos(Player* pPlayer, Creature* pCreature)
+{
+    if (pPlayer && pCreature)
+    {
+        pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
+
+        instance_temple_of_ahnqiraj* pInstance = dynamic_cast<instance_temple_of_ahnqiraj*>(pCreature->GetInstanceData());
+
+        if (pInstance)
+        {
+            if (pInstance->GetData(TYPE_TWINS) == DONE)
+            {
+                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport me to the lair of the Twin Emperors, please.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+            }
+        }
+
+        pPlayer->SEND_GOSSIP_MENU(66, pCreature->GetObjectGuid());
+    }
+    return true;
+}
+
+bool GossipSelect_npc_andorgos(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+{
+    if (uiAction == GOSSIP_ACTION_INFO_DEF + 1)
+    {
+        if (pPlayer)
+        {
+            pPlayer->NearTeleportTo(-8954.5f, 1233.8f, -112.0f, 1.74f);
+        }
+    }
+    return true;
+}
+
 void AddSC_temple_of_ahnqiraj()
 {
     Script* pNewscript;
@@ -756,5 +793,11 @@ void AddSC_temple_of_ahnqiraj()
     pNewscript = new Script;
     pNewscript->Name = "mob_qiraji_champion";
     pNewscript->GetAI = &GetAI_mob_qiraji_champion;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_andorgos";
+    pNewscript->pGossipHello = &GossipHello_npc_andorgos;
+    pNewscript->pGossipSelect = &GossipSelect_npc_andorgos;
     pNewscript->RegisterSelf();
 }
