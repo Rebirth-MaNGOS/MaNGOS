@@ -123,6 +123,10 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         
         // respawn the dummy
         GetGround(0);
+        
+        // Make sure Ouro resest and doesn't lock.
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_OURO, FAIL);       
     }
     
     void GetGround(int action)
@@ -151,8 +155,6 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
     void JustReachedHome() 
     {
-        if (m_pInstance)
-            m_pInstance->SetData(TYPE_OURO, FAIL);       
     }
 
     void JustDied(Unit* /*pKiller*/) 
