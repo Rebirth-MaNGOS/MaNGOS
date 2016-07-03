@@ -175,7 +175,7 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
         if(m_creature->GetHealthPercent() <= m_uiHealthSpawnAdd && m_creature->GetHealthPercent() > 6)
         {
             SummonSpawn(m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0));
-            m_uiHealthSpawnAdd = m_creature->GetHealthPercent() - urand(15,20);
+            m_uiHealthSpawnAdd = m_creature->GetHealthPercent() - urand(10,15);
 
             m_extraSpawns = urand(0,2);
 
