@@ -810,15 +810,15 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
 
                     m_creature->InterruptNonMeleeSpells(false);
 					Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-					// Cast the rotation spell
-                    if (DoCastSpellIfCan(m_creature, SPELL_ROTATE_TRIGGER) == CAST_OK)
-                    {
-                        // Remove the target focus but allow the boss to face the current victim
-                        m_creature->SetTargetGuid(ObjectGuid());
-						if(pTarget)
-							m_creature->SetFacingToObject(pTarget);
 
-					}
+                    // Remove the target focus but allow the boss to face the current victim
+                    if(pTarget)
+                        m_creature->SetFacingToObject(pTarget);
+                    m_creature->SetTargetGuid(ObjectGuid());
+
+					// Cast the rotation spell
+                    m_creature->CastSpell(m_creature, SPELL_ROTATE_TRIGGER, true);
+
                     //// Select random target for dark beam to start on
                     //if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
                     //{
