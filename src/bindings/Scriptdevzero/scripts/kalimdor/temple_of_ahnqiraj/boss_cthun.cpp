@@ -749,9 +749,26 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
                 // m_uiBeamTimer
                 if (m_uiBeamTimer < uiDiff)
                 {
-                    // SPELL_GREEN_BEAM
-                    if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    std::vector<Unit*> targetList;
+                    const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+
+                    // Make sure NOT to cast the spell while iterating the threat list.
+                    // Casting a spell on a new target switches target and will change
+                    // the threat list while it is being iterated, thus causing a crash.
+                    if(!threatList.empty())
                     {
+                        for (HostileReference *currentReference : threatList)
+                        {
+                            Unit *target = currentReference->getTarget();
+                            if (target && target->GetTypeId() == TYPEID_PLAYER)
+                                targetList.push_back(target);
+                        }
+                    }
+
+                    // SPELL_GREEN_BEAM
+                    if (!targetList.empty())
+                    {
+                        Unit* pTarget = targetList[urand(0, targetList.size() - 1)];
                         m_creature->InterruptNonMeleeSpells(false);
                         DoCastSpellIfCan(pTarget, SPELL_GREEN_BEAM);
 
@@ -764,6 +781,7 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
                 }
                 else
                     m_uiBeamTimer -= uiDiff;
+
 
                 // m_uiClawTentacleTimer
                 if (m_uiClawTentacleTimer < uiDiff)
