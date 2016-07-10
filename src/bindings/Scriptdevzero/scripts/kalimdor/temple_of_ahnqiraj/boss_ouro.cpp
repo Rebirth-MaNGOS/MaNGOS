@@ -241,6 +241,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                 // pick one and never change
                 if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
                     pDirtMound->AddThreat(pTarget, 100000.f);
+                pDirtMound->SetInCombatWithZone();
             }
         }
     }
@@ -301,6 +302,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                 if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
                     pScarab->AI()->AttackStart(pTarget);
                 pScarab->SetRespawnDelay(-10);				// to stop them from randomly respawning
+                pScarab->SetInCombatWithZone();
             }
         }	
     }
@@ -359,7 +361,18 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     }
 
     void DoNormalState(uint32 uiDiff)
-    {                
+    {                  
+        // Pulse to set everyone in combat to prevent alt f4 or ressing and not getting in combat
+        if (m_uiSetCombatTimer <= uiDiff)
+        {
+            if(m_creature->isInCombat())
+                m_creature->SetInCombatWithZone();
+
+            m_uiSetCombatTimer = 5000;
+        }
+        else
+            m_uiSetCombatTimer -= uiDiff;
+        
         if(!m_bEnraged)
         {
             if(m_bForceSubmerge)
@@ -539,20 +552,6 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
             return;
         }
-        
-        if (m_pInstance && m_pInstance->GetData(TYPE_OURO) == IN_PROGRESS)
-        {
-            // Pulse to set everyone in combat to prevent alt f4 or ressing and not getting in combat
-            if (m_uiSetCombatTimer <= uiDiff)
-            {
-                if(m_creature->isInCombat())
-                    m_creature->SetInCombatWithZone();
-
-                m_uiSetCombatTimer = 5000;
-            }
-            else
-                m_uiSetCombatTimer -= uiDiff;
-        }
 
         if (m_bossState == BOSS_STATE_SUBMERGE)
         {
@@ -562,7 +561,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-                
+                   
         switch (m_bossState)
         {
             case BOSS_STATE_NORMAL:
