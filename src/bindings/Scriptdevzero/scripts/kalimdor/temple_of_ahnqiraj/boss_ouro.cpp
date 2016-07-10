@@ -83,6 +83,8 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     uint32 m_uiScarabTimer;
     
     uint8  m_bossState;
+    
+    uint32 m_uiSetCombatTimer;
 
     bool m_bForceSubmerge;
     bool m_bEnraged;
@@ -93,6 +95,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
     void Reset()
     {
+        m_uiSetCombatTimer = 5000;
         m_uiMoundTimer = 20000;
         m_uiScarabTimer = urand(30000, 45000);
         m_uiForceSubmergeTimer = 10000;
@@ -356,7 +359,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
     }
 
     void DoNormalState(uint32 uiDiff)
-    {
+    {                
         if(!m_bEnraged)
         {
             if(m_bForceSubmerge)
@@ -536,6 +539,20 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
             return;
         }
+        
+        if (m_pInstance && m_pInstance->GetData(TYPE_OURO) == IN_PROGRESS)
+        {
+            // Pulse to set everyone in combat to prevent alt f4 or ressing and not getting in combat
+            if (m_uiSetCombatTimer <= uiDiff)
+            {
+                if(m_creature->isInCombat())
+                    m_creature->SetInCombatWithZone();
+
+                m_uiSetCombatTimer = 5000;
+            }
+            else
+                m_uiSetCombatTimer -= uiDiff;
+        }
 
         if (m_bossState == BOSS_STATE_SUBMERGE)
         {
@@ -545,7 +562,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
+                
         switch (m_bossState)
         {
             case BOSS_STATE_NORMAL:
