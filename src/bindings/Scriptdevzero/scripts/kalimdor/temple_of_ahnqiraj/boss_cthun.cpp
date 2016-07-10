@@ -1037,10 +1037,28 @@ struct MANGOS_DLL_DECL eye_tentacleAI : public ScriptedAI
         // MindflayTimer
         if (m_uiMindflayTimer < uiDiff)
         {
-            Unit* target = NULL;
-            target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-            if (target && !target->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
-                DoCastSpellIfCan(target, SPELL_MIND_FLAY);
+            std::vector<Unit*> targetList;
+            const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+
+            // Make sure NOT to cast the spell while iterating the threat list.
+            // Casting a spell on a new target switches target and will change
+            // the threat list while it is being iterated, thus causing a crash.
+            if(!threatList.empty())
+            {
+                for (HostileReference *currentReference : threatList)
+                {
+                    Unit *target = currentReference->getTarget();
+                    if (target && target->GetTypeId() == TYPEID_PLAYER)
+                        targetList.push_back(target);
+                }
+            }
+
+            if (!targetList.empty())
+            {
+                Unit* pTarget = targetList[urand(0, targetList.size() - 1)];
+                if (!pTarget->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
+                    DoCastSpellIfCan(pTarget, SPELL_MIND_FLAY);
+            }
 
             //Mindflay every 10 seconds
             m_uiMindflayTimer = 10100;
