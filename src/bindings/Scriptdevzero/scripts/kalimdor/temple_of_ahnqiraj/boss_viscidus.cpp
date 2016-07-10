@@ -119,7 +119,8 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
         m_lToxinClouds.clear();
         m_creature->SetObjectScale(1.2f);		// has to reset scale here
         m_creature->UpdateModelData();
-        m_creature->CastSpell(m_creature, SPELL_MEMBRANE_VISCIDUS, true); // add dmg reduction
+        if(!m_creature->HasAura(SPELL_MEMBRANE_VISCIDUS))         
+            m_creature->CastSpell(m_creature, SPELL_MEMBRANE_VISCIDUS, true); // add dmg reduction
         
         if (m_pInstance)
             m_pInstance->SetData(TYPE_VISCIDUS, FAIL);
@@ -161,8 +162,9 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
             m_pInstance->SetData(TYPE_VISCIDUS, IN_PROGRESS);
     }
 
-    void JustDied(Unit* /*pKiller*/)							// Remove all clouds when he dies
+    void JustDied(Unit* pKiller)							// Remove all clouds when he dies
     {
+        m_creature->SetLootRecipient(pKiller);     
         RemoveToxinClouds();
         if (m_pInstance)
             m_pInstance->SetData(TYPE_VISCIDUS, DONE);
@@ -442,6 +444,8 @@ struct MANGOS_DLL_DECL boss_viscidusAI : public ScriptedAI
                 m_creature->SetObjectScale(m_creature->GetHealthPercent() * 0.0084 + 0.358);			// set Viscidus' size depending on the blobs that are alive 1/ too small?   
                 m_creature->UpdateModelData();
                 m_creature->RemoveAllAuras(AuraRemoveMode::AURA_REMOVE_BY_DEFAULT);
+                if(!m_creature->HasAura(SPELL_MEMBRANE_VISCIDUS))                    
+                    m_creature->CastSpell(m_creature, SPELL_MEMBRANE_VISCIDUS, true); // reapply dmg reduction
             }
             else
                 m_uiSetVisibleTimer -= uiDiff;

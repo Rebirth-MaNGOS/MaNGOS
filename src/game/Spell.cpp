@@ -1981,6 +1981,15 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 Cell::VisitAllObjects(m_caster, searcher, max_range);
             }
 
+            // The green beam at C'Thun should not target totems.
+            if (m_spellInfo->Id == 26134)
+            {
+                std::remove_if(tempTargetUnitMap.begin(), tempTargetUnitMap.end(), [&](Unit* target)
+                {
+                    return dynamic_cast<Totem*>(target) != nullptr;
+                });
+            }
+
             tempTargetUnitMap.sort(TargetDistanceOrderNear(pUnitTarget));
 
             if(tempTargetUnitMap.empty())

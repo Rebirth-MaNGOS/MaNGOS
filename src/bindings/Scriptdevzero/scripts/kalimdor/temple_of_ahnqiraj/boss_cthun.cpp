@@ -285,8 +285,8 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
             // Check for valid player
             Player* pPlayer = m_creature->GetMap()->GetPlayer(itr->first);
 
-            // Only units out of stomach
-            if (pPlayer && itr->second == false)
+            // Only units out of stomach and that are alive.
+            if (pPlayer && itr->second == false && pPlayer->isAlive())
                 vTempTargets.push_back(pPlayer);
         }
 
@@ -749,9 +749,26 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
                 // m_uiBeamTimer
                 if (m_uiBeamTimer < uiDiff)
                 {
-                    // SPELL_GREEN_BEAM
-                    if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                    std::vector<Unit*> targetList;
+                    const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+
+                    // Make sure NOT to cast the spell while iterating the threat list.
+                    // Casting a spell on a new target switches target and will change
+                    // the threat list while it is being iterated, thus causing a crash.
+                    if(!threatList.empty())
                     {
+                        for (HostileReference *currentReference : threatList)
+                        {
+                            Unit *target = currentReference->getTarget();
+                            if (target && target->GetTypeId() == TYPEID_PLAYER)
+                                targetList.push_back(target);
+                        }
+                    }
+
+                    // SPELL_GREEN_BEAM
+                    if (!targetList.empty())
+                    {
+                        Unit* pTarget = targetList[urand(0, targetList.size() - 1)];
                         m_creature->InterruptNonMeleeSpells(false);
                         DoCastSpellIfCan(pTarget, SPELL_GREEN_BEAM);
 
@@ -764,6 +781,7 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
                 }
                 else
                     m_uiBeamTimer -= uiDiff;
+
 
                 // m_uiClawTentacleTimer
                 if (m_uiClawTentacleTimer < uiDiff)
@@ -810,15 +828,15 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
 
                     m_creature->InterruptNonMeleeSpells(false);
 					Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-					// Cast the rotation spell
-                    if (DoCastSpellIfCan(m_creature, SPELL_ROTATE_TRIGGER) == CAST_OK)
-                    {
-                        // Remove the target focus but allow the boss to face the current victim
-                        m_creature->SetTargetGuid(ObjectGuid());
-						if(pTarget)
-							m_creature->SetFacingToObject(pTarget);
 
-					}
+                    // Remove the target focus but allow the boss to face the current victim
+                    if(pTarget)
+                        m_creature->SetFacingToObject(pTarget);
+                    m_creature->SetTargetGuid(ObjectGuid());
+
+					// Cast the rotation spell
+                    m_creature->CastSpell(m_creature, SPELL_ROTATE_TRIGGER, true);
+
                     //// Select random target for dark beam to start on
                     //if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
                     //{
@@ -1019,10 +1037,28 @@ struct MANGOS_DLL_DECL eye_tentacleAI : public ScriptedAI
         // MindflayTimer
         if (m_uiMindflayTimer < uiDiff)
         {
-            Unit* target = NULL;
-            target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-            if (target && !target->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
-                DoCastSpellIfCan(target, SPELL_MIND_FLAY);
+            std::vector<Unit*> targetList;
+            const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+
+            // Make sure NOT to cast the spell while iterating the threat list.
+            // Casting a spell on a new target switches target and will change
+            // the threat list while it is being iterated, thus causing a crash.
+            if(!threatList.empty())
+            {
+                for (HostileReference *currentReference : threatList)
+                {
+                    Unit *target = currentReference->getTarget();
+                    if (target && target->GetTypeId() == TYPEID_PLAYER)
+                        targetList.push_back(target);
+                }
+            }
+
+            if (!targetList.empty())
+            {
+                Unit* pTarget = targetList[urand(0, targetList.size() - 1)];
+                if (!pTarget->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
+                    DoCastSpellIfCan(pTarget, SPELL_MIND_FLAY);
+            }
 
             //Mindflay every 10 seconds
             m_uiMindflayTimer = 10100;

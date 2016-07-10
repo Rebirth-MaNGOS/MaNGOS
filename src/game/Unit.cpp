@@ -6061,6 +6061,12 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
     // Done fixed damage bonus auras
     int32 DoneAdvertisedBenefit = SpellBaseDamageBonusDone(GetSpellSchoolMask(spellProto));
 
+    // Judgement of Command needs its bonus doubled since its damage
+    // is halved later.
+    if (spellProto->SpellVisual == 0 && spellProto->SpellIconID == 561)
+        DoneAdvertisedBenefit *= 2;
+
+
     // Pets just add their bonus damage to their spell damage
     // note that their spell damage is just gain of their own auras
     if (GetTypeId() == TYPEID_UNIT && ((Creature*)this)->IsPet())
