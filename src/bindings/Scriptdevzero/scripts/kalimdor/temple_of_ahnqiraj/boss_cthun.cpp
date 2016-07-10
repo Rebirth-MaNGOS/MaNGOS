@@ -285,8 +285,8 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
             // Check for valid player
             Player* pPlayer = m_creature->GetMap()->GetPlayer(itr->first);
 
-            // Only units out of stomach
-            if (pPlayer && itr->second == false)
+            // Only units out of stomach and that are alive.
+            if (pPlayer && itr->second == false && pPlayer->isAlive())
                 vTempTargets.push_back(pPlayer);
         }
 
