@@ -61,25 +61,25 @@ struct MANGOS_DLL_DECL boss_baron_rivendareAI : public ScriptedAI
 
     instance_stratholme* m_pInstance;
 
-    bool m_bAuriusArrived;
-
     uint32 m_uiCleaveTimer;
     uint32 m_uiDeathPactTimer;
     uint32 m_uiMortalStrikeTimer;
     uint32 m_uiShadowBoltTimer;
     uint32 m_uiSummonSkeletonsTimer;
+    
+    uint32 m_uiSumAuriusTimer;
 
     GUIDList m_uiSkeletonGUID;
 
     void Reset()
     {
-        m_bAuriusArrived = false;
-
         m_uiCleaveTimer = urand(6000,8000);
         m_uiDeathPactTimer = 0;
         m_uiMortalStrikeTimer = urand(10000,12000);
         m_uiShadowBoltTimer = urand(2000,4000);
         m_uiSummonSkeletonsTimer = urand(15000,20000);
+        
+        m_uiSumAuriusTimer = 5000;
 
         m_uiSkeletonGUID.clear();
     }
@@ -118,21 +118,29 @@ struct MANGOS_DLL_DECL boss_baron_rivendareAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        DoCastSpellIfCan(m_creature, SPELL_UNHOLY_AURA, CAST_AURA_NOT_PRESENT);
-
-        if (!m_bAuriusArrived && HealthBelowPct(70))
+        if(m_pInstance->m_bSummonAurius == true)
         {
-            if (m_pInstance && m_pInstance->GetData(TYPE_AURIUS) == DONE)
-            { 
-                if (Creature* pAurius = m_creature->getVictim()->SummonCreature(NPC_AURIUS, 4048.37f, -3339.96f, 115.05f,  0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
-                {
+            
+            if (m_uiSumAuriusTimer <= uiDiff)
+            {
+                // Spawn Aurius in the Slaughter House to engage Baron
+                if (Creature* pAurius = m_creature->SummonCreature(NPC_AURIUS, 4032.63f, -3362.61f, 115.05f, 1.64f, TEMPSUMMON_DEAD_DESPAWN, 0))
+                {                        
+                    pAurius->MonsterYell("Rivendare! I come for you!", LANG_UNIVERSAL, nullptr);
                     pAurius->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                    pAurius->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    pAurius->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
                     pAurius->AI()->AttackStart(m_creature);
                 }
+                    
+                m_uiSumAuriusTimer = 0;            
+                m_pInstance->m_bSummonAurius = false;
             }
-
-            m_bAuriusArrived = true;
+            else
+                m_uiSumAuriusTimer -= uiDiff;            
         }
+        
+        DoCastSpellIfCan(m_creature, SPELL_UNHOLY_AURA, CAST_AURA_NOT_PRESENT);
 
         // Cleave
         if (m_uiCleaveTimer <= uiDiff)

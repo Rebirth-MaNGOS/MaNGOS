@@ -49,6 +49,7 @@ instance_stratholme::instance_stratholme(Map* pMap) : ScriptedInstance(pMap),
     m_bBaronRun(false),
     m_bBaronWarn(false),
     m_bZigguratDoor(false),
+    m_bSummonAurius(false),
 
     m_uiAbCount(0),
     m_uiNextPull(0),
@@ -125,6 +126,11 @@ void instance_stratholme::OnCreatureDeath(Creature* pCreature)
             }
             else
                 debug_log("SD0: Instance Stratholme: %lu Black Guard Sentries left to kill.", m_lSentryGUID.size());
+            break;
+        }
+        case NPC_AURIUS:        
+        {
+            SetData(TYPE_AURIUS, FAIL);   
             break;
         }
         case NPC_THUZADIN_ACOLYTE:
@@ -388,18 +394,10 @@ void instance_stratholme::SetData(uint32 uiType, uint32 uiData)
                 case DONE:
                     if (uiData == DONE)
                     {
-                    if (GetData(TYPE_BARON_RUN) == IN_PROGRESS)
-							SetData(TYPE_BARON_RUN, DONE);
-
-                        if (GetData(TYPE_AURIUS) == DONE)
-                        {
-                            PlayersRun(ACTION_AURIUS);
-                            if (Creature* pAurius = GetSingleCreatureFromStorage(NPC_AURIUS))
-                            {
-                                pAurius->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                                pAurius->SetStandState(UNIT_STAND_STATE_DEAD);
-                            }
-                        }
+                        if (GetData(TYPE_BARON_RUN) == IN_PROGRESS)
+                                SetData(TYPE_BARON_RUN, DONE);   
+                        if (GetData(TYPE_AURIUS) == SPECIAL)                        
+                            SetData(TYPE_AURIUS, DONE);  
                     }
 
                     HandleGameObject(GO_ZIGGURAT_DOOR_4, true);
@@ -430,9 +428,46 @@ void instance_stratholme::SetData(uint32 uiType, uint32 uiData)
             break;
         case TYPE_AURIUS:
             m_auiEncounter[12] = uiData;
+            // Baron killed and Aurius is alive: give him his NPC Flags back
+            // So players can complete the quest
+            // Fake his death
+            if (uiData == DONE)
+            {
+                if (Creature* pAurius = GetSingleCreatureFromStorage(NPC_AURIUS))
+                {
+                    if(pAurius && pAurius->isAlive())
+                    {
+                        CreatureCreatePos pos(pAurius->GetMap(), pAurius->GetPositionX(), pAurius->GetPositionY(), pAurius->GetPositionZ(), pAurius->GetOrientation());
+                        pAurius->SetSummonPoint(pos);
+                        pAurius->MonsterSay("Argh!", LANG_UNIVERSAL, nullptr);                        
+                        pAurius->StopMoving();
+                        pAurius->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        pAurius->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                        pAurius->InterruptNonMeleeSpells(true);
+                        pAurius->SetHealth(1);
+                        pAurius->GetMotionMaster()->MovementExpired();
+                        pAurius->GetMotionMaster()->MoveIdle();
+                        pAurius->RemoveAllAurasOnDeath();
+                        pAurius->SetStandState(UNIT_STAND_STATE_DEAD);
+                    }
+                }
+                break;
+            }
+            if (uiData == FAIL)
+            {
+                // Baron encounter failed and Aurius is spawned: kill him
+                if (Creature* pAurius = GetSingleCreatureFromStorage(NPC_AURIUS))
+                {
+                    if (pAurius->isAlive())
+                    {
+                        pAurius->MonsterSay("Argh!", LANG_UNIVERSAL, nullptr);
+                        pAurius->DealDamage(pAurius, pAurius->GetHealth(), nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, nullptr, false);
+                    }
+                }
+                break;
+           }
             break;
     }
-
    
     OUT_SAVE_INST_DATA;
 
@@ -546,7 +581,7 @@ void instance_stratholme::Update(uint32 uiDiff)
         else
             m_uiBaronWarnTimer -= uiDiff;
     }
-
+    
     if (m_bBaronRun)
     {
         if (!m_bTenUp && m_uiBaronRunTimer <= 10*MINUTE*IN_MILLISECONDS)

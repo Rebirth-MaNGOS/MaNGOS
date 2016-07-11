@@ -168,6 +168,7 @@ class MANGOS_DLL_DECL instance_stratholme : public ScriptedInstance
         void OpenSlaugtherSquare();
         void PlayersRun(uint32 uiAction);
 
+        bool m_bSummonAurius;
     protected:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
         std::string strInstData;
@@ -177,13 +178,13 @@ class MANGOS_DLL_DECL instance_stratholme : public ScriptedInstance
         bool m_bAbomPull;
         bool m_bBaronRun;
         bool m_bBaronWarn;
-        bool m_bZigguratDoor;
+        bool m_bZigguratDoor;        
 
         uint32 m_uiAbCount;
         uint32 m_uiNextPull;
         uint32 m_uiAbomPullTimer;
         uint32 m_uiBaronRunTimer;
-        uint32 m_uiBaronWarnTimer;
+        uint32 m_uiBaronWarnTimer;        
         uint32 m_uiZigguratDoorTimer;
 
         ObjectGuid m_auiCrystalSortedGUID[MAX_ZIGGURAT];
