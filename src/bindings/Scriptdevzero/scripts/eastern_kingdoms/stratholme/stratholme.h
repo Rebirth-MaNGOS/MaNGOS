@@ -27,8 +27,7 @@ enum Actions
 {
     ACTION_RUN_START,
     ACTION_RUN_ENCOUNTER,
-    ACTION_RUN_COMPLETE,
-    ACTION_AURIUS
+    ACTION_RUN_COMPLETE
 };
 
 enum Creatures
@@ -54,6 +53,9 @@ enum Creatures
     NPC_CRIMSON_HAMMERSMITH     = 11120,
     NPC_BLACK_GUARD_SWORDSMITH  = 11121,
     NPC_CRIMSON_CONJUROR        = 10419,
+    NPC_CRIMSON_MONK            = 11043,
+    NPC_CRIMSON_SORCERER        = 10422,
+    NPC_CRIMSON_BATTLE_MAGE     = 10425,
     NPC_CRIMSON_INITIATE        = 10420,
     NPC_CRIMSON_GALLANT         = 10424,
     NPC_CRIMSON_GUARDSMAN       = 10418,
@@ -65,7 +67,7 @@ enum Creatures
     NPC_PLAGUED_RAT             = 10441,
     NPC_SKELETAL_GUARDIAN       = 10390,
     NPC_SKELETAL_BERSERKER      = 10391,
-    NPC_UNDEAD_POSTMAN          = 11142,
+    NPC_UNDEAD_POSTMAN          = 11142,    
     NPC_UNDEAD_SCARAB           = 10876,
     NPC_THUZADIN_ACOLYTE        = 10399,
     NPC_VENGEFUL_PHANTOM        = 10387,
@@ -121,7 +123,18 @@ enum ZoneYells
     SAY_RAMMSTEIN_DEATH         = -1329006,
     SAY_ANNOUNCE_ZIGGURAT_1     = -1329007,
     SAY_ANNOUNCE_ZIGGURAT_2     = -1329008,
-    SAY_ANNOUNCE_ZIGGURAT_3     = -1329009
+    SAY_ANNOUNCE_ZIGGURAT_3     = -1329009,
+    
+    // Timmy
+    SAY_SPAWN_TIMMY         = -1329012,
+    
+    // Used in the Scarlet Bastion defense events
+    YELL_BASTION_BARRICADE      = -1329023,
+    YELL_BASTION_STAIRS         = -1329024,
+    YELL_BASTION_ENTRANCE       = -1329025,
+    YELL_BASTION_HALL_LIGHTS    = -1329026,
+    YELL_BASTION_INNER_1        = -1329027,
+    YELL_BASTION_INNER_2        = -1329028,    
 };
 
 struct Locations
@@ -139,7 +152,88 @@ struct MobInfo
     float dist;
 };
 
+struct EventLocation
+{
+    float m_fX, m_fY, m_fZ, m_fO;
+};
 
+static const EventLocation aStratholmeLocation[] =
+{
+    {3725.577f, -3599.484f, 142.367f, 0},                      // Barthilas door run
+    {4068.284f, -3535.678f, 122.771f, 2.50f},               // Barthilas tele
+    {4032.643f, -3378.546f, 119.752f, 4.74f},               // Ramstein summon loc
+    {4032.843f, -3390.246f, 119.732f, 0},                      // Ramstein move loc
+    {3969.357f, -3391.871f, 119.116f, 5.91f},               // Skeletons summon loc
+    {4033.044f, -3431.031f, 119.055f, 0},                      // Skeletons move loc
+    {4032.602f, -3378.506f, 119.752f, 4.74f},               // Guards summon loc
+    {4044.78f,  -3333.68f,  115.53f,  4.15f},               // Ysida summon loc
+    {4041.9f,   -3337.6f,   115.06f,  3.82f}                // Ysida move/death loc
+};
+
+// Scarlet Bastion defense events
+enum
+{
+    BARRICADE           = 0,
+    STAIRS              = 1,
+    TIMMY               = 2,
+    ENTRANCE            = 3,
+    HALL_OF_LIGHTS      = 4,
+    INNER_BASTION_1     = 5,
+    INNER_BASTION_2     = 6,
+    CRIMSON_THRONE      = 7,
+    FIRST_BARRICADES    = 7,
+
+    MAX_DEFENSE_POINTS  = 8
+};
+
+static const int ScarletEventYells[] =
+{
+    YELL_BASTION_BARRICADE, YELL_BASTION_STAIRS, 0, YELL_BASTION_ENTRANCE,
+    YELL_BASTION_HALL_LIGHTS, YELL_BASTION_INNER_1, YELL_BASTION_INNER_2
+};
+
+static const EventLocation aDefensePoints[] =
+{
+    {3662.84f, -3175.15f, 126.559f, 0},                        // Last barricade before the Scarlet Bastion (Courtyard)
+    {3661.57f, -3157.80f, 128.945f, 0},                        // Scarlet Bastion stairs (Courtyard)
+    {3668.60f, -3183.31f, 126.215f, 0},                        // Courtyard mobs sort point (Timmy)
+    {3646.49f, -3072.84f, 134.207f, 0},                        // Scarlet Bastion entrance corridor
+    {3599.28f, -3107.91f, 134.204f, 0},                        // Hall of Lights
+    {3485.98f, -3087.02f, 135.080f, 0},                        // Inner Bastion: first corridor
+    {3436.74f, -3090.19f, 135.085f, 0},                        // Inner Bastion: Second corridor
+    {3661.89f, -3192.89f, 126.691f, 0}                         // Barricades before the last one (Courtyard): in last position for conveniently iterate over the table
+};
+
+static const EventLocation aScarletGuards[] =               // Spawned when players cleared some parts of the Bastion
+{
+    {3577.469f, -3064.498f, 135.667f, 5.3425f},             // Hall of Lights
+    {3602.198f, -3096.243f, 134.120f, 5.3425},
+    {3598.152f, -3098.927f, 134.120f, 5.3425},
+    {3432.967f, -3069.643f, 136.529f, 5.3425f},             // Inner Bastion
+    {3441.795f, -3077.431f, 135.000f, 5.3425},
+    {3437.445f, -3080.316f, 135.000f, 5.3425}
+};
+
+static const EventLocation aScourgeInvaders[] =             // Attack when players cleared some parts of the Bastion
+{
+    {3614.702f, -3187.642f, 131.406f, 4.024f},              // Timmy. TIMMYYYYYYY !!!
+    {3647.36f, -3139.70f, 134.78f, 2.1962f},                // Entrance
+    {3642.50f, -3106.24f, 134.18f, 0.5210f},
+    {3547.85f, -3076.46f, 135.00f, 2.2269f},                // Inner Bastion
+    {3512.21f, -3066.85f, 135.00f, 3.7136f},
+    {3492.44f, -3077.72f, 135.00f, 2.1680f},                // Crimson Throne
+    {3443.18f, -3083.90f, 135.01f, 2.1563f}
+};
+
+static const EventLocation aScarletLastStand[] =            // Positions remaining Scarlet defenders will move to if the position is lost
+{
+    {3658.43f, -3178.07f, 126.696f, 5.23599f},              // Last barricade
+    {3665.62f, -3173.88f, 126.551f, 5.02655f},
+    {3662.84f, -3175.15f, 126.559f, 5.11381f},
+    {3656.91f, -3161.94f, 128.359f, 5.39307f},              // Bastion stairs
+    {3664.29f, -3157.06f, 128.357f, 5.18363f},
+    {3661.57f, -3157.80f, 128.945f, 5.23599f}
+};
 
 typedef std::list<MobInfo> MobInfoList;
 
@@ -172,6 +266,11 @@ class MANGOS_DLL_DECL instance_stratholme : public ScriptedInstance
     protected:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
         std::string strInstData;
+        
+        void DoSpawnScarletGuards(uint8 uiStep, Player* pSummoner);
+        void DoSpawnScourgeInvaders(uint8 uiStep, Player* pSummoner);
+        void DoMoveBackDefenders(uint8 uiStep, Creature* pCreature);
+        void DoScarletBastionDefense(uint8 uiStep, Creature* pCreature);
 
         bool m_bFiveUp;
         bool m_bTenUp;
@@ -187,6 +286,7 @@ class MANGOS_DLL_DECL instance_stratholme : public ScriptedInstance
         uint32 m_uiBaronWarnTimer;        
         uint32 m_uiZigguratDoorTimer;
 
+        GUIDList m_suiCrimsonDefendersLowGuids[MAX_DEFENSE_POINTS];
         ObjectGuid m_auiCrystalSortedGUID[MAX_ZIGGURAT];
         ObjectGuid m_auiZigguratDoorGUID[MAX_ZIGGURAT];
 
