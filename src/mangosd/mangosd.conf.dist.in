@@ -802,6 +802,10 @@ TalentsInspecting = 1
 #                 1.5 - 150%
 #                 0   - off (0%)
 #
+#    CreatureRespawnAggroDelay
+#        The delay between when a creature spawns and when it can be aggroed by nearby movement.
+#        Default: 3000 (3s)
+#
 #    CreatureFamilyFleeAssistanceRadius
 #        Radius which creature will use to seek for a near creature for assistance. Creature will flee to this creature.
 #        Default: 30
@@ -889,6 +893,7 @@ TalentsInspecting = 1
 
 ThreatRadius = 100
 Rate.Creature.Aggro = 1
+CreatureRespawnAggroDelay = 3000
 CreatureFamilyFleeAssistanceRadius = 30
 CreatureFamilyAssistanceRadius = 10
 CreatureFamilyAssistanceDelay = 1500
