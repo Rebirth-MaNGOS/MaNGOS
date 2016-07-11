@@ -33,8 +33,7 @@ enum
     // Random Wispers - No text only sound, maybe handle them in instance script!
     RANDOM_SOUND_WHISPER            = 8663,
 
-    // ***** Phase 1 ********
-    NPC_EYE_OF_CTHUN                = 15589,
+    // ***** Phase 1 ********    
     MOB_CLAW_TENTACLE               = 15725,
     MOB_EYE_TENTACLE                = 15726,
     MOB_SMALL_PORTAL                = 15904,
@@ -216,6 +215,8 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
     uint32 m_uiStomachEnterTimer;
     uint32 m_uiStomachEnterVisTimer;
 
+    uint32 m_uiSetCombatTimer;
+    
     ObjectGuid m_stomachEnterTargetGuid;
     ObjectGuid m_eyeGuid;
 
@@ -248,6 +249,7 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         m_creature->RemoveAurasDueToSpell(SPELL_TRANSFORM);
         m_creature->SetDisplayId(MODEL_BASE_NORMAL);
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+        m_uiSetCombatTimer = 5000;
     }
 
     void StartSecondPhase(ObjectGuid eyeGuid, Unit* target)
@@ -326,7 +328,21 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         // No instance
         if (!m_pInstance)
             return;
+       
+        if(m_creature->isInCombat() && (m_creature->SelectHostileTarget() || !m_creature->getVictim()))
+        {
+            // Pulse to set everyone in combat to prevent alt f4 or ressing and not getting in combat
+            if (m_uiSetCombatTimer <= uiDiff)
+            {
+                if(m_creature->isInCombat())
+                    m_creature->SetInCombatWithZone();
 
+                m_uiSetCombatTimer = 5000;
+            }
+            else
+                m_uiSetCombatTimer -= uiDiff;
+        }
+        
         switch (m_pInstance->GetData(TYPE_CTHUN_PHASE))
         {
             // Transition phase
@@ -680,6 +696,8 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
     float m_fDarkGlareAngle;
     bool m_bClockWise;
 
+    uint32 m_uiSetCombatTimer;
+    
     void Reset()
     {
         // Phase information
@@ -699,6 +717,8 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
         // Reset flags
         m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
         m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
+        
+        m_uiSetCombatTimer = 5000;
     }
 
     void JustSummoned(Creature* pSummoned)
@@ -741,7 +761,21 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
             if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
                 return;
         }
+        
+        if(m_creature->isInCombat() && (m_creature->SelectHostileTarget() || !m_creature->getVictim()))
+        {
+            // Pulse to set everyone in combat to prevent alt f4 or ressing and not getting in combat
+            if (m_uiSetCombatTimer <= uiDiff)
+            {
+                if(m_creature->isInCombat())
+                    m_creature->SetInCombatWithZone();
 
+                m_uiSetCombatTimer = 5000;
+            }
+            else
+                m_uiSetCombatTimer -= uiDiff;
+        }
+        
         switch (m_pInstance->GetData(TYPE_CTHUN_PHASE))
         {
             case PHASE_EYE_NORMAL:
@@ -837,19 +871,6 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
 					// Cast the rotation spell
                     m_creature->CastSpell(m_creature, SPELL_ROTATE_TRIGGER, true);
 
-                    //// Select random target for dark beam to start on
-                    //if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                    //{
-                    //    // Correctly update our target
-                    //    m_creature->SetTargetGuid(pTarget->GetObjectGuid());
-
-                    //    // Face our target
-                    //    m_fDarkGlareAngle = m_creature->GetAngle(pTarget);
-                    //    m_uiDarkGlareTickTimer = 1000;
-                    //    m_uiDarkGlareTick = 0;
-                    //    m_bClockWise = urand(0, 1);
-                    //}
-
                     // Add red coloration to C'thun
                     DoCastSpellIfCan(m_creature, SPELL_RED_COLORATION);
 
@@ -865,32 +886,6 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
             }
             case PHASE_EYE_DARK_GLARE:
             {
-                //// Dark Glare
-                //if (m_uiDarkGlareTick < 35)
-                //{
-                //    if (m_uiDarkGlareTickTimer < uiDiff)
-                //    {
-                //        // Remove any target
-                //        m_creature->SetTargetGuid(ObjectGuid());
-
-                //        // Set angle and cast
-                //        m_creature->SetOrientation(m_fDarkGlareAngle + (m_bClockWise ? 1 : -1) * ((float)m_uiDarkGlareTick*M_PI_F/35));
-
-                //        m_creature->StopMoving();
-
-                //        // Actual dark glare cast, maybe something missing here?
-                //        DoCastSpellIfCan(m_creature, SPELL_DARK_GLARE);
-
-                //        // Increase tick
-                //        ++m_uiDarkGlareTick;
-
-                //        // 1 second per tick
-                //        m_uiDarkGlareTickTimer = 1000;
-                //    }
-                //    else
-                //        m_uiDarkGlareTickTimer -= uiDiff;
-                //}
-
                 // m_uiPhaseTimer
                 if (m_uiPhaseTimer < uiDiff)
                 {
@@ -1121,13 +1116,12 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
                 m_creature->SetVisibility(VISIBILITY_OFF);
 
                 Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0);
-                if (!pTarget)
+                if (!pTarget || pTarget->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
                 {
                     m_creature->DealDamage(m_creature, m_creature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
                     return;
                 }
-
-                if (!pTarget->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
+                else
                 {
                     m_creature->GetMap()->CreatureRelocation(m_creature, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0);
 
@@ -1144,6 +1138,8 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
             else
                 m_uiEvadeTimer -= uiDiff;
         }
+        else // reset the evade timer
+            m_uiEvadeTimer = 5000;
 
         // GroundRuptureTimer
         if (m_uiGroundRuptureTimer < uiDiff)
@@ -1191,8 +1187,8 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
 
     void Reset()
     {
-        //First rupture should happen half a second after we spawn
-        m_uiGroundRuptureTimer = 500;
+        //First rupture should happen earlier than half a second after we spawn
+        m_uiGroundRuptureTimer = 100;
         m_uiHamstringTimer = 2000;
         m_uiThrashTimer = 5000;
         m_uiEvadeTimer = 5000;
@@ -1210,8 +1206,8 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
             return;
 
         // EvadeTimer
-        if (m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
-        {
+        if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
+        {            
             if (m_uiEvadeTimer < uiDiff)
             {
                 if (Creature* pCreature = m_creature->GetMap()->GetCreature(m_portalGuid))
@@ -1222,19 +1218,20 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
 
                 Unit* target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
 
-                if (!target)
+                if (!target || target->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
                 {
                     m_creature->DealDamage(m_creature, m_creature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
                     return;
                 }
-
-                if (!target->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
+                else
                 {
                     m_creature->GetMap()->CreatureRelocation(m_creature, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), 0);
 
                     m_portalGuid = SummonGiantPortal(m_creature);
 
-                    m_uiGroundRuptureTimer = 500;
+                    // full hp after move
+                    m_creature->SetHealthPercent(100);
+                    m_uiGroundRuptureTimer = 100;
                     m_uiHamstringTimer = 2000;
                     m_uiThrashTimer = 5000;
                     m_uiEvadeTimer = 5000;
@@ -1247,11 +1244,13 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
             else
                 m_uiEvadeTimer -= uiDiff;
         }
+        else // reset the evade timer
+            m_uiEvadeTimer = 5000;
 
         // GroundRuptureTimer
         if (m_uiGroundRuptureTimer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_GROUND_RUPTURE);
+            DoCastSpellIfCan(m_creature->getVictim(),SPELL_MASSIVE_GROUND_RUPTURE);
             m_uiGroundRuptureTimer = 30000;
         }
         else
@@ -1374,6 +1373,51 @@ void flesh_tentacleAI::JustDied(Unit* /*killer*/)
     }
     else
         error_log("SD2: flesh_tentacle: No Cthun");
+}
+
+
+/*######
+## npc_cthun_aggro_dummy
+######*/
+
+struct MANGOS_DLL_DECL npc_cthun_aggro_dummyAI : public ScriptedAI
+{
+    npc_cthun_aggro_dummyAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Reset();
+    }
+    
+    ScriptedInstance* m_pInstance;
+
+    void Reset()
+    {
+    }
+
+    void MoveInLineOfSight(Unit* pWho)
+    {
+        if (pWho->GetTypeId() == TYPEID_PLAYER && m_creature->IsWithinDistInMap(pWho, 5.0f) &&  m_creature->IsWithinLOSInMap(pWho))
+        {
+            if(m_pInstance)
+            {
+                Creature* pCthun = m_pInstance->GetSingleCreatureFromStorage(NPC_EYE_OF_CTHUN);
+                if(pCthun && pCthun->isAlive() && !pCthun->isInCombat())
+                    pCthun->AI()->AttackStart(pWho);
+            }
+        }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        //Return since we have no target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+    }
+};
+
+CreatureAI* GetAI_npc_cthun_aggro_dummy(Creature* pCreature)
+{
+    return new npc_cthun_aggro_dummyAI(pCreature);
 }
 
 // GetAIs
@@ -1576,6 +1620,11 @@ void AddSC_boss_cthun()
     pNewScript = new Script;
     pNewScript->Name = "mob_tentacle_portal";
     pNewScript->GetAI = &GetAI_portal;
+    pNewScript->RegisterSelf();
+    
+    pNewScript = new Script;
+    pNewScript->Name = "npc_cthun_aggro_dummy";
+    pNewScript->GetAI = &GetAI_npc_cthun_aggro_dummy;
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;
