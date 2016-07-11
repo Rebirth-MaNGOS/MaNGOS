@@ -7275,7 +7275,7 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
             return false;
 
     // Visible units, always are visible for all units, except for units under invisibility
-    if (m_Visibility == VISIBILITY_ON && u->m_invisibilityMask==0)
+    if (m_Visibility == VISIBILITY_ON/* && u->m_invisibilityMask==0*/)
         return true;
 
     // GMs see any players, not higher GMs and all units
@@ -7296,14 +7296,10 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
 
     // detectable invisibility case
     if( invisible && (
-                // Invisible units, always are visible for units under same invisibility type
-                (m_invisibilityMask & u->m_invisibilityMask)!=0 ||
-                // Creatures can always detect other creatures and players that aren't invisible
-                (u->GetTypeId() == TYPEID_UNIT && m_invisibilityMask == 0) ||
+        // Invisible units, always are visible for units under same invisibility type
+                (m_invisibilityMask & u->m_invisibilityMask) != 0 ||
                 // Invisible units, always are visible for unit that can detect this invisibility (have appropriate level for detect)
-                u->canDetectInvisibilityOf(this) ||
-                // Units that can detect invisibility always are visible for units that can be detected
-                canDetectInvisibilityOf(u) ))
+                u->canDetectInvisibilityOf(this)))
     {
         invisible = false;
     }
