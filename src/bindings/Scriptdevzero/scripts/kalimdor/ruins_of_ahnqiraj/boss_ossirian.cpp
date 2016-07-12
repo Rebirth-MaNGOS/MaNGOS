@@ -363,7 +363,7 @@ struct MANGOS_DLL_DECL npc_ossirian_dummyAI : public ScriptedAI
     {
         if (!m_bHasCasted)
         {
-            if (Creature* pOssirian = GetClosestCreatureWithEntry(m_creature, NPC_OSSIRIAN, 20.0f))
+            if (Creature* pOssirian = GetClosestCreatureWithEntry(m_creature, NPC_OSSIRIAN, 30.0f))
             {
                 switch (urand(0,4))
                 {
