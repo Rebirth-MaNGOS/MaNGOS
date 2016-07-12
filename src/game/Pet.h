@@ -215,6 +215,7 @@ class MANGOS_DLL_SPEC Pet : public Creature
         void UpdateMaxPower(Powers power);
         void UpdateAttackPowerAndDamage(bool ranged = false);
         void UpdateDamagePhysical(WeaponAttackType attType);
+        void UpdateSpeed(UnitMoveType mtype, bool forced, float ratio = 1.0f);
 
         bool   CanTakeMoreActiveSpells(uint32 SpellIconID);
         void   ToggleAutocast(uint32 spellid, bool apply);
