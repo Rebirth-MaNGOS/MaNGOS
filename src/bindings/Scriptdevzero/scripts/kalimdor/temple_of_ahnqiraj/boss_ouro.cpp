@@ -169,7 +169,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
         std::vector<Player*> tmp_list;
 
         if (!m_creature->CanHaveThreatList())
-            return NULL;
+            return nullptr;
 
         GUIDVector vGuids;
         m_creature->FillGuidsListFromThreatList(vGuids);
@@ -181,7 +181,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                 if (Unit* current_target = m_creature->GetMap()->GetUnit(current_guid))
                 {
                     // We need only a player
-                    if (!current_target->IsCharmerOrOwnerPlayerOrPlayerItself())
+                    if (current_target->GetTypeId() != TYPEID_PLAYER)
                         continue;
 
                     if (m_creature->CanReachWithMeleeAttack(current_target))
@@ -189,6 +189,11 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                 }
             }
         }
+        else
+            return nullptr;
+
+        if (tmp_list.empty())
+            return nullptr;
 
         // If there's just one player on the threat list we return that player.
         if (tmp_list.size() == 1)
@@ -202,7 +207,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                     m_creature->getThreatManager().getThreat(second); 
                 });
 
-        return tmp_list.empty() ? NULL : tmp_list.front();
+        return tmp_list.front();
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -453,7 +458,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                     m_creature->SetTargetGuid(melee_player->GetGUID());
                     if (m_creature->getVictim())
                     {
-                        this->DoMeleeAttackIfReady();
+                        DoMeleeAttackIfReady();
                         m_bForceSubmerge = false;       // if there's someone in melee don't submerge
                     }
                 }
@@ -473,7 +478,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             }
             else
             {
-                this->DoMeleeAttackIfReady();
+                DoMeleeAttackIfReady();
                 m_bForceSubmerge = false;       // if there's someone in melee don't submerge
             }
         }
