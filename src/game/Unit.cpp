@@ -6941,7 +6941,7 @@ void Unit::Mount(uint32 mount, uint32 spellId)
                     ((Player*)this)->UnsummonPetTemporaryIfAny();
                 }
                 else
-                    pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,true);
+                    pet->SetModeFlags(PET_MODE_DISABLE_ACTIONS);
    
             }
             else if (Unit* pCharmed = GetCharm()) // For the Warlock spell Enslave Demon.
@@ -6981,7 +6981,10 @@ void Unit::Unmount(bool from_aura)
     if(GetTypeId() == TYPEID_PLAYER)
     {
         if(Pet* pet = GetPet())
-            pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,false);
+        {
+            if (CharmInfo* charmInfo = pet->GetCharmInfo())
+                pet->SetModeFlags(PetModeFlags(charmInfo->GetReactState() | charmInfo->GetCommandState() * 0x100));
+        }
         else if (Unit* pCharmed = GetCharm()) // For the Warlock spell Enslave Demon.
         {
             WorldPacket data(SMSG_PET_MODE, 12);
