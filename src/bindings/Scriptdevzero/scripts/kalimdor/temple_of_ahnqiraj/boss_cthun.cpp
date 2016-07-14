@@ -41,7 +41,6 @@ enum
 
     SPELL_GREEN_BEAM                = 26134,
     //SPELL_DARK_GLARE                = 26029,
-    SPELL_RED_COLORATION            = 22518,                // Probably not the right spell but looks similar
 
     SPELL_ROTATE_TRIGGER            = 26137,                // phase switch spell - triggers 26009 or 26136. These trigger the Dark Glare spell - 26029
     SPELL_ROTATE_360_LEFT           = 26009,
@@ -420,8 +419,6 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
                     DoScriptText(EMOTE_WEAKENED, m_creature);
                     m_uiPhaseTimer = 45000;
 
-                    DoCastSpellIfCan(m_creature, SPELL_RED_COLORATION, CAST_TRIGGERED);
-
                     // Kick all players out of stomach
                     for (StomachMap::iterator itr = m_pInstance->GetStomachMap().begin(); itr != m_pInstance->GetStomachMap().end(); ++itr)
                     {
@@ -574,9 +571,6 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
                     // Switch
                     m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_CTHUN);
 
-                    // Remove red coloration
-                    m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
-
                     // Spawn 2 flesh tentacles
                     m_uiFleshTentaclesKilled = 0;
 
@@ -715,7 +709,6 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
         m_bClockWise = false;
 
         // Reset flags
-        m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
         m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
         
         m_uiSetCombatTimer = 5000;
@@ -869,12 +862,7 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
                     m_creature->SetTargetGuid(ObjectGuid());
 
 					// Cast the rotation spell
-                    m_creature->CastSpell(m_creature, SPELL_ROTATE_TRIGGER, true);
-
-                    // Add red coloration to C'thun
-                    DoCastSpellIfCan(m_creature, SPELL_RED_COLORATION);
-
-                    // Freeze animation
+                    m_creature->CastSpell(m_creature, SPELL_ROTATE_TRIGGER, false);
 
                     // Darkbeam for 35 seconds
                     m_uiPhaseTimer = 35000;
@@ -898,8 +886,6 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
 
                     m_creature->InterruptNonMeleeSpells(false);
 
-                    // Remove Red coloration from C'thun
-                    m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
 					// Remove rotation auras
                     m_creature->RemoveAurasDueToSpell(SPELL_ROTATE_360_LEFT);
                     m_creature->RemoveAurasDueToSpell(SPELL_ROTATE_360_RIGHT);
@@ -936,9 +922,6 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
 
                 // Fake death in phase 0 or 1 (green beam or dark glare phase)
                 m_creature->InterruptNonMeleeSpells(false);
-
-                // Remove Red coloration from c'thun
-                m_creature->RemoveAurasDueToSpell(SPELL_RED_COLORATION);
 
                 // Reset to normal emote state and prevent select and attack
                 m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
