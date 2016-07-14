@@ -718,7 +718,9 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         duel_hasEnded = true;
     }
     //Get in CombatState
-    if(pVictim != this && damagetype != DOT)
+    // The spellProto check is for the Dark Glare at C'Thun.
+    // If he's put into combat with new units his animation bugs.
+    if(pVictim != this && damagetype != DOT && (!spellProto || spellProto->Id != 26029))
     {
         SetInCombatWith(pVictim);
         pVictim->SetInCombatWith(this);
