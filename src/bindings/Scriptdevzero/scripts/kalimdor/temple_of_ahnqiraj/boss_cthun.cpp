@@ -760,20 +760,20 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
             // Check if we have a target
             if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
                 return;
-        }
         
-        if(m_creature->isInCombat() && (m_creature->SelectHostileTarget() || !m_creature->getVictim()))
-        {
-            // Pulse to set everyone in combat to prevent alt f4 or ressing and not getting in combat
-            if (m_uiSetCombatTimer <= uiDiff)
+            if(m_creature->isInCombat() && (m_creature->SelectHostileTarget() || !m_creature->getVictim()))
             {
-                if(m_creature->isInCombat())
-                    m_creature->SetInCombatWithZone();
+                // Pulse to set everyone in combat to prevent alt f4 or ressing and not getting in combat
+                if (m_uiSetCombatTimer <= uiDiff)
+                {
+                    if(m_creature->isInCombat())
+                        m_creature->SetInCombatWithZone();
 
-                m_uiSetCombatTimer = 5000;
+                    m_uiSetCombatTimer = 5000;
+                }
+                else
+                    m_uiSetCombatTimer -= uiDiff;
             }
-            else
-                m_uiSetCombatTimer -= uiDiff;
         }
         
         switch (m_pInstance->GetData(TYPE_CTHUN_PHASE))
