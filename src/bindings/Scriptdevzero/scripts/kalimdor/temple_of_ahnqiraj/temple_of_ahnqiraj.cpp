@@ -31,9 +31,11 @@ enum
     SPELL_VISUAL_EFFECT_FIERY_HANDS = 6297,
     SPELL_ROOT_SELF                 = 23973,
 
-    SPELL_SUMMON_WARRIOR            = 17431,
-    SPELL_SUMMON_SWARMER            = 17430,
-
+//     SPELL_SUMMON_WARRIOR            = 17431,
+//     SPELL_SUMMON_SWARMER            = 17430,
+    NPC_ANUBISATH_WARRIOR           = 15537,
+    NPC_ANUBISATH_SWARMGUARD = 15538,
+    
     LARGE_OBSIDIAN_CHUNK            = 181069,
 
     SPELL_ENRAGE                    = 8599,
@@ -48,7 +50,7 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
 
     uint32 m_uiCastAbility;
     uint32 m_uiEnrageAbility;
-    uint32 m_uiSummonAbility;
+    uint32 m_uiSummonMob;
     uint32 m_uiExplodeTimer;
     uint32 m_uiCastTimer;
     uint32 m_uiSummonTimer;
@@ -56,7 +58,7 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
     bool m_bExploding;
     bool m_hasSpell;
 
-    
+    uint8 m_uiAddsCount;
 
     void Reset()
     {
@@ -74,6 +76,9 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
     void Aggro(Unit* pWho)
     {
         SetAbilites();   
+        m_creature->SetInCombatWithZone();
+        // reset here in case adds despawn after wipe
+        m_uiAddsCount = 0;
     }
 
     void JustDied(Unit* /*pKiller*/)
@@ -93,6 +98,27 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
         }
     }
 
+    void JustSummoned(Creature* pSummoned)
+    {       
+        ++m_uiAddsCount;
+        pSummoned->SetRespawnEnabled(false);            // make sure they won't respawn
+        
+        if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+            pSummoned->AI()->AttackStart(pTarget);
+        
+        pSummoned->SetOwnerGuid(m_creature->GetGUID());
+    }
+
+    void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        --m_uiAddsCount;
+    }
+    
+    void SummonedCreatureDespawn(Creature* pSummoned)
+    {
+        --m_uiAddsCount;
+    }
+    
     // this way will make it quite possible that sentinels get the same buff as others, need to fix that, it should be one unique each
     void SetAbilites()
     {
@@ -120,7 +146,7 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
                 //    m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_ENRAGE) + "!").c_str(), LANG_UNIVERSAL);
                     break;
                 case 4:
-                    m_uiSummonAbility = SPELL_SUMMON_SWARMER;
+                    m_uiSummonMob = NPC_ANUBISATH_SWARMGUARD;
                     break;
                 }
                 
@@ -145,7 +171,7 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
                //     m_creature->MonsterYell(std::string("I have been given spell " + TranslateSpell(SPELL_EXPLODE) + "!").c_str(), LANG_UNIVERSAL);
                     break;
                 case 4:
-                    m_uiSummonAbility = SPELL_SUMMON_WARRIOR;
+                    m_uiSummonMob = NPC_ANUBISATH_WARRIOR;
                     break;
                 }
                 
@@ -234,9 +260,12 @@ struct MANGOS_DLL_DECL mob_anubisath_defender : public ScriptedAI
             if(m_uiSummonTimer <= uiDiff)
             {
                 m_uiSummonTimer = 10000;
-                float x, y, z;
-                m_creature->GetClosePoint(x, y, z, 3.0f, 10.0f);
-                m_creature->CastSpell(x, y, z, m_uiSummonAbility, true);
+                if(m_uiAddsCount < 4)
+                {
+                    float x, y, z;
+                    m_creature->GetClosePoint(x, y, z, 3.0f, 10.0f);
+                    m_creature->SummonCreature(m_uiSummonMob, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN, 60000);
+                }
             }
             else
                 m_uiSummonTimer -= uiDiff;
