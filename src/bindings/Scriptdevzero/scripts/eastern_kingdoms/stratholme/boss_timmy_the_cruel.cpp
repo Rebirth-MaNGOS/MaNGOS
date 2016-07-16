@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: boss_timmy_the_cruel
 SD%Complete: 100
-SDComment: Timmy the Cruel AI + bastion's AT
+SDComment: Timmy the Cruel AI
 SDCategory: Stratholme
 EndScriptData */
 
@@ -25,20 +25,10 @@ EndScriptData */
 #include "stratholme.h"
 
 enum eTimmy
-{
-    SAY_SPAWN_TIMMY         = -1329012,
-
+{    
     SPELL_ENRAGE            = 8599,
     SPELL_RAVENOUS_CLAW     = 17470
 };
-
-static Locations Timmy[]=
-{
-    {3613.19f,-3188.20f,131.61f, 0, 0},
-    {3669.12f,-3186.15f,126.19f, 0, 0}
-};
-
-const uint32 CrimsonEntries[4]= {NPC_CRIMSON_INITIATE, NPC_CRIMSON_CONJUROR, NPC_CRIMSON_GALLANT, NPC_CRIMSON_GUARDSMAN};
 
 struct MANGOS_DLL_DECL boss_timmy_the_cruelAI : public ScriptedAI
 {
@@ -108,37 +98,6 @@ CreatureAI* GetAI_boss_timmy_the_cruel(Creature* pCreature)
     return new boss_timmy_the_cruelAI(pCreature);
 }
 
-bool AreaTrigger_at_bastion(Player* pPlayer, AreaTriggerEntry const* /*pAt*/)
-{
-    instance_stratholme* m_pInstance = (instance_stratholme*)pPlayer->GetInstanceData();
-
-    if (!m_pInstance || m_pInstance->GetData(TYPE_TIMMY_THE_CRUEL) != NOT_STARTED)
-        return false;
-
-    for (uint32 i = 0; i < 4; ++i)
-    {
-        std::list<Creature*> m_lScarlet;
-        GetCreatureListWithEntryInGrid(m_lScarlet, pPlayer, CrimsonEntries[i], 70.0f);
-        if (!m_lScarlet.empty())
-        {
-            for(std::list<Creature*>::iterator itr = m_lScarlet.begin(); itr != m_lScarlet.end(); ++itr)
-            {
-                if ((*itr) && (*itr)->isAlive())
-                    return false;
-            }
-        }
-    }
-
-    m_pInstance->SetData(TYPE_TIMMY_THE_CRUEL, IN_PROGRESS);
-    if (Creature* pTimmy = pPlayer->SummonCreature(NPC_TIMMY_THE_CRUEL, Timmy[0].x, Timmy[0].y, Timmy[0].z, 0, TEMPSUMMON_DEAD_DESPAWN, 5000))
-    {
-        DoScriptText(SAY_SPAWN_TIMMY, pTimmy);
-        pTimmy->GetMotionMaster()->MovePoint(0, Timmy[1].x, Timmy[1].y, Timmy[1].z);
-    }
-
-    return true;
-}
-
 void AddSC_boss_timmy_the_cruel()
 {
     Script* pNewscript;
@@ -146,10 +105,5 @@ void AddSC_boss_timmy_the_cruel()
     pNewscript = new Script;
     pNewscript->Name = "boss_timmy_the_cruel";
     pNewscript->GetAI = &GetAI_boss_timmy_the_cruel;
-    pNewscript->RegisterSelf();
-
-    pNewscript = new Script;
-    pNewscript->Name = "at_bastion";
-    pNewscript->pAreaTrigger = &AreaTrigger_at_bastion;
     pNewscript->RegisterSelf();
 }

@@ -46,26 +46,6 @@ enum
     SPELL_MIND_CONTROL              = 15690
 };
 
-struct SummonDef
-{
-    uint32 m_uiEntry;
-    float fX, fY, fZ, fO;
-};
-
-SummonDef m_aSummonPoint[]=
-{
-    {NPC_SKELETAL_BERSERKER, 3460.356f, -3070.572f, 135.086f, 0.332f},
-    {NPC_SKELETAL_BERSERKER, 3465.289f, -3069.987f, 135.086f, 5.480f},
-    {NPC_SKELETAL_BERSERKER, 3463.616f, -3074.912f, 135.086f, 5.009f},
-    {NPC_SKELETAL_GUARDIAN, 3460.012f, -3076.041f, 135.086f, 1.187f},
-    {NPC_SKELETAL_GUARDIAN, 3467.909f, -3076.401f, 135.086f, 3.770f},
-    {NPC_SKELETAL_BERSERKER, 3509.269f, -3066.474f, 135.080f, 4.817f},
-    {NPC_SKELETAL_BERSERKER, 3510.966f, -3069.011f, 135.080f, 3.491f},
-    {NPC_SKELETAL_GUARDIAN, 3516.042f, -3066.873f, 135.080f, 3.997f},
-    {NPC_SKELETAL_GUARDIAN, 3513.561f, -3063.027f, 135.080f, 2.356f},
-    {NPC_SKELETAL_GUARDIAN, 3518.825f, -3060.926f, 135.080f, 3.944f}
-};
-
 struct MANGOS_DLL_DECL boss_dathrohan_balnazzarAI : public ScriptedAI
 {
     boss_dathrohan_balnazzarAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
@@ -110,12 +90,7 @@ struct MANGOS_DLL_DECL boss_dathrohan_balnazzarAI : public ScriptedAI
         DoScriptText(SAY_DEATH, m_creature);
 
         // it appears that dynflags are not properly assigned after calling UpdateEntry(), do it manually
-        m_creature->SetFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE | UNIT_DYNFLAG_TAPPED);
-
-        static uint32 uiCount = sizeof(m_aSummonPoint)/sizeof(SummonDef);
-
-        for(uint8 i = 0; i < uiCount; ++i)
-            m_creature->SummonCreature(m_aSummonPoint[i].m_uiEntry, m_aSummonPoint[i].fX, m_aSummonPoint[i].fY, m_aSummonPoint[i].fZ, m_aSummonPoint[i].fO, TEMPSUMMON_DEAD_DESPAWN, 1000);
+        m_creature->SetFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE | UNIT_DYNFLAG_TAPPED);      
     }
 
     void UpdateAI(const uint32 uiDiff)

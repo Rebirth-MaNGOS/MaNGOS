@@ -49,6 +49,7 @@ instance_stratholme::instance_stratholme(Map* pMap) : ScriptedInstance(pMap),
     m_bBaronRun(false),
     m_bBaronWarn(false),
     m_bZigguratDoor(false),
+    m_bSummonAurius(false),
 
     m_uiAbCount(0),
     m_uiNextPull(0),
@@ -107,6 +108,28 @@ void instance_stratholme::OnCreatureCreate(Creature* pCreature)
             m_lCrystalGUID.push_back(pCreature->GetObjectGuid());
 			pCreature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);		// not working
             break;
+        case NPC_CRIMSON_INITIATE:
+        case NPC_CRIMSON_GALLANT:
+        case NPC_CRIMSON_GUARDSMAN:
+        case NPC_CRIMSON_CONJUROR:
+        case NPC_CRIMSON_BATTLE_MAGE:
+            // Store GUID of NPCs in the courtyard to spawn Timmy once they are all dead
+            if (pCreature->IsWithinDist2d(aDefensePoints[TIMMY].m_fX, aDefensePoints[TIMMY].m_fY, 40.0f))
+                m_suiCrimsonDefendersLowGuids[TIMMY].push_back(pCreature->GetObjectGuid());
+            // Iterate also over all the defense points where those NPCs are possibly spawned
+            for (uint8 i = BARRICADE; i <= FIRST_BARRICADES; i++)
+            {
+                // Do not store - again - GUIDs for Timmy spawn point, they were done previously with a different range
+                if (i == TIMMY)
+                    continue;
+                // Store the GUID of the nearby NPCs for each defense point
+                if (pCreature->IsWithinDist2d(aDefensePoints[i].m_fX, aDefensePoints[i].m_fY, 8.0f))
+                {
+                    m_suiCrimsonDefendersLowGuids[i].push_back(pCreature->GetObjectGuid());
+                    break;
+                }
+            }
+break;
     }
 }
 
@@ -125,6 +148,11 @@ void instance_stratholme::OnCreatureDeath(Creature* pCreature)
             }
             else
                 debug_log("SD0: Instance Stratholme: %lu Black Guard Sentries left to kill.", m_lSentryGUID.size());
+            break;
+        }
+        case NPC_AURIUS:        
+        {
+            SetData(TYPE_AURIUS, FAIL);   
             break;
         }
         case NPC_THUZADIN_ACOLYTE:
@@ -157,8 +185,29 @@ void instance_stratholme::OnCreatureDeath(Creature* pCreature)
                             SetData(TYPE_MALEKI_THE_PALLID, SPECIAL);
                             break;
                     }
-                }
+                }                
             }
+            break;
+            
+            // Scarlet Bastion defense and Timmy spawn support
+            case NPC_CRIMSON_INITIATE:
+            case NPC_CRIMSON_GALLANT:
+            case NPC_CRIMSON_GUARDSMAN:
+            case NPC_CRIMSON_CONJUROR:
+            case NPC_CRIMSON_BATTLE_MAGE:
+            for (uint8 i = BARRICADE; i <= FIRST_BARRICADES; i++)
+            {
+                if (m_suiCrimsonDefendersLowGuids[i].empty())
+                    continue;
+
+                m_suiCrimsonDefendersLowGuids[i].remove(pCreature->GetObjectGuid());
+                // If all mobs from a defense group are dead then activate the related defense event
+                if (m_suiCrimsonDefendersLowGuids[i].empty() && i != FIRST_BARRICADES)
+                    DoScarletBastionDefense(i, pCreature);
+            }
+            break;
+        case NPC_BALNAZZAR:
+            DoScarletBastionDefense(CRIMSON_THRONE, pCreature);
             break;
         }
         default:
@@ -388,18 +437,10 @@ void instance_stratholme::SetData(uint32 uiType, uint32 uiData)
                 case DONE:
                     if (uiData == DONE)
                     {
-                    if (GetData(TYPE_BARON_RUN) == IN_PROGRESS)
-							SetData(TYPE_BARON_RUN, DONE);
-
-                        if (GetData(TYPE_AURIUS) == DONE)
-                        {
-                            PlayersRun(ACTION_AURIUS);
-                            if (Creature* pAurius = GetSingleCreatureFromStorage(NPC_AURIUS))
-                            {
-                                pAurius->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                                pAurius->SetStandState(UNIT_STAND_STATE_DEAD);
-                            }
-                        }
+                        if (GetData(TYPE_BARON_RUN) == IN_PROGRESS)
+                                SetData(TYPE_BARON_RUN, DONE);   
+                        if (GetData(TYPE_AURIUS) == SPECIAL)                        
+                            SetData(TYPE_AURIUS, DONE);  
                     }
 
                     HandleGameObject(GO_ZIGGURAT_DOOR_4, true);
@@ -430,9 +471,46 @@ void instance_stratholme::SetData(uint32 uiType, uint32 uiData)
             break;
         case TYPE_AURIUS:
             m_auiEncounter[12] = uiData;
+            // Baron killed and Aurius is alive: give him his NPC Flags back
+            // So players can complete the quest
+            // Fake his death
+            if (uiData == DONE)
+            {
+                if (Creature* pAurius = GetSingleCreatureFromStorage(NPC_AURIUS))
+                {
+                    if(pAurius && pAurius->isAlive())
+                    {
+                        CreatureCreatePos pos(pAurius->GetMap(), pAurius->GetPositionX(), pAurius->GetPositionY(), pAurius->GetPositionZ(), pAurius->GetOrientation());
+                        pAurius->SetSummonPoint(pos);
+                        pAurius->MonsterSay("Argh!", LANG_UNIVERSAL, nullptr);                        
+                        pAurius->StopMoving();
+                        pAurius->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                        pAurius->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                        pAurius->InterruptNonMeleeSpells(true);
+                        pAurius->SetHealth(1);
+                        pAurius->GetMotionMaster()->MovementExpired();
+                        pAurius->GetMotionMaster()->MoveIdle();
+                        pAurius->RemoveAllAurasOnDeath();
+                        pAurius->SetStandState(UNIT_STAND_STATE_DEAD);
+                    }
+                }
+                break;
+            }
+            if (uiData == FAIL)
+            {
+                // Baron encounter failed and Aurius is spawned: kill him
+                if (Creature* pAurius = GetSingleCreatureFromStorage(NPC_AURIUS))
+                {
+                    if (pAurius->isAlive())
+                    {
+                        pAurius->MonsterSay("Argh!", LANG_UNIVERSAL, nullptr);
+                        pAurius->DealDamage(pAurius, pAurius->GetHealth(), nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, nullptr, false);
+                    }
+                }
+                break;
+           }
             break;
     }
-
    
     OUT_SAVE_INST_DATA;
 
@@ -496,6 +574,181 @@ uint32 instance_stratholme::GetData(uint32 uiType)
 	return 0;
 }
 
+void instance_stratholme::DoSpawnScarletGuards(uint8 uiStep, Player* pSummoner)
+{
+    if (!pSummoner)
+        return;
+
+    uint32 uiNPCEntry[2];
+    uint8  uiIndex;
+
+    switch (uiStep)
+    {
+        case HALL_OF_LIGHTS:
+            uiNPCEntry[0] = NPC_CRIMSON_GALLANT;
+            uiNPCEntry[1] = NPC_CRIMSON_GALLANT;
+            uiIndex = 0;
+            break;
+        case INNER_BASTION_2:
+            uiNPCEntry[0] = NPC_CRIMSON_MONK;
+            uiNPCEntry[1] = NPC_CRIMSON_SORCERER;
+            uiIndex = 3;
+            break;
+        default:
+            return;    // avoid indexing the following tables with a wrong index. Should never happen.
+    }
+
+    // Spawn the two guards and move them to where they will guard (each side of a door)
+    for (uint8 i = 0; i < 2; i++)
+    {
+        if (Creature* pTemp = pSummoner->SummonCreature(uiNPCEntry[i], aScarletGuards[uiIndex].m_fX, aScarletGuards[uiIndex].m_fY, aScarletGuards[uiIndex].m_fZ, aScarletGuards[uiIndex].m_fO, TEMPSUMMON_DEAD_DESPAWN, 0))
+        {
+            pTemp->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+            pTemp->GetMotionMaster()->MovePoint(0, aScarletGuards[uiIndex + i + 1].m_fX, aScarletGuards[uiIndex + i + 1].m_fY, aScarletGuards[uiIndex + i + 1].m_fZ);
+            
+            CreatureCreatePos pos(pTemp->GetMap(), aScarletGuards[uiIndex + i + 1].m_fX, aScarletGuards[uiIndex + i + 1].m_fY, aScarletGuards[uiIndex + i + 1].m_fZ, 5.35f);
+            pTemp->SetSummonPoint(pos);
+        }
+    }
+
+    return;
+}
+
+void instance_stratholme::DoSpawnScourgeInvaders(uint8 uiStep, Player* pSummoner)
+{
+    if (!pSummoner)
+        return;
+
+    // Define the group of 5 Scourge invaders
+    std::vector<uint32> uiMobList;                  // Vector holding the 5 creatures entries for each Scourge invaders group
+    uiMobList.push_back(NPC_SKELETAL_GUARDIAN);     // 4 static NPC entries
+    uiMobList.push_back(NPC_SKELETAL_GUARDIAN);
+    uiMobList.push_back(NPC_SKELETAL_BERSERKER);
+    uiMobList.push_back(NPC_SKELETAL_BERSERKER);
+
+    uint32 uiMobEntry;                              // will hold the last random creature entry
+    uint8  uiIndex;
+
+    // Pick the fifth NPC in the group and randomize the five possible spawns
+    switch (urand(0, 1))
+    {
+        case 0: uiMobEntry = NPC_SKELETAL_GUARDIAN;     break;
+        case 1: uiMobEntry = NPC_SKELETAL_BERSERKER;    break;
+    }
+
+    uiMobList.push_back(uiMobEntry);
+    std::random_shuffle(uiMobList.begin(), uiMobList.end());
+
+    // Define the correct index for the spawn/move coords table
+    switch (uiStep)
+    {
+        case ENTRANCE:          uiIndex = 1; break;
+        case INNER_BASTION_1:   uiIndex = 3; break;
+        case CRIMSON_THRONE:    uiIndex = 5; break;
+        default: return;    // avoid indexing the following table with a wrong index. Should never happen.
+    }
+
+    // Summon the five invaders and make them run into the room
+    for (uint8 i = 0; i < 5; i++)
+    {
+        float fTargetPosX, fTargetPosY, fTargetPosZ;
+
+        if (Creature* pTemp = pSummoner->SummonCreature(uiMobList[i], aScourgeInvaders[uiIndex].m_fX, aScourgeInvaders[uiIndex].m_fY, aScourgeInvaders[uiIndex].m_fZ, aScourgeInvaders[uiIndex].m_fO, TEMPSUMMON_DEAD_DESPAWN, 0))
+        {
+            pTemp->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+            pTemp->GetRandomPoint(aScourgeInvaders[uiIndex + 1].m_fX, aScourgeInvaders[uiIndex + 1].m_fY, aScourgeInvaders[uiIndex + 1].m_fZ, 3.0f, fTargetPosX, fTargetPosY, fTargetPosZ);
+            pTemp->GetMotionMaster()->MovePoint(0, fTargetPosX, fTargetPosY, fTargetPosZ);
+            
+            CreatureCreatePos pos(pTemp->GetMap(), aScourgeInvaders[uiIndex + 1].m_fX, aScourgeInvaders[uiIndex + 1].m_fY, aScourgeInvaders[uiIndex + 1].m_fZ, aScourgeInvaders[uiIndex].m_fO);
+            pTemp->SetSummonPoint(pos);                      
+        }
+    }
+
+    return;
+}
+
+void instance_stratholme::DoMoveBackDefenders(uint8 uiStep, Creature* pCreature)
+{
+    uint8 uiIndex;
+    uint8 uiTreshold = 0;
+    uint8 uiFoundGuards = 0;
+
+    switch (uiStep)
+    {
+        case BARRICADE:
+            uiIndex = FIRST_BARRICADES;
+            break;
+        case STAIRS:
+            uiIndex = BARRICADE;
+            uiTreshold = 3;
+            break;
+        default:
+            return;     // avoid indexing the following table with a wrong index. Should never happen.
+    }
+
+    // Check that there are still defenders to move to the stairs/last barricade
+    if (m_suiCrimsonDefendersLowGuids[uiIndex].empty())
+        return;
+    if (pCreature)
+        DoScriptText(ScarletEventYells[uiStep], pCreature);
+
+    for (GUIDList::const_iterator itr = m_suiCrimsonDefendersLowGuids[uiIndex].begin(); itr != m_suiCrimsonDefendersLowGuids[uiIndex].end(); ++itr)
+    {
+        Creature* pGuard = instance->GetCreature(*itr);
+        if (pGuard && pGuard->isAlive() && !pGuard->isInCombat())
+        {
+            pGuard->GetMotionMaster()->MoveIdle();
+            pGuard->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+            pGuard->GetMotionMaster()->MovePoint(0, aScarletLastStand[uiTreshold + uiFoundGuards].m_fX, aScarletLastStand[uiTreshold + uiFoundGuards].m_fY, aScarletLastStand[uiTreshold + uiFoundGuards].m_fZ);
+            uiFoundGuards++;
+        }
+
+        if (uiFoundGuards == 3)
+            return;
+    }
+
+    return;
+}
+
+void instance_stratholme::DoScarletBastionDefense(uint8 uiStep, Creature* pCreature)
+{
+    if (!pCreature)
+        return;
+
+    switch (uiStep)
+    {
+        case BARRICADE:
+        case STAIRS:
+            DoMoveBackDefenders(uiStep, pCreature);
+            return;
+        case TIMMY:
+            if(Creature* pTimmy = pCreature->SummonCreature(NPC_TIMMY_THE_CRUEL, aScourgeInvaders[0].m_fX, aScourgeInvaders[0].m_fY, 
+                aScourgeInvaders[0].m_fZ, aScourgeInvaders[0].m_fO, TEMPSUMMON_DEAD_DESPAWN, 0))
+            {
+                pTimmy->GetMotionMaster()->MovePoint(1, 3669.12f, -3186.15f, 126.19f);
+                DoScriptText(SAY_SPAWN_TIMMY, pTimmy);
+            }
+            SetData(TYPE_TIMMY_THE_CRUEL, IN_PROGRESS);
+            return;
+        // Scarlet guards spawned
+        case HALL_OF_LIGHTS:
+        case INNER_BASTION_2:
+            DoScriptText(ScarletEventYells[uiStep], pCreature);
+            if (Player* pPlayer = GetPlayerInMap())
+                DoSpawnScarletGuards(uiStep, pPlayer);
+            return;
+        // Scourge invading
+        case ENTRANCE:
+        case INNER_BASTION_1:
+            DoScriptText(ScarletEventYells[uiStep], pCreature);
+        case CRIMSON_THRONE:
+            if (Player* pPlayer = GetPlayerInMap())
+                DoSpawnScourgeInvaders(uiStep, pPlayer);
+            return;
+    }
+    return;
+}
+
 void instance_stratholme::Update(uint32 uiDiff)
 {
     if (m_bAbomPull)
@@ -546,7 +799,7 @@ void instance_stratholme::Update(uint32 uiDiff)
         else
             m_uiBaronWarnTimer -= uiDiff;
     }
-
+    
     if (m_bBaronRun)
     {
         if (!m_bTenUp && m_uiBaronRunTimer <= 10*MINUTE*IN_MILLISECONDS)
@@ -711,10 +964,6 @@ void instance_stratholme::PlayersRun(uint32 uiAction)
                         pPlayer->AreaExploredOrEventHappens(QUEST_DEAD_MAN_PLEA);
 
 					pPlayer->CastSpell(pPlayer,SPELL_BARON_RUN_REP, true);
-                    break;
-                case ACTION_AURIUS:
-                    if (pPlayer->GetQuestStatus(QUEST_AURIUS_RECKONING) == QUEST_STATUS_INCOMPLETE)
-                        pPlayer->AreaExploredOrEventHappens(QUEST_AURIUS_RECKONING);
                     break;
             }
         }

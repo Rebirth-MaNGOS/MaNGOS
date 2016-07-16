@@ -3699,18 +3699,12 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
 
         }
 
-
         // Frost root aura -> freeze/unfreeze target
         if (GetSpellSchoolMask(GetSpellProto()) & SPELL_SCHOOL_MASK_FROST)
             target->ModifyAuraState(AURA_STATE_FROZEN, apply);
 
         target->addUnitState(UNIT_STAT_ROOT);
-        target->SetTargetGuid(ObjectGuid());
-
-        //Save last orientation
-        if( target->getVictim() )
-            target->SetOrientation(target->GetAngle(target->getVictim()));
-
+        
         if(target->GetTypeId() == TYPEID_PLAYER)
         {
             WorldPacket data(SMSG_FORCE_MOVE_ROOT, 10);

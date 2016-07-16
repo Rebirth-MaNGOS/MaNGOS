@@ -29,6 +29,7 @@ enum
     NPC_VISCIDUS                = 15299,
     NPC_VEKLOR                  = 15276,
     NPC_VEKNILASH               = 15275,
+    NPC_EYE_OF_CTHUN     = 15589,
     NPC_CTHUN                   = 15727,
     NPC_VISCIDUS_DUMMY = 800109,
     NPC_OURO_GROUND = 157120,

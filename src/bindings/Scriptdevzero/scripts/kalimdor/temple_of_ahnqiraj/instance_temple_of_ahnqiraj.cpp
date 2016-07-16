@@ -47,6 +47,7 @@ void instance_temple_of_ahnqiraj::OnCreatureCreate (Creature* pCreature)
         case NPC_VISCIDUS:
         case NPC_VEKLOR:
         case NPC_VEKNILASH:
+        case NPC_EYE_OF_CTHUN:
         case NPC_CTHUN:
         case NPC_VISCIDUS_DUMMY:
         case NPC_OURO_GROUND:

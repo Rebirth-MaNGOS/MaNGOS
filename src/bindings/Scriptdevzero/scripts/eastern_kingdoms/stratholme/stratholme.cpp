@@ -672,7 +672,9 @@ struct MANGOS_DLL_DECL npc_auriusAI : public ScriptedAI
 
     void Leave()
     {
-        m_uiLeaveTimer = 45000;
+        m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+        m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+        m_uiLeaveTimer = 25000;        
     }
 
     void MovementInform(uint32 uiMotionType, uint32 uiPointId)
@@ -690,6 +692,7 @@ struct MANGOS_DLL_DECL npc_auriusAI : public ScriptedAI
                 m_uiLeaveTimer = 0;
                 m_creature->SetStandState(UNIT_STAND_STATE_STAND);
                 m_creature->GetMotionMaster()->MovePoint(0, 3666.92f, -3624.59f, 139.958f);
+                m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
             }
             else
                 m_uiLeaveTimer -= uiDiff;
@@ -748,13 +751,52 @@ bool QuestRewarded_npc_aurius(Player* /*pPlayer*/, Creature* pCreature, const Qu
 {
     instance_stratholme* m_pInstance = (instance_stratholme*)pCreature->GetInstanceData();
     
-    if (m_pInstance && m_pInstance->GetData(TYPE_AURIUS) != DONE && pQuest->GetQuestId() == QUEST_THE_MEDALLION_OF_FAITH)
-    {
-        m_pInstance->SetData(TYPE_AURIUS, DONE);
+    if (pQuest->GetQuestId() == QUEST_THE_MEDALLION_OF_FAITH)
+    {        
         if (npc_auriusAI* pAuriusAI = dynamic_cast<npc_auriusAI*>(pCreature->AI()))
             pAuriusAI->Leave();
+        
+        if(m_pInstance && m_pInstance->m_bSummonAurius == false)
+        {
+            m_pInstance->m_bSummonAurius = true;
+            m_pInstance->SetData(TYPE_AURIUS, SPECIAL);
+        }
+
     }
     return true;
+}
+
+bool GossipHello_npc_aurius(Player* pPlayer, Creature* pCreature)
+{
+    instance_stratholme* m_pInstance = (instance_stratholme*)pCreature->GetInstanceData();
+
+    uint32 ui_GossipId;
+
+    if (m_pInstance)
+    {
+        if (pCreature->isQuestGiver())
+            pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
+        
+        DEBUG_LOG("AURIUS TYPE: %u",m_pInstance->GetData(TYPE_AURIUS));
+        switch (m_pInstance->GetData(TYPE_AURIUS))
+        {
+            case SPECIAL:
+                ui_GossipId = 3756;
+                break;
+            case DONE:
+                ui_GossipId = 3757;
+                break;
+            default:
+                ui_GossipId = 3755;
+                break;
+        }
+                    
+        pPlayer->SEND_GOSSIP_MENU(ui_GossipId, pCreature->GetObjectGuid());
+
+        return true;
+    }
+
+    return false;
 }
 
 /*######
@@ -958,6 +1000,7 @@ void AddSC_stratholme()
     pNewscript = new Script;
     pNewscript->Name = "npc_aurius";
     pNewscript->GetAI = &GetAI_npc_aurius;
+    pNewscript->pGossipHello =  &GossipHello_npc_aurius;
     pNewscript->pQuestRewardedNPC = &QuestRewarded_npc_aurius;
     pNewscript->RegisterSelf();
 

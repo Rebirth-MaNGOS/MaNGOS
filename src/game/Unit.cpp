@@ -718,7 +718,9 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         duel_hasEnded = true;
     }
     //Get in CombatState
-    if(pVictim != this && damagetype != DOT)
+    // The spellProto check is for the Dark Glare at C'Thun.
+    // If he's put into combat with new units his animation bugs.
+    if(pVictim != this && damagetype != DOT && (!spellProto || spellProto->Id != 26029))
     {
         SetInCombatWith(pVictim);
         pVictim->SetInCombatWith(this);
@@ -6941,7 +6943,7 @@ void Unit::Mount(uint32 mount, uint32 spellId)
                     ((Player*)this)->UnsummonPetTemporaryIfAny();
                 }
                 else
-                    pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,true);
+                    pet->SetModeFlags(PET_MODE_DISABLE_ACTIONS);
    
             }
             else if (Unit* pCharmed = GetCharm()) // For the Warlock spell Enslave Demon.
@@ -6981,7 +6983,10 @@ void Unit::Unmount(bool from_aura)
     if(GetTypeId() == TYPEID_PLAYER)
     {
         if(Pet* pet = GetPet())
-            pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,false);
+        {
+            if (CharmInfo* charmInfo = pet->GetCharmInfo())
+                pet->SetModeFlags(PetModeFlags(charmInfo->GetReactState() | charmInfo->GetCommandState() * 0x100));
+        }
         else if (Unit* pCharmed = GetCharm()) // For the Warlock spell Enslave Demon.
         {
             WorldPacket data(SMSG_PET_MODE, 12);
@@ -7275,7 +7280,7 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
             return false;
 
     // Visible units, always are visible for all units, except for units under invisibility
-    if (m_Visibility == VISIBILITY_ON && u->m_invisibilityMask==0)
+    if (m_Visibility == VISIBILITY_ON/* && u->m_invisibilityMask==0*/)
         return true;
 
     // GMs see any players, not higher GMs and all units
@@ -7291,19 +7296,20 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
     if (m_Visibility == VISIBILITY_OFF)
         return false;
 
+    // grouped players should always see stealthed party members
+    if (GetTypeId() == TYPEID_PLAYER && u->GetTypeId() == TYPEID_PLAYER)
+        if (((Player*)this)->IsGroupVisibleFor(((Player*)u)) && u->IsFriendlyTo(this))
+            return true;
+    
     // raw invisibility
     bool invisible = (m_invisibilityMask != 0 || u->m_invisibilityMask !=0);
 
     // detectable invisibility case
     if( invisible && (
-                // Invisible units, always are visible for units under same invisibility type
-                (m_invisibilityMask & u->m_invisibilityMask)!=0 ||
-                // Creatures can always detect other creatures and players that aren't invisible
-                (u->GetTypeId() == TYPEID_UNIT && m_invisibilityMask == 0) ||
+        // Invisible units, always are visible for units under same invisibility type
+                (m_invisibilityMask & u->m_invisibilityMask) != 0 ||
                 // Invisible units, always are visible for unit that can detect this invisibility (have appropriate level for detect)
-                u->canDetectInvisibilityOf(this) ||
-                // Units that can detect invisibility always are visible for units that can be detected
-                canDetectInvisibilityOf(u) ))
+                u->canDetectInvisibilityOf(this)))
     {
         invisible = false;
     }
@@ -7311,35 +7317,18 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
     // special cases for always overwrite invisibility/stealth
     if(invisible || m_Visibility == VISIBILITY_GROUP_STEALTH)
     {
-        // non-hostile case
-        if (!u->IsHostileTo(this))
-        {
-            // player see other player with stealth/invisibility only if he in same group or raid or same team (raid/team case dependent from conf setting)
-            if(GetTypeId()==TYPEID_PLAYER && u->GetTypeId()==TYPEID_PLAYER)
-            {
-                if(((Player*)this)->IsGroupVisibleFor(((Player*)u)))
-                    return true;
-
-                // else apply same rules as for hostile case (detecting check for stealth)
-            }
-        }
         // hostile case
-        else
+        if (u->IsHostileTo(this))
         {
             // Hunter mark functionality
             AuraList const& auras = GetAurasByType(SPELL_AURA_MOD_STALKED);
             for(AuraList::const_iterator iter = auras.begin(); iter != auras.end(); ++iter)
                 if ((*iter)->GetCasterGuid() == u->GetObjectGuid())
                     return true;
-
-            // else apply detecting check for stealth
         }
-
         // none other cases for detect invisibility, so invisible
         if(invisible)
             return false;
-
-        // else apply stealth detecting check
     }
 
     // unit got in stealth in this moment and must ignore old detected state
@@ -7556,25 +7545,6 @@ void Unit::UpdateWalkMode(Unit* source, bool self)
 
 void Unit::UpdateSpeed(UnitMoveType mtype, bool forced, float ratio)
 {
-    // not in combat pet have same speed as owner
-    switch(mtype)
-    {
-    case MOVE_RUN:
-    case MOVE_WALK:
-    case MOVE_SWIM:
-        if (GetTypeId() == TYPEID_UNIT && ((Creature*)this)->IsPet() && hasUnitState(UNIT_STAT_FOLLOW))
-        {
-            if(Unit* owner = GetOwner())
-            {
-                SetSpeedRate(mtype, owner->GetSpeedRate(mtype), forced);
-                return;
-            }
-        }
-        break;
-    default:
-        break;
-    }
-
     int32 main_speed_mod  = 0;
     float stack_bonus     = 1.0f;
     float non_stack_bonus = 1.0f;
