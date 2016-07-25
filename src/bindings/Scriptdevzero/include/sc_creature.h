@@ -158,7 +158,12 @@ struct MANGOS_DLL_DECL ScriptedAI : public CreatureAI
     std::list<Creature*> DoFindFriendlyMissingBuff(float fRange, uint32 uiSpellId);
 
     //Return a player with at least minimumRange from m_creature
+    //Checks the 3D distance.
     Player* GetPlayerAtMinimumRange(float fMinimumRange);
+
+    //Return a list of players with at least minimumRange from m_creature
+    //Checks the 3D distance.
+    std::list<Player*> GetPlayersAtMinimumRange(float fMinimumRange);
 
     // Returns the player from the creature's threat list that is farthest away but within max_distance.
     Player* GetPlayerFarthestAwayFromThreatlistWithinRange(float max_distance);

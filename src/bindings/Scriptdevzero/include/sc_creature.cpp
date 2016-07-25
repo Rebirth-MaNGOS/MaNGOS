@@ -508,6 +508,19 @@ Player* ScriptedAI::GetPlayerAtMinimumRange(float fMinimumRange)
     return pPlayer;
 }
 
+std::list<Player*> ScriptedAI::GetPlayersAtMinimumRange(float fMinimumRange)
+{
+    std::list<Player*> playerList;
+
+    MaNGOS::AnyPlayerInObjectRangeCheck check(m_creature, fMinimumRange);
+    MaNGOS::PlayerListSearcher<MaNGOS::AnyPlayerInObjectRangeCheck> searcher(playerList, check);
+
+    Cell::VisitWorldObjects(m_creature, searcher, fMinimumRange);
+
+    return playerList;
+
+}
+
 Player* ScriptedAI::GetPlayerFarthestAwayFromThreatlistWithinRange(float max_distance)
 {
     if (!m_creature->getVictim())
