@@ -1332,10 +1332,6 @@ struct MANGOS_DLL_DECL giant_eye_tentacleAI : public ScriptedAI
 // Flesh tentacle functions
 void flesh_tentacleAI::UpdateAI(const uint32 uiDiff)
 {
-    // Check if we have a target
-    if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-        return;
-
     if (m_cThunGuid)
     {
         if (m_uiCheckTimer < uiDiff)
@@ -1355,17 +1351,15 @@ void flesh_tentacleAI::UpdateAI(const uint32 uiDiff)
             m_uiCheckTimer -= uiDiff;
     }
 
+    // Check if we have a target
+    if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+        return;
+
     DoMeleeAttackIfReady();
 }
 
 void flesh_tentacleAI::JustDied(Unit* /*killer*/)
 {
-    if (!m_cThunGuid)
-    {
-        error_log("SD2: flesh_tentacle: No m_cThunGuid variable");
-        return;
-    }
-
     if (Creature* pCthun = m_creature->GetMap()->GetCreature(m_cThunGuid))
     {
         if (cthunAI* pCthunAI = dynamic_cast<cthunAI*>(pCthun->AI()))
