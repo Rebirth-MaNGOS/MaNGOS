@@ -248,7 +248,7 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         m_creature->RemoveAurasDueToSpell(SPELL_TRANSFORM);
         m_creature->SetDisplayId(MODEL_BASE_NORMAL);
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
-        m_uiSetCombatTimer = 5000;
+        m_uiSetCombatTimer = 20000;
     }
 
     void StartSecondPhase(ObjectGuid eyeGuid, Unit* target)
@@ -728,10 +728,13 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
         m_creature->SummonCreature(MOB_EYE_TENTACLE, m_creature->GetPositionX()+x ,m_creature->GetPositionY()+y, m_creature->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 500);
     }
 
-    void Aggro(Unit* /*pWho*/)
+    void Aggro(Unit* pWho)
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_NORMAL);
+
+        // Nuke the aggroing player with a beam.
+        DoCastSpellIfCan(pWho, SPELL_GREEN_BEAM);
     }
 
     void ResetToHome()
