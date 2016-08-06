@@ -708,6 +708,8 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
     {
     case 5024: // Skull of Impending Doom "Flee" should be a positive effect
             return true;
+    case 9632: // Bladestorm (Ravager procc) should be a positive effect
+            return true;        
     case 12042: // Arcane power should be a positive effect.
         return true;
 	case 12613: // Dark Iron Taskmaster Death should be a positive effect.
