@@ -83,6 +83,7 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
     uint32 m_uiWarStompTimer;
     uint32 m_uiCurseOfTonguesTimer;
     uint32 m_uiEnvelopingWingsTimer;
+    uint32 m_uiSetCombatTimer;
 
     std::list<uint8> m_lCrystalPos;
     std::list<ObjectGuid> m_lCrystalList;
@@ -101,6 +102,7 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
         m_uiWarStompTimer = urand(8000,12000);
         m_uiCurseOfTonguesTimer = urand(15000,20000);
         m_uiEnvelopingWingsTimer = urand(15000,20000);
+        m_uiSetCombatTimer = 10000;
     }
 
 	void TornadoesVisibility(int Visible = 0)
@@ -307,6 +309,17 @@ struct MANGOS_DLL_DECL boss_ossirianAI : public ScriptedAI
 			SetResistances(4,0);
 		else
 			SetResistances(4,1000);
+        
+        // Pulse to set everyone in combat to prevent alt f4 or ressing and not getting in combat
+        if (m_uiSetCombatTimer <= uiDiff)
+        {
+            if(m_creature->isInCombat())
+                m_creature->SetInCombatWithZone();
+
+            m_uiSetCombatTimer = 5000;
+        }
+        else
+            m_uiSetCombatTimer -= uiDiff;
 
         // War Stom
         if (m_uiWarStompTimer <= uiDiff)
