@@ -2480,6 +2480,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 					if ((spellInfo_1->SpellIconID == 456 && spellInfo_2->SpellIconID == 2006) ||
 						(spellInfo_2->SpellIconID == 456 && spellInfo_1->SpellIconID == 2006))
 						return false;
+                    
+                    // Battle Shout and Lord General's Sword should stack
+                    if ((spellInfo_1->SpellIconID == 456 && spellInfo_2->Id == 15602) ||
+                        (spellInfo_2->SpellIconID == 456 && spellInfo_1->Id == 15602))
+                        return false;
 				}
 
 				// Hamstring -> Improved Hamstring (multi-family check)
