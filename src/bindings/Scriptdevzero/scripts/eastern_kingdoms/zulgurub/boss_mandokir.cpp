@@ -81,6 +81,62 @@ static Loc aSpirits[]=
     {-12266.1f, -1940.72f, 132.61f, 0.70f},
 };
 
+/*######
+## mob_chained_spirit
+######*/
+
+struct MANGOS_DLL_DECL mob_chained_spiritAI : public ScriptedAI
+{
+    mob_chained_spiritAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 m_uiPlayerCheck;
+    ObjectGuid m_uiPlayerGUID;
+
+    void Reset()
+    {
+        m_uiPlayerCheck = 60000;
+        m_uiPlayerGUID.Clear();
+    }
+    
+    void SetPlayerToRess(ObjectGuid Player)
+    {
+        m_uiPlayerGUID = Player;              
+        m_uiPlayerCheck = 500;
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        // Revive
+        if (m_uiPlayerCheck < uiDiff)
+        {
+            Player* pPlayer = m_creature->GetMap()->GetPlayer(m_uiPlayerGUID);
+            if (pPlayer && pPlayer->IsWithinDistInMap(m_creature, 2.0f))
+            {
+                m_creature->CastSpell(pPlayer, SPELL_REVIVE, false);
+                
+                m_creature->MonsterWhisper("I am released through you! Avenge me!", pPlayer, false);
+                
+                // Reset it
+                m_uiPlayerGUID.Clear();                
+                
+                m_creature->ForcedDespawn(2000);
+            }
+            else
+                m_uiPlayerCheck = 500;
+        }
+        else
+            m_uiPlayerCheck -= uiDiff;
+    }
+};
+
+CreatureAI* GetAI_mob_chained_spirit(Creature* pCreature)
+{
+    return new mob_chained_spiritAI(pCreature);
+}
+
 struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
 {
     boss_mandokirAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -103,7 +159,6 @@ struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
     uint32 m_uiWriteThreatTimer;
 
 	uint32 m_uiSuspendTimer; // Timer used to allow the charge animation to occur correctly. Works most of the time but not always
-
     uint32 m_uiDefaultLevel;
 
     uint8 m_uiKillCount;
@@ -175,9 +230,26 @@ struct MANGOS_DLL_DECL boss_mandokirAI : public ScriptedAI
             }
 
 			if (m_creature->isInCombat())
-			{				          
-				if (Creature* pSpirit = GetClosestCreatureWithEntry(pVictim, NPC_CHAINED_SPIRIT, 50.0f))
-					pSpirit->CastSpell(pVictim, SPELL_REVIVE, false);
+			{				 
+                int r;
+                r = irand(0,5);
+                if (r > 0)
+                {
+                    if (Creature* pSpirit = GetClosestCreatureWithEntry(pVictim, NPC_CHAINED_SPIRIT, 80.0f))
+                    {
+                        if(pSpirit && pSpirit->GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE)
+                        {                        
+                            mob_chained_spiritAI* pSpiritAI = dynamic_cast<mob_chained_spiritAI*>(pSpirit->AI());
+                            
+                            if(pSpiritAI)
+                            {
+                                pSpiritAI->SetPlayerToRess(pVictim->GetGUID());
+                                // only move if we know the spirit is ok
+                                pSpirit->GetMotionMaster()->MovePoint(1, pVictim->GetPositionX(),pVictim->GetPositionY(), pVictim->GetPositionZ());
+                            }
+                        }
+                    }
+                }
 			}
         }
     }
@@ -708,6 +780,11 @@ void AddSC_boss_mandokir()
     pNewScript = new Script;
     pNewScript->Name = "mob_ohgan";
     pNewScript->GetAI = &GetAI_mob_ohgan;
+    pNewScript->RegisterSelf();
+    
+    pNewScript = new Script;
+    pNewScript->Name = "mob_chained_spirit";
+    pNewScript->GetAI = &GetAI_mob_chained_spirit;
     pNewScript->RegisterSelf();
 
     pNewScript = new Script;
