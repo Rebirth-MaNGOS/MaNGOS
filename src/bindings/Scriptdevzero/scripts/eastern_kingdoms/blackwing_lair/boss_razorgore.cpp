@@ -842,7 +842,7 @@ bool GOUse_go_orb_of_domination(Player* pPlayer, GameObject* pGo)
 
                     pPlayer->CastSpell(pPlayer, SPELL_ORB_USAGE, true);
                     pPlayer->CastSpell(pPlayer, SPELL_MIND_EXHAUSTION, true);
-                    pPlayer->CastSpell(razorgore, SPELL_ORB_MIND_CONTROL, false);
+                    pPlayer->CastSpell(razorgore, SPELL_ORB_MIND_CONTROL, true);
                     razorgore->CastSpell(razorgore,  SPELL_ORB_SHRINK_EFFECT, true);
 
                     if (!razorgore->HasAura(SPELL_POSSESS))
