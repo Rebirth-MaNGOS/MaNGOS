@@ -351,6 +351,82 @@ bool GossipSelect_npc_awbee(Player* pPlayer, Creature* pCreature, uint32 uiSende
     return true;
 }
 
+/*####
+# boss_goraluk_anvilcrack
+####*/
+
+enum eAnvilC
+{
+    SPELL_STRIKE   = 15580,
+    SPELL_BACKHAND    = 6253,
+    SPELL_HEAD_CRACK        = 16172,
+
+    SPELL_SOUL_CLAIM = 17048,
+    ITEM_SOUL_STAINED_PIKE = 12847
+};
+
+struct MANGOS_DLL_DECL boss_goraluk_anvilcrackAI : public ScriptedAI
+{
+    boss_goraluk_anvilcrackAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+    
+    uint32 m_uiStrikeTimer;
+    uint32 m_uiBackhandTimer;
+    uint32 m_uiHeadCrackTimer;
+    
+    void Reset()
+    {
+        m_uiStrikeTimer = urand(5000, 7000);
+        m_uiBackhandTimer = urand(10000, 12000);
+        m_uiHeadCrackTimer = urand(5000, 10000);
+    }
+
+    void SpellHit(Unit* pCaster, SpellEntry const* pSpell)          // create the item for quest
+    {
+        if (pSpell->Id == SPELL_SOUL_CLAIM)
+            if (Item* pItem = ((Player*)pCaster)->StoreNewItemInInventorySlot(ITEM_SOUL_STAINED_PIKE, 1))
+                ((Player*)pCaster)->SendNewItem(pItem, 1, true, false);
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        if (m_uiStrikeTimer < uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_STRIKE);
+            m_uiStrikeTimer = urand(4000, 6000);
+        }
+        else
+            m_uiStrikeTimer -= uiDiff;
+        
+        if (m_uiBackhandTimer < uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_BACKHAND);
+            m_uiBackhandTimer = urand(9000,12000);
+        }
+        else
+            m_uiBackhandTimer -= uiDiff;
+        
+        if (m_uiHeadCrackTimer < uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_HEAD_CRACK);
+            m_uiHeadCrackTimer = urand(20000, 24000);
+        }
+        else
+            m_uiHeadCrackTimer -= uiDiff;
+        
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_boss_goraluk_anvilcrack(Creature* pCreature)
+{
+    return new boss_goraluk_anvilcrackAI(pCreature);
+}
 void AddSC_blackrock_spire()
 {
     Script* pNewscript;
@@ -390,5 +466,10 @@ void AddSC_blackrock_spire()
     pNewscript->Name = "npc_awbee";
     pNewscript->pGossipHello = &GossipHello_npc_awbee;
     pNewscript->pGossipSelect = &GossipSelect_npc_awbee;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "boss_goraluk_anvilcrack";
+    pNewscript->GetAI = &GetAI_boss_goraluk_anvilcrack;
     pNewscript->RegisterSelf();
 }
