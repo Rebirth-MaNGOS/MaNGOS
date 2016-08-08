@@ -347,7 +347,7 @@ struct MANGOS_DLL_DECL boss_twinemperorsAI : public ScriptedAI
                 Unit *nearu = PickNearestPlayer();
                 //DoYell(nearu->GetName(), LANG_UNIVERSAL, 0);
                 AttackStart(nearu);
-                m_creature->getThreatManager().addThreat(nearu, 10000);
+                m_creature->getThreatManager().addThreat(nearu, 1000);
                 m_creature->GetMotionMaster()->MoveChase(nearu);
                 return true;
             }
