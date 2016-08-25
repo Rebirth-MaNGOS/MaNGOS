@@ -5901,8 +5901,8 @@ void Player::CheckAreaExploreAndOutdoor()
             }
             // PvP speed boost 
             if (HasAura(768) || HasAura(5487) || HasAura(9634) || HasAura(783))
-                UpdateEquipSpellsAtFormChange();                          
-    
+                UpdateEquipSpellsAtFormChange();        
+        }
     }
     else if (sWorld.getConfig(CONFIG_BOOL_VMAP_INDOOR_CHECK) && !isGameMaster())
         RemoveAurasWithAttribute(SPELL_ATTR_OUTDOORS_ONLY);
