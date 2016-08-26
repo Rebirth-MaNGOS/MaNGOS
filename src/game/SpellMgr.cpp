@@ -2165,6 +2165,20 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     (spellInfo_2->Id == 24382 && spellInfo_1->Id == 10668))
         return true;
             
+    // Zanza buffs that shouldn't stack
+    if(spellInfo_1->Id == 24382 || spellInfo_1->Id == 24417|| spellInfo_1->Id == 24383)
+    {
+        switch(spellInfo_2->Id)
+        {
+        case 24382: // Spirit of Zanza
+        case 24417: // Sheen of Zanza
+        case 24383: // Swiftness of Zanza
+            return true;
+        default:
+            break;
+        }
+    }   
+        
     // Beer that shouldn't stack
     if(spellInfo_1->Id == 22789 || spellInfo_1->Id == 20875|| spellInfo_1->Id == 25722
         || spellInfo_1->Id == 25804 || spellInfo_1->Id == 25037)
