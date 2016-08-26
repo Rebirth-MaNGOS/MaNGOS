@@ -869,6 +869,9 @@ bool GossipSelect_npc_anachronos(Player* pPlayer, Creature* pCreature, uint32 /*
 
 bool GossipHello_npc_meridith_the_mermaiden(Player* pPlayer, Creature* pCreature)
 {
+    if(pPlayer && pCreature && pCreature->isQuestGiver())
+        pPlayer->PrepareQuestMenu(pCreature->GetObjectGuid());
+    
     if (pPlayer->GetQuestRewardStatus(8599))
     {
         pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "That would be wonderful! Thank you, Meridith.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
@@ -876,7 +879,6 @@ bool GossipHello_npc_meridith_the_mermaiden(Player* pPlayer, Creature* pCreature
     }
     else
         pPlayer->SEND_GOSSIP_MENU(7916, pCreature->GetObjectGuid());
-
 
     return true;
 }
