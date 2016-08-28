@@ -566,8 +566,6 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
     int RandX;
     int RandY;
     
-    bool m_bShadowBolt;
-
     Creature* Summoned;
 
     void Reset()
@@ -577,7 +575,6 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
         Blizzard_Timer = urand(15000, 20000);
         ArcaneBurst_Timer = 1000;
         Scorpions_Timer = urand(7000, 14000);
-        m_bShadowBolt = true;
 
         //Added. Can be removed if its included in DB.
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, true);
@@ -610,7 +607,7 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
             if (ShadowBolt_Timer < diff)
             {                
                 m_creature->CastSpell(m_creature->getVictim(),SPELL_SHADOWBOLT, false);
-                m_bShadowBolt ? ShadowBolt_Timer = 2200 : ShadowBolt_Timer = 5000;
+                ShadowBolt_Timer = 2200;
             }
             else 
                 ShadowBolt_Timer -= diff;
@@ -644,7 +641,6 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
         {
             m_creature->GetMotionMaster()->MoveIdle();
             m_creature->StopMoving();
-            m_bShadowBolt = true;
         }
         else
         {
@@ -652,7 +648,6 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
                 m_creature->GetMotionMaster()->MoveChase(pTarget);
             else
                 m_creature->GetMotionMaster()->Clear();
-            m_bShadowBolt = false;
         }
 
         HandleBugs(diff);
