@@ -270,6 +270,13 @@ CreatureAI* GetAI_boss_anubrekhan(Creature* pCreature)
     return new boss_anubrekhanAI(pCreature);
 }
 
+enum eGuard
+{
+    SPELL_CLEAVE = 20691,
+    SPELL_ACID_SPIT = 28969, // wrong spell?
+    SPELL_WEB_EXPLOSION = 15474, // wrong since its 30yrds, change when we know spell id
+};
+
 struct MANGOS_DLL_DECL mob_cryptguardsAI : public ScriptedAI
 {
     mob_cryptguardsAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -281,8 +288,15 @@ struct MANGOS_DLL_DECL mob_cryptguardsAI : public ScriptedAI
 	instance_naxxramas* m_pInstance;
     float FX, FY, FZ;
         
+    uint32 m_uiCleaveTimer;
+    uint32 m_uiAcidSpitTimer;
+    uint32 m_uiWebExplosionTimer;
+    
 	void Reset()
     {
+        m_uiCleaveTimer = urand(3000, 6000);
+        m_uiAcidSpitTimer = urand(1000, 2000);
+        m_uiWebExplosionTimer = urand(10000, 20000);
     } 
 		
 	void KilledUnit(Unit* pVictim)
@@ -297,10 +311,38 @@ struct MANGOS_DLL_DECL mob_cryptguardsAI : public ScriptedAI
         }
     }
     	
-	 void UpdateAI(const uint32 /*uiDiff*/)
+	 void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+        
+        // Cleave
+        if (m_uiCleaveTimer < uiDiff)
+        {
+            DoCastSpellIfCan(m_creature, SPELL_CLEAVE);
+            m_uiCleaveTimer = urand(7000, 9000);
+        }
+        else
+            m_uiCleaveTimer -= uiDiff;
+        
+        // Acid spit
+        if (m_uiAcidSpitTimer < uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_ACID_SPIT);
+            m_uiAcidSpitTimer = urand(4000, 7000);
+        }
+        else
+            m_uiAcidSpitTimer -= uiDiff;
+        
+        // Locust Swarm
+        if (m_uiWebExplosionTimer < uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_WEB_EXPLOSION);
+            m_uiWebExplosionTimer = urand(20000, 35000);
+        }
+        else
+            m_uiWebExplosionTimer -= uiDiff;               
+        
         DoMeleeAttackIfReady();
     }
 };
