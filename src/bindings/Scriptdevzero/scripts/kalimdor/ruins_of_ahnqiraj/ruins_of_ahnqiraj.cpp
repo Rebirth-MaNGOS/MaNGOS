@@ -209,7 +209,7 @@ struct MANGOS_DLL_DECL mob_anubisath_guardianAI : public ScriptedAI
                 m_creature->SummonCreature(m_uiSummonMob, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN, 60000);
             }
 
-            m_uiSpell5Timer = 15000;
+            m_uiSpell5Timer = 20000;
         }
         else
             m_uiSpell5Timer -= uiDiff;
