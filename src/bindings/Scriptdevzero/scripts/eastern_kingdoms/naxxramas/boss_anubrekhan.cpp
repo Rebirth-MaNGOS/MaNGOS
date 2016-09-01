@@ -83,7 +83,6 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
     uint32 m_uiLocustSwarmTimer;
     uint32 m_uiSummonTimer;
     uint32 m_uiGuardExplode;
-    uint8 m_uiExplodedGuards;
     
     bool m_bHasTaunted;
     std::list<Creature*> m_lCryptGuards;
@@ -91,11 +90,10 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
    
     void Reset()
     {
-        m_uiExplodedGuards = 0;
         m_uiImpaleTimer = 15000;                            // 15 seconds
         m_uiLocustSwarmTimer = urand(80000, 120000);        // Random time between 80 seconds and 2 minutes for initial cast
         m_uiSummonTimer = m_uiLocustSwarmTimer + 45000;
-        m_uiGuardExplode = 10000;
+        m_uiGuardExplode = 60000;
         GetCreatureListWithEntryInGrid(m_lCryptGuards, m_creature, MOB_CRYPT_GUARD, DEFAULT_VISIBILITY_INSTANCE);
         m_uiGuardGUID.clear();
     }
@@ -151,6 +149,8 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
         {
             if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
                 pSummoned->AI()->AttackStart(pTarget);
+            
+             pSummoned->SetRespawnDelay(3000);
         }
         if (pSummoned->GetEntry() == MOB_CORPSE_SCARAB)
         {
@@ -163,12 +163,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
     void SummonedCreatureJustDied(Creature* pSummoned)
     {
         if (pSummoned->GetEntry() == MOB_CRYPT_GUARD)
-        {
-            pSummoned->CastSpell(pSummoned, SPELL_SELF_SPAWN_10, true);
-            pSummoned->GetPosition(FX, FY, FZ);
-            for(uint8 i = 0; i < 10; ++i)
-                m_creature->SummonCreature(MOB_CORPSE_SCARAB, FX+irand(-3,3), FY+irand(-3,3), FZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
-        }            
+            ExplodeScarabTimer();   
     }
         
     void JustReachedHome()
@@ -187,45 +182,53 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
         }
     }
     
+    void ExplodeScarabTimer()
+    {
+        // Spawn scarabs from a corpse in 10-15, called from adds AI
+        m_uiGuardExplode = urand(10000, 15000); 
+    }
+    
     void UpdateAI(const uint32 uiDiff)
     {
         m_introDialogue.DialogueUpdate(uiDiff);
         
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-        
-       if(m_uiExplodedGuards <= 2)
-       {
-            if (m_uiGuardExplode < uiDiff)
-            {            
-                 if (!m_lCryptGuards.empty())
+    
+        if (m_uiGuardExplode < uiDiff)
+        {                        
+            // new list to get spawned guards aswell
+            std::list<Creature*> m_lExplodeGuards;
+            GetCreatureListWithEntryInGrid(m_lExplodeGuards, m_creature, MOB_CRYPT_GUARD, DEFAULT_VISIBILITY_INSTANCE);
+
+            if (!m_lExplodeGuards.empty())
+            {
+                for(std::list<Creature*>::iterator itr = m_lExplodeGuards.begin(); itr != m_lExplodeGuards.end(); ++itr)
                 {
-                    for(std::list<Creature*>::iterator itr = m_lCryptGuards.begin(); itr != m_lCryptGuards.end(); ++itr)
+                    if ((*itr) && !(*itr)->isAlive())
                     {
-                        if ((*itr) && !(*itr)->isAlive())
-                        {                            
-                            // Check if we already exploded corpse    
-                            if(std::find(m_uiGuardGUID.begin(), m_uiGuardGUID.end(), (*itr)->GetObjectGuid()) != m_uiGuardGUID.end())
-                                continue;
-                            
-                            // Spawn scarabs         
-                            (*itr)->CastSpell((*itr), SPELL_SELF_SPAWN_10, true);    
-                            (*itr)->GetPosition(fX, fY, fZ);
-                            for(uint8 i = 0; i < 10; ++i)
-                                m_creature->SummonCreature(MOB_CORPSE_SCARAB, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
-                           
-                            ++m_uiExplodedGuards;
-                            m_uiGuardGUID.push_back((*itr)->GetObjectGuid());
-                            break;
-                        }
+                        // Check if we already exploded corpse    
+                        if(std::find(m_uiGuardGUID.begin(), m_uiGuardGUID.end(), (*itr)->GetObjectGuid()) != m_uiGuardGUID.end())
+                            continue;
+                        
+                        // Spawn scarabs                      
+                        (*itr)->CastSpell((*itr), SPELL_SELF_SPAWN_10, true);  
+                        (*itr)->GetPosition(fX, fY, fZ);
+                        for(uint8 i = 0; i < 10; ++i)
+                            m_creature->SummonCreature(MOB_CORPSE_SCARAB, fX+irand(-3,3), fY+irand(-3,3), fZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                                                  
+                        // add timer to despawn so animation shows
+                        (*itr)->ForcedDespawn();
+                        m_uiGuardGUID.push_back((*itr)->GetObjectGuid());
+                        break;
                     }
                 }
-                m_uiGuardExplode = 10000;
-            }            
-            else
-                m_uiGuardExplode -= uiDiff;            
-       }  
-       
+            }                       
+            m_uiGuardExplode = urand(10000, 15000);
+        }            
+        else
+            m_uiGuardExplode -= uiDiff;            
+              
         // Impale
         if (m_uiImpaleTimer < uiDiff)
         {
@@ -255,7 +258,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
         // Summon
         if (m_uiSummonTimer < uiDiff)
         {
-            m_creature->SummonCreature(MOB_CRYPT_GUARD, aCryptGuardLoc[0], aCryptGuardLoc[1], aCryptGuardLoc[2], aCryptGuardLoc[3], TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+            m_creature->SummonCreature(MOB_CRYPT_GUARD, aCryptGuardLoc[0], aCryptGuardLoc[1], aCryptGuardLoc[2], aCryptGuardLoc[3], TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 120000);
             m_uiSummonTimer = m_uiLocustSwarmTimer + 45000;
         }
         else
@@ -297,6 +300,17 @@ struct MANGOS_DLL_DECL mob_cryptguardsAI : public ScriptedAI
         m_uiCleaveTimer = urand(3000, 6000);
         m_uiAcidSpitTimer = urand(1000, 2000);
         m_uiWebExplosionTimer = urand(10000, 20000);
+        
+        // For the spawned guardians during locus swarm
+        instance_naxxramas* pInstance = dynamic_cast<instance_naxxramas*>(m_creature->GetInstanceData()); 
+        if (pInstance)
+        {
+            if (pInstance->GetData(TYPE_ANUB_REKHAN) != IN_PROGRESS)
+            {
+                if (m_creature->IsTemporarySummon() && !m_creature->isInCombat())
+                    m_creature->ForcedDespawn();
+            }
+        }
     } 
 		
 	void KilledUnit(Unit* pVictim)
@@ -310,9 +324,26 @@ struct MANGOS_DLL_DECL mob_cryptguardsAI : public ScriptedAI
                 m_creature->SummonCreature(MOB_CORPSE_SCARAB, FX+irand(-3,3), FY+irand(-3,3), FZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
         }
     }
-    	
-	 void UpdateAI(const uint32 uiDiff)
+    
+    void JustDied(Unit* pKiller)
     {
+        instance_naxxramas* pInstance = dynamic_cast<instance_naxxramas*>(pKiller->GetInstanceData()); 
+        if (pInstance)
+        {
+            Creature* pAnub = pInstance->GetSingleCreatureFromStorage(NPC_ANUB_REKHAN);
+            if (pAnub && pAnub->isAlive() && pInstance->GetData(TYPE_ANUB_REKHAN) == IN_PROGRESS)
+            {
+                boss_anubrekhanAI* pAI = dynamic_cast<boss_anubrekhanAI*>(pAnub->AI());
+                if (pAI)
+                {
+                    pAI->ExplodeScarabTimer();
+                }
+            }
+        }
+    }
+        	
+	 void UpdateAI(const uint32 uiDiff)
+    {        
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
         
