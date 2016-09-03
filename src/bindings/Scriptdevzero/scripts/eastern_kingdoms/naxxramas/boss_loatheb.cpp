@@ -31,17 +31,17 @@ enum
     SPELL_INEVITABLE_DOOM = 29204,
     SPELL_REMOVE_CURSE    = 30281,
     SPELL_FUNGAL_BLOOM = 29232,
-    NPC_SPORE = 16286    
+    NPC_SPORE = 16286
 };
 
 #define ADD_1X 2957.040f
 #define ADD_1Y -3997.590f
 #define ADD_1Z 274.280f
-
+ 
 #define ADD_2X 2909.130f
 #define ADD_2Y -4042.970f
 #define ADD_2Z 274.280f
-
+ 
 #define ADD_3X 2861.102f
 #define ADD_3Y -3997.901f
 #define ADD_3Z 274.280f
@@ -63,6 +63,8 @@ struct MANGOS_DLL_DECL boss_loathebAI : public ScriptedAI
     uint32 m_uiSummonTimer;
     uint8 m_uiCorruptedMindCount;
 
+    float spawnPos1, spawnPos2, spawnPos3;
+    
     void Reset()
     {
         m_uiCorruptedMindTimer = 4000;
@@ -83,6 +85,38 @@ struct MANGOS_DLL_DECL boss_loathebAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_LOATHEB, DONE);
+    }
+    
+    void ChooseSpore()
+    {
+            Unit* pSummonedSpores = NULL;           
+            
+            spawnPos1 = m_creature->GetDistance(ADD_1X, ADD_1Y, ADD_1Z);
+            spawnPos2 = m_creature->GetDistance(ADD_2X, ADD_2Y, ADD_2Z);
+            spawnPos3 = m_creature->GetDistance(ADD_3X, ADD_3Y, ADD_3Z);
+            
+            // Choose the spawn point furthest away
+            if(spawnPos1 < spawnPos2)
+            {
+                if(spawnPos2 < spawnPos3)
+                    pSummonedSpores = m_creature->SummonCreature(NPC_SPORE, ADD_3X, ADD_3Y, ADD_3Z, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,80000);
+                else
+                     pSummonedSpores = m_creature->SummonCreature(NPC_SPORE, ADD_2X, ADD_2Y, ADD_2Z, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,80000);
+            }
+            else if(spawnPos1 > spawnPos2)
+            {
+                if(spawnPos1 < spawnPos3)
+                    pSummonedSpores = m_creature->SummonCreature(NPC_SPORE, ADD_3X, ADD_3Y, ADD_3Z, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,80000);
+                else
+                     pSummonedSpores = m_creature->SummonCreature(NPC_SPORE, ADD_1X, ADD_1Y, ADD_1Z, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
+            }
+            
+            if (pSummonedSpores)
+            {
+                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
+                    pSummonedSpores->AddThreat(pTarget);
+            }
+        
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -128,19 +162,9 @@ struct MANGOS_DLL_DECL boss_loathebAI : public ScriptedAI
             m_uiRemoveCurseTimer -= uiDiff;
 
         // Summon
-        if (m_uiSummonTimer < uiDiff) // Check the range from boss for each spawn and take the one furthest away
+        if (m_uiSummonTimer < uiDiff)
         {
-            Unit* pSummonedSpores = NULL;
-
-            pSummonedSpores = m_creature->SummonCreature(NPC_SPORE, ADD_1X, ADD_1Y, ADD_1Z, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
-            //pSummonedSpores = m_creature->SummonCreature(NPC_SPORE, ADD_2X, ADD_2Y, ADD_2Z, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,80000);
-            //pSummonedSpores = m_creature->SummonCreature(NPC_SPORE, ADD_3X, ADD_3Y, ADD_3Z, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,80000);
-            if (pSummonedSpores)
-            {
-                if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0))
-                    pSummonedSpores->AddThreat(pTarget);
-            }
-
+            ChooseSpore();          
             m_uiSummonTimer = 12000;
         }
         else
