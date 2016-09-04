@@ -105,9 +105,14 @@ struct MANGOS_DLL_DECL boss_lady_blaumeuxAI : public ScriptedAI
     uint32 VoidZone_Timer;
     bool ShieldWall1;
     bool ShieldWall2;
+    
+    uint8 m_uiMarkCount;
+    bool m_bEnrage;
 
     void Reset()
     {
+        m_bEnrage = false;
+        m_uiMarkCount = 0;
         Mark_Timer = 20000;                                 // First Horsemen Mark is applied at 20 sec.
         VoidZone_Timer = 12000;                             // right
         ShieldWall1 = true;
@@ -139,11 +144,19 @@ struct MANGOS_DLL_DECL boss_lady_blaumeuxAI : public ScriptedAI
         if (Mark_Timer < uiDiff)
         {
             m_creature->CastSpell(m_creature->getVictim(), SPELL_MARK_OF_BLAUMEUX, true);
+            ++m_uiMarkCount;
             Mark_Timer = 12000;
         }
         else 
             Mark_Timer -= uiDiff;
 
+        if(m_uiMarkCount >= 100 && !m_bEnrage)
+        {
+            m_creature->CastSpell(m_creature, SPELL_BESERK, true);
+            m_bEnrage = true;
+        }
+            
+        
         // Shield Wall - All 4 horsemen will shield wall at 50% hp and 20% hp for 20 seconds
         if (ShieldWall1 && m_creature->GetHealthPercent() < 50.0f)
         {
@@ -166,7 +179,7 @@ struct MANGOS_DLL_DECL boss_lady_blaumeuxAI : public ScriptedAI
         if (VoidZone_Timer < uiDiff)
         {
             DoCastSpellIfCan(m_creature->getVictim(), SPELL_VOIDZONE);
-            VoidZone_Timer = 12000;
+            VoidZone_Timer = m_bEnrage ? 3000 : 12000;
         }
         else 
             VoidZone_Timer -= uiDiff;
@@ -188,8 +201,13 @@ struct MANGOS_DLL_DECL boss_highlord_mograineAI : public ScriptedAI
     bool ShieldWall1;
     bool ShieldWall2;
 
+    uint8 m_uiMarkCount;
+    bool m_bEnrage;
+
     void Reset()
     {
+        m_bEnrage = false;
+        m_uiMarkCount = 0;
         Mark_Timer = 20000;                                 // First Horsemen Mark is applied at 20 sec.
         ShieldWall1 = true;
         ShieldWall2 = true;
@@ -228,11 +246,18 @@ struct MANGOS_DLL_DECL boss_highlord_mograineAI : public ScriptedAI
         if(Mark_Timer < uiDiff)
         {
             m_creature->CastSpell(m_creature->getVictim(), SPELL_MARK_OF_MOGRAINE, true);
+            ++m_uiMarkCount;
             Mark_Timer = 12000;
         }
         else 
             Mark_Timer -= uiDiff;
 
+        if(m_uiMarkCount >= 100 && !m_bEnrage)
+        {
+            m_creature->CastSpell(m_creature, SPELL_BESERK, true);
+            m_bEnrage = true;
+        }
+        
         // Shield Wall - All 4 horsemen will shield wall at 50% hp and 20% hp for 20 seconds
         if(ShieldWall1 && (m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 50)
         {
@@ -268,9 +293,14 @@ struct MANGOS_DLL_DECL boss_thane_korthazzAI : public ScriptedAI
     uint32 Meteor_Timer;
     bool ShieldWall1;
     bool ShieldWall2;
+    
+    uint8 m_uiMarkCount;    
+    bool m_bEnrage;
 
     void Reset()
     {
+        m_bEnrage = false;
+        m_uiMarkCount = 0;
         Mark_Timer = 20000;                                 // First Horsemen Mark is applied at 20 sec.
         Meteor_Timer = 30000;                               // wrong
         ShieldWall1 = true;
@@ -330,10 +360,17 @@ struct MANGOS_DLL_DECL boss_thane_korthazzAI : public ScriptedAI
         if (Mark_Timer < uiDiff)
         {
             m_creature->CastSpell(m_creature->getVictim(), SPELL_MARK_OF_KORTHAZZ, true);
+            ++m_uiMarkCount;
             Mark_Timer = 12000;
         }
         else 
             Mark_Timer -= uiDiff;
+        
+        if(m_uiMarkCount >= 100 && !m_bEnrage)
+        {
+            m_creature->CastSpell(m_creature, SPELL_BESERK, true);
+            m_bEnrage = true;
+        }
 
         // Shield Wall - All 4 horsemen will shield wall at 50% hp and 20% hp for 20 seconds
         if (ShieldWall1 && m_creature->GetHealthPercent() < 50.0f)
@@ -357,7 +394,7 @@ struct MANGOS_DLL_DECL boss_thane_korthazzAI : public ScriptedAI
         if (Meteor_Timer < uiDiff)
         {
             CastMeteorOnRandomTarget();
-            Meteor_Timer = 20000;                           // wrong
+            Meteor_Timer = m_bEnrage ? 5000 : 20000;                           // wrong
         }
         else 
             Meteor_Timer -= uiDiff;
@@ -380,8 +417,13 @@ struct MANGOS_DLL_DECL boss_sir_zeliekAI : public ScriptedAI
     bool ShieldWall1;
     bool ShieldWall2;
 
+    uint8 m_uiMarkCount;    
+    bool m_bEnrage;
+
     void Reset()
     {
+        m_bEnrage = false;
+        m_uiMarkCount = 0;
         Mark_Timer = 20000;                                 // First Horsemen Mark is applied at 20 sec.
         HolyWrath_Timer = 12000;                            // right
         ShieldWall1 = true;
@@ -414,11 +456,18 @@ struct MANGOS_DLL_DECL boss_sir_zeliekAI : public ScriptedAI
         if (Mark_Timer < uiDiff)
         {
             m_creature->CastSpell(m_creature->getVictim(), SPELL_MARK_OF_ZELIEK, true);
+            ++m_uiMarkCount;
             Mark_Timer = 12000;
         }
         else 
             Mark_Timer -= uiDiff;
 
+        if(m_uiMarkCount >= 100 && !m_bEnrage)
+        {
+            m_creature->CastSpell(m_creature, SPELL_BESERK, true);
+            m_bEnrage = true;
+        }
+        
         // Shield Wall - All 4 horsemen will shield wall at 50% hp and 20% hp for 20 seconds
         if (ShieldWall1 && m_creature->GetHealthPercent() < 50.0f)
         {
@@ -441,7 +490,7 @@ struct MANGOS_DLL_DECL boss_sir_zeliekAI : public ScriptedAI
         if (HolyWrath_Timer < uiDiff)
         {
             DoCastSpellIfCan(m_creature->getVictim(), SPELL_HOLY_WRATH);
-            HolyWrath_Timer = 12000;
+            HolyWrath_Timer = m_bEnrage ? 3000 : 12000;
         }
         else 
             HolyWrath_Timer -= uiDiff;
