@@ -26,7 +26,7 @@ EndScriptData */
 
 enum
 {
-    SPELL_CORRUPTED_MIND  = 29198, // this triggers the following spells on targets (based on class): 29185, 29194, 29196, 29198
+    SPELL_CORRUPTED_MIND  = 29201, // this triggers the following spells on targets (based on class): 29185, 29194, 29196, 29198
     SPELL_POISON_AURA     = 29865,
     SPELL_INEVITABLE_DOOM = 29204,
     SPELL_REMOVE_CURSE    = 30281,
