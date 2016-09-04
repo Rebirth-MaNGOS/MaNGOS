@@ -636,8 +636,8 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
         else 
             ArcaneBurst_Timer -= diff;
         
-        // no movement if between 5 and 20 yrds
-        if(m_creature->getVictim() && m_creature->getVictim()->GetDistance(m_creature) > ATTACK_DISTANCE && m_creature->getVictim()->GetDistance(m_creature) < 20.f)
+        // no movement if below 20 yrds
+        if(m_creature->getVictim() && m_creature->getVictim()->GetDistance(m_creature) < 20.f)
         {
             m_creature->GetMotionMaster()->MoveIdle();
             m_creature->StopMoving();
@@ -665,7 +665,7 @@ struct MANGOS_DLL_DECL boss_veklorAI : public boss_twinemperorsAI
 
         CheckEnrage(diff);
         
-     //   DoMeleeAttackIfReady();
+        DoMeleeAttackIfReady();
     }
 };
 
