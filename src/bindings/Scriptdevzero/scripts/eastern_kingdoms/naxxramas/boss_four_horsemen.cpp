@@ -99,7 +99,13 @@ enum
 
 struct MANGOS_DLL_DECL boss_lady_blaumeuxAI : public ScriptedAI
 {
-    boss_lady_blaumeuxAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    boss_lady_blaumeuxAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Reset();        
+    }
+    
+    ScriptedInstance* m_pInstance;
 
     uint32 Mark_Timer;
     uint32 VoidZone_Timer;
@@ -135,6 +141,24 @@ struct MANGOS_DLL_DECL boss_lady_blaumeuxAI : public ScriptedAI
         m_creature->CastSpell(m_creature, SPELL_SPIRIT_BLAUMEUX, true);
     }
 
+    void ResetToHome()
+    {
+        Creature* pZeliek = m_pInstance->GetSingleCreatureFromStorage(NPC_ZELIEK);
+        Creature* pThane = m_pInstance->GetSingleCreatureFromStorage(NPC_THANE);
+        Creature* pMograine = m_pInstance->GetSingleCreatureFromStorage(NPC_MOGRAINE);
+
+        if(pZeliek && pZeliek->isDead())
+            pZeliek->Respawn();
+
+        if(pThane && pThane->isDead())
+            pThane->Respawn();
+        
+         if(pMograine && pMograine->isDead())
+            pMograine->Respawn();
+                
+        ScriptedAI::ResetToHome();
+    }
+    
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -195,7 +219,13 @@ CreatureAI* GetAI_boss_lady_blaumeux(Creature* pCreature)
 
 struct MANGOS_DLL_DECL boss_highlord_mograineAI : public ScriptedAI
 {
-   boss_highlord_mograineAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+   boss_highlord_mograineAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Reset();        
+    }
+    
+    ScriptedInstance* m_pInstance;
 
     uint32 Mark_Timer;
     bool ShieldWall1;
@@ -235,6 +265,24 @@ struct MANGOS_DLL_DECL boss_highlord_mograineAI : public ScriptedAI
     {
         DoScriptText(SAY_MOG_DEATH, m_creature);
         m_creature->CastSpell(m_creature, SPELL_SPIRIT_MOGRAINE, true);
+    }
+    
+    void ResetToHome()
+    {
+        Creature* pBlaumeux = m_pInstance->GetSingleCreatureFromStorage(NPC_BLAUMEUX);
+        Creature* pThane = m_pInstance->GetSingleCreatureFromStorage(NPC_THANE);
+        Creature* pZeliek = m_pInstance->GetSingleCreatureFromStorage(NPC_ZELIEK);
+
+        if(pBlaumeux && pBlaumeux->isDead())
+            pBlaumeux->Respawn();
+
+        if(pThane && pThane->isDead())
+            pThane->Respawn();
+        
+         if(pZeliek && pZeliek->isDead())
+            pZeliek->Respawn();
+                
+        ScriptedAI::ResetToHome();
     }
     
     void UpdateAI(const uint32 uiDiff)
@@ -287,7 +335,13 @@ CreatureAI* GetAI_boss_highlord_mograine(Creature* pCreature)
 
 struct MANGOS_DLL_DECL boss_thane_korthazzAI : public ScriptedAI
 {
-    boss_thane_korthazzAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    boss_thane_korthazzAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Reset();        
+    }
+    
+    ScriptedInstance* m_pInstance;
 
     uint32 Mark_Timer;
     uint32 Meteor_Timer;
@@ -321,6 +375,24 @@ struct MANGOS_DLL_DECL boss_thane_korthazzAI : public ScriptedAI
     {
         DoScriptText(SAY_KORT_DEATH, m_creature);
         m_creature->CastSpell(m_creature, SPELL_SPIRIT_KORTHAZZ, true);
+    }
+    
+    void ResetToHome()
+    {
+        Creature* pBlaumeux = m_pInstance->GetSingleCreatureFromStorage(NPC_BLAUMEUX);
+        Creature* pZeliek = m_pInstance->GetSingleCreatureFromStorage(NPC_ZELIEK);
+        Creature* pMograine = m_pInstance->GetSingleCreatureFromStorage(NPC_MOGRAINE);
+
+        if(pBlaumeux && pBlaumeux->isDead())
+            pBlaumeux->Respawn();
+
+        if(pZeliek && pZeliek->isDead())
+            pZeliek->Respawn();
+        
+         if(pMograine && pMograine->isDead())
+            pMograine->Respawn();
+                
+        ScriptedAI::ResetToHome();
     }
     
     void CastMeteorOnRandomTarget()
@@ -410,7 +482,13 @@ CreatureAI* GetAI_boss_thane_korthazz(Creature* pCreature)
 
 struct MANGOS_DLL_DECL boss_sir_zeliekAI : public ScriptedAI
 {
-    boss_sir_zeliekAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    boss_sir_zeliekAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    {
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Reset();        
+    }
+    
+    ScriptedInstance* m_pInstance;
 
     uint32 Mark_Timer;
     uint32 HolyWrath_Timer;
@@ -444,6 +522,24 @@ struct MANGOS_DLL_DECL boss_sir_zeliekAI : public ScriptedAI
     {
         DoScriptText(SAY_ZELI_DEATH, m_creature);
         m_creature->CastSpell(m_creature, SPELL_SPIRIT_ZELIEK, true);
+    }
+    
+    void ResetToHome()
+    {
+        Creature* pBlaumeux = m_pInstance->GetSingleCreatureFromStorage(NPC_BLAUMEUX);
+        Creature* pThane = m_pInstance->GetSingleCreatureFromStorage(NPC_THANE);
+        Creature* pMograine = m_pInstance->GetSingleCreatureFromStorage(NPC_MOGRAINE);
+
+        if(pBlaumeux && pBlaumeux->isDead())
+            pBlaumeux->Respawn();
+
+        if(pThane && pThane->isDead())
+            pThane->Respawn();
+        
+         if(pMograine && pMograine->isDead())
+            pMograine->Respawn();
+                
+        ScriptedAI::ResetToHome();
     }
 
     void UpdateAI(const uint32 uiDiff)

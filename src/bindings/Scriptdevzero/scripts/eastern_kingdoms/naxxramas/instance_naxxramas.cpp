@@ -63,7 +63,7 @@ void instance_naxxramas::OnCreatureCreate(Creature* pCreature)
         case NPC_ZELIEK:
         case NPC_THANE:
         case NPC_BLAUMEUX:
-        case NPC_RIVENDARE:
+        case NPC_MOGRAINE:
         case NPC_GOTHIK:
         case NPC_SAPPHIRON:
         case NPC_KELTHUZAD:
