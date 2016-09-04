@@ -24,6 +24,7 @@ EndScriptData */
 #include "precompiled.h"
 #include "naxxramas.h"
 
+// Command texts are wrong, some of aggro should be command and vice versa
 enum
 {
     SAY_AGGRO1               = -1533120,
@@ -38,10 +39,8 @@ enum
     SAY_DEATH                = -1533129,
 
     SPELL_UNBALANCING_STRIKE = 26613,
-    SPELL_DISRUPTING_SHOUT   = 55543,
-    SPELL_DISRUPTING_SHOUT_H = 29107,
-    SPELL_JAGGED_KNIFE       = 55550,
-    SPELL_HOPELESS           = 29125
+    SPELL_DISRUPTING_SHOUT   = 29107,
+    SPELL_HOPELESS           = 29125 // used when?
 };
 
 struct MANGOS_DLL_DECL boss_razuviousAI : public ScriptedAI
@@ -56,14 +55,12 @@ struct MANGOS_DLL_DECL boss_razuviousAI : public ScriptedAI
 
     uint32 m_uiUnbalancingStrikeTimer;
     uint32 m_uiDisruptingShoutTimer;
-    uint32 m_uiJaggedKnifeTimer;
     uint32 m_uiCommandSoundTimer;
 
     void Reset()
     {
         m_uiUnbalancingStrikeTimer = 30000;                 // 30 seconds
         m_uiDisruptingShoutTimer   = 15000;                 // 15 seconds
-        m_uiJaggedKnifeTimer       = urand(10000, 15000);
         m_uiCommandSoundTimer      = 40000;                 // 40 seconds
     }
 
@@ -100,6 +97,12 @@ struct MANGOS_DLL_DECL boss_razuviousAI : public ScriptedAI
             m_pInstance->SetData(TYPE_RAZUVIOUS, IN_PROGRESS);
     }
 
+    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_DISRUPTING_SHOUT)
+            m_creature->GenericTextEmote("Instructor Razuvious lets loose a triumphant shout.", NULL, false);       
+    }
+    
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -123,16 +126,6 @@ struct MANGOS_DLL_DECL boss_razuviousAI : public ScriptedAI
         else
             m_uiDisruptingShoutTimer -= uiDiff;
 
-        // Jagged Knife
-        if (m_uiJaggedKnifeTimer < uiDiff)
-        {
-            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                DoCastSpellIfCan(pTarget, SPELL_JAGGED_KNIFE);
-            m_uiJaggedKnifeTimer = 10000;
-        }
-        else
-            m_uiJaggedKnifeTimer -= uiDiff;
-
         // Random say
         if (m_uiCommandSoundTimer < uiDiff)
         {
@@ -150,6 +143,8 @@ struct MANGOS_DLL_DECL boss_razuviousAI : public ScriptedAI
             m_uiCommandSoundTimer -= uiDiff;
 
         DoMeleeAttackIfReady();
+        
+        EnterEvadeIfOutOfCombatArea(uiDiff);
     }
 };
 CreatureAI* GetAI_boss_razuvious(Creature* pCreature)
