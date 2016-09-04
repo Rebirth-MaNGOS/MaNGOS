@@ -16,8 +16,8 @@
 
 /* ScriptData
 SDName: Boss_Four_Horsemen
-SD%Complete: 100
-SDComment: Lady Blaumeux, Thane Korthazz, Sir Zeliek, Baron Rivendare
+SD%Complete: 80
+SDComment: Lady Blaumeux, Thane Korthazz, Sir Zeliek, Baron Rivendare, manually spawn the spirits and fix void zone
 SDCategory: Naxxramas
 EndScriptData */
 
@@ -57,7 +57,8 @@ enum
     SAY_MOG_DEATH          = -1533074,
 
     SPELL_MARK_OF_MOGRAINE = 28834,
-    SPELL_RIGHTEOUS_FIRE    = 28882,
+    //SPELL_RIGHTEOUS_FIRE_PROC    = 28882,
+    SPELL_RIGHTEOUS_FIRE = 28881,
 
     //thane korthazz
     SAY_KORT_AGGRO          = -1533051,
@@ -82,13 +83,18 @@ enum
 
     SPELL_MARK_OF_ZELIEK    = 28835,
     SPELL_HOLY_WRATH        = 28883,
-    SPELL_HOLY_BOLT         = 57376,
 
     // horseman spirits
     NPC_SPIRIT_OF_BLAUMEUX    = 16776,
-    NPC_SPIRIT_OF_RIVENDARE   = 0,                          //creature entry not known yet
+    NPC_SPIRIT_MOGRAINE   = 16775,
     NPC_SPIRIT_OF_KORTHAZZ    = 16778,
-    NPC_SPIRIT_OF_ZELIREK     = 16777
+    NPC_SPIRIT_OF_ZELIREK     = 16777,
+    
+    // spells, don't use
+    SPELL_SPIRIT_BLAUMEUX = 28931,
+    SPELL_SPIRIT_MOGRAINE = 28928,
+    SPELL_SPIRIT_KORTHAZZ = 28932,
+    SPELL_SPIRIT_ZELIEK = 28934,
 };
 
 struct MANGOS_DLL_DECL boss_lady_blaumeuxAI : public ScriptedAI
@@ -121,6 +127,7 @@ struct MANGOS_DLL_DECL boss_lady_blaumeuxAI : public ScriptedAI
     void JustDied(Unit* /*Killer*/)
     {
         DoScriptText(SAY_BLAU_DEATH, m_creature);
+        m_creature->CastSpell(m_creature, SPELL_SPIRIT_BLAUMEUX, true);
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -131,9 +138,11 @@ struct MANGOS_DLL_DECL boss_lady_blaumeuxAI : public ScriptedAI
         // Mark of Blaumeux
         if (Mark_Timer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_MARK_OF_BLAUMEUX);
+            m_creature->CastSpell(m_creature->getVictim(), SPELL_MARK_OF_BLAUMEUX, true);
             Mark_Timer = 12000;
-        }else Mark_Timer -= uiDiff;
+        }
+        else 
+            Mark_Timer -= uiDiff;
 
         // Shield Wall - All 4 horsemen will shield wall at 50% hp and 20% hp for 20 seconds
         if (ShieldWall1 && m_creature->GetHealthPercent() < 50.0f)
@@ -148,7 +157,7 @@ struct MANGOS_DLL_DECL boss_lady_blaumeuxAI : public ScriptedAI
         {
             if (ShieldWall2)
             {
-                DoCastSpellIfCan(m_creature,SPELL_SHIELDWALL);
+                DoCastSpellIfCan(m_creature, SPELL_SHIELDWALL);
                 ShieldWall2 = false;
             }
         }
@@ -156,9 +165,11 @@ struct MANGOS_DLL_DECL boss_lady_blaumeuxAI : public ScriptedAI
         // Void Zone
         if (VoidZone_Timer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_VOIDZONE);
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_VOIDZONE);
             VoidZone_Timer = 12000;
-        }else VoidZone_Timer -= uiDiff;
+        }
+        else 
+            VoidZone_Timer -= uiDiff;
 
         DoMeleeAttackIfReady();
     }
@@ -174,16 +185,17 @@ struct MANGOS_DLL_DECL boss_highlord_mograineAI : public ScriptedAI
    boss_highlord_mograineAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
 
     uint32 Mark_Timer;
-    uint32 RighteousFire_Timer;
     bool ShieldWall1;
     bool ShieldWall2;
 
     void Reset()
     {
         Mark_Timer = 20000;                                 // First Horsemen Mark is applied at 20 sec.
-        RighteousFire_Timer = 2000;                         // applied approx 1 out of 4 attacks
         ShieldWall1 = true;
         ShieldWall2 = true;
+        
+        if(!m_creature->HasAura(SPELL_RIGHTEOUS_FIRE))
+            m_creature->CastSpell(m_creature, SPELL_RIGHTEOUS_FIRE, true);    
     }
 
     void Aggro(Unit* /*who*/)
@@ -204,46 +216,42 @@ struct MANGOS_DLL_DECL boss_highlord_mograineAI : public ScriptedAI
     void JustDied(Unit* /*Killer*/)
     {
         DoScriptText(SAY_MOG_DEATH, m_creature);
+        m_creature->CastSpell(m_creature, SPELL_SPIRIT_MOGRAINE, true);
     }
-
-    void UpdateAI(const uint32 /*uiDiff*/)
+    
+    void UpdateAI(const uint32 uiDiff)
     {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+        
         // Mark of Mograine
-        //if(Mark_Timer < uiDiff)
-        //{
-        //    DoCastSpellIfCan(m_creature->getVictim(),SPELL_MARK_OF_MOGRAINE);
-        //    Mark_Timer = 12000;
-        //}else Mark_Timer -= uiDiff;
+        if(Mark_Timer < uiDiff)
+        {
+            m_creature->CastSpell(m_creature->getVictim(), SPELL_MARK_OF_MOGRAINE, true);
+            Mark_Timer = 12000;
+        }
+        else 
+            Mark_Timer -= uiDiff;
 
-        //// Shield Wall - All 4 horsemen will shield wall at 50% hp and 20% hp for 20 seconds
-        //if(ShieldWall1 && (m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 50)
-        //{
-        //    if(ShieldWall1)
-        //    {
-        //        DoCastSpellIfCan(m_creature,SPELL_SHIELDWALL);
-        //        ShieldWall1 = false;
-        //    }
-        //}
-        //if(ShieldWall2 && (m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 20)
-        //{
-        //    if(ShieldWall2)
-        //    {
-        //        DoCastSpellIfCan(m_creature,SPELL_SHIELDWALL);
-        //        ShieldWall2 = false;
-        //    }
-        //}
-
-        //// Righteous Fire
-        //if(RighteousFire_Timer < uiDiff)
-        //{
-        //    if(rand()%4 == 1)                               // 1/4
-        //    {
-        //        DoCastSpellIfCan(m_creature->getVictim(),SPELL_RIGHTEOUS_FIRE);
-        //    }
-        //    RighteousFire_Timer = 2000;
-        //}else RighteousFire_Timer -= uiDiff;
-
-        DoMeleeAttackIfReady();
+        // Shield Wall - All 4 horsemen will shield wall at 50% hp and 20% hp for 20 seconds
+        if(ShieldWall1 && (m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 50)
+        {
+            if(ShieldWall1)
+            {
+                DoCastSpellIfCan(m_creature, SPELL_SHIELDWALL);
+                ShieldWall1 = false;
+            }
+        }
+        if(ShieldWall2 && (m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 20)
+        {
+            if(ShieldWall2)
+            {
+                DoCastSpellIfCan(m_creature, SPELL_SHIELDWALL);
+                ShieldWall2 = false;
+            }
+        }
+        
+       DoMeleeAttackIfReady();       
     }
 };
 
@@ -282,6 +290,35 @@ struct MANGOS_DLL_DECL boss_thane_korthazzAI : public ScriptedAI
     void JustDied(Unit* /*Killer*/)
     {
         DoScriptText(SAY_KORT_DEATH, m_creature);
+        m_creature->CastSpell(m_creature, SPELL_SPIRIT_KORTHAZZ, true);
+    }
+    
+    void CastMeteorOnRandomTarget()
+    {
+        const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+        std::vector<Unit*> pEligibleTargets;
+
+        pEligibleTargets.clear();
+
+        if(!threatList.empty())
+        {
+            for (HostileReference *currentReference : threatList)
+            {
+                Unit *target = currentReference->getTarget();
+                if (target && target->isAlive() && target->GetTypeId() == TYPEID_PLAYER && target->IsWithinDist(m_creature, 20.f)) // within 20 yrds, change if we find sources for range
+                    pEligibleTargets.push_back(target);
+            }
+
+            if(!pEligibleTargets.empty())
+            {
+                std::random_shuffle(pEligibleTargets.begin(), pEligibleTargets.end());
+                Unit *target = pEligibleTargets.front();
+                if (target && target->isAlive() && target->GetTypeId() == TYPEID_PLAYER)
+                {
+                    m_creature->CastSpell(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), SPELL_METEOR, true);
+                }
+            }
+        }
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -292,16 +329,18 @@ struct MANGOS_DLL_DECL boss_thane_korthazzAI : public ScriptedAI
         // Mark of Korthazz
         if (Mark_Timer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_MARK_OF_KORTHAZZ);
+            m_creature->CastSpell(m_creature->getVictim(), SPELL_MARK_OF_KORTHAZZ, true);
             Mark_Timer = 12000;
-        }else Mark_Timer -= uiDiff;
+        }
+        else 
+            Mark_Timer -= uiDiff;
 
         // Shield Wall - All 4 horsemen will shield wall at 50% hp and 20% hp for 20 seconds
         if (ShieldWall1 && m_creature->GetHealthPercent() < 50.0f)
         {
             if (ShieldWall1)
             {
-                DoCastSpellIfCan(m_creature,SPELL_SHIELDWALL);
+                DoCastSpellIfCan(m_creature, SPELL_SHIELDWALL);
                 ShieldWall1 = false;
             }
         }
@@ -309,7 +348,7 @@ struct MANGOS_DLL_DECL boss_thane_korthazzAI : public ScriptedAI
         {
             if (ShieldWall2)
             {
-                DoCastSpellIfCan(m_creature,SPELL_SHIELDWALL);
+                DoCastSpellIfCan(m_creature, SPELL_SHIELDWALL);
                 ShieldWall2 = false;
             }
         }
@@ -317,9 +356,11 @@ struct MANGOS_DLL_DECL boss_thane_korthazzAI : public ScriptedAI
         // Meteor
         if (Meteor_Timer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_METEOR);
+            CastMeteorOnRandomTarget();
             Meteor_Timer = 20000;                           // wrong
-        }else Meteor_Timer -= uiDiff;
+        }
+        else 
+            Meteor_Timer -= uiDiff;
 
         DoMeleeAttackIfReady();
     }
@@ -360,6 +401,7 @@ struct MANGOS_DLL_DECL boss_sir_zeliekAI : public ScriptedAI
     void JustDied(Unit* /*Killer*/)
     {
         DoScriptText(SAY_ZELI_DEATH, m_creature);
+        m_creature->CastSpell(m_creature, SPELL_SPIRIT_ZELIEK, true);
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -371,16 +413,18 @@ struct MANGOS_DLL_DECL boss_sir_zeliekAI : public ScriptedAI
         // Mark of Zeliek
         if (Mark_Timer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_MARK_OF_ZELIEK);
+            m_creature->CastSpell(m_creature->getVictim(), SPELL_MARK_OF_ZELIEK, true);
             Mark_Timer = 12000;
-        }else Mark_Timer -= uiDiff;
+        }
+        else 
+            Mark_Timer -= uiDiff;
 
         // Shield Wall - All 4 horsemen will shield wall at 50% hp and 20% hp for 20 seconds
         if (ShieldWall1 && m_creature->GetHealthPercent() < 50.0f)
         {
             if (ShieldWall1)
             {
-                DoCastSpellIfCan(m_creature,SPELL_SHIELDWALL);
+                DoCastSpellIfCan(m_creature, SPELL_SHIELDWALL);
                 ShieldWall1 = false;
             }
         }
@@ -388,7 +432,7 @@ struct MANGOS_DLL_DECL boss_sir_zeliekAI : public ScriptedAI
         {
             if (ShieldWall2)
             {
-                DoCastSpellIfCan(m_creature,SPELL_SHIELDWALL);
+                DoCastSpellIfCan(m_creature, SPELL_SHIELDWALL);
                 ShieldWall2 = false;
             }
         }
@@ -396,9 +440,11 @@ struct MANGOS_DLL_DECL boss_sir_zeliekAI : public ScriptedAI
         // Holy Wrath
         if (HolyWrath_Timer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_HOLY_WRATH);
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_HOLY_WRATH);
             HolyWrath_Timer = 12000;
-        }else HolyWrath_Timer -= uiDiff;
+        }
+        else 
+            HolyWrath_Timer -= uiDiff;
 
         DoMeleeAttackIfReady();
     }
