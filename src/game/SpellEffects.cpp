@@ -4747,9 +4747,11 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
             if (!unitTarget)
                 { return; }
 
-            int32 damage = unitTarget->GetHealth() - unitTarget->GetMaxHealth() * 0.05f;
-            if (damage > 0)
-                m_caster->CastCustomSpell(unitTarget, 28375, &damage, NULL, NULL, true);
+//             int32 damage = unitTarget->GetHealth() - unitTarget->GetMaxHealth() * 0.05f;
+//             if (damage > 0)
+//                 m_caster->CastCustomSpell(unitTarget, 28375, &damage, NULL, NULL, true);
+            if(unitTarget->GetHealthPercent() > 5)
+                unitTarget->SetHealthPercent(5);                       
             return;
         }
         case 28560:                                 // Summon Blizzard
