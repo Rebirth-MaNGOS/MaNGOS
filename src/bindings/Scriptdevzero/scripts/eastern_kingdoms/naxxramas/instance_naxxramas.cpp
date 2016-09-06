@@ -143,7 +143,15 @@ void instance_naxxramas::OnObjectCreate(GameObject* pGo)
             if (m_auiEncounter[11] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
-
+        case GO_CONS_NOX_TESLA_FEUGEN:
+            if (m_auiEncounter[TYPE_THADDIUS] == DONE)
+                pGo->SetGoState(GO_STATE_READY);
+            break;
+        case GO_CONS_NOX_TESLA_STALAGG:
+            if (m_auiEncounter[TYPE_THADDIUS] == DONE)
+                pGo->SetGoState(GO_STATE_READY);
+            break;
+            
         case GO_KELTHUZAD_WATERFALL_DOOR:
             if (m_auiEncounter[13] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);

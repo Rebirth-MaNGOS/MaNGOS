@@ -99,6 +99,9 @@ enum
     GO_CONS_PATH_EXIT_DOOR      = 181123,
     GO_CONS_GLUT_EXIT_DOOR      = 181120,
     GO_CONS_THAD_DOOR           = 181121,                   // Thaddius enc door
+    GO_CONS_NOX_TESLA_FEUGEN    = 181477,
+    GO_CONS_NOX_TESLA_STALAGG   = 181478,
+
 
     // Frostwyrm Lair
     GO_KELTHUZAD_WATERFALL_DOOR = 181225,                   // exit, open after sapphiron is dead
@@ -166,6 +169,9 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
         void GetGothSummonPointCreatures(std::list<Creature*> &lList, bool bRightSide);
         bool IsInRightSideGothArea(Unit* pUnit);
 
+        // thaddius
+        void GetThadTeslaCreatures(GUIDList& lList) { lList = m_lThadTeslaCoilList; };
+        
         // kel
         void SetChamberCenterCoords(float fX, float fY, float fZ);
         void GetChamberCenterCoords(float &fX, float &fY, float &fZ) { fX = m_fChamberCenterX; fY = m_fChamberCenterY; fZ = m_fChamberCenterZ; }
@@ -173,6 +179,8 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
     protected:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
         std::string strInstData;
+        
+        GUIDList m_lThadTeslaCoilList;
 
         GUIDList m_lGothTriggerList;
         UNORDERED_MAP<ObjectGuid, GothTrigger> m_mGothTriggerMap;

@@ -110,6 +110,7 @@ extern void AddSC_boss_heigan();
 extern void AddSC_boss_patchwerk();
 extern void AddSC_boss_razuvious();
 extern void AddSC_boss_sapphiron();
+extern void AddSC_boss_thaddius();
 extern void AddSC_instance_naxxramas();
 extern void AddSC_boss_arcanist_doan();                     //scarlet_monastery
 extern void AddSC_boss_azshir_the_sleepless();
@@ -405,6 +406,7 @@ void AddScripts()
     AddSC_boss_patchwerk();
     AddSC_boss_razuvious();
     AddSC_boss_sapphiron();
+    AddSC_boss_thaddius();
     AddSC_instance_naxxramas();
     AddSC_boss_arcanist_doan();                             //scarlet_monastery
     AddSC_boss_azshir_the_sleepless();
