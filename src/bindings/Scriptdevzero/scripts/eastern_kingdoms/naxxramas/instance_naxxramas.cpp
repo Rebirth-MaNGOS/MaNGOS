@@ -28,7 +28,8 @@ instance_naxxramas::instance_naxxramas(Map* pMap) : ScriptedInstance(pMap),
     m_fChamberCenterX(0.0f),
     m_fChamberCenterY(0.0f),
     m_fChamberCenterZ(0.0f),
-    m_uiSapphSpawnTimer(0)
+    m_uiSapphSpawnTimer(0),
+    m_uiLivingPoisonTimer(5000)
 {
     Initialize();
 }
@@ -493,6 +494,27 @@ uint32 instance_naxxramas::GetData(uint32 uiType)
 
 void instance_naxxramas::Update(uint32 uiDiff)
 {
+     // Handle the continuous spawning of Living Poison blobs in Patchwerk corridor
+    if (m_uiLivingPoisonTimer)
+    {
+        if (m_uiLivingPoisonTimer <= uiDiff)
+        {
+            if (Player* pPlayer = GetPlayerInMap())
+            {
+                // Spawn 3 living poisons every 5 secs and make them cross the corridor and then despawn, for ever and ever
+                for (uint8 i = 0; i < 3; i++)
+                    if (Creature* pPoison = pPlayer->SummonCreature(NPC_LIVING_POISON, aLivingPoisonPositions[i].x, aLivingPoisonPositions[i].y, aLivingPoisonPositions[i].z, aLivingPoisonPositions[i].o, TEMPSUMMON_DEAD_DESPAWN, 0))
+                    {
+                        pPoison->GetMotionMaster()->MovePoint(0, aLivingPoisonPositions[i + 3].x, aLivingPoisonPositions[i + 3].y, aLivingPoisonPositions[i + 3].z);
+                        pPoison->ForcedDespawn(15000);
+                    }
+            }
+            m_uiLivingPoisonTimer = 5000;
+        }
+        else
+            m_uiLivingPoisonTimer -= uiDiff;
+    }
+    
     if (m_uiSapphSpawnTimer)
     {
         if (m_uiSapphSpawnTimer <= uiDiff)

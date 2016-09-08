@@ -58,6 +58,7 @@ enum
     NPC_SAPPHIRON               = 15989,
     NPC_KELTHUZAD               = 15990,
     NPC_MR_BIGGLESWORTH         = 16998,
+    NPC_LIVING_POISON = 16027,
 
     // Gothik
     NPC_GOTHIK                  = 16060,
@@ -143,6 +144,17 @@ struct Loc
 
 static const float aSapphPositions[4] = {3521.48f, -5234.87f, 137.626f, 4.53329f};
 
+// Used in Construct Quarter for the deadly blobs continuously spawning in Patcherk corridor
+static const Loc aLivingPoisonPositions[6] =
+{
+    {3128.692f, -3119.211f, 293.346f, 4.725505f},
+    {3154.432f, -3125.669f, 293.408f, 4.456693f},
+    {3175.614f, -3134.716f, 293.282f, 4.244928f},
+    {3128.709f, -3157.404f, 293.3238f, 4.725505f},
+    {3145.881f, -3158.563f, 293.3216f, 4.456693f},
+    {3157.736f, -3164.859f, 293.2874f, 4.244928f},
+};
+
 class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
 {
     public:
@@ -199,6 +211,7 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
         float m_fChamberCenterZ;
         
         uint32 m_uiSapphSpawnTimer;
+        uint32 m_uiLivingPoisonTimer;
 };
 
 #endif
