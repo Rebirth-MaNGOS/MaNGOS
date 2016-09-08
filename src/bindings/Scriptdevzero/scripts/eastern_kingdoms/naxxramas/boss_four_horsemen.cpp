@@ -83,12 +83,6 @@ enum
 
     SPELL_MARK_OF_ZELIEK    = 28835,
     SPELL_HOLY_WRATH        = 28883,
-
-    // horseman spirits
-    NPC_SPIRIT_OF_BLAUMEUX    = 16776,
-    NPC_SPIRIT_MOGRAINE   = 16775,
-    NPC_SPIRIT_OF_KORTHAZZ    = 16778,
-    NPC_SPIRIT_OF_ZELIREK     = 16777,
     
     // spells, don't use
     SPELL_SPIRIT_BLAUMEUX = 28931,

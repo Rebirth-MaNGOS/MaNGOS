@@ -64,6 +64,10 @@ void instance_naxxramas::OnCreatureCreate(Creature* pCreature)
         case NPC_THANE:
         case NPC_BLAUMEUX:
         case NPC_MOGRAINE:
+        case NPC_SPIRIT_OF_BLAUMEUX:
+        case NPC_SPIRIT_OF_MOGRAINE:
+        case NPC_SPIRIT_OF_KORTHAZZ:
+        case NPC_SPIRIT_OF_ZELIREK:
         case NPC_GOTHIK:
         case NPC_SAPPHIRON:
         case NPC_KELTHUZAD:
@@ -71,7 +75,10 @@ void instance_naxxramas::OnCreatureCreate(Creature* pCreature)
 			break;
         case NPC_SUB_BOSS_TRIGGER:
 			m_lGothTriggerList.push_back(pCreature->GetObjectGuid());
-			break;
+            break;
+        case NPC_TESLA_COIL: 
+            m_lThadTeslaCoilList.push_back(pCreature->GetObjectGuid()); 
+            break;
     }
 }
 
@@ -219,6 +226,10 @@ bool instance_naxxramas::IsEncounterInProgress() const
     for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
         if (m_auiEncounter[i] == IN_PROGRESS)
             return true;
+        
+    // Some Encounters use SPECIAL while in progress
+    if (m_auiEncounter[TYPE_GOTHIK] == SPECIAL)
+        return true;
 
     return false;
 }
@@ -299,7 +310,7 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
                 case DONE:
                     DoUseDoorOrButton(GO_MILI_GOTH_ENTRY_GATE);
                     DoUseDoorOrButton(GO_MILI_GOTH_EXIT_GATE);
-                    DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);
+                    DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);                   
                     break;
             }
             m_auiEncounter[7] = uiData;
@@ -309,6 +320,16 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);
             if (uiData == DONE)
             {
+                // Despawn spirits
+                if (Creature* pSpirit = GetSingleCreatureFromStorage(NPC_SPIRIT_OF_BLAUMEUX))
+                    pSpirit->ForcedDespawn();
+                if (Creature* pSpirit = GetSingleCreatureFromStorage(NPC_SPIRIT_OF_MOGRAINE))
+                    pSpirit->ForcedDespawn();
+                if (Creature* pSpirit = GetSingleCreatureFromStorage(NPC_SPIRIT_OF_KORTHAZZ))
+                    pSpirit->ForcedDespawn();
+                if (Creature* pSpirit = GetSingleCreatureFromStorage(NPC_SPIRIT_OF_ZELIREK))
+                    pSpirit->ForcedDespawn();
+
                 DoUseDoorOrButton(GO_MILI_EYE_RAMP);
                 DoRespawnGameObject(GO_MILI_PORTAL, 30*MINUTE);
                 DoRespawnGameObject(GO_CHEST_HORSEMEN_NORM, 30*MINUTE);
@@ -331,12 +352,17 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             }
             break;
         case TYPE_THADDIUS:
-            m_auiEncounter[12] = uiData;
-            DoUseDoorOrButton(GO_CONS_THAD_DOOR, uiData);
+             // Only process real changes here
+            if (m_auiEncounter[uiType] == uiData)
+                return;
+
+            m_auiEncounter[uiType] = uiData;
+            if (uiData != SPECIAL)
+                DoUseDoorOrButton(GO_CONS_THAD_DOOR, uiData);
             if (uiData == DONE)
             {
                 DoUseDoorOrButton(GO_CONS_EYE_RAMP);
-                DoRespawnGameObject(GO_CONS_PORTAL, 30*MINUTE);
+                DoRespawnGameObject(GO_CONS_PORTAL, 30 * MINUTE);
             }
             break;
         case TYPE_SAPPHIRON:
@@ -523,7 +549,7 @@ Creature* instance_naxxramas::GetClosestAnchorForGoth(Creature* pSource, bool bR
         return lList.front();
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void instance_naxxramas::GetGothSummonPointCreatures(std::list<Creature*> &lList, bool bRightSide)

@@ -42,11 +42,18 @@ enum
     NPC_THADDIUS                = 15928,
     NPC_STALAGG                 = 15929,
     NPC_FEUGEN                  = 15930,
+    NPC_TESLA_COIL          = 16218,
 
     NPC_ZELIEK                  = 16063,
     NPC_THANE                   = 16064,
     NPC_BLAUMEUX                = 16065,
     NPC_MOGRAINE              = 16062,
+    
+    // horseman spirits
+    NPC_SPIRIT_OF_BLAUMEUX    = 16776,
+    NPC_SPIRIT_OF_MOGRAINE   = 16775,
+    NPC_SPIRIT_OF_KORTHAZZ    = 16778,
+    NPC_SPIRIT_OF_ZELIREK     = 16777,
     
     NPC_SAPPHIRON               = 15989,
     NPC_KELTHUZAD               = 15990,
@@ -59,10 +66,10 @@ enum
     NPC_UNREL_DEATH_KNIGHT      = 16125,
     NPC_UNREL_RIDER             = 16126,
     NPC_SPECT_TRAINEE           = 16127,
-    NPC_SPECT_DEATH_KNIGTH      = 16148,
+    NPC_SPECT_DEATH_KNIGHT      = 16148,
     NPC_SPECT_RIDER             = 16150,
     NPC_SPECT_HORSE             = 16149,
-
+    
     // End boss adds
     NPC_SOLDIER_FROZEN          = 16427,
     NPC_UNSTOPPABLE_ABOM        = 16428,
