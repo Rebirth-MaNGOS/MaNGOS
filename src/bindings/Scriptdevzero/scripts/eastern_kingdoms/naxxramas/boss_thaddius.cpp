@@ -420,7 +420,7 @@ struct boss_thaddiusAddsAI : public ScriptedAI
     uint32 m_uiWarStompTimer;
     uint32 m_uiReviveTimer;
 
-    void Reset() override
+    void Reset()
     {
         m_bFakeDeath = false;
         m_bBothDead = false;
