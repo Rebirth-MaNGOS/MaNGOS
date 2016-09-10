@@ -28,11 +28,11 @@ enum
 {
     EMOTE_ZOMBIE                    = -1533119,
     EMOTE_BOSS_GENERIC_ENRAGED      = -1000006,
-    EMOTE_DECIMATE                  = -1533152,
+//     EMOTE_DECIMATE                  = -1533152, // no emote on decimate
 
     SPELL_MORTALWOUND               = 25646,
     SPELL_DECIMATE                  = 28374,
-    SPELL_ENRAGE                    = 28371,
+    SPELL_FRENZY                    = 28371,
     SPELL_BERSERK                   = 26662,
     SPELL_TERRIFYING_ROAR           = 29685,
     // SPELL_SUMMON_ZOMBIE_CHOW      = 28216,               // removed from dbc: triggers 28217 every 6 secs
@@ -63,7 +63,7 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
 
     uint32 m_uiMortalWoundTimer;
     uint32 m_uiDecimateTimer;
-    uint32 m_uiEnrageTimer;
+    uint32 m_uiFrenzyTimer;
     uint32 m_uiRoarTimer;
     uint32 m_uiSummonTimer;
     uint32 m_uiZombieSearchTimer;
@@ -76,7 +76,7 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
     {
         m_uiMortalWoundTimer  = 10000;
         m_uiDecimateTimer     = 110000;
-        m_uiEnrageTimer       = 10000;
+        m_uiFrenzyTimer       = 10000;
         m_uiSummonTimer       = 6000;
         m_uiRoarTimer         = 15000;
         m_uiZombieSearchTimer = 3000;
@@ -133,7 +133,10 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
             if (Creature* pZombie = m_creature->GetMap()->GetCreature(*itr))
             {
                 if(action == 0)
+                {
                     pZombie->GetMotionMaster()->MoveFollow(m_creature, ATTACK_DISTANCE, 0);
+                    pZombie->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                }
                 else    // kill zombies on reset
                     m_creature->DealDamage(pZombie, pZombie->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
             }
@@ -155,6 +158,14 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
                     m_creature->DealDamage(pZombie, pZombie->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
             }
         }
+    }
+    
+    // Need emote for berzerk
+    void SpellHit(Unit* /*pCaster*/, const SpellEntry* pSpellEntry)
+    {
+        // Only do emote if hit by the spells
+        if (pSpellEntry->Id == SPELL_FRENZY)
+            m_creature->GenericTextEmote("Gluth goes into a frenzy!", NULL, false);            
     }
     
     void UpdateAI(const uint32 uiDiff)
@@ -182,27 +193,22 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
         // Decimate
         if (m_uiDecimateTimer < uiDiff)
         {
-            if (DoCastSpellIfCan(m_creature, SPELL_DECIMATE) == CAST_OK)
-            {
-                DoScriptText(EMOTE_DECIMATE, m_creature);
-                DoCallAllZombieChow(0);
-                m_uiDecimateTimer = 100000;
-            }
+            m_creature->CastSpell(m_creature, SPELL_DECIMATE, true);
+            // This is called after like 2 sec of spell being cast should be instantly
+            DoCallAllZombieChow(0);
+            m_uiDecimateTimer = 100000;
         }
         else
             m_uiDecimateTimer -= uiDiff;
 
         // Enrage
-        if (m_uiEnrageTimer < uiDiff)
+        if (m_uiFrenzyTimer< uiDiff)
         {
-            if (DoCastSpellIfCan(m_creature, SPELL_ENRAGE) == CAST_OK)
-            {
-                DoScriptText(EMOTE_BOSS_GENERIC_ENRAGED, m_creature);
-                m_uiEnrageTimer = 10000;
-            }
+            if (DoCastSpellIfCan(m_creature, SPELL_FRENZY) == CAST_OK)
+                m_uiFrenzyTimer = 10000;
         }
         else
-            m_uiEnrageTimer -= uiDiff;
+            m_uiFrenzyTimer -= uiDiff;
 
         // Terrifying Roar
         if (m_uiRoarTimer < uiDiff)

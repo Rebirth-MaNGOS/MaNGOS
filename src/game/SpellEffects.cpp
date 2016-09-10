@@ -1550,7 +1550,26 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
         break;
     }
     case SPELLFAMILY_DRUID:
-        break;
+    {
+        switch (m_spellInfo->Id)
+            {
+                case 29201:                                 // Loatheb Corrupted Mind triggered sub spells
+                {
+                    uint32 spellid = 0;
+                    switch (unitTarget->getClass())
+                    {
+                        case CLASS_PALADIN: spellid = 29196; break;
+                        case CLASS_PRIEST: spellid = 29185; break;
+                        case CLASS_SHAMAN: spellid = 29198; break;
+                        case CLASS_DRUID: spellid = 29194; break;
+                            default: break;
+                    }
+                    if (spellid != 0)
+                        m_caster->CastSpell(unitTarget, spellid, true, NULL);
+                }
+            }
+    break;
+    }
     case SPELLFAMILY_ROGUE:
     {
         switch(m_spellInfo->Id)
@@ -2315,7 +2334,7 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
             }
 
             int32 tickheal = targetAura->GetModifier()->m_amount;
-            int32 tickcount = GetSpellDuration(targetAura->GetSpellProto()) / targetAura->GetSpellProto()->EffectAmplitude[idx] - 1;
+            int32 tickcount = GetSpellDuration(targetAura->GetSpellProto()) / targetAura->GetSpellProto()->EffectAmplitude[idx]; // not sure why it had -1 before, now it should be 4 and 7 ticks as intended
 
             unitTarget->RemoveAurasDueToSpell(targetAura->GetId());
 
@@ -4728,9 +4747,11 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
             if (!unitTarget)
                 { return; }
 
-            int32 damage = unitTarget->GetHealth() - unitTarget->GetMaxHealth() * 0.05f;
-            if (damage > 0)
-                m_caster->CastCustomSpell(unitTarget, 28375, &damage, NULL, NULL, true);
+//             int32 damage = unitTarget->GetHealth() - unitTarget->GetMaxHealth() * 0.05f;
+//             if (damage > 0)
+//                 m_caster->CastCustomSpell(unitTarget, 28375, &damage, NULL, NULL, true);
+            if(unitTarget->GetHealthPercent() > 5)
+                unitTarget->SetHealthPercent(5);                       
             return;
         }
         case 28560:                                 // Summon Blizzard

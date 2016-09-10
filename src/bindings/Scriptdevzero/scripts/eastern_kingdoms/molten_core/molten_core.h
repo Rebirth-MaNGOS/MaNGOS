@@ -61,6 +61,14 @@ enum GameObjects
     GO_RUNE_OF_BLAZ             = 176955,
     GO_RUNE_OF_KRESS            = 176956,
     GO_RUNE_OF_MOHN             = 176957,
+    
+    GO_CIRCLE_SULFURON = 178187,
+    GO_CIRCLE_SHAZZRAH = 178189,
+    GO_CIRCLE_GOLEMAGG = 178190,
+    GO_CIRCLE_GARR = 178191,
+    GO_CIRCLE_MAGMADAR = 178192,
+    GO_CIRCLE_GEHENNAS = 178193,
+    GO_CIRCLE_GEDDON = 178188,
 
     GO_HOT_COALS                = 177000,
     GO_FIRELORD_CACHE           = 179703,
@@ -106,6 +114,8 @@ class MANGOS_DLL_DECL instance_molten_core : public ScriptedInstance
 
 		void HandleRune(uint32 uiEntry, uint32 uiData);
 		void HandleRune(GameObject *obj, uint32 uiData);
+        void HandleCircle(uint32 uiEntry, uint32 uiData);
+        void HandleCircle(GameObject *obj, uint32 uiData);        
 		bool CanSpawnDomoOrRagnaros(bool spawn_majordomo);
 		void SetMoltenCoreCreatureVisibility(Creature* pCreature, ObjectGuid pCreatureGUID, bool set_visible, bool m_bKillAndRespawn = false);
 		void DoSpawnMajordomoIfCan(bool m_bKillAndRespawn = true, bool force = false);

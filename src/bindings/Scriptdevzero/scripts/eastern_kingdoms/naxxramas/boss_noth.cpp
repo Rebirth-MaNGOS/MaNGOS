@@ -35,8 +35,8 @@ enum
     SAY_DEATH                           = -1533081,
 
     EMOTE_WARRIOR                       = -1533130,
-    EMOTE_SKELETON                      = -1533131,
-    EMOTE_TELEPORT                      = -1533132,
+    EMOTE_SKELETON                      = -1533132,
+    EMOTE_TELEPORT                      = -1533131,
     EMOTE_TELEPORT_RETURN               = -1533133,
 
     SPELL_TELEPORT                      = 29216,
@@ -126,6 +126,10 @@ struct MANGOS_DLL_DECL boss_nothAI : public ScriptedAI
     {
         pSummoned->SetInCombatWithZone();
         pSummoned->SetRespawnEnabled(false);
+        
+        Unit* target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0);
+        if (pSummoned && target)
+            pSummoned->AI()->AttackStart(target);                      
     }
 
     void KilledUnit(Unit* /*pVictim*/)
@@ -171,24 +175,21 @@ struct MANGOS_DLL_DECL boss_nothAI : public ScriptedAI
             else
                 m_uiPhaseTimer -= uiDiff;
 
-            //if (m_bIsRegularMode)
-            //{
-                if (m_uiBlinkTimer < uiDiff)
+            if (m_uiBlinkTimer < uiDiff)
+            {
+                static uint32 const auiSpellBlink[4] =
                 {
-                    static uint32 const auiSpellBlink[4] =
-                    {
-                        SPELL_BLINK_1, SPELL_BLINK_2, SPELL_BLINK_3, SPELL_BLINK_4
-                    };
+                    SPELL_BLINK_1, SPELL_BLINK_2, SPELL_BLINK_3, SPELL_BLINK_4
+                };
 
-                    if (DoCastSpellIfCan(m_creature, auiSpellBlink[urand(0,3)]) == CAST_OK)
-                    {
-                        DoResetThreat();
-                        m_uiBlinkTimer = 25000;
-                    }
+                if (DoCastSpellIfCan(m_creature, auiSpellBlink[urand(0,3)]) == CAST_OK)
+                {
+                    DoResetThreat();
+                    m_uiBlinkTimer = 25000;
                 }
-                else
-                    m_uiBlinkTimer -= uiDiff;
-            //}
+            }
+            else
+                m_uiBlinkTimer -= uiDiff;
 
             if (m_uiCurseTimer < uiDiff)
             {
@@ -203,20 +204,13 @@ struct MANGOS_DLL_DECL boss_nothAI : public ScriptedAI
                 DoScriptText(SAY_SUMMON, m_creature);
                 DoScriptText(EMOTE_WARRIOR, m_creature);
 
-                //if (m_bIsRegularMode)
-                //{
-                    static uint32 const auiSpellSummonPlaguedWarrior[3] =
-                    {
-                        SPELL_SUMMON_WARRIOR_1, SPELL_SUMMON_WARRIOR_2, SPELL_SUMMON_WARRIOR_3
-                    };
+                static uint32 const auiSpellSummonPlaguedWarrior[3] =
+                {
+                    SPELL_SUMMON_WARRIOR_1, SPELL_SUMMON_WARRIOR_2, SPELL_SUMMON_WARRIOR_3
+                };
 
-                    for(uint8 i = 0; i < 2; ++i)
-                        DoCastSpellIfCan(m_creature, auiSpellSummonPlaguedWarrior[urand(0,2)], CAST_TRIGGERED);
-                //}
-                //else
-                //{
-                //    DoCastSpellIfCan(m_creature, SPELL_SUMMON_WARRIOR_THREE, CAST_TRIGGERED);
-                //}
+                for(uint8 i = 0; i < 2; ++i)
+                    DoCastSpellIfCan(m_creature, auiSpellSummonPlaguedWarrior[urand(0,2)], CAST_TRIGGERED);
 
                 m_uiSummonTimer = 30000;
             }

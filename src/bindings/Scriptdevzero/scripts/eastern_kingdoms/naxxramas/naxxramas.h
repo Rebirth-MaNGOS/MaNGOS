@@ -42,15 +42,23 @@ enum
     NPC_THADDIUS                = 15928,
     NPC_STALAGG                 = 15929,
     NPC_FEUGEN                  = 15930,
+    NPC_TESLA_COIL          = 16218,
 
     NPC_ZELIEK                  = 16063,
     NPC_THANE                   = 16064,
     NPC_BLAUMEUX                = 16065,
-    NPC_RIVENDARE               = 30549,
+    NPC_MOGRAINE              = 16062,
+    
+    // horseman spirits
+    NPC_SPIRIT_OF_BLAUMEUX    = 16776,
+    NPC_SPIRIT_OF_MOGRAINE   = 16775,
+    NPC_SPIRIT_OF_KORTHAZZ    = 16778,
+    NPC_SPIRIT_OF_ZELIREK     = 16777,
     
     NPC_SAPPHIRON               = 15989,
     NPC_KELTHUZAD               = 15990,
     NPC_MR_BIGGLESWORTH         = 16998,
+    NPC_LIVING_POISON = 16027,
 
     // Gothik
     NPC_GOTHIK                  = 16060,
@@ -59,10 +67,10 @@ enum
     NPC_UNREL_DEATH_KNIGHT      = 16125,
     NPC_UNREL_RIDER             = 16126,
     NPC_SPECT_TRAINEE           = 16127,
-    NPC_SPECT_DEATH_KNIGTH      = 16148,
+    NPC_SPECT_DEATH_KNIGHT      = 16148,
     NPC_SPECT_RIDER             = 16150,
     NPC_SPECT_HORSE             = 16149,
-
+    
     // End boss adds
     NPC_SOLDIER_FROZEN          = 16427,
     NPC_UNSTOPPABLE_ABOM        = 16428,
@@ -99,6 +107,9 @@ enum
     GO_CONS_PATH_EXIT_DOOR      = 181123,
     GO_CONS_GLUT_EXIT_DOOR      = 181120,
     GO_CONS_THAD_DOOR           = 181121,                   // Thaddius enc door
+    GO_CONS_NOX_TESLA_FEUGEN    = 181477,
+    GO_CONS_NOX_TESLA_STALAGG   = 181478,
+
 
     // Frostwyrm Lair
     GO_KELTHUZAD_WATERFALL_DOOR = 181225,                   // exit, open after sapphiron is dead
@@ -133,6 +144,17 @@ struct Loc
 
 static const float aSapphPositions[4] = {3521.48f, -5234.87f, 137.626f, 4.53329f};
 
+// Used in Construct Quarter for the deadly blobs continuously spawning in Patcherk corridor
+static const Loc aLivingPoisonPositions[6] =
+{
+    {3128.692f, -3119.211f, 293.346f, 4.725505f},
+    {3154.432f, -3125.669f, 293.408f, 4.456693f},
+    {3175.614f, -3134.716f, 293.282f, 4.244928f},
+    {3128.709f, -3157.404f, 293.3238f, 4.725505f},
+    {3145.881f, -3158.563f, 293.3216f, 4.456693f},
+    {3157.736f, -3164.859f, 293.2874f, 4.244928f},
+};
+
 class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
 {
     public:
@@ -166,6 +188,9 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
         void GetGothSummonPointCreatures(std::list<Creature*> &lList, bool bRightSide);
         bool IsInRightSideGothArea(Unit* pUnit);
 
+        // thaddius
+        void GetThadTeslaCreatures(GUIDList& lList) { lList = m_lThadTeslaCoilList; };
+        
         // kel
         void SetChamberCenterCoords(float fX, float fY, float fZ);
         void GetChamberCenterCoords(float &fX, float &fY, float &fZ) { fX = m_fChamberCenterX; fY = m_fChamberCenterY; fZ = m_fChamberCenterZ; }
@@ -173,6 +198,8 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
     protected:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
         std::string strInstData;
+        
+        GUIDList m_lThadTeslaCoilList;
 
         GUIDList m_lGothTriggerList;
         UNORDERED_MAP<ObjectGuid, GothTrigger> m_mGothTriggerMap;
@@ -184,6 +211,7 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
         float m_fChamberCenterZ;
         
         uint32 m_uiSapphSpawnTimer;
+        uint32 m_uiLivingPoisonTimer;
 };
 
 #endif

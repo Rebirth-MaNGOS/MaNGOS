@@ -46,8 +46,10 @@ enum eGuardian
     SPELL_ENRAGE                 = 8559,
     SPELL_EXPLODE                = 25698,
 
-    SPELL_SUMMON_ANUB_SWARMGUARD = 17430,
-    SPELL_SUMMON_ANUB_WARRIOR    = 17431,
+    /*SPELL_SUMMON_ANUB_SWARMGUARD = 17430,
+    SPELL_SUMMON_ANUB_WARRIOR    = 17431,*/
+    NPC_ANUBISATH_WARRIOR           = 15537,
+    NPC_ANUBISATH_SWARMGUARD = 15538,
 
     EMOTE_FRENZY                 = -1000002
 };
@@ -62,6 +64,7 @@ struct MANGOS_DLL_DECL mob_anubisath_guardianAI : public ScriptedAI
     bool m_bIsEnraged;
 
     uint32 m_uiSummonCount;
+    uint32 m_uiSummonMob;
 
     uint32 m_uiSpell1;
     uint32 m_uiSpell2;
@@ -83,7 +86,7 @@ struct MANGOS_DLL_DECL mob_anubisath_guardianAI : public ScriptedAI
         m_uiSpell2 = urand(0,1) ? SPELL_SHADOW_STORM : SPELL_THUNDER_CLAP;
         m_uiSpell3 = urand(0,1) ? SPELL_REFLECT_ARFR : SPELL_REFLECT_FSSH;
         m_uiSpell4 = urand(0,1) ? SPELL_ENRAGE : SPELL_EXPLODE;
-        m_uiSpell5 = urand(0,1) ? SPELL_SUMMON_ANUB_SWARMGUARD : SPELL_SUMMON_ANUB_WARRIOR;
+        m_uiSummonMob = urand(0,1) ? NPC_ANUBISATH_SWARMGUARD : NPC_ANUBISATH_WARRIOR;
 
         m_uiSpell1Timer = 10000;
         m_uiSpell2Timer = 20000;
@@ -98,7 +101,12 @@ struct MANGOS_DLL_DECL mob_anubisath_guardianAI : public ScriptedAI
 
     void JustSummoned(Creature* pSummoned)
     {
-        pSummoned->AI()->AttackStart(m_creature->getVictim());
+        pSummoned->SetRespawnEnabled(false);            // make sure they won't respawn
+        
+        if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+            pSummoned->AI()->AttackStart(pTarget);
+        
+        pSummoned->SetOwnerGuid(m_creature->GetGUID());
         ++m_uiSummonCount;
     }
 
@@ -193,11 +201,15 @@ struct MANGOS_DLL_DECL mob_anubisath_guardianAI : public ScriptedAI
         // summon Anubisath Swarmguard or Anubisath Warrior
         if (m_uiSpell5Timer <= uiDiff)
         {
-            // change for summon spell
+            // chance for summon spell
             if (m_uiSummonCount < 4)
-                DoCastSpellIfCan(m_creature->getVictim(), m_uiSpell5);
+            {
+                float x, y, z;
+                m_creature->GetClosePoint(x, y, z, 3.0f, 10.0f);
+                m_creature->SummonCreature(m_uiSummonMob, x, y, z, 0, TEMPSUMMON_TIMED_DESPAWN, 60000);
+            }
 
-            m_uiSpell5Timer = 15000;
+            m_uiSpell5Timer = 20000;
         }
         else
             m_uiSpell5Timer -= uiDiff;

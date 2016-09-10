@@ -5888,15 +5888,20 @@ void Player::CheckAreaExploreAndOutdoor()
             }
         }
         // If the player is a druid, update pvp speed bonus, add passive speed bonus aswell
-        if (getClass() == CLASS_DRUID && (HasAura(768) || HasAura(5487) || HasAura(9634) || HasAura(783)))
-        {            
-            UpdateEquipSpellsAtFormChange();
-            
-            // apply the talent speed boost
-            if (HasSpell(17002))
-                CastSpell(this, 17002, true);
-            if (HasSpell(24866))
-                CastSpell(this, 24866, true);            
+        if (getClass() == CLASS_DRUID)
+        {               
+            // Handle passive speed bonus from talents separately
+            if (HasAura(768))
+            {
+                // apply the talent speed boost
+                if (HasSpell(17002))
+                    CastSpell(this, 17002, true);
+                if (HasSpell(24866))
+                    CastSpell(this, 24866, true);     
+            }
+            // PvP speed boost 
+            if (HasAura(768) || HasAura(5487) || HasAura(9634) || HasAura(783))
+                UpdateEquipSpellsAtFormChange();        
         }
     }
     else if (sWorld.getConfig(CONFIG_BOOL_VMAP_INDOOR_CHECK) && !isGameMaster())
@@ -15377,6 +15382,7 @@ void Player::_LoadGroup(QueryResult *result)
             SetGroup(group, subgroup);
         }
     }
+    UpdateGroupLeaderFlag();
 }
 
 void Player::_LoadBoundInstances(QueryResult *result)
@@ -19430,6 +19436,18 @@ PartyResult Player::CanUninviteFromGroup() const
         return ERR_INVITE_RESTRICTED;
 
     return ERR_PARTY_RESULT_OK;
+}
+
+void Player::UpdateGroupLeaderFlag(const bool remove /*= false*/)
+{
+    const Group* group = GetGroup();
+    if (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GROUP_LEADER))
+    {
+        if (remove || !group || group->GetLeaderGuid() != GetObjectGuid())
+            RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_GROUP_LEADER);
+    }
+    else if (!remove && group && group->GetLeaderGuid() == GetObjectGuid())
+        SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_GROUP_LEADER);
 }
 
 void Player::SetBattleGroundRaid(Group* group, int8 subgroup)

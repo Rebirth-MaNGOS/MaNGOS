@@ -708,6 +708,8 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
     {
     case 5024: // Skull of Impending Doom "Flee" should be a positive effect
             return true;
+    case 9632: // Bladestorm (Ravager procc) should be a positive effect
+            return true;        
     case 12042: // Arcane power should be a positive effect.
         return true;
 	case 12613: // Dark Iron Taskmaster Death should be a positive effect.
@@ -2163,6 +2165,20 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     (spellInfo_2->Id == 24382 && spellInfo_1->Id == 10668))
         return true;
             
+    // Zanza buffs that shouldn't stack
+    if(spellInfo_1->Id == 24382 || spellInfo_1->Id == 24417|| spellInfo_1->Id == 24383)
+    {
+        switch(spellInfo_2->Id)
+        {
+        case 24382: // Spirit of Zanza
+        case 24417: // Sheen of Zanza
+        case 24383: // Swiftness of Zanza
+            return true;
+        default:
+            break;
+        }
+    }   
+        
     // Beer that shouldn't stack
     if(spellInfo_1->Id == 22789 || spellInfo_1->Id == 20875|| spellInfo_1->Id == 25722
         || spellInfo_1->Id == 25804 || spellInfo_1->Id == 25037)
@@ -2478,6 +2494,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 					if ((spellInfo_1->SpellIconID == 456 && spellInfo_2->SpellIconID == 2006) ||
 						(spellInfo_2->SpellIconID == 456 && spellInfo_1->SpellIconID == 2006))
 						return false;
+                    
+                    // Battle Shout and Lord General's Sword should stack
+                    if ((spellInfo_1->SpellIconID == 456 && spellInfo_2->Id == 15602) ||
+                        (spellInfo_2->SpellIconID == 456 && spellInfo_1->Id == 15602))
+                        return false;
 				}
 
 				// Hamstring -> Improved Hamstring (multi-family check)

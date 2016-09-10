@@ -28,7 +28,8 @@ instance_naxxramas::instance_naxxramas(Map* pMap) : ScriptedInstance(pMap),
     m_fChamberCenterX(0.0f),
     m_fChamberCenterY(0.0f),
     m_fChamberCenterZ(0.0f),
-    m_uiSapphSpawnTimer(0)
+    m_uiSapphSpawnTimer(0),
+    m_uiLivingPoisonTimer(5000)
 {
     Initialize();
 }
@@ -63,7 +64,11 @@ void instance_naxxramas::OnCreatureCreate(Creature* pCreature)
         case NPC_ZELIEK:
         case NPC_THANE:
         case NPC_BLAUMEUX:
-        case NPC_RIVENDARE:
+        case NPC_MOGRAINE:
+        case NPC_SPIRIT_OF_BLAUMEUX:
+        case NPC_SPIRIT_OF_MOGRAINE:
+        case NPC_SPIRIT_OF_KORTHAZZ:
+        case NPC_SPIRIT_OF_ZELIREK:
         case NPC_GOTHIK:
         case NPC_SAPPHIRON:
         case NPC_KELTHUZAD:
@@ -71,7 +76,10 @@ void instance_naxxramas::OnCreatureCreate(Creature* pCreature)
 			break;
         case NPC_SUB_BOSS_TRIGGER:
 			m_lGothTriggerList.push_back(pCreature->GetObjectGuid());
-			break;
+            break;
+        case NPC_TESLA_COIL: 
+            m_lThadTeslaCoilList.push_back(pCreature->GetObjectGuid()); 
+            break;
     }
 }
 
@@ -143,7 +151,15 @@ void instance_naxxramas::OnObjectCreate(GameObject* pGo)
             if (m_auiEncounter[11] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
-
+        case GO_CONS_NOX_TESLA_FEUGEN:
+            if (m_auiEncounter[TYPE_THADDIUS] == DONE)
+                pGo->SetGoState(GO_STATE_READY);
+            break;
+        case GO_CONS_NOX_TESLA_STALAGG:
+            if (m_auiEncounter[TYPE_THADDIUS] == DONE)
+                pGo->SetGoState(GO_STATE_READY);
+            break;
+            
         case GO_KELTHUZAD_WATERFALL_DOOR:
             if (m_auiEncounter[13] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
@@ -211,6 +227,10 @@ bool instance_naxxramas::IsEncounterInProgress() const
     for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
         if (m_auiEncounter[i] == IN_PROGRESS)
             return true;
+        
+    // Some Encounters use SPECIAL while in progress
+    if (m_auiEncounter[TYPE_GOTHIK] == SPECIAL)
+        return true;
 
     return false;
 }
@@ -291,7 +311,7 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
                 case DONE:
                     DoUseDoorOrButton(GO_MILI_GOTH_ENTRY_GATE);
                     DoUseDoorOrButton(GO_MILI_GOTH_EXIT_GATE);
-                    DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);
+                    DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);                   
                     break;
             }
             m_auiEncounter[7] = uiData;
@@ -301,6 +321,16 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);
             if (uiData == DONE)
             {
+                // Despawn spirits
+                if (Creature* pSpirit = GetSingleCreatureFromStorage(NPC_SPIRIT_OF_BLAUMEUX))
+                    pSpirit->ForcedDespawn();
+                if (Creature* pSpirit = GetSingleCreatureFromStorage(NPC_SPIRIT_OF_MOGRAINE))
+                    pSpirit->ForcedDespawn();
+                if (Creature* pSpirit = GetSingleCreatureFromStorage(NPC_SPIRIT_OF_KORTHAZZ))
+                    pSpirit->ForcedDespawn();
+                if (Creature* pSpirit = GetSingleCreatureFromStorage(NPC_SPIRIT_OF_ZELIREK))
+                    pSpirit->ForcedDespawn();
+
                 DoUseDoorOrButton(GO_MILI_EYE_RAMP);
                 DoRespawnGameObject(GO_MILI_PORTAL, 30*MINUTE);
                 DoRespawnGameObject(GO_CHEST_HORSEMEN_NORM, 30*MINUTE);
@@ -323,12 +353,17 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             }
             break;
         case TYPE_THADDIUS:
-            m_auiEncounter[12] = uiData;
-            DoUseDoorOrButton(GO_CONS_THAD_DOOR, uiData);
+             // Only process real changes here
+            if (m_auiEncounter[uiType] == uiData)
+                return;
+
+            m_auiEncounter[uiType] = uiData;
+            if (uiData != SPECIAL)
+                DoUseDoorOrButton(GO_CONS_THAD_DOOR, uiData);
             if (uiData == DONE)
             {
                 DoUseDoorOrButton(GO_CONS_EYE_RAMP);
-                DoRespawnGameObject(GO_CONS_PORTAL, 30*MINUTE);
+                DoRespawnGameObject(GO_CONS_PORTAL, 30 * MINUTE);
             }
             break;
         case TYPE_SAPPHIRON:
@@ -459,6 +494,27 @@ uint32 instance_naxxramas::GetData(uint32 uiType)
 
 void instance_naxxramas::Update(uint32 uiDiff)
 {
+     // Handle the continuous spawning of Living Poison blobs in Patchwerk corridor
+    if (m_uiLivingPoisonTimer)
+    {
+        if (m_uiLivingPoisonTimer <= uiDiff)
+        {
+            if (Player* pPlayer = GetPlayerInMap())
+            {
+                // Spawn 3 living poisons every 5 secs and make them cross the corridor and then despawn, for ever and ever
+                for (uint8 i = 0; i < 3; i++)
+                    if (Creature* pPoison = pPlayer->SummonCreature(NPC_LIVING_POISON, aLivingPoisonPositions[i].x, aLivingPoisonPositions[i].y, aLivingPoisonPositions[i].z, aLivingPoisonPositions[i].o, TEMPSUMMON_DEAD_DESPAWN, 0))
+                    {
+                        pPoison->GetMotionMaster()->MovePoint(0, aLivingPoisonPositions[i + 3].x, aLivingPoisonPositions[i + 3].y, aLivingPoisonPositions[i + 3].z);
+                        pPoison->ForcedDespawn(15000);
+                    }
+            }
+            m_uiLivingPoisonTimer = 5000;
+        }
+        else
+            m_uiLivingPoisonTimer -= uiDiff;
+    }
+    
     if (m_uiSapphSpawnTimer)
     {
         if (m_uiSapphSpawnTimer <= uiDiff)
@@ -515,7 +571,7 @@ Creature* instance_naxxramas::GetClosestAnchorForGoth(Creature* pSource, bool bR
         return lList.front();
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void instance_naxxramas::GetGothSummonPointCreatures(std::list<Creature*> &lList, bool bRightSide)

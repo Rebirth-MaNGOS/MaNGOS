@@ -420,14 +420,6 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
             recv_data >> channel;
             recv_data >> msg;
 
-            // Players below level 20 can not speak in channels.
-            if (_player->getLevel() < 10)
-            {
-                SendNotification("You must be level 10 to chat in channels!");
-
-                return;
-            }
-
             if (!processChatmessageFurtherAfterSecurityChecks(msg, lang))
                 return;
 

@@ -185,9 +185,10 @@ bool QuestAccept_npc_kerlonian(Player* pPlayer, Creature* pCreature, const Quest
     {
         if (npc_kerlonianAI* pKerlonianAI = dynamic_cast<npc_kerlonianAI*>(pCreature->AI()))
         {
-            pCreature->SetStandState(UNIT_STAND_STATE_STAND);
+            pCreature->SetStandState(UNIT_STAND_STATE_STAND);            
             DoScriptText(SAY_KER_START, pCreature, pPlayer);
-            pKerlonianAI->StartFollow(pPlayer, FACTION_ESCORT_N_FRIEND_PASSIVE, pQuest);
+            pKerlonianAI->StartFollow(pPlayer, FACTION_ESCORT_N_FRIEND_PASSIVE, pQuest);            
+            pCreature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
         }
     }
 

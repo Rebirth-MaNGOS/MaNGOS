@@ -248,7 +248,7 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         m_creature->RemoveAurasDueToSpell(SPELL_TRANSFORM);
         m_creature->SetDisplayId(MODEL_BASE_NORMAL);
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
-        m_uiSetCombatTimer = 5000;
+        m_uiSetCombatTimer = 20000;
     }
 
     void StartSecondPhase(ObjectGuid eyeGuid, Unit* target)
@@ -728,10 +728,13 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
         m_creature->SummonCreature(MOB_EYE_TENTACLE, m_creature->GetPositionX()+x ,m_creature->GetPositionY()+y, m_creature->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 500);
     }
 
-    void Aggro(Unit* /*pWho*/)
+    void Aggro(Unit* pWho)
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_NORMAL);
+
+        // Nuke the aggroing player with a beam.
+        DoCastSpellIfCan(pWho, SPELL_GREEN_BEAM);
     }
 
     void ResetToHome()
@@ -1051,7 +1054,9 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
     claw_tentacleAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
-		DoCastSpellIfCan(m_creature->getVictim(),SPELL_GROUND_RUPTURE);
+
+        CastGroundRupture();
+
         Reset();
 
         m_portalGuid = SummonSmallPortal(m_creature);
@@ -1074,6 +1079,14 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
         m_uiGroundRuptureTimer = 30000;
         m_uiHamstringTimer = 2000;
         m_uiEvadeTimer = 5000;
+    }
+
+    void CastGroundRupture()
+    {
+        // Cast Ground Rupture on all players within 1 yd.
+        std::list<Player*> playerList = GetPlayersAtMinimumRange(1.f);
+        for (Player* pPlayer : playerList)
+            m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);
     }
 
     void Aggro(Unit* /*pWho*/)
@@ -1127,7 +1140,7 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
         // GroundRuptureTimer
         if (m_uiGroundRuptureTimer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_GROUND_RUPTURE);
+            CastGroundRupture();
             m_uiGroundRuptureTimer = 30000;
         }
         else
@@ -1233,7 +1246,11 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
         // GroundRuptureTimer
         if (m_uiGroundRuptureTimer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(),SPELL_MASSIVE_GROUND_RUPTURE);
+            // Cast Ground Rupture on all players within 3 yd.
+            std::list<Player*> playerList = GetPlayersAtMinimumRange(3.f);
+            for (Player* pPlayer : playerList)
+                m_creature->CastSpell(pPlayer, SPELL_MASSIVE_GROUND_RUPTURE, true);
+
             m_uiGroundRuptureTimer = 30000;
         }
         else
@@ -1315,10 +1332,6 @@ struct MANGOS_DLL_DECL giant_eye_tentacleAI : public ScriptedAI
 // Flesh tentacle functions
 void flesh_tentacleAI::UpdateAI(const uint32 uiDiff)
 {
-    // Check if we have a target
-    if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-        return;
-
     if (m_cThunGuid)
     {
         if (m_uiCheckTimer < uiDiff)
@@ -1338,17 +1351,15 @@ void flesh_tentacleAI::UpdateAI(const uint32 uiDiff)
             m_uiCheckTimer -= uiDiff;
     }
 
+    // Check if we have a target
+    if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+        return;
+
     DoMeleeAttackIfReady();
 }
 
 void flesh_tentacleAI::JustDied(Unit* /*killer*/)
 {
-    if (!m_cThunGuid)
-    {
-        error_log("SD2: flesh_tentacle: No m_cThunGuid variable");
-        return;
-    }
-
     if (Creature* pCthun = m_creature->GetMap()->GetCreature(m_cThunGuid))
     {
         if (cthunAI* pCthunAI = dynamic_cast<cthunAI*>(pCthun->AI()))
