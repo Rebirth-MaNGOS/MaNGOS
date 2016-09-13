@@ -105,6 +105,23 @@ enum
 #define KICK_Y                              1984.0f
 #define KICK_Z                              -96.0f
 
+struct Loc
+{
+    float m_fX, m_fY, m_fZ, m_fO;
+};
+
+static const Loc aEyeLoc[8] = 
+{
+    {-8602.41f, 1967.61f, 100.498f, 0.f},
+    {-8582.13f, 1959.f, 100.22f, 0.f},
+    {-8560.77f, 1966.81f, 100.22f, 0.f},
+    {-8548.13f, 1987.38f, 100.22f, 0.f},
+    {-8558.32f, 2010.84f, 100.498f, 0.f},
+    {-8577.8f, 2021.11f, 100.22f, 0.f},
+    {-8601.7f, 2011.6f, 100.499f, 0.f},
+    {-8612.97f, 1990.4f, 100.499f, 0.f},
+};
+
 ObjectGuid SummonSmallPortal(Creature* creature)
 {
     float x, y, z;
@@ -267,9 +284,10 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
         }
     }
 
-    void SpawnEyeTentacle(float x, float y)
+    void SpawnEyeTentacle()
     {
-        m_creature->SummonCreature(MOB_EYE_TENTACLE, m_creature->GetPositionX()+x ,m_creature->GetPositionY()+y, m_creature->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 500);
+        for(int i = 0; i < 8; ++i)
+            m_creature->SummonCreature(MOB_EYE_TENTACLE, aEyeLoc[i].m_fX ,aEyeLoc[i].m_fY, aEyeLoc[i].m_fZ, aEyeLoc[i].m_fO, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 500);        
     }
 
     Player* SelectRandomNotStomach()
@@ -543,16 +561,8 @@ struct MANGOS_DLL_DECL cthunAI : public ScriptedAI
                 if (m_uiEyeTentacleTimer < uiDiff)
                 {
                     // Spawn the 8 Eye Tentacles in the corret spots
-                    SpawnEyeTentacle(0, 25);                //south
-                    SpawnEyeTentacle(12, 12);               //south west
-                    SpawnEyeTentacle(25, 0);                //west
-                    SpawnEyeTentacle(12, -12);              //north west
-
-                    SpawnEyeTentacle(0, -25);               //north
-                    SpawnEyeTentacle(-12, -12);             //north east
-                    SpawnEyeTentacle(-25, 0);               // east
-                    SpawnEyeTentacle(-12, 12);              // south east
-
+                    SpawnEyeTentacle();
+                    
                     //These spawn at every 30 seconds
                     m_uiEyeTentacleTimer = 30000;
                 }
@@ -723,9 +733,10 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
         }
     }
 
-    void SpawnEyeTentacle(float x, float y)
+    void SpawnEyeTentacle()
     {
-        m_creature->SummonCreature(MOB_EYE_TENTACLE, m_creature->GetPositionX()+x ,m_creature->GetPositionY()+y, m_creature->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 500);
+        for(int i = 0; i < 8; ++i)
+            m_creature->SummonCreature(MOB_EYE_TENTACLE, aEyeLoc[i].m_fX ,aEyeLoc[i].m_fY, aEyeLoc[i].m_fZ, aEyeLoc[i].m_fO, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 500);        
     }
 
     void Aggro(Unit* pWho)
@@ -833,16 +844,8 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
                 if (m_uiEyeTentacleTimer < uiDiff)
                 {
                     //Spawn the 8 Eye Tentacles in the corret spots
-                    SpawnEyeTentacle(0, 20);                //south
-                    SpawnEyeTentacle(10, 10);               //south west
-                    SpawnEyeTentacle(20, 0);                //west
-                    SpawnEyeTentacle(10, -10);              //north west
-
-                    SpawnEyeTentacle(0, -20);               //north
-                    SpawnEyeTentacle(-10, -10);             //north east
-                    SpawnEyeTentacle(-20, 0);               // east
-                    SpawnEyeTentacle(-10, 10);              // south east
-
+                    SpawnEyeTentacle();
+                    
                     // No point actually putting a timer here since
                     // These shouldn't trigger agian until after phase shifts
                     m_uiEyeTentacleTimer = 45000;
