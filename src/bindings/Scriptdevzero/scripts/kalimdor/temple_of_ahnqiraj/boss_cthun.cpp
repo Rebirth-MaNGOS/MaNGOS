@@ -855,6 +855,9 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
                 {
                     //Switch to Dark Beam
                     m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_DARK_GLARE);
+                    
+                    // Remove proximity aggro on Dark Glare
+                    m_creature->SetAggroRangeOverride(0.f);
 
                     m_creature->InterruptNonMeleeSpells(false);
 					Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
@@ -883,6 +886,9 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
                     // Switch to Eye Beam
                     m_pInstance->SetData(TYPE_CTHUN_PHASE, PHASE_EYE_NORMAL);
 
+                    // Restore the proximity aggro
+                    m_creature->SetAggroRangeOverride(1.f);
+                    
                     m_uiBeamTimer = 3000;
                     m_uiEyeTentacleTimer = 45000;               //Always spawns 5 seconds before Dark Beam
                     m_uiClawTentacleTimer = 12500;              //4 per Eye beam phase (unsure if they spawn durring Dark beam)
@@ -970,6 +976,7 @@ struct MANGOS_DLL_DECL eye_tentacleAI : public ScriptedAI
     eye_tentacleAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
+        CastGroundRupture();
         Reset();
 
         m_portalGuid = SummonSmallPortal(m_creature);
@@ -999,6 +1006,14 @@ struct MANGOS_DLL_DECL eye_tentacleAI : public ScriptedAI
         m_creature->SetInCombatWithZone();
     }
 
+    void CastGroundRupture()
+    {
+        // Cast Ground Rupture on all players within 1 yd.
+        std::list<Player*> playerList = GetPlayersAtMinimumRange(1.f);
+        for (Player* pPlayer : playerList)
+            m_creature->CastSpell(pPlayer, SPELL_GROUND_RUPTURE, true);
+    }
+    
     void UpdateAI(const uint32 uiDiff)
     {
         // Check if we have a target
@@ -1062,10 +1077,11 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
         m_portalGuid = SummonSmallPortal(m_creature);
     }
 
-    uint32 m_uiGroundRuptureTimer;
     uint32 m_uiHamstringTimer;
     uint32 m_uiEvadeTimer;
     ObjectGuid m_portalGuid;
+    
+    bool m_bGroundRupture;
 
     void JustDied(Unit*)
     {
@@ -1075,10 +1091,55 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
 
     void Reset()
     {
-        // First rupture should happen half a second after we spawn, should be instant!
-        m_uiGroundRuptureTimer = 30000;
+        m_bGroundRupture = false;
         m_uiHamstringTimer = 2000;
         m_uiEvadeTimer = 5000;
+    }
+    
+    Player* DoGetPlayerInMeleeRangeByThreat()
+    {
+        std::vector<Player*> tmp_list;
+
+        if (!m_creature->CanHaveThreatList())
+            return nullptr;
+
+        GUIDVector vGuids;
+        m_creature->FillGuidsListFromThreatList(vGuids);
+
+        if (!vGuids.empty())
+        {
+            for (ObjectGuid current_guid : vGuids)
+            {
+                if (Unit* current_target = m_creature->GetMap()->GetUnit(current_guid))
+                {
+                    // We need only a player
+                    if (current_target->GetTypeId() != TYPEID_PLAYER)
+                        continue;
+
+                    if (m_creature->CanReachWithMeleeAttack(current_target))
+                        tmp_list.push_back(dynamic_cast<Player*>(current_target));
+                }
+            }
+        }
+        else
+            return nullptr;
+
+        if (tmp_list.empty())
+            return nullptr;
+
+        // If there's just one player on the threat list we return that player.
+        if (tmp_list.size() == 1)
+            return tmp_list.front();
+
+        // Sort the list from highest to lowest threat.
+        std::sort(tmp_list.begin(), tmp_list.end(), 
+                [&]( Player* first, Player* second) -> bool 
+                { 
+                    return m_creature->getThreatManager().getThreat(first) > 
+                    m_creature->getThreatManager().getThreat(second); 
+                });
+
+        return tmp_list.front();
     }
 
     void CastGroundRupture()
@@ -1102,49 +1163,56 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
 
         // EvadeTimer
         if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
-        {
-            if (m_uiEvadeTimer < uiDiff)
-            {
-                if (Creature* pCreature = m_creature->GetMap()->GetCreature(m_portalGuid))
-                    pCreature->DealDamage(pCreature, pCreature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
-
-                // Dissapear and reappear at new position
-                m_creature->SetVisibility(VISIBILITY_OFF);
-
-                Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0);
-                if (!pTarget || pTarget->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
-                {
-                    m_creature->DealDamage(m_creature, m_creature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
-                    return;
-                }
-                else
-                {
-                    m_creature->GetMap()->CreatureRelocation(m_creature, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0);
-
-                    m_portalGuid = SummonSmallPortal(m_creature);
-
-                    m_uiGroundRuptureTimer = 500;
-                    m_uiHamstringTimer = 2000;
-                    m_uiEvadeTimer = 5000;
-                    AttackStart(pTarget);
-                }
-
-                m_creature->SetVisibility(VISIBILITY_ON);
+        {            
+            if (Player* melee_player = DoGetPlayerInMeleeRangeByThreat())
+            {                                
+                // If there are players in melee range prioritise them.
+                m_creature->SetTargetGuid(melee_player->GetGUID());
+                if (m_creature->getVictim())
+                    m_creature->AI()->AttackStart(melee_player);
             }
             else
-                m_uiEvadeTimer -= uiDiff;
-        }
+            {        
+                if (m_uiEvadeTimer < uiDiff)
+                {
+                    if (Creature* pCreature = m_creature->GetMap()->GetCreature(m_portalGuid))
+                        pCreature->DealDamage(pCreature, pCreature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+
+                    // Dissapear and reappear at new position
+                    m_creature->SetVisibility(VISIBILITY_OFF);
+
+                    Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0);
+                    if (!pTarget || pTarget->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
+                    {
+                        m_creature->DealDamage(m_creature, m_creature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+                        return;
+                    }
+                    else
+                    {
+                        m_creature->GetMap()->CreatureRelocation(m_creature, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0);
+
+                        m_portalGuid = SummonSmallPortal(m_creature);
+
+                        m_bGroundRupture = true;
+                        m_uiHamstringTimer = 2000;
+                        m_uiEvadeTimer = 5000;
+                        AttackStart(pTarget);
+                    }
+                    m_creature->SetVisibility(VISIBILITY_ON);
+                }
+                else
+                    m_uiEvadeTimer -= uiDiff;                           
+            }           
+        }             
         else // reset the evade timer
             m_uiEvadeTimer = 5000;
-
+          
         // GroundRuptureTimer
-        if (m_uiGroundRuptureTimer < uiDiff)
+        if(m_bGroundRupture)
         {
-            CastGroundRupture();
-            m_uiGroundRuptureTimer = 30000;
-        }
-        else
-            m_uiGroundRuptureTimer -= uiDiff;
+                CastGroundRupture();
+                m_bGroundRupture = false;
+        }            
 
         // HamstringTimer
         if (m_uiHamstringTimer < uiDiff)
@@ -1155,7 +1223,7 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
         else
             m_uiHamstringTimer -= uiDiff;
 
-        DoMeleeAttackIfReady();
+         DoMeleeAttackIfReady();
     }
 };
 
@@ -1164,16 +1232,18 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
     giant_claw_tentacleAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
+        CastGroundRupture();
         Reset();
 
         m_portalGuid = SummonGiantPortal(m_creature);
     }
 
-    uint32 m_uiGroundRuptureTimer;
     uint32 m_uiThrashTimer;
     uint32 m_uiHamstringTimer;
     uint32 m_uiEvadeTimer;
     ObjectGuid m_portalGuid;
+    
+    bool m_bGroundRupture;
 
     void JustDied(Unit*)
     {
@@ -1183,8 +1253,7 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
 
     void Reset()
     {
-        //First rupture should happen earlier than half a second after we spawn
-        m_uiGroundRuptureTimer = 100;
+        m_bGroundRupture = false;
         m_uiHamstringTimer = 2000;
         m_uiThrashTimer = 5000;
         m_uiEvadeTimer = 5000;
@@ -1194,6 +1263,60 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
     {
         m_creature->SetInCombatWithZone();
     }
+    
+    void CastGroundRupture()
+    {
+        // Cast Ground Rupture on all players within 1 yd.
+        std::list<Player*> playerList = GetPlayersAtMinimumRange(3.f);
+        for (Player* pPlayer : playerList)
+            m_creature->CastSpell(pPlayer, SPELL_MASSIVE_GROUND_RUPTURE, true);
+    }
+    
+    Player* DoGetPlayerInMeleeRangeByThreat()
+    {
+        std::vector<Player*> tmp_list;
+
+        if (!m_creature->CanHaveThreatList())
+            return nullptr;
+
+        GUIDVector vGuids;
+        m_creature->FillGuidsListFromThreatList(vGuids);
+
+        if (!vGuids.empty())
+        {
+            for (ObjectGuid current_guid : vGuids)
+            {
+                if (Unit* current_target = m_creature->GetMap()->GetUnit(current_guid))
+                {
+                    // We need only a player
+                    if (current_target->GetTypeId() != TYPEID_PLAYER)
+                        continue;
+
+                    if (m_creature->CanReachWithMeleeAttack(current_target))
+                        tmp_list.push_back(dynamic_cast<Player*>(current_target));
+                }
+            }
+        }
+        else
+            return nullptr;
+
+        if (tmp_list.empty())
+            return nullptr;
+
+        // If there's just one player on the threat list we return that player.
+        if (tmp_list.size() == 1)
+            return tmp_list.front();
+
+        // Sort the list from highest to lowest threat.
+        std::sort(tmp_list.begin(), tmp_list.end(), 
+                [&]( Player* first, Player* second) -> bool 
+                { 
+                    return m_creature->getThreatManager().getThreat(first) > 
+                    m_creature->getThreatManager().getThreat(second); 
+                });
+
+        return tmp_list.front();
+    }
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -1201,60 +1324,62 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        // EvadeTimer
+         // EvadeTimer
         if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
         {            
-            if (m_uiEvadeTimer < uiDiff)
-            {
-                if (Creature* pCreature = m_creature->GetMap()->GetCreature(m_portalGuid))
-                    pCreature->DealDamage(pCreature, pCreature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
-
-                // Dissapear and reappear at new position
-                m_creature->SetVisibility(VISIBILITY_OFF);
-
-                Unit* target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-
-                if (!target || target->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
-                {
-                    m_creature->DealDamage(m_creature, m_creature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
-                    return;
-                }
-                else
-                {
-                    m_creature->GetMap()->CreatureRelocation(m_creature, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), 0);
-
-                    m_portalGuid = SummonGiantPortal(m_creature);
-
-                    // full hp after move
-                    m_creature->SetHealthPercent(100);
-                    m_uiGroundRuptureTimer = 100;
-                    m_uiHamstringTimer = 2000;
-                    m_uiThrashTimer = 5000;
-                    m_uiEvadeTimer = 5000;
-                    AttackStart(target);
-                }
-
-                m_creature->SetVisibility(VISIBILITY_ON);
-
+            if (Player* melee_player = DoGetPlayerInMeleeRangeByThreat())
+            {                                
+                // If there are players in melee range prioritise them.
+                m_creature->SetTargetGuid(melee_player->GetGUID());
+                if (m_creature->getVictim())
+                    m_creature->AI()->AttackStart(melee_player);
             }
             else
-                m_uiEvadeTimer -= uiDiff;
+            {        
+                if (m_uiEvadeTimer < uiDiff)
+                {
+                    if (Creature* pCreature = m_creature->GetMap()->GetCreature(m_portalGuid))
+                        pCreature->DealDamage(pCreature, pCreature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+
+                    // Dissapear and reappear at new position
+                    m_creature->SetVisibility(VISIBILITY_OFF);
+
+                    Unit* target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
+
+                    if (!target || target->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
+                    {
+                        m_creature->DealDamage(m_creature, m_creature->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NONE, NULL, false);
+                        return;
+                    }
+                    else
+                    {
+                        m_creature->GetMap()->CreatureRelocation(m_creature, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), 0);
+
+                        m_portalGuid = SummonGiantPortal(m_creature);
+
+                        // full hp after move
+                        m_creature->SetHealthPercent(100);
+                        m_bGroundRupture = true;
+                        m_uiHamstringTimer = 2000;
+                        m_uiThrashTimer = 5000;
+                        m_uiEvadeTimer = 5000;
+                        AttackStart(target);
+                    }
+                    m_creature->SetVisibility(VISIBILITY_ON);
+                }
+                else
+                    m_uiEvadeTimer -= uiDiff;
+            }
         }
         else // reset the evade timer
             m_uiEvadeTimer = 5000;
-
+                       
         // GroundRuptureTimer
-        if (m_uiGroundRuptureTimer < uiDiff)
+        if(m_bGroundRupture)
         {
-            // Cast Ground Rupture on all players within 3 yd.
-            std::list<Player*> playerList = GetPlayersAtMinimumRange(3.f);
-            for (Player* pPlayer : playerList)
-                m_creature->CastSpell(pPlayer, SPELL_MASSIVE_GROUND_RUPTURE, true);
-
-            m_uiGroundRuptureTimer = 30000;
-        }
-        else
-            m_uiGroundRuptureTimer -= uiDiff;
+                CastGroundRupture();
+                m_bGroundRupture = false;
+        }     
 
         // ThrashTimer
         if (m_uiThrashTimer < uiDiff)
@@ -1283,6 +1408,7 @@ struct MANGOS_DLL_DECL giant_eye_tentacleAI : public ScriptedAI
     giant_eye_tentacleAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
+        CastGroundRupture();
         Reset();
 
         m_portalGuid = SummonGiantPortal(m_creature);
@@ -1308,6 +1434,14 @@ struct MANGOS_DLL_DECL giant_eye_tentacleAI : public ScriptedAI
         m_creature->SetInCombatWithZone();
     }
 
+    void CastGroundRupture()
+    {
+        // Cast Ground Rupture on all players within 1 yd.
+        std::list<Player*> playerList = GetPlayersAtMinimumRange(3.f);
+        for (Player* pPlayer : playerList)
+            m_creature->CastSpell(pPlayer, SPELL_MASSIVE_GROUND_RUPTURE, true);
+    }
+    
     void UpdateAI(const uint32 uiDiff)
     {
         // Check if we have a target
