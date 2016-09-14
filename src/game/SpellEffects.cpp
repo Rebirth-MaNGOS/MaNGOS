@@ -1328,6 +1328,26 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
             return;
         }
+        case 28089:                                 // Polarity Shift
+        {
+            if(!unitTarget)
+                return;
+            
+            // remove already present charge so they won't stack
+            if(unitTarget->HasAura(28084) || unitTarget->HasAura(28059))
+            {
+                unitTarget->RemoveAurasDueToSpell(28084);
+                unitTarget->RemoveAurasDueToSpell(28059);
+            }
+                
+            int i = urand(0,1);
+            // Should be evenly distributed so half the targets get 28084 and the other half 28054, fix this
+            if(i == 0)
+                unitTarget->CastSpell(unitTarget, 28084, true);
+            else
+                unitTarget->CastSpell(unitTarget, 28059, true);
+            return;            
+        }
         }
 
         //All IconID Check in there
