@@ -112,14 +112,14 @@ struct Loc
 
 static const Loc aEyeLoc[8] = 
 {
-    {-8602.41f, 1967.61f, 100.498f, 0.f},
-    {-8582.13f, 1959.f, 100.22f, 0.f},
-    {-8560.77f, 1966.81f, 100.22f, 0.f},
-    {-8548.13f, 1987.38f, 100.22f, 0.f},
-    {-8558.32f, 2010.84f, 100.498f, 0.f},
-    {-8577.8f, 2021.11f, 100.22f, 0.f},
-    {-8601.7f, 2011.6f, 100.499f, 0.f},
-    {-8612.97f, 1990.4f, 100.499f, 0.f},
+    {-8602.41f, 1967.61f, 100.998f, 0.f},
+    {-8582.13f, 1959.f, 100.72f, 0.f},
+    {-8560.77f, 1966.81f, 100.72f, 0.f},
+    {-8548.13f, 1987.38f, 100.72f, 0.f},
+    {-8558.32f, 2010.84f, 100.998f, 0.f},
+    {-8577.8f, 2021.11f, 100.72f, 0.f},
+    {-8601.7f, 2011.6f, 100.999f, 0.f},
+    {-8609.79f, 1990.62f, 100.999f, 0.f},
 };
 
 ObjectGuid SummonSmallPortal(Creature* creature)
@@ -986,9 +986,12 @@ struct MANGOS_DLL_DECL eye_tentacleAI : public ScriptedAI
     }
 
     uint32 m_uiMindflayTimer;
+    uint32 m_uiInitialGroundRupture;
     uint32 m_uiKillSelfTimer;
     ObjectGuid m_portalGuid;
 
+    bool m_bInitialGroundRupture;
+    
     void JustDied(Unit*)
     {
         if (Creature* pCreature = m_creature->GetMap()->GetCreature(m_portalGuid))
@@ -997,6 +1000,9 @@ struct MANGOS_DLL_DECL eye_tentacleAI : public ScriptedAI
 
     void Reset()
     {
+        m_bInitialGroundRupture = true;
+        m_uiInitialGroundRupture = 100;
+        
         // Mind flay half a second after we spawn
         m_uiMindflayTimer = 500;
 
@@ -1032,6 +1038,18 @@ struct MANGOS_DLL_DECL eye_tentacleAI : public ScriptedAI
         }
         else
             m_uiKillSelfTimer -= uiDiff;
+        
+        if(m_bInitialGroundRupture)
+        {
+            // Initial Ground Rupture
+            if (m_uiInitialGroundRupture < uiDiff)
+            {
+                CastGroundRupture();
+                m_bInitialGroundRupture = false;
+            }
+            else
+                m_uiInitialGroundRupture -= uiDiff;
+        }
 
         // MindflayTimer
         if (m_uiMindflayTimer < uiDiff)
@@ -1072,9 +1090,6 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
     claw_tentacleAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
-
-        CastGroundRupture();
-
         Reset();
 
         m_portalGuid = SummonSmallPortal(m_creature);
@@ -1082,8 +1097,10 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
 
     uint32 m_uiHamstringTimer;
     uint32 m_uiEvadeTimer;
+    uint32 m_uiInitialGroundRupture;
     ObjectGuid m_portalGuid;
     
+    bool m_bInitialGroundRupture;
     bool m_bGroundRupture;
 
     void JustDied(Unit*)
@@ -1094,6 +1111,8 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
 
     void Reset()
     {
+        m_bInitialGroundRupture = true;
+        m_uiInitialGroundRupture = 100;
         m_bGroundRupture = false;
         m_uiHamstringTimer = 2000;
         m_uiEvadeTimer = 5000;
@@ -1163,7 +1182,19 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
         // Check if we have a target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
+        
+        if(m_bInitialGroundRupture)
+        {
+            // Initial Ground Rupture
+            if (m_uiInitialGroundRupture < uiDiff)
+            {
+                CastGroundRupture();
+                m_bInitialGroundRupture = false;
+            }
+            else
+                m_uiInitialGroundRupture -= uiDiff;
+        }
+        
         // EvadeTimer
         if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
         {            
@@ -1235,7 +1266,6 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
     giant_claw_tentacleAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
-        CastGroundRupture();
         Reset();
 
         m_portalGuid = SummonGiantPortal(m_creature);
@@ -1244,8 +1274,10 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
     uint32 m_uiThrashTimer;
     uint32 m_uiHamstringTimer;
     uint32 m_uiEvadeTimer;
+    uint32 m_uiInitialGroundRupture;
     ObjectGuid m_portalGuid;
     
+    bool m_bInitialGroundRupture;
     bool m_bGroundRupture;
 
     void JustDied(Unit*)
@@ -1256,6 +1288,8 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
 
     void Reset()
     {
+        m_bInitialGroundRupture = true;
+        m_uiInitialGroundRupture = 100;
         m_bGroundRupture = false;
         m_uiHamstringTimer = 2000;
         m_uiThrashTimer = 5000;
@@ -1327,6 +1361,18 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+        if(m_bInitialGroundRupture)
+        {
+            // Initial Ground Rupture
+            if (m_uiInitialGroundRupture < uiDiff)
+            {
+                CastGroundRupture();
+                m_bInitialGroundRupture = false;
+            }
+            else
+                m_uiInitialGroundRupture -= uiDiff;
+        }
+        
          // EvadeTimer
         if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
         {            
@@ -1411,15 +1457,16 @@ struct MANGOS_DLL_DECL giant_eye_tentacleAI : public ScriptedAI
     giant_eye_tentacleAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         SetCombatMovement(false);
-        CastGroundRupture();
         Reset();
 
         m_portalGuid = SummonGiantPortal(m_creature);
     }
 
     uint32 m_uiBeamTimer;
+    uint32 m_uiInitialGroundRupture;
     ObjectGuid m_portalGuid;
-
+    bool m_bInitialGroundRupture;
+    
     void JustDied(Unit*)
     {
         if (Creature* pCreature = m_creature->GetMap()->GetCreature(m_portalGuid))
@@ -1428,6 +1475,9 @@ struct MANGOS_DLL_DECL giant_eye_tentacleAI : public ScriptedAI
 
     void Reset()
     {
+        m_bInitialGroundRupture = true;
+        m_uiInitialGroundRupture = 100;
+
         //Green Beam half a second after we spawn
         m_uiBeamTimer = 500;
     }
@@ -1451,6 +1501,18 @@ struct MANGOS_DLL_DECL giant_eye_tentacleAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+        if(m_bInitialGroundRupture)
+        {
+            // Initial Ground Rupture
+            if (m_uiInitialGroundRupture < uiDiff)
+            {
+                CastGroundRupture();
+                m_bInitialGroundRupture = false;
+            }
+            else
+                m_uiInitialGroundRupture -= uiDiff;
+        }
+        
         // BeamTimer
         if (m_uiBeamTimer < uiDiff)
         {
