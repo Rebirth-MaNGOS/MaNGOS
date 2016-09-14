@@ -89,9 +89,9 @@ enum
 ************/
 
 // Actually this boss behaves like a NoMovement Boss (SPELL_BALL_LIGHTNING) - but there are some movement packages used, unknown what this means!
-struct boss_thaddiusAI : public Scripted_NoMovementAI
+struct boss_thaddiusAI : public ScriptedAI
 {
-    boss_thaddiusAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature)
+    boss_thaddiusAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (instance_naxxramas*)pCreature->GetInstanceData();
         Reset();
@@ -106,6 +106,7 @@ struct boss_thaddiusAI : public Scripted_NoMovementAI
 
     void Reset()
     {
+        m_creature->CastSpell(m_creature, SPELL_THADIUS_SPAWN, true);
         m_uiPolarityShiftTimer = 15 * IN_MILLISECONDS;
         m_uiChainLightningTimer = 8 * IN_MILLISECONDS;
         m_uiBallLightningTimer = 1 * IN_MILLISECONDS;
@@ -289,7 +290,7 @@ struct npc_tesla_coilAI : public Scripted_NoMovementAI
     uint32 m_uiSetupTimer;
     uint32 m_uiOverloadTimer;
 
-    void Reset() override {}
+    void Reset() {}
     void MoveInLineOfSight(Unit* /*pWho*/) {}
 
     void Aggro(Unit* /*pWho*/)
