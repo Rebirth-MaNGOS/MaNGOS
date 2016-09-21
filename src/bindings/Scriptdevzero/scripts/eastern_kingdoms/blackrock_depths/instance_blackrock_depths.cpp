@@ -144,9 +144,9 @@ void instance_blackrock_depths::OnCreatureCreate(Creature* pCreature)
         return;
 
         // Rare spawn
-    case NPC_PANZOR:
-        SetRareBoss(pCreature, 10);
-        break;
+//     case NPC_PANZOR:
+//         SetRareBoss(pCreature, 10);
+//         break;
     default:
         return;
     }
