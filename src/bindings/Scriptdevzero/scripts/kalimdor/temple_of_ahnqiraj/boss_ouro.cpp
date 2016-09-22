@@ -460,7 +460,7 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                     m_creature->SetTargetGuid(melee_player->GetGUID());
                     if (m_creature->getVictim())
                     {
-                        DoMeleeAttackIfReady();
+                        m_creature->AI()->AttackStart(melee_player);
                         m_bForceSubmerge = false;       // if there's someone in melee don't submerge
                     }
                 }

@@ -692,6 +692,7 @@ public:
 	void SetCombatStartPosition(float x, float y, float z) { m_combatStartX = x; m_combatStartY = y; m_combatStartZ = z; }
 	void GetCombatStartPosition(float &x, float &y, float &z) { x = m_combatStartX; y = m_combatStartY; z = m_combatStartZ; }
 	float GetAggroRangeOverride() const { return m_aggroRangeOverride; }
+	void SetAggroRangeOverride(float override) { m_aggroRangeOverride = override;  }
 	
 	// Set the leash timer for how long a creature is allowed not to hit a player without resetting if the player doesn't hit back.
 	void SetCreatureMeleeHitResetTimer(uint32 ms_time) { m_noCreatureMeleeHitResetTimer = ms_time; }
