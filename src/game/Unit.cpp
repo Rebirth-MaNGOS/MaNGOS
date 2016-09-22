@@ -278,6 +278,7 @@ Unit::Unit()
         m_reactiveTimer[i] = 0;
 
     m_isAOEImmune = false;
+    m_ignoreTargets = false;
 }
 
 Unit::~Unit()

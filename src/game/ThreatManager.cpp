@@ -537,6 +537,11 @@ void ThreatManager::tauntFadeOut(Unit *pTaunter)
 
 void ThreatManager::setCurrentVictim(HostileReference* pHostileReference)
 {
+    // If the unit is currently ignoring target changes
+    // we do not update its victim.
+    if (getOwner()->isIgnoringTargets())
+        return;
+
     iCurrentVictim = pHostileReference;
 }
 

@@ -1820,6 +1820,10 @@ public:
         bool isMeleeReachable() {return m_meleeReachable;}
         void setSpellNextMelee(bool /*spellNextMelee*/) {m_spellNextHit = true;}
 
+        // If this is true the mob should not change target.
+        bool isIgnoringTargets() const { return m_ignoreTargets; }
+        void SetIgnoringTargets(bool ignore) { m_ignoreTargets = ignore; }
+
     protected:
         explicit Unit ();
 
@@ -1921,6 +1925,7 @@ public:
         void CastSpell(float x, float y, float z, SpellEntry const* spell, TR triggered);
 
         bool m_isAOEImmune;
+        bool m_ignoreTargets;
         
     protected:
         // Set if no more procs should be done on this attack.

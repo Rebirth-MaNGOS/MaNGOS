@@ -867,6 +867,9 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
 					// Cast the rotation spell
                     m_creature->CastSpell(m_creature, SPELL_ROTATE_TRIGGER, false);
 
+                    // Make C'Thun ignore target changes.
+                    m_creature->SetIgnoringTargets(true);
+
                     // Darkbeam for 35 seconds
                     m_uiPhaseTimer = 35000;
                 }
@@ -896,6 +899,9 @@ struct MANGOS_DLL_DECL eye_of_cthunAI : public ScriptedAI
                     // Freeze animation
                     m_creature->SetUInt32Value(UNIT_FIELD_FLAGS, 0);
                     m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IN_COMBAT);
+
+                    // Make C'Thun start picking targets again.
+                    m_creature->SetIgnoringTargets(false);
 
                     // Eye Beam for 50 seconds
                     m_uiPhaseTimer = 50000;
