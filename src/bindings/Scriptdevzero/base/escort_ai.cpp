@@ -381,6 +381,13 @@ void npc_escortAI::MovementInform(uint32 uiMoveType, uint32 uiPointId)
     if (uiMoveType != POINT_MOTION_TYPE || !HasEscortState(STATE_ESCORT_ESCORTING))
         return;
 
+    // If an escort is paused we still allow manual movement.
+    if (HasEscortState(STATE_ESCORT_PAUSED))
+    {
+        WaypointReached(uiPointId);
+        return;
+    }
+
     //Combat start position reached, continue waypoint movement
     if (uiPointId == POINT_LAST_POINT)
     {
@@ -434,8 +441,8 @@ void npc_escortAI::FillPointMovementListForCreature()
 {
     std::vector<ScriptPointMove> const &pPointsEntries = pSystemMgr.GetPointMoveList(m_creature->GetEntry());
 
-	if (pPointsEntries.empty()) 
-		return; 
+	if (pPointsEntries.empty())
+		return;
 
     std::vector<ScriptPointMove>::const_iterator itr;
 
@@ -501,7 +508,7 @@ void npc_escortAI::Start(bool bRun, const Player* pPlayer, const Quest* pQuest, 
     }
 
     if (HasEscortState(STATE_ESCORT_ESCORTING))
-    {	
+    {
         error_log("SD0: EscortAI attempt to Start while already escorting.");
         return;
     }

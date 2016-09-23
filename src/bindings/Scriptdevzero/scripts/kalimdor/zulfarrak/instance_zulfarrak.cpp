@@ -116,7 +116,7 @@ void instance_zulfarrak::OnCreatureCreate(Creature* pCreature)
 			m_uiPyramideTrash.push_back(pCreature->GetObjectGuid());
 			break;
         case NPC_SANDFURY_SOUL_EATER: //no spawns
-        case NPC_SHADOWPRIEST_SEZZZIZZ: 
+        case NPC_SHADOWPRIEST_SEZZZIZZ:
             m_uiPyramideTrash.push_back(pCreature->GetObjectGuid());
             break;
 
@@ -211,7 +211,7 @@ void instance_zulfarrak::Load(const char* in)
 
     std::istringstream loadStream(in);
     loadStream >> m_auiEncounter[0] >> m_auiEncounter[1] >> m_auiEncounter[2];
-        
+
     for(uint8 i = 0; i < MAX_ENCOUNTER; ++i)
     {
         if (m_auiEncounter[i] == IN_PROGRESS)
@@ -239,34 +239,46 @@ void instance_zulfarrak::OnPlayerDeath(Player * /*pPlayer*/)
 	SetData(TYPE_PYRAMIDE, NOT_STARTED);
 	//despawn summons
     if (!m_uiPyramideTrash.empty())
+    {
         for(GUIDList::iterator itr = m_uiPyramideTrash.begin(); itr != m_uiPyramideTrash.end(); ++itr)
-			if (Creature* pTroll = instance->GetCreature(*itr)) {
+        {
+			if (Creature* pTroll = instance->GetCreature(*itr))
+            {
 				pTroll->ForcedDespawn();
-				pTroll->RemoveFromWorld(); }
+				pTroll->RemoveFromWorld();
+            }
+        }
+    }
 	m_uiPyramideTrash.clear();
 	m_uiPyramideTrashTemp.clear();
 	m_uiWave = 0;
 	m_uiCheckPyramideTrash_Timer = 15000;
 	//Reset troll cages and prisoners so event can be restarted
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 5; i++)
+    {
 		m_uiPyramideNPCs[i].clear();
 		DoUseDoorOrButton(m_mGoEntryGuidStore[GO_TROLL_CAGE1+i],0,false);
 		Creature* C = GetSingleCreatureFromStorage(NPC_SERGEANT_BLY+i);
 		C->SetDeathState(JUST_DIED);
 		C->Respawn();
-		C->setFaction(FACTION_FRIENDLY); }
+		C->setFaction(FACTION_FRIENDLY);
+    }
 	//Set respawn time of executioner
 	Creature* C = GetSingleCreatureFromStorage(NPC_SANDFURY_EXECUTIONER);
-	if (C && C->IsInWorld() && !C->isAlive()) {
-		C->SetRespawnDelay(35);
-		C->SaveRespawnTime();
-		C->SetDeathState(JUST_DIED);
-		C->RemoveCorpse();}
+	if (C && C->IsInWorld() && !C->isAlive())
+    {
+        C->RemoveCorpse();
+        C->SetRespawnTime(35);
+        C->SaveRespawnTime();
+        C->SetRespawnDelay(10 * 24 * 3600);
+    }
 	//Despawn Nekrum aswell
 	C = GetSingleCreatureFromStorage(NPC_NEKRUM_GUTCHEWER);
-	if (C && C->IsInWorld()){
+	if (C && C->IsInWorld())
+    {
 		C->ForcedDespawn();
-		C->RemoveFromWorld(); }
+		C->RemoveFromWorld();
+    }
 }
 
 void instance_zulfarrak::OnCreatureDeath(Creature * pCreature)
@@ -320,8 +332,8 @@ void instance_zulfarrak::Update(uint32 uiDiff)
                             if (!pTroll->getVictim())
                             {
                                 pTroll->GetMotionMaster()->Clear();
-                                pTroll->GetMotionMaster()->MovePoint(1, 1886.31f, 1269.72f, 41.65f);
-								CreatureCreatePos pos(pTroll->GetMap(), 1886.31f, 1269.72f, 41.65f, 0.0f);
+                                pTroll->GetMotionMaster()->MovePoint(1, 1886.31f, 1269.72f, 42.f);
+								CreatureCreatePos pos(pTroll->GetMap(), 1886.31f, 1269.72f, 42.f, 0.0f);
 								pTroll->SetSummonPoint(pos);
                             }
 
@@ -333,7 +345,7 @@ void instance_zulfarrak::Update(uint32 uiDiff)
 			}
 			}
 			m_uiWave++;
-			m_uiCheckPyramideTrash_Timer = 40000; 
+			m_uiCheckPyramideTrash_Timer = 40000;
 		}
         else m_uiCheckPyramideTrash_Timer -= uiDiff;
 	}
@@ -383,7 +395,7 @@ void instance_zulfarrak::Update(uint32 uiDiff)
     //        Creature* pMurta = GetSingleCreatureFromStorage(NPC_MURTA_GRIMGUT);
     //        if (pMurta && pMurta->isAlive() && !pMurta->getVictim())
     //            pMurta->CastSpell(pMurta, SPELL_BLYS_BANDS_ESCAPE, false);
-    //            
+    //
     //        m_uiBlysBandHeartstone_Timer = 0;
     //    }
     //    else m_uiBlysBandHeartstone_Timer -= uiDiff;

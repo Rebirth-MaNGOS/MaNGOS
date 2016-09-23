@@ -56,6 +56,7 @@ struct MANGOS_DLL_DECL npc_sergeant_blyAI : public npc_escortAI
 {
     npc_sergeant_blyAI(Creature* pCreature) : npc_escortAI(pCreature)
     {
+        m_creature->SetAggroRangeOverride(0.3f);
         m_pInstance = (instance_zulfarrak*)pCreature->GetInstanceData();
         Reset();
     }
@@ -68,6 +69,12 @@ struct MANGOS_DLL_DECL npc_sergeant_blyAI : public npc_escortAI
 
     void Reset()
     {
+        if (bEscaped && m_pInstance && m_pInstance->GetData(TYPE_PYRAMIDE) == IN_PROGRESS)
+        {
+            m_creature->GetMotionMaster()->MovePoint(1000, 1883.12f, 1272.03f, 42.f, true);
+            SetEscortPaused(true);
+        }
+
         if (HasEscortState(STATE_ESCORT_ESCORTING))
             return;
         m_uiShieldBash_Timer = 5000;
@@ -95,6 +102,12 @@ struct MANGOS_DLL_DECL npc_sergeant_blyAI : public npc_escortAI
                 m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                 m_creature->SetOrientation(1.58f);
                 CanWalk = false;
+                break;
+            case 1000:
+                m_creature->GetMotionMaster()->MovePoint(1001, 1883.12f, 1271.03f, 42.f, true);
+                break;
+            case 1001:
+                SetEscortPaused(false);
                 break;
         }
     }
@@ -141,6 +154,7 @@ struct MANGOS_DLL_DECL npc_sergeant_blyAI : public npc_escortAI
         if (!bEscaped && m_pInstance && m_pInstance->GetData(TYPE_PYRAMIDE) == IN_PROGRESS)
         {
             bEscaped = true;
+            SetIgnorePathing(true);
             Start(true);
             m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP); // Escort system remove this flag, so we add him back
         }
@@ -226,6 +240,7 @@ struct MANGOS_DLL_DECL npc_weegli_blastfuseAI : public npc_escortAI
 {
     npc_weegli_blastfuseAI(Creature* pCreature) : npc_escortAI(pCreature)
     {
+        m_creature->SetAggroRangeOverride(0.3f);
         m_pInstance = (instance_zulfarrak*)pCreature->GetInstanceData();
         Reset();
     }
@@ -238,8 +253,15 @@ struct MANGOS_DLL_DECL npc_weegli_blastfuseAI : public npc_escortAI
 
     void Reset()
     {
+        if (bEscaped && m_pInstance && m_pInstance->GetData(TYPE_PYRAMIDE) == IN_PROGRESS)
+        {
+            m_creature->GetMotionMaster()->MovePoint(1000, 1881.48f, 1272.32f, 42.f, true);
+            SetEscortPaused(true);
+        }
+
         if (HasEscortState(STATE_ESCORT_ESCORTING))
             return;
+
         m_uiBomb_Timer = urand(5000,7000);
         m_uiShoot_Timer = urand(1000,2000);
         uiLastPointId = 0;
@@ -282,7 +304,13 @@ struct MANGOS_DLL_DECL npc_weegli_blastfuseAI : public npc_escortAI
                 SetRun();
                 break;
             case 15:
-                m_creature->SetOrientation(4.71f);
+                m_creature->SetFacingTo(4.71f);
+                break;
+            case 1000:
+                m_creature->GetMotionMaster()->MovePoint(1001, 1881.48f, 1271.32f, 42.f, true);
+                break;
+            case 1001:
+                SetEscortPaused(false);
                 break;
         }
     }
@@ -313,6 +341,7 @@ struct MANGOS_DLL_DECL npc_weegli_blastfuseAI : public npc_escortAI
         if (!bEscaped && m_pInstance && m_pInstance->GetData(TYPE_PYRAMIDE) == IN_PROGRESS)
         {
             bEscaped = true;
+            SetIgnorePathing(true);
             Start(true);
             m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         }
@@ -405,6 +434,7 @@ struct MANGOS_DLL_DECL npc_ravenAI : public npc_escortAI
 {
     npc_ravenAI(Creature* pCreature) : npc_escortAI(pCreature)
     {
+        m_creature->SetAggroRangeOverride(0.3f);
         m_pInstance = (instance_zulfarrak*)pCreature->GetInstanceData();
         Reset();
     }
@@ -416,6 +446,12 @@ struct MANGOS_DLL_DECL npc_ravenAI : public npc_escortAI
 
     void Reset()
     {
+        if (bEscaped && m_pInstance && m_pInstance->GetData(TYPE_PYRAMIDE) == IN_PROGRESS)
+        {
+            m_creature->GetMotionMaster()->MovePoint(1000, 1884.74f, 1272.25f, 42.f, true);
+            SetEscortPaused(true);
+        }
+
         if (HasEscortState(STATE_ESCORT_ESCORTING))
             return;
         m_uiBackstab_Timer = 3000;
@@ -428,8 +464,13 @@ struct MANGOS_DLL_DECL npc_ravenAI : public npc_escortAI
     {
         if (uiPointId == 4)
             CanWalk = false;
-        if (uiPointId == 7)
+        else if (uiPointId == 7)
             m_creature->SetOrientation(2.27f);
+        else if (uiPointId == 1000)
+            m_creature->GetMotionMaster()->MovePoint(1001, 1884.74f, 1271.25f, 42.f, true);
+        else if (uiPointId == 1001)
+            SetEscortPaused(false);
+
     }
 
     void Aggro(Unit *)
@@ -445,6 +486,7 @@ struct MANGOS_DLL_DECL npc_ravenAI : public npc_escortAI
         if (!bEscaped && m_pInstance && m_pInstance->GetData(TYPE_PYRAMIDE) == IN_PROGRESS)
         {
             bEscaped = true;
+            SetIgnorePathing(true);
             Start(true);
         }
 
@@ -496,6 +538,7 @@ struct MANGOS_DLL_DECL npc_oro_eyegougeAI : public npc_escortAI
 {
     npc_oro_eyegougeAI(Creature* pCreature) : npc_escortAI(pCreature)
     {
+        m_creature->SetAggroRangeOverride(0.3f);
         m_pInstance = (instance_zulfarrak*)pCreature->GetInstanceData();
         Reset();
     }
@@ -508,6 +551,12 @@ struct MANGOS_DLL_DECL npc_oro_eyegougeAI : public npc_escortAI
 
     void Reset()
     {
+        if (bEscaped && m_pInstance && m_pInstance->GetData(TYPE_PYRAMIDE) == IN_PROGRESS)
+        {
+            m_creature->GetMotionMaster()->MovePoint(1000, 1886.14f, 1271.83f, 42.f, true);
+            SetEscortPaused(true);
+        }
+
         if (HasEscortState(STATE_ESCORT_ESCORTING))
             return;
         m_uiImmolate_Timer = urand(5000,7000);
@@ -522,8 +571,12 @@ struct MANGOS_DLL_DECL npc_oro_eyegougeAI : public npc_escortAI
     {
         if (uiPointId == 3)
             CanWalk = false;
-        if (uiPointId == 7)
+        else if (uiPointId == 7)
             m_creature->SetOrientation(5.07f);
+        else if (uiPointId == 1000)
+            m_creature->GetMotionMaster()->MovePoint(1001, 1886.14f, 1270.83f, 42.f, true);
+        else if (uiPointId == 1001)
+            SetEscortPaused(false);
     }
 
     void Aggro(Unit* pVictim)
@@ -539,6 +592,7 @@ struct MANGOS_DLL_DECL npc_oro_eyegougeAI : public npc_escortAI
         if (!bEscaped && m_pInstance && m_pInstance->GetData(TYPE_PYRAMIDE) == IN_PROGRESS)
         {
             bEscaped = true;
+            SetIgnorePathing(true);
             Start(true);
         }
 
@@ -557,7 +611,7 @@ struct MANGOS_DLL_DECL npc_oro_eyegougeAI : public npc_escortAI
             m_uiShadowBolt_Timer = 3500;
         }
         else m_uiShadowBolt_Timer -= uiDiff;
-        
+
         // Immolate timer
         if (m_uiImmolate_Timer <= uiDiff)
         {
@@ -598,6 +652,7 @@ struct MANGOS_DLL_DECL npc_murta_grimgutAI : public npc_escortAI
 {
     npc_murta_grimgutAI(Creature* pCreature) : npc_escortAI(pCreature)
     {
+        m_creature->SetAggroRangeOverride(0.3f);
         m_pInstance = (instance_zulfarrak*)pCreature->GetInstanceData();
         Reset();
     }
@@ -610,8 +665,16 @@ struct MANGOS_DLL_DECL npc_murta_grimgutAI : public npc_escortAI
 
     void Reset()
     {
+        if (bEscaped && m_pInstance && m_pInstance->GetData(TYPE_PYRAMIDE) == IN_PROGRESS)
+        {
+            m_creature->GetMotionMaster()->MovePoint(1000, 1888.70f, 1272.02f, 42.f, true);
+            SetEscortPaused(true);
+        }
+
         if (HasEscortState(STATE_ESCORT_ESCORTING))
             return;
+
+
         m_uiHeal_Timer = urand(2000,5000);
         m_uiHolySmite_Timer = 0;
         m_uiRenew_Timer = 0;
@@ -623,6 +686,10 @@ struct MANGOS_DLL_DECL npc_murta_grimgutAI : public npc_escortAI
     {
         if (uiPointId == 4)
             CanWalk = false;
+        else if (uiPointId == 1000)
+            m_creature->GetMotionMaster()->MovePoint(1001, 1888.70f, 1271.02f, 42.f, true);
+        else if (uiPointId == 1001)
+            SetEscortPaused(false);
     }
 
     void Aggro(Unit *)
@@ -638,6 +705,7 @@ struct MANGOS_DLL_DECL npc_murta_grimgutAI : public npc_escortAI
         if (!bEscaped && m_pInstance && m_pInstance->GetData(TYPE_PYRAMIDE) == IN_PROGRESS)
         {
             bEscaped = true;
+            SetIgnorePathing(true);
             Start(true);
         }
 
@@ -704,7 +772,7 @@ bool GOUse_go_troll_cage(Player* /*pPlayer*/, GameObject* pGo)
 bool GOUse_go_gong_of_zulfarrak(Player* pPlayer, GameObject* pGo)
 {
     instance_zulfarrak* m_pInstance = (instance_zulfarrak*)pGo->GetInstanceData();
-    
+
     if (m_pInstance && m_pInstance->GetData(TYPE_GAHZRILLA) != DONE)
     {
         if (pPlayer->HasItemCount(ITEM_MALLET_OF_ZULFARRAK, 1, false))
@@ -994,12 +1062,12 @@ void AddSC_zulfarrak()
     pNewscript->Name = "go_troll_cage";
     pNewscript->pGOUse = &GOUse_go_troll_cage;
     pNewscript->RegisterSelf();
-    
+
     pNewscript = new Script;
     pNewscript->Name = "go_gong_of_zulfarrak";
     pNewscript->pGOUse = &GOUse_go_gong_of_zulfarrak;
     pNewscript->RegisterSelf();
-    
+
     pNewscript = new Script;
     pNewscript->Name = "go_shallow_grave";
     pNewscript->pGOUse = &GOUse_go_shallow_grave;
@@ -1009,7 +1077,7 @@ void AddSC_zulfarrak()
     pNewscript->Name = "boss_theka_the_martyr";
     pNewscript->GetAI = &GetAI_boss_theka_the_martyr;
     pNewscript->RegisterSelf();
-    
+
     pNewscript = new Script;
     pNewscript->Name = "go_table_theka";
     pNewscript->pGOUse = &GOUse_go_table_theka;
