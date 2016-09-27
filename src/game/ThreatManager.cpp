@@ -297,6 +297,9 @@ void ThreatContainer::update()
 
 HostileReference* ThreatContainer::selectNextVictim(Creature* pAttacker, HostileReference* pCurrentVictim)
 {
+    if (pAttacker->isIgnoringTargets())
+        return nullptr;
+
     HostileReference* currentRef = NULL;
 
     ThreatList::const_iterator lastRef = iThreatList.end();

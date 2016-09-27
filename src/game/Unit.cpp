@@ -7932,6 +7932,9 @@ bool Unit::SelectHostileTarget()
     if (!this->isAlive())
         return false;
 
+    if (isIgnoringTargets())
+        return false;
+
     //This function only useful once AI has been initialized
     if (!((Creature*)this)->AI())
         return false;
