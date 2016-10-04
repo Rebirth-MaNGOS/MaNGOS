@@ -626,15 +626,25 @@ bool AreaTrigger_at_naxxramas(Player* pPlayer, AreaTriggerEntry const* pAt)
 {
     if (pAt->id == AREATRIGGER_KELTHUZAD)
     {
-        if (pPlayer->isDead())
+      if (pPlayer->isGameMaster() || !pPlayer->isAlive())
             return false;
 
-        if (instance_naxxramas* pInstance = (instance_naxxramas*)pPlayer->GetInstanceData())
+        instance_naxxramas* pInstance = (instance_naxxramas*)pPlayer->GetInstanceData();
+
+        if (!pInstance)
+            return false;
+
+        pInstance->SetChamberCenterCoords(pAt->x, pAt->y, pAt->z);
+
+        if (pInstance->GetData(TYPE_KELTHUZAD) == NOT_STARTED)
         {
-            if (pInstance->GetData(TYPE_KELTHUZAD) == NOT_STARTED)
+            if (Creature* pKelthuzad = pInstance->GetSingleCreatureFromStorage(NPC_KELTHUZAD))
             {
-                pInstance->SetData(TYPE_KELTHUZAD, SPECIAL);
-                pInstance->SetChamberCenterCoords(pAt->x, pAt->y, pAt->z);
+                if (pKelthuzad->isAlive())
+                {
+                    pInstance->SetData(TYPE_KELTHUZAD, IN_PROGRESS);
+                    pKelthuzad->SetInCombatWithZone();
+                }
             }
         }
     }

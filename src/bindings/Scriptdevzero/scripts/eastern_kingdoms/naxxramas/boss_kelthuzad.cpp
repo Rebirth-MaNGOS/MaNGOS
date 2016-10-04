@@ -80,7 +80,11 @@ enum
 
     SPELL_MANA_DETONATION               = 27819,
     SPELL_SHADOW_FISSURE                = 27810,
-    SPELL_FROST_BLAST                   = 27808
+    SPELL_VOID_BLAST                        = 27812,
+    SPELL_FROST_BLAST                   = 27808,
+    
+    SPELL_CHANNEL_VISUAL                = 29423,
+    NPC_SHADOW_FISSURE                  = 16129
 };
 
 static float M_F_ANGLE = 0.2f;                              // to adjust for map rotation
@@ -93,7 +97,7 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
     {
         m_pInstance = (instance_naxxramas*)pCreature->GetInstanceData();
         m_uiGuardiansCount = 0;
-        m_uiGuardiansCountMax = 2;
+        m_uiGuardiansCountMax = 5;
         Reset();
     }
 
@@ -144,7 +148,7 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
             }
         }
 
-        m_uiPhase1Timer = 228000;                           //Phase 1 lasts "3 minutes and 48 seconds"
+        m_uiPhase1Timer = 2000;//228000;                           //Phase 1 lasts "3 minutes and 48 seconds"
         m_uiSoldierTimer = 5000;
         m_uiUndeadTimer = 5000;
         m_bSummonedIntro = false;
@@ -230,6 +234,42 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
         m_lUndeadSet.clear();
     }
 
+    void DespawnIntroCreaturesNonCombat()
+    {
+        // Only despawn the ones not sent and not already in combat
+        if (!m_lSoldierSet.empty())
+        {
+            for(GUIDSet::iterator itr = m_lSoldierSet.begin(); itr != m_lSoldierSet.end(); ++itr)
+            {
+                if (Creature* pSoldier = m_pInstance->instance->GetCreature(*itr))
+                {
+                    // won't despawn all the adds
+                    if(!pSoldier->isInCombat() && pSoldier->GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE)
+                    {
+                        pSoldier->ForcedDespawn();
+                        m_lSoldierSet.erase(pSoldier->GetObjectGuid());
+                    }
+                }
+            }
+        }
+
+        if (!m_lUndeadSet.empty())
+        {
+            for(GUIDSet::iterator itr = m_lUndeadSet.begin(); itr != m_lUndeadSet.end(); ++itr)
+            {
+                if (Creature* pSoldier = m_pInstance->instance->GetCreature(*itr))
+                {
+                    // won't despawn all the adds
+                    if(!pSoldier->isInCombat() && pSoldier->GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE)
+                    {
+                        pSoldier->ForcedDespawn();
+                        m_lUndeadSet.erase(pSoldier->GetObjectGuid());
+                    }
+                }
+            }
+        }
+    }
+    
     float GetLocationAngle(uint32 uiId)
     {
         switch(uiId)
@@ -411,6 +451,36 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
 
         return false;
     }
+    
+    void CastShadowFissure()
+    {
+        const ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+        std::vector<Unit*> pEligibleTargets;
+
+        pEligibleTargets.clear();
+
+        if(!threatList.empty())
+        {
+            for (HostileReference *currentReference : threatList)
+            {
+                Unit *target = currentReference->getTarget();
+                if (target && target->isAlive() && target->GetTypeId() == TYPEID_PLAYER)
+                    pEligibleTargets.push_back(target);
+            }
+
+            if(!pEligibleTargets.empty())
+            {
+                std::random_shuffle(pEligibleTargets.begin(), pEligibleTargets.end());
+                Unit *target = pEligibleTargets.front();
+                if (target && target->isAlive() && target->GetTypeId() == TYPEID_PLAYER)
+                {
+                    // When summoned it does damage but when spawned with spell it's visible
+                    m_creature->SummonCreature(NPC_SHADOW_FISSURE, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, 3200);
+                    m_creature->CastSpell(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), SPELL_SHADOW_FISSURE, true); // Visually needed, above is invisible
+                } 
+            }
+        }
+    }
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -426,18 +496,31 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
             {
                 m_bSummonedIntro = true;
                 SummonIntroStart();
+                
+                // Cast channel visual, doesn't channel find out why
+                m_creature->CastSpell(m_creature, SPELL_CHANNEL_VISUAL, true);
             }
-
+            
             if (m_uiPhase1Timer < uiDiff)
             {
+                if(m_creature->HasAura(SPELL_CHANNEL_VISUAL))
+                    m_creature->RemoveAurasDueToSpell(SPELL_CHANNEL_VISUAL);
+                
+                // Remove all non-combat or already moving intro adds
+                DespawnIntroCreaturesNonCombat();
+                
                 m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-
-                float fx, fy, fz;
-                m_pInstance->GetChamberCenterCoords(fx, fy, fz);
-                m_creature->GetMotionMaster()->MovePoint(0, fx, fy, fz);
+                SetCombatMovement(true);
+                m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim());
 
                 DoScriptText(EMOTE_PHASE2, m_creature);
-                return;
+                
+                switch (urand(0, 2))
+                {
+                    case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
+                    case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
+                    case 2: DoScriptText(SAY_AGGRO3, m_creature); break;
+                }
             }
             else
             {
@@ -507,12 +590,12 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
 
         if (m_uiShadowFissureTimer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature->getVictim(), SPELL_SHADOW_FISSURE);
-
+            CastShadowFissure();
+            
             if (urand(0, 1))
                 DoScriptText(SAY_SPECIAL3_MANA_DET, m_creature);
 
-            m_uiShadowFissureTimer = 25000;
+            m_uiShadowFissureTimer = 10000;
         }
         else
             m_uiShadowFissureTimer -= uiDiff;
@@ -563,6 +646,46 @@ CreatureAI* GetAI_boss_kelthuzad(Creature* pCreature)
     return new boss_kelthuzadAI(pCreature);
 }
 
+/*######
+## npc_shadow_fissure
+######*/
+
+struct MANGOS_DLL_DECL npc_shadow_fissureAI : public ScriptedAI
+{
+    npc_shadow_fissureAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        m_uiVoidBlastTimer = 3000;
+        m_bDoVoidBlast = true;
+        Reset();
+    }
+
+    uint32 m_uiVoidBlastTimer;
+    bool m_bDoVoidBlast;
+
+    void Reset() 
+    {       
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(m_bDoVoidBlast)
+        {            
+            if (m_uiVoidBlastTimer < uiDiff)
+            {
+                m_creature->CastSpell(m_creature, SPELL_VOID_BLAST, true);
+                m_bDoVoidBlast = false;
+            }
+            else
+                m_uiVoidBlastTimer -= uiDiff;
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_shadow_fissure(Creature* pCreature)
+{
+    return new npc_shadow_fissureAI(pCreature);
+}
+
 void AddSC_boss_kelthuzad()
 {
     Script* pNewscript;
@@ -570,5 +693,10 @@ void AddSC_boss_kelthuzad()
     pNewscript = new Script;
     pNewscript->Name = "boss_kelthuzad";
     pNewscript->GetAI = &GetAI_boss_kelthuzad;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_shadow_fissure";
+    pNewscript->GetAI = &GetAI_npc_shadow_fissure;
     pNewscript->RegisterSelf();
 }
