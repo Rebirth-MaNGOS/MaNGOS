@@ -89,8 +89,8 @@ enum
 };
 
 static float M_F_ANGLE = 0.2f;                              // to adjust for map rotation
-static float M_F_HEIGHT = 2.0f;                             // adjust for height difference
-static float M_F_RANGE = 55.0f;                             // ~ range from center of chamber to center of alcove
+static float M_F_HEIGHT = 3.0f;                             // adjust for height difference
+static float M_F_RANGE = 60.0f;                             // ~ range from center of chamber to center of alcove
 
 struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
 {
@@ -321,7 +321,7 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
                 }
 
                 float ffx, ffy, ffz;
-                m_creature->GetRandomPoint(fx, fy, fz, 15.0f, ffx, ffy, ffz);
+                m_creature->GetRandomPoint(fx, fy, fz, 12.0f, ffx, ffy, ffz);
 
                 m_creature->SummonCreature(uiNpcEntry, ffx, ffy, ffz, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 5000);
             }
