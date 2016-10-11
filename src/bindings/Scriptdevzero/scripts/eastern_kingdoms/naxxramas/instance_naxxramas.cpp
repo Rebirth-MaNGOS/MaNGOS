@@ -375,9 +375,10 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             if (uiData == SPECIAL)
                 m_uiSapphSpawnTimer = 22000;
             break;
-        case TYPE_KELTHUZAD:
+        case TYPE_KELTHUZAD:            
             switch(uiData)
             {
+                DoUseDoorOrButton(GO_KELTHUZAD_EXIT_DOOR);
                 case SPECIAL:
                 {
                     Map::PlayerList const& lPlayers = instance->GetPlayers();
@@ -403,9 +404,21 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
                 }
                 case FAIL:
                     m_auiEncounter[14] = NOT_STARTED;
+                    break;                    
+                case NOT_STARTED:        
+                {
+                    if (GameObject* pWindow = GetSingleGameObjectFromStorage(GO_KELTHUZAD_WINDOW_1))
+                        pWindow->ResetDoorOrButton();
+                    if (GameObject* pWindow = GetSingleGameObjectFromStorage(GO_KELTHUZAD_WINDOW_2))
+                        pWindow->ResetDoorOrButton();
+                    if (GameObject* pWindow = GetSingleGameObjectFromStorage(GO_KELTHUZAD_WINDOW_3))
+                        pWindow->ResetDoorOrButton();
+                    if (GameObject* pWindow = GetSingleGameObjectFromStorage(GO_KELTHUZAD_WINDOW_4))
+                        pWindow->ResetDoorOrButton();           
+                }
                     break;
                 default:
-                    m_auiEncounter[14] = uiData;
+                    m_auiEncounter[14] = uiData;                    
                     break;
             }
             break;
