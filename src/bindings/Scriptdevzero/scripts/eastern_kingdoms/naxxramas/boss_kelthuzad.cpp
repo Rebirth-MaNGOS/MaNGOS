@@ -84,7 +84,8 @@ enum
     SPELL_FROST_BLAST                   = 27808,
     
     SPELL_CHANNEL_VISUAL                = 29423,
-    NPC_SHADOW_FISSURE                  = 16129
+    NPC_SHADOW_FISSURE                  = 16129,
+    MAX_SHACKLE                                 = 3
 };
 
 static float M_F_ANGLE = 0.2f;                              // to adjust for map rotation
@@ -107,6 +108,7 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
     uint32 m_uiGuardiansCount;
     uint32 m_uiGuardiansCountMax;
     uint32 m_uiGuardiansTimer;
+    uint32 m_uiCheckShackleTimer;
     uint32 m_uiFrostBoltTimer;
     uint32 m_uiFrostBoltNovaTimer;
     uint32 m_uiChainsTimer;
@@ -132,7 +134,8 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
         m_uiShadowFissureTimer = 25000;                     //25 seconds
         m_uiFrostBlastTimer = urand(30000, 60000);          //Random time between 30-60 seconds
         m_uiGuardiansTimer = 5000;                          //5 seconds for summoning each Guardian of Icecrown in phase 3
-
+        m_uiCheckShackleTimer = 10000;
+        
         for(int i=0; i<5; ++i)
         {
             if (m_auiGuardiansGUID[i])
@@ -148,7 +151,7 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
             }
         }
 
-        m_uiPhase1Timer = 2000;//228000;                           //Phase 1 lasts "3 minutes and 48 seconds"
+        m_uiPhase1Timer = 228000;                           //Phase 1 lasts "3 minutes and 48 seconds"
         m_uiSoldierTimer = 5000;
         m_uiUndeadTimer = 5000;
         m_bSummonedIntro = false;
@@ -481,6 +484,43 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
             }
         }
     }
+    
+    void CheckShackle()
+    {
+        int ShackleCount = 0;
+        // Loop through and check if more than 3 has Shackles aura
+        for(int i=0; i<5; ++i)
+        {
+            if (m_auiGuardiansGUID[i])
+            {
+                if (Creature* pGuardian = m_creature->GetMap()->GetCreature(m_auiGuardiansGUID[i]))
+                {
+                    if (pGuardian->isAlive() && (pGuardian->HasAura(9484) || pGuardian->HasAura(9485) || pGuardian->HasAura(10955)))
+                        ++ShackleCount;
+                }                
+            }
+        }
+        
+        // If they do, then remove it from all
+        if(ShackleCount > MAX_SHACKLE)
+        {
+            for(int i=0; i<5; ++i)
+            {
+                if (m_auiGuardiansGUID[i])
+                {
+                    if (Creature* pGuardian = m_creature->GetMap()->GetCreature(m_auiGuardiansGUID[i]))
+                    {
+                        if (pGuardian->isAlive() && (pGuardian->HasAura(9484) || pGuardian->HasAura(9485) || pGuardian->HasAura(10955)))
+                        {
+                            pGuardian->RemoveAurasDueToSpell(9484);
+                            pGuardian->RemoveAurasDueToSpell(9485);
+                            pGuardian->RemoveAurasDueToSpell(10955);
+                        }
+                    }                
+                }
+            }        
+        }        
+    }
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -635,6 +675,18 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
             }
             else
                 m_uiGuardiansTimer -= uiDiff;
+        }
+        
+        if (m_bIsPhase3 && m_uiGuardiansCount > 0)
+        {
+            if (m_uiCheckShackleTimer < uiDiff)
+            {
+                CheckShackle();
+                
+                m_uiCheckShackleTimer = 2000;
+            }
+            else
+                m_uiCheckShackleTimer -= uiDiff;
         }
 
         DoMeleeAttackIfReady();
