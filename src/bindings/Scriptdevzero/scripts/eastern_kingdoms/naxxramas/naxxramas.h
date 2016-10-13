@@ -101,7 +101,6 @@ enum
     GO_MILI_HORSEMEN_DOOR       = 181119,                   //encounter door
 
     GO_CHEST_HORSEMEN_NORM      = 181366,                   //four horsemen event, DoRespawnGameObject() when event == DONE
-    GO_CHEST_HORSEMEN_HERO      = 193426,
 
     // Construct Quarter
     GO_CONS_PATH_EXIT_DOOR      = 181123,
