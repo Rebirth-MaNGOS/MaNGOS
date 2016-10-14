@@ -3029,6 +3029,24 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     }
 
     sMod.spellPrepare(this, m_caster);  // extra for prepare
+    
+    // Corrupted Mind 29201 in Naxx, shouldn't be able to heal/dispel while having this aura
+    // Confirm how it should work, add cooldown to all spells or just can't cast. 
+    // Fix: Find some better way than positiveEffect as now they can't buff  rather than just not heal/dispel
+//     Unit::AuraList const& aurasOverrideClassScripts = m_caster->GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
+//     for(Unit::AuraList::const_iterator iter = aurasOverrideClassScripts.begin(); iter != aurasOverrideClassScripts.end(); ++iter)
+//     {
+//         // select by script id
+//         if((*iter)->GetModifier()->m_miscvalue == 4327 && IsPositiveEffect(m_spellInfo, EFFECT_INDEX_0))
+//         {            
+//                 SendCastResult(SPELL_FAILED_SILENCED);
+//                 cancel();
+//                 finish(false);
+//                 m_caster->DecreaseCastCounter();
+//                 SetExecutedCurrently(false);
+//                 return;
+//         }
+//     }
 
     // Make the Ritual of Summoning effect instantly cast.
     if (m_spellInfo->Id == 7720)
