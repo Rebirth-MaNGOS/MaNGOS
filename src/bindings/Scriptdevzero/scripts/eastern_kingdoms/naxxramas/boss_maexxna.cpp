@@ -35,6 +35,8 @@ enum
 
     //spellId invalid
     //SPELL_SUMMON_SPIDERLING = 29434,
+    NPC_WEB_WRAP = 16486,
+    NPC_WEB_WRAP_DUMMY = 800113,
     NPC_MAEXXNA_SPIDERLING = 17055
 };
 
@@ -55,58 +57,136 @@ struct MANGOS_DLL_DECL npc_web_wrapAI : public ScriptedAI
     npc_web_wrapAI(Creature* pCreature) : ScriptedAI(pCreature) 
     {
         Reset();
-        m_uiWrapTimer = 300;
-        m_bWrap = false;
+//         //m_uiWebWrapTimer = 300;
+//         m_bWrap = false;
     }
 
-    ObjectGuid m_uiVictimGUID;
-    uint32 m_uiWrapTimer;
-    bool m_bWrap;    
+//     ObjectGuid m_uiVictimGUID;
+//     uint32 m_uiWebWrapTimer;
+//     bool m_bWrap;    
     
     void Reset()
     {
 		//m_uiVictimGUID.Clear(); // no need to clear since web wrap is gonna die
     }
 
-    void SetVictim(Unit* pVictim)
-    {
-        if (pVictim)
-        {
-			m_uiVictimGUID = pVictim->GetObjectGuid();
-            //pVictim->CastSpell(pVictim, SPELL_WEBWRAP, true);
-        }
-    }
-    
-    void JustDied(Unit* /*pKiller*/)
-    {
-        if (m_uiVictimGUID)
-        {
-            if (Player* pVictim = m_creature->GetMap()->GetPlayer(m_uiVictimGUID))
-                if (pVictim->isAlive())
-                    pVictim->RemoveAurasDueToSpell(SPELL_WEBWRAP);
-        }
-    }
-        
+//     void SetVictim(Unit* pVictim)
+//     {
+//         if (pVictim)
+//         {
+// 			m_uiVictimGUID = pVictim->GetObjectGuid();
+//             //pVictim->CastSpell(pVictim, SPELL_WEBWRAP, true);
+//         }
+//     }
+//     
+//     void JustDied(Unit* /*pKiller*/)
+//     {
+//         if (m_uiVictimGUID)
+//         {
+//             if (Player* pVictim = m_creature->GetMap()->GetPlayer(m_uiVictimGUID))
+//                 if (pVictim->isAlive())
+//                     pVictim->RemoveAurasDueToSpell(SPELL_WEBWRAP);
+//         }
+//     }
+//         
     // Don't attack anything
     void Aggro(Unit* /*pVictim*/) { return; }
     void AttackStart(Unit* /*pVictim*/) { return; }
     void MoveInLineOfSight(Unit* /*pWho*/) { }
     void UpdateAI(const uint32 uiDiff) 
     {
-         if(m_uiWrapTimer && !m_bWrap)
-         {
-            if (m_uiWrapTimer < uiDiff)
-            {
-                if (Player* pTarget = m_creature->GetMap()->GetPlayer(m_uiVictimGUID))
-                {
-                    pTarget->CastSpell(pTarget, SPELL_WEBWRAP, true);
-                    m_bWrap = true;
-                }
-            }
-            else
-                m_uiWrapTimer -= uiDiff;
+        return;
+    }
+};
+
+struct MANGOS_DLL_DECL npc_web_wrap_dummyAI : public ScriptedAI
+{
+    npc_web_wrap_dummyAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    {
+        Reset();
+        m_bWrap = false;
+        m_uiWebWrapTimer = 1000;
+    }
+
+    ObjectGuid m_uiVictimGUID;
+    uint32 m_uiWebWrapTimer;
+    bool m_bWrap;    
+    
+    void Reset()
+    {
+        //m_uiVictimGUID.Clear(); // no need to clear since web wrap is gonna die
+    }
+
+       void SetVictim(Unit* pVictim)
+    {
+        if (pVictim && pVictim->GetTypeId() == TYPEID_PLAYER)
+        {
+            // Vanilla spell 28618, 28619, 28620, 28621 had effect SPELL_EFFECT_PLAYER_PULL with EffectMiscValue = 200, 300, 400 and 500
+            // All these spells trigger 28622 after 1 or 2 seconds
+            // the EffectMiscValue may have been based on the distance between the victim and the target
+
+            // NOTE: This implementation may not be 100% correct, but it gets very close to the expected result
+
+            float fDist = m_creature->GetDistance2d(pVictim);
+            // Switch the speed multiplier based on the distance from the web wrap
+            uint32 uiEffectMiscValue = 500; // 200, 300, 400, 500
+            if (fDist < 25.0f)
+                uiEffectMiscValue = 200;
+            else if (fDist < 50.0f)
+                uiEffectMiscValue = 300;
+            else if (fDist < 75.0f)
+                uiEffectMiscValue = 400;
+
+            // This doesn't give the expected result in all cases
+            ((Player*)pVictim)->KnockBackFrom(m_creature, -fDist, uiEffectMiscValue * 0.033f);
+
+            // Jump movement not supported on 2.4.3
+            // float fSpeed = fDist * (uiEffectMiscValue * 0.01f);
+            // pVictim->GetMotionMaster()->MoveJump(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), fSpeed, 0.0f);
+
+            m_uiVictimGUID = pVictim->GetObjectGuid();
+            m_uiWebWrapTimer = uiEffectMiscValue == 200 ? 1000 : 2000;
         }
     }
+    
+    void SummonedCreatureJustDied(Creature* pSummoned)
+    {
+        if(pSummoned->GetEntry() == NPC_WEB_WRAP)
+        {
+            if (Player* pTarget = m_creature->GetMap()->GetPlayer(m_uiVictimGUID))
+            {
+                if (pTarget->isAlive())
+                    pTarget->RemoveAurasDueToSpell(SPELL_WEBWRAP);
+            }
+        }
+    }
+    
+    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_WEBWRAP)
+            if (Creature* pWrap = m_creature->SummonCreature(NPC_WEB_WRAP, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 60000))                     
+                m_bWrap = true;                         
+    }
+            
+    // Don't attack anything
+    void Aggro(Unit* /*pVictim*/) { return; }
+    void AttackStart(Unit* /*pVictim*/) { return; }
+    void MoveInLineOfSight(Unit* /*pWho*/) { }    
+    
+    // AI isn't updated when summoned for some reason
+    void UpdateAI(const uint32 uiDiff) 
+    {
+        if(!m_bWrap)
+        {
+            if (m_uiWebWrapTimer < uiDiff)               
+            {                
+                    if (Player* pTarget = m_creature->GetMap()->GetPlayer(m_uiVictimGUID))
+                        pTarget->CastSpell(pTarget, SPELL_WEBWRAP, true, nullptr, nullptr, m_creature->GetObjectGuid());
+            }
+             else
+                m_uiWebWrapTimer -= uiDiff;             
+        }       
+    }          
 };
 
 struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
@@ -128,7 +208,7 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiWebWrapTimer = 20000;                           //20 sec init, 40 sec normal
+        m_uiWebWrapTimer = 5000;                           //20 sec init, 40 sec normal
         m_uiWebSprayTimer = 40000;                          //40 seconds
         m_uiPoisonShockTimer = 20000;                       //20 seconds
         m_uiNecroticPoisonTimer = 30000;                    //30 seconds
@@ -190,19 +270,19 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
             switch(i)
             {
                 case 0:
-                    (*iter)->NearTeleportTo(LOC_X1, LOC_Y1, LOC_Z1, (*iter)->GetOrientation());
-                    if (Creature* pWrap = m_creature->SummonCreature(16486, LOC_X1, LOC_Y1, LOC_Z1, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
-                        ((npc_web_wrapAI*)pWrap->AI())->SetVictim((*iter));
+//                     (*iter)->NearTeleportTo(LOC_X1, LOC_Y1, LOC_Z1, (*iter)->GetOrientation());
+                    if (Creature* pWrap = m_creature->SummonCreature(NPC_WEB_WRAP_DUMMY, LOC_X1, LOC_Y1, LOC_Z1, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
+                        ((npc_web_wrap_dummyAI*)pWrap->AI())->SetVictim((*iter));
                     break;
                 case 1:
-                    (*iter)->NearTeleportTo(LOC_X2, LOC_Y2, LOC_Z2, (*iter)->GetOrientation());
-                    if (Creature* pWrap = m_creature->SummonCreature(16486, LOC_X2, LOC_Y2, LOC_Z2, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
-                        ((npc_web_wrapAI*)pWrap->AI())->SetVictim((*iter));
+//                     (*iter)->NearTeleportTo(LOC_X2, LOC_Y2, LOC_Z2, (*iter)->GetOrientation());
+                    if (Creature* pWrap = m_creature->SummonCreature(NPC_WEB_WRAP_DUMMY, LOC_X2, LOC_Y2, LOC_Z2, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
+                        ((npc_web_wrap_dummyAI*)pWrap->AI())->SetVictim((*iter));
                     break;
                 case 2:
-                    (*iter)->NearTeleportTo(LOC_X3, LOC_Y3, LOC_Z3, (*iter)->GetOrientation());
-                    if (Creature* pWrap = m_creature->SummonCreature(16486, LOC_X3, LOC_Y3, LOC_Z3, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
-                        ((npc_web_wrapAI*)pWrap->AI())->SetVictim((*iter));
+//                     (*iter)->NearTeleportTo(LOC_X3, LOC_Y3, LOC_Z3, (*iter)->GetOrientation());
+                    if (Creature* pWrap = m_creature->SummonCreature(NPC_WEB_WRAP_DUMMY, LOC_X3, LOC_Y3, LOC_Z3, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
+                        ((npc_web_wrap_dummyAI*)pWrap->AI())->SetVictim((*iter));
                     break;
             }
         }
@@ -297,6 +377,11 @@ void AddSC_boss_maexxna()
 
     pNewscript = new Script;
     pNewscript->Name = "npc_web_wrap";
+    pNewscript->GetAI = &GetAI_npc_web_wrap;
+    pNewscript->RegisterSelf();
+
+    pNewscript = new Script;
+    pNewscript->Name = "npc_web_wrap_dummy";
     pNewscript->GetAI = &GetAI_npc_web_wrap;
     pNewscript->RegisterSelf();
 }
