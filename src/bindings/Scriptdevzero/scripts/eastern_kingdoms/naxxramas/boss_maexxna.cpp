@@ -99,17 +99,22 @@ struct MANGOS_DLL_DECL npc_web_wrapAI : public ScriptedAI
     }
 };
 
+CreatureAI* GetAI_npc_web_wrap(Creature* pCreature)
+{
+    return new npc_web_wrapAI(pCreature);
+}
+
 struct MANGOS_DLL_DECL npc_web_wrap_dummyAI : public ScriptedAI
 {
     npc_web_wrap_dummyAI(Creature* pCreature) : ScriptedAI(pCreature) 
     {
         Reset();
         m_bWrap = false;
-        m_uiWebWrapTimer = 1000;
     }
 
     ObjectGuid m_uiVictimGUID;
     uint32 m_uiWebWrapTimer;
+    uint32 m_uiSpawnWebWrapTimer;
     bool m_bWrap;    
     
     void Reset()
@@ -138,14 +143,12 @@ struct MANGOS_DLL_DECL npc_web_wrap_dummyAI : public ScriptedAI
                 uiEffectMiscValue = 400;
 
             // This doesn't give the expected result in all cases
-            ((Player*)pVictim)->KnockBackFrom(m_creature, -fDist, uiEffectMiscValue * 0.033f);
-
-            // Jump movement not supported on 2.4.3
-            // float fSpeed = fDist * (uiEffectMiscValue * 0.01f);
-            // pVictim->GetMotionMaster()->MoveJump(m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), fSpeed, 0.0f);
+            // 0.04f was kinda ok height, needs more testing at further distances
+            ((Player*)pVictim)->KnockBackFrom(m_creature, -fDist, uiEffectMiscValue * 0.04f/*0.033f*/);
 
             m_uiVictimGUID = pVictim->GetObjectGuid();
-            m_uiWebWrapTimer = uiEffectMiscValue == 200 ? 1000 : 2000;
+            m_uiWebWrapTimer = uiEffectMiscValue == 200 ? 800 : 1800;
+            m_uiSpawnWebWrapTimer = m_uiWebWrapTimer + 1000;
         }
     }
     
@@ -160,20 +163,7 @@ struct MANGOS_DLL_DECL npc_web_wrap_dummyAI : public ScriptedAI
             }
         }
     }
-    
-    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
-    {
-        if (pSpell->Id == SPELL_WEBWRAP)
-            if (Creature* pWrap = m_creature->SummonCreature(NPC_WEB_WRAP, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 60000))                     
-                m_bWrap = true;                         
-    }
-            
-    // Don't attack anything
-    void Aggro(Unit* /*pVictim*/) { return; }
-    void AttackStart(Unit* /*pVictim*/) { return; }
-    void MoveInLineOfSight(Unit* /*pWho*/) { }    
-    
-    // AI isn't updated when summoned for some reason
+
     void UpdateAI(const uint32 uiDiff) 
     {
         if(!m_bWrap)
@@ -181,13 +171,28 @@ struct MANGOS_DLL_DECL npc_web_wrap_dummyAI : public ScriptedAI
             if (m_uiWebWrapTimer < uiDiff)               
             {                
                     if (Player* pTarget = m_creature->GetMap()->GetPlayer(m_uiVictimGUID))
-                        pTarget->CastSpell(pTarget, SPELL_WEBWRAP, true, nullptr, nullptr, m_creature->GetObjectGuid());
+                        pTarget->CastSpell(pTarget, SPELL_WEBWRAP, true, nullptr, nullptr, m_creature->GetObjectGuid());                
+                    m_uiWebWrapTimer = 10000; // random number to not cast again until its true below
             }
              else
-                m_uiWebWrapTimer -= uiDiff;             
+                m_uiWebWrapTimer -= uiDiff;          
+             
+            if (m_uiSpawnWebWrapTimer < uiDiff)               
+            {                
+                    if (Player* pTarget = m_creature->GetMap()->GetPlayer(m_uiVictimGUID))
+                        m_creature->SummonCreature(NPC_WEB_WRAP, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 60000);
+                    m_bWrap = true;
+            }
+             else
+                m_uiSpawnWebWrapTimer -= uiDiff;                  
         }       
     }          
 };
+
+CreatureAI* GetAI_npc_web_wrap_dummy(Creature* pCreature)
+{
+    return new npc_web_wrap_dummyAI(pCreature);
+}
 
 struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
 {
@@ -208,7 +213,7 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiWebWrapTimer = 5000;                           //20 sec init, 40 sec normal
+        m_uiWebWrapTimer = 20000;                           //20 sec init, 40 sec normal
         m_uiWebSprayTimer = 40000;                          //40 seconds
         m_uiPoisonShockTimer = 20000;                       //20 seconds
         m_uiNecroticPoisonTimer = 30000;                    //30 seconds
@@ -356,11 +361,6 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
     }
 };
 
-CreatureAI* GetAI_npc_web_wrap(Creature* pCreature)
-{
-    return new npc_web_wrapAI(pCreature);
-}
-
 CreatureAI* GetAI_boss_maexxna(Creature* pCreature)
 {
     return new boss_maexxnaAI(pCreature);
@@ -371,17 +371,17 @@ void AddSC_boss_maexxna()
     Script* pNewscript;
 
     pNewscript = new Script;
-    pNewscript->Name = "boss_maexxna";
-    pNewscript->GetAI = &GetAI_boss_maexxna;
-    pNewscript->RegisterSelf();
-
-    pNewscript = new Script;
     pNewscript->Name = "npc_web_wrap";
     pNewscript->GetAI = &GetAI_npc_web_wrap;
     pNewscript->RegisterSelf();
 
     pNewscript = new Script;
     pNewscript->Name = "npc_web_wrap_dummy";
-    pNewscript->GetAI = &GetAI_npc_web_wrap;
+    pNewscript->GetAI = &GetAI_npc_web_wrap_dummy;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "boss_maexxna";
+    pNewscript->GetAI = &GetAI_boss_maexxna;
     pNewscript->RegisterSelf();
 }
