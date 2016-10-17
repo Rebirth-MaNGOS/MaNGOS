@@ -352,6 +352,10 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
             
             SpawnWormBase();
             
+            // Reset threat, hopefully this makes the boss less prone to stop attacking the MT 
+            // when presumedly ranged pull aggro and boss doesn't submerge for some reason (only happens after first submerge?)
+            DoResetThreat();
+            
             m_creature->SetVisibility(VISIBILITY_ON);
             m_creature->UpdateVisibilityAndView();
 
