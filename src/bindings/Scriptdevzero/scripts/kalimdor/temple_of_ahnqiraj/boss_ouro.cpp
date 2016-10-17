@@ -303,12 +303,13 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
                         fX + frand(-5,5),
                         fY + frand(-5,5),
                         fZ, 0,
-                        TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,
-                        15000,false))
+                        TEMPSUMMON_TIMED_DESPAWN, 45000, false))      
             {
                 if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
-                    pScarab->AI()->AttackStart(pTarget);
-                pScarab->SetRespawnDelay(-10);				// to stop them from randomly respawning
+                {
+                    pScarab->AddThreat(pTarget, 100000.f);
+                }
+                pScarab->SetRespawnEnabled(false);				// to stop them from randomly respawning
                 pScarab->SetInCombatWithZone();
             }
         }	
@@ -348,9 +349,9 @@ struct MANGOS_DLL_DECL boss_ouroAI : public ScriptedAI
 
             m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             m_creature->setFaction(14);	
-
+            
             SpawnWormBase();
-
+            
             m_creature->SetVisibility(VISIBILITY_ON);
             m_creature->UpdateVisibilityAndView();
 
