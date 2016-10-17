@@ -1202,7 +1202,7 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
         }
         
         // EvadeTimer
-        if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
+        if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()) && m_creature->getVictim() && m_creature->getVictim()->isAlive())
         {            
             if (Player* melee_player = DoGetPlayerInMeleeRangeByThreat())
             {                                
@@ -1221,6 +1221,9 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
                     // Dissapear and reappear at new position
                     m_creature->SetVisibility(VISIBILITY_OFF);
 
+                    // Reset threat
+                    DoResetThreat();
+                    
                     Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM,0);
                     if (!pTarget || pTarget->HasAura(SPELL_DIGESTIVE_ACID, EFFECT_INDEX_0))
                     {
@@ -1380,7 +1383,7 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
         }
         
          // EvadeTimer
-        if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
+        if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()) && m_creature->getVictim() && m_creature->getVictim()->isAlive())
         {            
             if (Player* melee_player = DoGetPlayerInMeleeRangeByThreat())
             {                                
@@ -1398,6 +1401,9 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
 
                     // Dissapear and reappear at new position
                     m_creature->SetVisibility(VISIBILITY_OFF);
+                    
+                    // Reset threat
+                    DoResetThreat();
 
                     Unit* target = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
 
