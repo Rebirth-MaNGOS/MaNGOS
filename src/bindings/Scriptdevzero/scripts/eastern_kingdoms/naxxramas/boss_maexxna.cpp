@@ -32,6 +32,8 @@ enum
     SPELL_POISONSHOCK       = 28741,
     SPELL_NECROTICPOISON    = 28776,
     SPELL_ENRAGE            = 28747,
+    // For web wrap so it can "fly"
+    SPELL_ROOT_SELF         = 23973,
 
     //spellId invalid
     //SPELL_SUMMON_SPIDERLING = 29434,
@@ -57,38 +59,13 @@ struct MANGOS_DLL_DECL npc_web_wrapAI : public ScriptedAI
     npc_web_wrapAI(Creature* pCreature) : ScriptedAI(pCreature) 
     {
         Reset();
-//         //m_uiWebWrapTimer = 300;
-//         m_bWrap = false;
     }
-
-//     ObjectGuid m_uiVictimGUID;
-//     uint32 m_uiWebWrapTimer;
-//     bool m_bWrap;    
-    
+   
     void Reset()
     {
 		//m_uiVictimGUID.Clear(); // no need to clear since web wrap is gonna die
     }
-
-//     void SetVictim(Unit* pVictim)
-//     {
-//         if (pVictim)
-//         {
-// 			m_uiVictimGUID = pVictim->GetObjectGuid();
-//             //pVictim->CastSpell(pVictim, SPELL_WEBWRAP, true);
-//         }
-//     }
-//     
-//     void JustDied(Unit* /*pKiller*/)
-//     {
-//         if (m_uiVictimGUID)
-//         {
-//             if (Player* pVictim = m_creature->GetMap()->GetPlayer(m_uiVictimGUID))
-//                 if (pVictim->isAlive())
-//                     pVictim->RemoveAurasDueToSpell(SPELL_WEBWRAP);
-//         }
-//     }
-//         
+  
     // Don't attack anything
     void Aggro(Unit* /*pVictim*/) { return; }
     void AttackStart(Unit* /*pVictim*/) { return; }
@@ -134,20 +111,21 @@ struct MANGOS_DLL_DECL npc_web_wrap_dummyAI : public ScriptedAI
 
             float fDist = m_creature->GetDistance2d(pVictim);
             // Switch the speed multiplier based on the distance from the web wrap
-            uint32 uiEffectMiscValue = 500; // 200, 300, 400, 500
+            uint32 uiEffectMiscValue = 400; // old: 200, 300, 400, 500 
+            
             if (fDist < 25.0f)
                 uiEffectMiscValue = 200;
             else if (fDist < 50.0f)
-                uiEffectMiscValue = 300;
-            else if (fDist < 75.0f)
-                uiEffectMiscValue = 400;
-
+                uiEffectMiscValue = 300;         
+            else if (fDist < 75.0f)        
+                uiEffectMiscValue = 350;
+            
             // This doesn't give the expected result in all cases
             // 0.04f was kinda ok height, needs more testing at further distances
             ((Player*)pVictim)->KnockBackFrom(m_creature, -fDist, uiEffectMiscValue * 0.04f/*0.033f*/);
 
             m_uiVictimGUID = pVictim->GetObjectGuid();
-            m_uiWebWrapTimer = uiEffectMiscValue == 200 ? 800 : 1800;
+            m_uiWebWrapTimer = uiEffectMiscValue == 200 ? 1000 : 2000;
             m_uiSpawnWebWrapTimer = m_uiWebWrapTimer + 1000;
         }
     }
@@ -161,6 +139,8 @@ struct MANGOS_DLL_DECL npc_web_wrap_dummyAI : public ScriptedAI
                 if (pTarget->isAlive())
                     pTarget->RemoveAurasDueToSpell(SPELL_WEBWRAP);
             }
+            // No need for dummy if wrap died
+            m_creature->ForcedDespawn();
         }
     }
 
@@ -180,7 +160,10 @@ struct MANGOS_DLL_DECL npc_web_wrap_dummyAI : public ScriptedAI
             if (m_uiSpawnWebWrapTimer < uiDiff)               
             {                
                     if (Player* pTarget = m_creature->GetMap()->GetPlayer(m_uiVictimGUID))
-                        m_creature->SummonCreature(NPC_WEB_WRAP, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 60000);
+                    {
+                        if(Creature* pWrap = m_creature->SummonCreature(NPC_WEB_WRAP, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 60000))
+                            pWrap->CastSpell(pWrap, SPELL_ROOT_SELF, true);
+                    }
                     m_bWrap = true;
             }
              else
@@ -213,7 +196,7 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiWebWrapTimer = 20000;                           //20 sec init, 40 sec normal
+        m_uiWebWrapTimer = 5000;//20000;                           //20 sec init, 40 sec normal
         m_uiWebSprayTimer = 40000;                          //40 seconds
         m_uiPoisonShockTimer = 20000;                       //20 seconds
         m_uiNecroticPoisonTimer = 30000;                    //30 seconds
