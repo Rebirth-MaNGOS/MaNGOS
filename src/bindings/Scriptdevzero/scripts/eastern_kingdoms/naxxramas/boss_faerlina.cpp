@@ -207,6 +207,11 @@ CreatureAI* GetAI_boss_faerlina(Creature* pCreature)
 ## mob_naxxramas_worshipper
 ######*/
 
+enum eNaxxramasWorshipper
+{
+    SPELL_FIREBALL = 20692,       // not sure which spell
+};
+
 struct MANGOS_DLL_DECL mob_naxxramas_worshipperAI : public ScriptedAI
 {
     mob_naxxramas_worshipperAI(Creature* pCreature) : ScriptedAI(pCreature)
@@ -219,10 +224,12 @@ struct MANGOS_DLL_DECL mob_naxxramas_worshipperAI : public ScriptedAI
 
     bool m_bDie;
     uint32 m_bDieTimer;
+    uint32 m_bFireballTimer;
     
     void Reset()
     {
         m_bDie = false;
+        m_bFireballTimer = urand(1000, 10000);
     }    
     
     void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
@@ -242,6 +249,15 @@ struct MANGOS_DLL_DECL mob_naxxramas_worshipperAI : public ScriptedAI
         // Return if we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+        
+        // Fireball Timer
+        if (m_bFireballTimer < uiDiff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_FIREBALL);
+            m_bFireballTimer = urand(5000, 10000);
+        }
+        else 
+            m_bFireballTimer -= uiDiff;
         
         // Die Timer
         if (m_bDieTimer < uiDiff && m_bDie)
