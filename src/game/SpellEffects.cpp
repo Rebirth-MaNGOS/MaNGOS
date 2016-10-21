@@ -1861,6 +1861,13 @@ void Spell::EffectTriggerSpell(SpellEffectIndex eff_idx)
     // special cases
     switch(triggered_spell_id)
     {
+    // Scorpid Surprise proc
+    case 6411:
+    {
+        if(urand(0, 100) < 5)
+            m_caster->CastSpell(unitTarget, 6411, true);
+        return;
+    }
         // Linken's Boomerang proc
     case 15752:
     {
