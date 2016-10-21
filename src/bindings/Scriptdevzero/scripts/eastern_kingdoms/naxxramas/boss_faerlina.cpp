@@ -217,18 +217,24 @@ struct MANGOS_DLL_DECL mob_naxxramas_worshipperAI : public ScriptedAI
 
     instance_naxxramas* m_pInstance;
 
+    bool m_bDie;
+    uint32 m_bDieTimer;
+    
     void Reset()
     {
-    }
+        m_bDie = false;
+    }    
     
-    void JustDied(Unit *)
+    void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
     {
-        if (m_pInstance)
-            {            
-                if(Creature* pFaerlina = m_pInstance->GetSingleCreatureFromStorage(NPC_FAERLINA))
-                    if (pFaerlina->isAlive() && m_pInstance->GetData(TYPE_FAERLINA) == IN_PROGRESS)
-                        pFaerlina->CastSpell(pFaerlina, SPELL_WIDOWS_EMBRACE, true);            // worshipper should cast on boss?
-            }
+        if (uiDamage > m_creature->GetHealth()) 
+        {
+            m_creature->CastSpell(m_creature, SPELL_WIDOWS_EMBRACE, true);            
+            m_bDieTimer = 1000;
+            m_bDie = true;
+        }
+        if(m_bDie)
+            uiDamage = 0;
     }
         
     void UpdateAI(const uint32 uiDiff)
@@ -236,8 +242,17 @@ struct MANGOS_DLL_DECL mob_naxxramas_worshipperAI : public ScriptedAI
         // Return if we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
-        DoMeleeAttackIfReady();
+        
+        // Die Timer
+        if (m_bDieTimer < uiDiff && m_bDie)
+        {
+            m_creature->DealDamage(m_creature, m_creature->GetHealth() + 1, nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, true);
+        }
+        else 
+            m_bDieTimer -= uiDiff;
+        
+        if(!m_bDie)
+            DoMeleeAttackIfReady();
     }
 };
 
