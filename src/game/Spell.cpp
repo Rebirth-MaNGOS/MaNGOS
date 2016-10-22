@@ -844,7 +844,7 @@ void Spell::AddUnitTarget(Unit* pVictim, SpellEffectIndex effIndex)
         target.reflectPartialResist = target.reflectPartialResist;
 
         if (target.reflectResult == SPELL_MISS_REFLECT)     // Impossible reflect again, so simply deflect spell
-            target.reflectResult = SPELL_MISS_PARRY;
+            target.reflectResult = SPELL_MISS_IMMUNE;
 
         // Increase time interval for reflected spells by 1.5
         target.timeDelay += target.timeDelay >> 1;
