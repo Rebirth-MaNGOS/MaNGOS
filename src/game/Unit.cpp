@@ -2167,6 +2167,11 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster,SpellSchoolMask schoolMa
 
             RemainingDamage -= currentAbsorb;
 
+            if (caster->IsImmunedToDamage(schoolMask))
+            {
+                SendSpellMiss(caster, (*i)->GetSpellProto()->Id, SPELL_MISS_IMMUNE);
+                return;
+            }
 
             uint32 splitted = currentAbsorb;
             uint32 splitted_absorb = 0;
@@ -2197,6 +2202,12 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster,SpellSchoolMask schoolMa
 
             RemainingDamage -=  int32(splitted);
 
+            if (caster->IsImmunedToDamage(schoolMask))
+            {
+                SendSpellMiss(caster, (*i)->GetSpellProto()->Id, SPELL_MISS_IMMUNE);
+                return;
+            }
+            
             uint32 split_absorb = 0;
             pCaster->DealDamageMods(caster,splitted,&split_absorb);
 
