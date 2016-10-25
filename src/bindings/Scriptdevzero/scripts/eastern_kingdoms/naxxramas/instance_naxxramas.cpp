@@ -87,6 +87,7 @@ void instance_naxxramas::OnObjectCreate(GameObject* pGo)
 {
     switch(pGo->GetEntry())
     {
+        // Arachnid Quarter
         case GO_ARAC_ANUB_DOOR:
             break;
         case GO_ARAC_ANUB_GATE:
@@ -106,6 +107,7 @@ void instance_naxxramas::OnObjectCreate(GameObject* pGo)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
 
+        // Plague Quarter
         case GO_PLAG_NOTH_ENTRY_DOOR:
             break;
         case GO_PLAG_NOTH_EXIT_DOOR:            
@@ -123,6 +125,7 @@ void instance_naxxramas::OnObjectCreate(GameObject* pGo)
         case GO_PLAG_LOAT_DOOR:
             break;
 
+        // Military Quarter
         case GO_MILI_GOTH_ENTRY_GATE:
             break;
         case GO_MILI_GOTH_EXIT_GATE:
@@ -135,10 +138,10 @@ void instance_naxxramas::OnObjectCreate(GameObject* pGo)
             if (m_auiEncounter[7] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
-
         case GO_CHEST_HORSEMEN_NORM:
             break;
 
+        // Construct Quarter
         case GO_CONS_PATH_EXIT_DOOR:
             if (m_auiEncounter[9] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
@@ -160,32 +163,56 @@ void instance_naxxramas::OnObjectCreate(GameObject* pGo)
                 pGo->SetGoState(GO_STATE_READY);
             break;
             
+        // Frostwyrm Lair
         case GO_KELTHUZAD_WATERFALL_DOOR:
             if (m_auiEncounter[13] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
+        case GO_KELTHUZAD_EXIT_DOOR:
+        case GO_KELTHUZAD_WINDOW_1:
+        case GO_KELTHUZAD_WINDOW_2:
+        case GO_KELTHUZAD_WINDOW_3:
+        case GO_KELTHUZAD_WINDOW_4:
+            break;
 
+        // Eyes
         case GO_ARAC_EYE_RAMP:
+        case GO_ARAC_EYE_BOSS:
             if (m_auiEncounter[2] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
         case GO_PLAG_EYE_RAMP:
+        case GO_PLAG_EYE_BOSS:
             if (m_auiEncounter[5] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
         case GO_MILI_EYE_RAMP:
+        case GO_MILI_EYE_BOSS:
             if (m_auiEncounter[8] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
         case GO_CONS_EYE_RAMP:
+        case GO_CONS_EYE_BOSS:
             if (m_auiEncounter[12] == DONE)
                 pGo->SetGoState(GO_STATE_ACTIVE);
             break;
-
+         
+            // Portals
         case GO_ARAC_PORTAL:
+            if (m_auiEncounter[TYPE_MAEXXNA] == DONE)
+                pGo->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NO_INTERACT);
+            break;
         case GO_PLAG_PORTAL:
+            if (m_auiEncounter[TYPE_LOATHEB] == DONE)
+                pGo->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NO_INTERACT);
+            break;
         case GO_MILI_PORTAL:
+            if (m_auiEncounter[TYPE_FOUR_HORSEMEN] == DONE)
+                pGo->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NO_INTERACT);
+            break;
         case GO_CONS_PORTAL:
+            if (m_auiEncounter[TYPE_THADDIUS] == DONE)
+                pGo->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NO_INTERACT);
             break;
 		default:
                // Heigan Traps - many different entries which are only required for sorting
@@ -194,21 +221,13 @@ void instance_naxxramas::OnObjectCreate(GameObject* pGo)
                 uint32 uiGoEntry = pGo->GetEntry();
 
                 if ((uiGoEntry >= 181517 && uiGoEntry <= 181524) || uiGoEntry == 181678)
-                {
                     m_alHeiganTrapGuids[0].push_back(pGo->GetObjectGuid());
-                }
                 else if ((uiGoEntry >= 181510 && uiGoEntry <= 181516) || (uiGoEntry >= 181525 && uiGoEntry <= 181531) || uiGoEntry == 181533 || uiGoEntry == 181676)
-                {
                     m_alHeiganTrapGuids[1].push_back(pGo->GetObjectGuid());
-                }
                 else if ((uiGoEntry >= 181534 && uiGoEntry <= 181544) || uiGoEntry == 181532 || uiGoEntry == 181677)
-                {
                     m_alHeiganTrapGuids[2].push_back(pGo->GetObjectGuid());
-                }
                 else if ((uiGoEntry >= 181545 && uiGoEntry <= 181552) || uiGoEntry == 181695)
-                {
                     m_alHeiganTrapGuids[3].push_back(pGo->GetObjectGuid());
-                }
             }
 			return;
     }
@@ -260,7 +279,10 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             if (uiData == DONE)
             {
                 DoUseDoorOrButton(GO_ARAC_EYE_RAMP);
+                DoUseDoorOrButton(GO_ARAC_EYE_BOSS);                
                 DoRespawnGameObject(GO_ARAC_PORTAL, 30*MINUTE);
+                DoToggleGameObjectFlags(GO_ARAC_PORTAL, GO_FLAG_NO_INTERACT, false);
+                // Add taunt timer
             }
             break;
         case TYPE_NOTH:
@@ -284,13 +306,16 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             if (uiData == DONE)
             {
                 DoUseDoorOrButton(GO_PLAG_EYE_RAMP);
-                DoRespawnGameObject(GO_PLAG_PORTAL, 30*MINUTE);
+                DoUseDoorOrButton(GO_PLAG_EYE_BOSS);
+                DoRespawnGameObject(GO_PLAG_PORTAL, 30 * MINUTE);
+                DoToggleGameObjectFlags(GO_PLAG_PORTAL, GO_FLAG_NO_INTERACT, false);
+                // Add taunt
             }
             break;
         case TYPE_RAZUVIOUS:
             m_auiEncounter[6] = uiData;
             if (uiData == DONE)
-                DoUseDoorOrButton(GO_MILI_GOTH_ENTRY_GATE);
+                DoUseDoorOrButton(GO_MILI_GOTH_ENTRY_GATE); // needed?
             break;
         case TYPE_GOTHIK:
             switch(uiData)
@@ -311,7 +336,8 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
                 case DONE:
                     DoUseDoorOrButton(GO_MILI_GOTH_ENTRY_GATE);
                     DoUseDoorOrButton(GO_MILI_GOTH_EXIT_GATE);
-                    DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);                   
+                    DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);          
+                    // m_dialogueHelper.StartNextDialogueText(NPC_THANE);
                     break;
             }
             m_auiEncounter[7] = uiData;
@@ -331,9 +357,12 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
                 if (Creature* pSpirit = GetSingleCreatureFromStorage(NPC_SPIRIT_OF_ZELIREK))
                     pSpirit->ForcedDespawn();
 
-                DoUseDoorOrButton(GO_MILI_EYE_RAMP);
-                DoRespawnGameObject(GO_MILI_PORTAL, 30*MINUTE);
-                DoRespawnGameObject(GO_CHEST_HORSEMEN_NORM, 30*MINUTE);
+               DoUseDoorOrButton(GO_MILI_EYE_RAMP);
+                DoUseDoorOrButton(GO_MILI_EYE_BOSS);
+                DoRespawnGameObject(GO_MILI_PORTAL, 30 * MINUTE);
+                DoToggleGameObjectFlags(GO_MILI_PORTAL, GO_FLAG_NO_INTERACT, false);
+                DoRespawnGameObject(GO_CHEST_HORSEMEN_NORM, 30 * MINUTE);
+                // Add taunt
             }
             break;
         case TYPE_PATCHWERK:
@@ -363,13 +392,19 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             if (uiData == DONE)
             {
                 DoUseDoorOrButton(GO_CONS_EYE_RAMP);
+                DoUseDoorOrButton(GO_CONS_EYE_BOSS);
                 DoRespawnGameObject(GO_CONS_PORTAL, 30 * MINUTE);
+                DoToggleGameObjectFlags(GO_CONS_PORTAL, GO_FLAG_NO_INTERACT, false);                
+                // Add taunt
             }
             break;
         case TYPE_SAPPHIRON:
             m_auiEncounter[13] = uiData;
             if (uiData == DONE)
+            {
                 DoUseDoorOrButton(GO_KELTHUZAD_WATERFALL_DOOR);
+                //m_dialogueHelper.StartNextDialogueText(NPC_KELTHUZAD);
+            }
             
              // Start Sapph summoning process
             if (uiData == SPECIAL)

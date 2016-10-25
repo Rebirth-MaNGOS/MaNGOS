@@ -124,6 +124,11 @@ enum
     GO_PLAG_EYE_RAMP            = 181211,
     GO_MILI_EYE_RAMP            = 181210,
     GO_CONS_EYE_RAMP            = 181213,
+    
+    GO_ARAC_EYE_BOSS            = 181233,
+    GO_PLAG_EYE_BOSS            = 181231,
+    GO_MILI_EYE_BOSS            = 181230,
+    GO_CONS_EYE_BOSS = 181232,
 
     // Portals
     GO_ARAC_PORTAL              = 181575,
