@@ -275,8 +275,8 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
         case TYPE_HEIGAN:
             m_auiEncounter[4] = uiData;
             DoUseDoorOrButton(GO_PLAG_HEIG_ENTRY_DOOR);
-//             if (uiData == DONE)  // This door should be open while boss is in progress and it shouldn't close when boss dies
-//                 DoUseDoorOrButton(GO_PLAG_HEIG_EXIT_DOOR);
+            if (uiData == DONE)  // This door should be open while boss is in progress and it shouldn't close when boss dies
+                DoUseDoorOrButton(GO_PLAG_HEIG_EXIT_DOOR);
             break;
         case TYPE_LOATHEB:
             m_auiEncounter[5] = uiData;

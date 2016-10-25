@@ -91,7 +91,7 @@ enum
     GO_PLAG_NOTH_ENTRY_DOOR     = 181200,                   //encounter door
     GO_PLAG_NOTH_EXIT_DOOR      = 181201,                   //exit, open when boss dead
     GO_PLAG_HEIG_ENTRY_DOOR     = 181202,
-    GO_PLAG_HEIG_EXIT_DOOR      = 181203,                   //exit, open when boss dead
+    GO_PLAG_HEIG_EXIT_DOOR      = 181496,                   //exit, open when boss dead
     GO_PLAG_LOAT_DOOR           = 181241,                   //encounter door
 
     // Military Quarter
