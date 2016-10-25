@@ -42,6 +42,10 @@ class MANGOS_DLL_DECL ScriptedInstance : public InstanceData
         void DoUseDoorOrButton(ObjectGuid guid, uint32 uiWithRestoreTime = 0, bool bUseAlternativeState = false);
         void DoUseDoorOrButton(uint32 uiEntry, uint32 uiWithRestoreTime = 0, bool bUseAlternativeState = false);
 
+        // Toggle the flags of a GO
+        void DoToggleGameObjectFlags(ObjectGuid guid, uint32 uiGOflags, bool bApply);
+        void DoToggleGameObjectFlags(uint32 uiEntry, uint32 uiGOflags, bool bApply);
+        
         // Respawns a GO having negative spawntimesecs in gameobject-table
         void DoRespawnGameObject(ObjectGuid guid, uint32 uiTimeToDespawn = MINUTE);
         void DoRespawnGameObject(uint32 uiEntry, uint32 uiTimeToDespawn = MINUTE);
