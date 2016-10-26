@@ -922,6 +922,416 @@ bool OnQuestRewarded_npc_maurin_bonesplitter(Player* pPlayer, Creature* pCreatur
 }
 
 /*######
+## npc_cork_gizelton
+######*/
+
+enum
+{
+//     SAY_CORK_AMBUSH1        = -1001191,
+//     SAY_CORK_AMBUSH2        = -1001192,
+//     SAY_CORK_AMBUSH3        = -1001193,
+//     SAY_CORK_END            = -1001194,
+//     SAY_RIGGER_AMBUSH1      = -1001195,
+//     SAY_RIGGER_AMBUSH2      = -1001196,
+//     SAY_RIGGER_END          = -1001197,
+
+    NPC_CORK_GIZELTON       = 11625,
+    NPC_RIGGER_GIZELTON     = 11626,
+    NPC_VENDOR_TRON         = 12245,
+    NPC_SUPER_SELLER        = 12246,
+
+    NPC_KOLKAR_WAYLAYER     = 12976,
+    NPC_KOLKAR_AMBUSHER     = 12977,
+
+    NPC_DOOMWARDER          = 4677,
+    NPC_LESSER_INFERNAL     = 4676,
+    NPC_NETHER_SORCERESS    = 4684,
+
+    QUEST_BODYGUARD_TO_HIRE = 5821,
+    QUEST_GIZELTON_CARAVAN  = 5943,
+};
+
+struct SummonLocation
+{
+    float m_fX, m_fY, m_fZ;
+};
+
+static const SummonLocation aAmbushLocsBodyGuard[12] =
+{
+    // Quest QUEST_BODYGUARD_TO_HIRE
+    {-969.05f, 1174.91f, 90.39f},       // First ambush
+    {-985.71f, 1173.95f, 91.02f},
+    {-983.01f, 1192.88f, 90.01f},
+    {-965.51f, 1193.58f, 92.15f},
+    {-1147.83f, 1180.87f, 91.38f},      // Second ambush
+    {-1163.96f, 1183.72f, 93.79f},
+    {-1160.97f, 1201.36f, 93.15f},
+    {-1146.20f, 1199.75f, 91.37f},
+    {-1277.78f, 1218.56f, 109.30f},     // Third ambush
+    {-1292.65f, 1221.28f, 109.99f},
+    {-1289.25f, 1239.20f, 108.79f},
+    {-1272.91f, 1234.39f, 108.14f},
+};
+
+static const SummonLocation aAmbushLocsGizelton[9] =
+{
+    // Quest QUEST_GIZELTON_CARAVAN
+    {-1823.7f, 2060.88f, 62.0925f},     // First ambush
+    {-1814.46f, 2060.13f, 62.4916f},
+    {-1814.87f, 2080.6f, 63.6323f},
+    {-1782.92f, 1942.55f, 60.2205f},    // Second ambush
+    {-1786.5f, 1926.05f, 59.7502f},
+    {-1805.74f, 1942.77f, 60.791f},
+    {-1677.56f, 1835.67f, 58.9269f},    // Third ambush
+    {-1675.66f, 1863.0f, 59.0008f},
+    {-1692.31f, 1862.69f, 58.9553f},
+};
+
+static const uint32 AmbushersBodyguard[4] = { NPC_KOLKAR_WAYLAYER, NPC_KOLKAR_AMBUSHER, NPC_KOLKAR_WAYLAYER, NPC_KOLKAR_AMBUSHER };
+static const uint32 AmbushersGizleton[3] = { NPC_NETHER_SORCERESS, NPC_LESSER_INFERNAL, NPC_DOOMWARDER };
+
+struct npc_cork_gizeltonAI : public ScriptedAI
+{
+    npc_cork_gizeltonAI(Creature* pCreature) : ScriptedAI(pCreature) { Reset(); }
+
+    ObjectGuid m_playerGuid;
+    uint8 uiQuestStatus;
+
+    void Reset()
+    {
+        uiQuestStatus = 0;
+        m_creature->GetMotionMaster()->Clear();
+    }
+
+    void GetPlayer(ObjectGuid pPlayerGUID)
+    {
+         if (!pPlayerGUID)
+            return;
+
+        m_playerGuid = pPlayerGUID;
+    }
+
+    // Custom function to handle event ambushes
+    void DoAmbush(uint32 uiQuestId, uint8 uiAmbushPoint)
+    {
+        uiAmbushPoint--;
+        switch (uiQuestId)
+        {
+            case QUEST_BODYGUARD_TO_HIRE:
+                // Summon 2 NPC_KOLKAR_WAYLAYER and 2 NPC_KOLKAR_AMBUSHER
+                for (uint8 i = 0; i < 4; ++i)
+                {
+                    float fX, fY, fZ;
+                    m_creature->GetRandomPoint(aAmbushLocsBodyGuard[i + 4 * uiAmbushPoint].m_fX, aAmbushLocsBodyGuard[i + 4 * uiAmbushPoint].m_fY, aAmbushLocsBodyGuard[i + 4 * uiAmbushPoint].m_fZ, 7.0f, fX, fY, fZ);
+                    m_creature->SummonCreature(AmbushersBodyguard[i], fX, fY, fZ, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 0);
+                }
+                break;
+            case QUEST_GIZELTON_CARAVAN:
+                // Summon 1 NPC_NETHER_SORCERESS, 1 NPC_LESSER_INFERNAL and 1 NPC_DOOMWARDER
+                for (uint8 i = 0; i < 3; ++i)
+                {
+                    float fX, fY, fZ;
+                    m_creature->GetRandomPoint(aAmbushLocsGizelton[i + 3 * uiAmbushPoint].m_fX, aAmbushLocsGizelton[i + 3 * uiAmbushPoint].m_fY, aAmbushLocsGizelton[i + 3 * uiAmbushPoint].m_fZ, 7.0f, fX, fY, fZ);
+                    m_creature->SummonCreature(AmbushersGizleton[i], fX, fY, fZ, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 0);
+                }
+                break;
+        }
+
+        return;
+    }
+
+    void MovementInform(uint32 uiType, uint32 uiPointId)
+    {
+        if (uiType != WAYPOINT_MOTION_TYPE)
+            return;
+        
+        // Handles all flag removals and such
+        switch (uiPointId)
+        {        
+            case 1:
+            {
+                m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+                
+                if (Creature* pRigger = GetClosestCreatureWithEntry(m_creature, NPC_RIGGER_GIZELTON, 100.0f))
+                    pRigger->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+                break;
+            }      
+            case 55:
+                m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                break; 
+            case 56:
+                m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                m_creature->MonsterYell("So sorry to leave a customer but we have places to go and people to swindle. We will be back sometime later today. Good-bye!", LANG_UNIVERSAL, nullptr);
+                break;
+            case 76:
+            {
+                // Pause WP
+                m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                m_creature->MonsterYell("I am looking for some bodyguards that would like to protect the Gizelton Caravan. We are stopped on the road east of Kormek's Hut, north of Kolkar Centaur Village.", LANG_UNIVERSAL, nullptr);
+                break;
+            }
+            case 77:            
+                m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                break;
+            case 196:
+            {
+                // Paus movement here
+                if (Creature* pRigger = GetClosestCreatureWithEntry(m_creature, NPC_RIGGER_GIZELTON, 100.0f))
+                    pRigger->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                break;
+            }
+            case 197:
+            {
+                if (Creature* pRigger = GetClosestCreatureWithEntry(m_creature, NPC_RIGGER_GIZELTON, 100.0f))
+                {
+                    pRigger->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);               
+                    pRigger->MonsterYell("Time for the Gizelton Caravan to head on out! We\'ll be back soon but if you cannot wait, head north to Kormek's Hut. We open shop in about an hour..", LANG_UNIVERSAL, nullptr);
+                }
+                break;
+            }
+            case 208:
+            {
+                // Paus movement here
+                if (Creature* pRigger = GetClosestCreatureWithEntry(m_creature, NPC_RIGGER_GIZELTON, 100.0f))
+                {
+                    pRigger->MonsterYell("This is Rigger Gizelton asking for assistance escorting my caravan past Mannoroc Coven. I'm on the road east of Shadowprey village.", LANG_UNIVERSAL, nullptr);
+                    pRigger->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);
+                }
+                break;
+            }
+            case 209:
+            {
+                if (Creature* pRigger = GetClosestCreatureWithEntry(m_creature, NPC_RIGGER_GIZELTON, 100.0f))
+                    pRigger->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP + UNIT_NPC_FLAG_QUESTGIVER);                
+                break;
+            }
+        }
+
+        // No player assigned as quest taker: abort to avoid summoning adds
+        Player* pPlayer = m_creature->GetMap()->GetPlayer(m_playerGuid);
+        if (!pPlayer)
+            return;
+                   
+            // Not corrected below points to -1 due to it happening after wp is passed
+        if (pPlayer->GetQuestStatus(QUEST_BODYGUARD_TO_HIRE) == QUEST_STATUS_INCOMPLETE)
+        {            
+            switch (uiPointId)
+            {
+                case 77:
+                    uiQuestStatus = 1;
+                // First Ambush
+                case 96:
+                    m_creature->MonsterSay("Hey, you call yourself a body guard? Get to work and protect us...", LANG_UNIVERSAL, nullptr);
+//                     DoScriptText(SAY_CORK_AMBUSH1, m_creature);
+                    DoAmbush(QUEST_BODYGUARD_TO_HIRE, 1);
+                    break;
+                // Second Ambush
+                case 103:
+                    m_creature->MonsterSay("Mister body guard, are you going to earn your money or what?", LANG_UNIVERSAL, nullptr);
+//                     DoScriptText(SAY_CORK_AMBUSH2, m_creature);
+                    DoAmbush(QUEST_BODYGUARD_TO_HIRE, 2);
+                    break;
+                // Third Ambush
+                case 111:
+                    m_creature->MonsterSay("You're fired! <Cough...Cork clears throat.> I mean, help!", LANG_UNIVERSAL, nullptr);
+//                     DoScriptText(SAY_CORK_AMBUSH3, m_creature);
+                    DoAmbush(QUEST_BODYGUARD_TO_HIRE, 3);
+                    break;
+                case 116:
+                    m_creature->MonsterSay("Blast those stupid centaurs! Sigh - well, it seems you kept your bargain. Up the road you shall find Smeed Scrabblescrew, he has your money.", LANG_UNIVERSAL, nullptr);
+//                     DoScriptText(SAY_CORK_END, m_creature);
+                    // Award quest credit
+                    if (pPlayer)
+                        pPlayer->GroupEventHappens(QUEST_BODYGUARD_TO_HIRE, m_creature);
+                    // Remove player to avoid adds being spawned again next turn
+                    m_playerGuid.Clear();
+                    uiQuestStatus = 0;
+                    m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                    break;
+                default:
+                    m_creature->AddSplineFlag(SPLINEFLAG_WALKMODE);
+                    break;
+            }
+        }
+        // The second escort quest is also handled by NPC Cork though it is given by NPC Rigger
+        else if (pPlayer->GetQuestStatus(QUEST_GIZELTON_CARAVAN) == QUEST_STATUS_INCOMPLETE)
+        {
+            switch (uiPointId)
+            {
+                case 209:
+                    uiQuestStatus = 2;                    
+                    // First Ambush
+                case 218:
+                    if (Creature* pRigger = GetClosestCreatureWithEntry(m_creature, NPC_RIGGER_GIZELTON, 100.0f))
+                        pRigger->MonsterSay("Eeck! Demons hungry for the kodos!", LANG_UNIVERSAL, nullptr);
+//                         DoScriptText(SAY_RIGGER_AMBUSH1, pRigger);
+                    DoAmbush(QUEST_GIZELTON_CARAVAN, 1);
+                    break;
+                    // Second Ambush
+                case 225:
+                    if (Creature* pRigger = GetClosestCreatureWithEntry(m_creature, NPC_RIGGER_GIZELTON, 100.0f))
+                         pRigger->MonsterSay("What am I paying you for? The kodos are nearly dead!", LANG_UNIVERSAL, nullptr);
+//                         DoScriptText(SAY_RIGGER_AMBUSH2, pRigger);
+                    DoAmbush(QUEST_GIZELTON_CARAVAN, 2);
+                    break;
+                    // Third Ambush
+                case 235:
+                    if (Creature* pRigger = GetClosestCreatureWithEntry(m_creature, NPC_RIGGER_GIZELTON, 100.0f))
+                         pRigger->MonsterSay("Eeck! Demons hungry for the kodos!", LANG_UNIVERSAL, nullptr);
+//                         DoScriptText(SAY_RIGGER_AMBUSH1, pRigger);
+                    DoAmbush(QUEST_GIZELTON_CARAVAN, 3);
+                    break;
+                case 241:
+                    if (Creature* pRigger = GetClosestCreatureWithEntry(m_creature, NPC_RIGGER_GIZELTON, 100.0f))
+                        pRigger->MonsterSay("Wow! We did it... not sure why we thought we needed the likes of you. Nevertheless, speak with Smeed Srablescrew; he will give you your earnings!", LANG_UNIVERSAL, nullptr);
+//                         DoScriptText(SAY_RIGGER_END, pRigger);
+                    // Award quest credit
+                    if (pPlayer)
+                        pPlayer->GroupEventHappens(QUEST_GIZELTON_CARAVAN, m_creature);
+                    // Remove player to avoid adds being spawned again next turn
+                    m_playerGuid.Clear();
+                    uiQuestStatus = 0;
+                    m_creature->RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+                    break;
+                default:
+                    m_creature->AddSplineFlag(SPLINEFLAG_WALKMODE);
+                    break;                    
+            }
+        }
+    }
+
+    void JustSummoned(Creature* pSummoned)
+    {
+        // By default: summoned for the two escort quests will attack
+        // So we want to add a special case to avoid the two summoned NPC vendors to also attack
+        if (pSummoned->GetEntry() != NPC_VENDOR_TRON && pSummoned->GetEntry() != NPC_SUPER_SELLER)
+            pSummoned->AI()->AttackStart(m_creature);
+        
+        pSummoned->SetRespawnEnabled(false);
+    }
+
+    void JustDied(Unit* /*pKiller*/)
+    {
+        if (Creature* pRigger = GetClosestCreatureWithEntry(m_creature, NPC_RIGGER_GIZELTON, 100.0f))
+            pRigger->ForcedDespawn();
+        
+        // Despawn Kodos
+        std::list<Creature*> m_lKodos;
+        GetCreatureListWithEntryInGrid(m_lKodos, m_creature, 11564, 30.f);
+
+        if (!m_lKodos.empty())
+        {
+            for(std::list<Creature*>::iterator itr = m_lKodos.begin(); itr != m_lKodos.end(); ++itr)
+            {
+                if ((*itr) && (*itr)->isAlive())
+                    (*itr)->ForcedDespawn();
+            }
+        }
+        
+        Player* pPlayer = m_creature->GetMap()->GetPlayer(m_playerGuid);
+        if (!pPlayer)
+            return;
+
+        // Handle all players in group (if they took quest)
+        if (Group* pGroup = pPlayer->GetGroup())
+        {
+            for (GroupReference* pRef = pGroup->GetFirstMember(); pRef != nullptr; pRef = pRef->next())
+            {
+                if (Player* pMember = pRef->getSource())
+                {
+                    if (pMember->GetQuestStatus(QUEST_BODYGUARD_TO_HIRE) == QUEST_STATUS_INCOMPLETE)
+                        pMember->FailQuest(QUEST_BODYGUARD_TO_HIRE);
+                    if (pMember->GetQuestStatus(QUEST_GIZELTON_CARAVAN) == QUEST_STATUS_INCOMPLETE)
+                        pMember->FailQuest(QUEST_GIZELTON_CARAVAN);
+                }
+            }
+        }
+        else
+        {
+            if (pPlayer->GetQuestStatus(QUEST_BODYGUARD_TO_HIRE) == QUEST_STATUS_INCOMPLETE)
+                pPlayer->FailQuest(QUEST_BODYGUARD_TO_HIRE);
+            if (pPlayer->GetQuestStatus(QUEST_GIZELTON_CARAVAN) == QUEST_STATUS_INCOMPLETE)
+                pPlayer->FailQuest(QUEST_GIZELTON_CARAVAN);
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_cork_gizelton(Creature* pCreature)
+{
+    return new npc_cork_gizeltonAI(pCreature);
+}
+
+bool QuestAccept_npc_cork_gizelton(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == QUEST_BODYGUARD_TO_HIRE)
+    {
+        if (pPlayer->GetTeam() == ALLIANCE)
+            pCreature->SetFactionTemporary(FACTION_ESCORT_A_PASSIVE, TEMPFACTION_RESTORE_RESPAWN);
+
+        if (pPlayer->GetTeam() == HORDE)
+            pCreature->SetFactionTemporary(FACTION_ESCORT_H_PASSIVE, TEMPFACTION_RESTORE_RESPAWN);
+
+        if (npc_cork_gizeltonAI* pCork = dynamic_cast<npc_cork_gizeltonAI*>(pCreature->AI()))  
+            pCork->GetPlayer(pPlayer->GetObjectGuid());
+    }
+    return true;
+}
+
+/*######
+## npc_rigger_gizelton
+######*/
+
+struct npc_rigger_gizeltonAI : public ScriptedAI
+{
+    npc_rigger_gizeltonAI(Creature* pCreature) : ScriptedAI(pCreature) { Reset(); }
+
+    void Reset() {}
+    
+    void JustDied(Unit* /*pKiller*/)
+    {
+        if (Creature* pCork = GetClosestCreatureWithEntry(m_creature, NPC_CORK_GIZELTON, 100.0f))
+            pCork->ForcedDespawn();
+        
+        // Despawn Kodos
+        std::list<Creature*> m_lKodos;
+        GetCreatureListWithEntryInGrid(m_lKodos, m_creature, 11564, 30.f);
+
+        if (!m_lKodos.empty())
+        {
+            for(std::list<Creature*>::iterator itr = m_lKodos.begin(); itr != m_lKodos.end(); ++itr)
+            {
+                if ((*itr) && (*itr)->isAlive())
+                    (*itr)->ForcedDespawn();
+            }
+        }
+    }
+};
+
+CreatureAI* GetAI_npc_rigger_gizelton(Creature* pCreature)
+{
+    return new npc_rigger_gizeltonAI(pCreature);
+}
+
+bool QuestAccept_npc_rigger_gizelton(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
+{
+    if (pQuest->GetQuestId() == QUEST_GIZELTON_CARAVAN)
+    {
+        if (pPlayer->GetTeam() == ALLIANCE)
+            pCreature->SetFactionTemporary(FACTION_ESCORT_A_PASSIVE, TEMPFACTION_RESTORE_RESPAWN);
+
+        if (pPlayer->GetTeam() == HORDE)
+            pCreature->SetFactionTemporary(FACTION_ESCORT_H_PASSIVE, TEMPFACTION_RESTORE_RESPAWN);
+
+        // Now the quest is accepted, tell NPC Cork what player took it so it can handle quest credit/failure
+        // because NPC Cork will handle both escort quests
+        if (npc_cork_gizeltonAI* pCork = dynamic_cast<npc_cork_gizeltonAI*>(pCreature->AI()))
+            pCork->GetPlayer(pPlayer->GetObjectGuid());
+    }
+
+    return true;
+}
+
+/*######
 ## AddSC
 ######*/
 
@@ -978,4 +1388,16 @@ void AddSC_desolace()
     pNewScript->GetAI = &GetAI_npc_maurin_bonesplitter;
     pNewScript->pQuestRewardedNPC = &OnQuestRewarded_npc_maurin_bonesplitter;
     pNewScript->RegisterSelf();   
+    
+    pNewScript = new Script;
+    pNewScript->Name = "npc_cork_gizelton";
+    pNewScript->GetAI = &GetAI_npc_cork_gizelton;
+    pNewScript->pQuestAcceptNPC = &QuestAccept_npc_cork_gizelton;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "npc_rigger_gizelton";
+    pNewScript->GetAI = &GetAI_npc_rigger_gizelton;
+    pNewScript->pQuestAcceptNPC = &QuestAccept_npc_rigger_gizelton;
+    pNewScript->RegisterSelf();
 }
