@@ -1247,8 +1247,12 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
                     m_uiEvadeTimer -= uiDiff;                           
             }           
         }             
-        else // reset the evade timer
+        else
+        {
+            // reset the evade timer
             m_uiEvadeTimer = 5000;
+            DoMeleeAttackIfReady();
+        }
           
         // GroundRuptureTimer
         if(m_bGroundRupture)
@@ -1265,8 +1269,6 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
         }
         else
             m_uiHamstringTimer -= uiDiff;
-
-         DoMeleeAttackIfReady();
     }
 };
 
@@ -1432,14 +1434,18 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
                     m_uiEvadeTimer -= uiDiff;
             }
         }
-        else // reset the evade timer
+        else 
+        {
+            // reset the evade timer
             m_uiEvadeTimer = 5000;
-                       
+            DoMeleeAttackIfReady();
+        }
+        
         // GroundRuptureTimer
         if(m_bGroundRupture)
         {
-                CastGroundRupture();
-                m_bGroundRupture = false;
+            CastGroundRupture();
+            m_bGroundRupture = false;
         }     
 
         // ThrashTimer
@@ -1459,8 +1465,6 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
         }
         else
             m_uiHamstringTimer -= uiDiff;
-
-        DoMeleeAttackIfReady();
     }
 };
 
