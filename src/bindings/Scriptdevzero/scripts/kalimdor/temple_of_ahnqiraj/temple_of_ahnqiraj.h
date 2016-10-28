@@ -33,6 +33,7 @@ enum
     NPC_CTHUN                   = 15727,
     NPC_VISCIDUS_DUMMY = 800109,
     NPC_OURO_GROUND = 157120,
+    NPC_EVADE_DUMMY = 800114,
     
     // Trash
     NPC_ANUBISATH_DEFENDER = 15277,    

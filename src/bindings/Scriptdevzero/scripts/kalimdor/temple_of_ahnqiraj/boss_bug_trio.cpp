@@ -52,7 +52,8 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
     uint32 Cleave_Timer;
     uint32 ToxicVolley_Timer;
     uint32 Check_Timer;
-    
+    uint32 m_uiEvadeTimer;
+        
     bool m_bStun;
     uint32 m_uiRemoveStunTimer;
 
@@ -64,7 +65,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         Cleave_Timer = urand(4000, 8000);
         ToxicVolley_Timer = urand(6000, 12000);
         Check_Timer = 2000;
-
+        m_uiEvadeTimer = 2500;
         VemDead = false;
         Death = false;
         
@@ -164,6 +165,17 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         //Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+        
+        if(m_uiEvadeTimer <= diff)
+        {
+            Creature* pDummy = m_pInstance->GetSingleCreatureFromStorage(NPC_EVADE_DUMMY);
+            if(m_creature->IsWithinDistInMap(pDummy, 10.0f) && m_creature->isAlive())
+                ResetToHome();                
+                
+            m_uiEvadeTimer = 1000;
+        }
+        else
+            m_uiEvadeTimer -= diff;
 
         if (m_bStun)
         {
@@ -228,7 +240,8 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
     uint32 Charge_Timer;
     uint32 KnockBack_Timer;
     uint32 Enrage_Timer;
-
+    uint32 m_uiEvadeTimer;
+    
     bool Enraged;
     
     bool m_bStun;
@@ -239,7 +252,7 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         Charge_Timer = urand(15000, 27000);
         KnockBack_Timer = urand(8000, 20000);
         Enrage_Timer = 1200000;
-
+        m_uiEvadeTimer = 2500;
         Enraged = false;
         
         m_bStun = false;
@@ -351,6 +364,17 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         //Return since we have no target
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
+        
+        if(m_uiEvadeTimer <= diff)
+        {
+            Creature* pDummy = m_pInstance->GetSingleCreatureFromStorage(NPC_EVADE_DUMMY);
+            if(m_creature->IsWithinDistInMap(pDummy, 10.0f) && m_creature->isAlive())
+                ResetToHome();                
+                
+            m_uiEvadeTimer = 1000;
+        }
+        else
+            m_uiEvadeTimer -= diff;
                       
         if (m_bStun)
         {
@@ -412,7 +436,7 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
     uint32 Heal_Timer;
     uint32 Fear_Timer;
     uint32 Check_Timer;
-
+    uint32 m_uiEvadeTimer;
     bool m_bStun;
     uint32 m_uiRemoveStunTimer;
     
@@ -423,6 +447,7 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         Heal_Timer = urand(25000, 40000);
         Fear_Timer = urand(12000, 24000);
         Check_Timer = 2000;
+        m_uiEvadeTimer = 2500;
 
         VemDead = false;
         m_bStun = false;
@@ -528,6 +553,17 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+        if(m_uiEvadeTimer <= diff)
+        {
+            Creature* pDummy = m_pInstance->GetSingleCreatureFromStorage(NPC_EVADE_DUMMY);
+            if(m_creature->IsWithinDistInMap(pDummy, 10.0f) && m_creature->isAlive())
+                ResetToHome();                
+                
+            m_uiEvadeTimer = 1000;
+        }
+        else
+            m_uiEvadeTimer -= diff;
+        
         if (m_bStun)
         {
             if (m_uiRemoveStunTimer <= diff)          
