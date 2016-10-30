@@ -297,9 +297,6 @@ void ThreatContainer::update()
 
 HostileReference* ThreatContainer::selectNextVictim(Creature* pAttacker, HostileReference* pCurrentVictim)
 {
-    if (pAttacker->isIgnoringTargets())
-        return nullptr;
-
     HostileReference* currentRef = NULL;
 
     ThreatList::const_iterator lastRef = iThreatList.end();
@@ -540,11 +537,6 @@ void ThreatManager::tauntFadeOut(Unit *pTaunter)
 
 void ThreatManager::setCurrentVictim(HostileReference* pHostileReference)
 {
-    // If the unit is currently ignoring target changes
-    // we do not update its victim.
-    if (getOwner()->isIgnoringTargets())
-        return;
-
     iCurrentVictim = pHostileReference;
 }
 

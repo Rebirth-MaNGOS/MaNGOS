@@ -7940,6 +7940,10 @@ bool Unit::SelectHostileTarget()
 
     MANGOS_ASSERT(GetTypeId() == TYPEID_UNIT);
 
+    if (isIgnoringTargets())
+        return false;
+
+
     if (!this->isAlive())
         return false;
 
