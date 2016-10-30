@@ -1208,8 +1208,10 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
             {                                
                 // If there are players in melee range prioritise them.
                 m_creature->SetTargetGuid(melee_player->GetGUID());
+                m_creature->AI()->AttackStart(melee_player);
+
                 if (m_creature->getVictim())
-                    m_creature->AI()->AttackStart(melee_player);
+                    DoMeleeAttackIfReady();
             }
             else
             {        
@@ -1391,8 +1393,10 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
             {                                
                 // If there are players in melee range prioritise them.
                 m_creature->SetTargetGuid(melee_player->GetGUID());
+                m_creature->AI()->AttackStart(melee_player);
+
                 if (m_creature->getVictim())
-                    m_creature->AI()->AttackStart(melee_player);
+                    DoMeleeAttackIfReady();
             }
             else
             {        
