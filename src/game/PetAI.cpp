@@ -287,7 +287,8 @@ void PetAI::UpdateAI(const uint32 diff)
 
                 Spell *spell = new Spell(m_creature, spellInfo, false);
 
-                if (inCombat && !m_creature->hasUnitState(UNIT_STAT_FOLLOW) && spell->CanAutoCast(m_creature->getVictim()))
+                if (inCombat && !m_creature->hasUnitState(UNIT_STAT_FOLLOW) && 
+                    m_creature->getVictim() && spell->CanAutoCast(m_creature->getVictim()))
                 {
                     targetSpellStore.push_back(std::make_pair(m_creature->getVictim(), spell));
                     continue;
