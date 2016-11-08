@@ -35,6 +35,16 @@
 class AuthSocket: public BufferedSocket
 {
     public:
+        enum eStatus
+        {
+            STATUS_CHALLENGE,
+            STATUS_LOGON_PROOF,
+            STATUS_RECON_PROOF,
+            STATUS_PATCH,
+            STATUS_AUTHED,
+            STATUS_CLOSED
+        }; 
+
         const static int s_BYTE_SIZE = 32;
 
         AuthSocket();
@@ -65,7 +75,7 @@ class AuthSocket: public BufferedSocket
         BigNumber K;
         BigNumber _reconnectProof;
 
-        bool _authed;
+        eStatus _status;
 
         std::string _login;
         std::string _safelogin;
