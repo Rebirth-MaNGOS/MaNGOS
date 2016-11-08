@@ -88,6 +88,15 @@ struct MANGOS_DLL_DECL boss_blackwing_dragonAI : public ScriptedAI
     {
     }
 
+    void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
+    {
+        if (pSpell->Id == SPELL_WING_BUFFET && pTarget)
+        {
+            if (m_creature->getThreatManager().getThreat(pTarget))
+                m_creature->getThreatManager().modifyThreatPercent(pTarget,-50);
+        }                 
+    }
+    
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
@@ -133,13 +142,8 @@ struct MANGOS_DLL_DECL boss_blackwing_dragonAI : public ScriptedAI
         // Wing Buffet
         if (m_uiWingBuffetTimer <= uiDiff)
         {
-			m_creature->CastSpell(m_creature->getVictim(), SPELL_WING_BUFFET, false);
-
-			if (m_creature->getThreatManager().getThreat(m_creature->getVictim()))
-				m_creature->getThreatManager().modifyThreatPercent(m_creature->getVictim(),-75);
-
+			m_creature->CastSpell(m_creature->getVictim(), SPELL_WING_BUFFET, false);	
 			m_uiWingBuffetTimer = 25000;
-
         }
         else
             m_uiWingBuffetTimer -= uiDiff;
