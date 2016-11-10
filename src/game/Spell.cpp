@@ -3030,24 +3030,6 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
 
     sMod.spellPrepare(this, m_caster);  // extra for prepare
     
-    // Corrupted Mind 29201 in Naxx, shouldn't be able to heal/dispel while having this aura
-    // Confirm how it should work, add cooldown to all spells or just can't cast. 
-    // Fix: Find some better way than positiveEffect as now they can't buff  rather than just not heal/dispel
-//     Unit::AuraList const& aurasOverrideClassScripts = m_caster->GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
-//     for(Unit::AuraList::const_iterator iter = aurasOverrideClassScripts.begin(); iter != aurasOverrideClassScripts.end(); ++iter)
-//     {
-//         // select by script id
-//         if((*iter)->GetModifier()->m_miscvalue == 4327 && IsPositiveEffect(m_spellInfo, EFFECT_INDEX_0))
-//         {            
-//                 SendCastResult(SPELL_FAILED_SILENCED);
-//                 cancel();
-//                 finish(false);
-//                 m_caster->DecreaseCastCounter();
-//                 SetExecutedCurrently(false);
-//                 return;
-//         }
-//     }
-
     // Make the Ritual of Summoning effect instantly cast.
     if (m_spellInfo->Id == 7720)
         m_timer = 0;
@@ -4712,6 +4694,31 @@ SpellCastResult Spell::CheckCast(bool strict)
                 (!m_targets.getUnitTarget() || m_targets.getUnitTarget()->GetObjectGuid() != ((Player*)m_caster)->GetComboTargetGuid()))
             // warrior not have real combo-points at client side but use this way for mark allow Overpower use
             return m_caster->getClass() == CLASS_WARRIOR ? SPELL_FAILED_CANT_DO_THAT_YET : SPELL_FAILED_NO_COMBO_POINTS;
+        
+        // Loatheb Corrupted Mind spell failed
+        switch(m_spellInfo->SpellFamilyName)
+        {
+            case SPELLFAMILY_DRUID:
+            case SPELLFAMILY_PRIEST:
+            case SPELLFAMILY_SHAMAN:
+            case SPELLFAMILY_PALADIN:
+            {
+                if (IsSpellHaveEffect(m_spellInfo, SPELL_EFFECT_HEAL) || IsSpellHaveAura(m_spellInfo, SPELL_AURA_PERIODIC_HEAL) ||
+                        IsSpellHaveEffect(m_spellInfo, SPELL_EFFECT_DISPEL))
+                {
+                    Unit::AuraList const& auraClassScripts = m_caster->GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
+                    for (Unit::AuraList::const_iterator itr = auraClassScripts.begin(); itr != auraClassScripts.end();)
+                    {
+                        if ((*itr)->GetModifier()->m_miscvalue == 4327)
+                        {
+                            return SPELL_FAILED_FIZZLE;
+                        }
+                        else
+                            ++itr;
+                    }
+                }
+            }
+        }
     }
 
     if(Unit *target = m_targets.getUnitTarget())
