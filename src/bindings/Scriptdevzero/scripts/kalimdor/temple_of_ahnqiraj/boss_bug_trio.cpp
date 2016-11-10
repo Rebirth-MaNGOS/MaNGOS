@@ -205,7 +205,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         if (ToxicVolley_Timer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_TOXIC_VOLLEY, true);
-            ToxicVolley_Timer = urand(10000, 15000);
+            ToxicVolley_Timer = urand(10000, 20000);
         }else ToxicVolley_Timer -= diff;
 
         if (!VemDead)
