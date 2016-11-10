@@ -7093,6 +7093,7 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
                 case 28599:			// Shadowbolt Volley
                 case 22682:			// Shadow Flame debuff
                 case 23410:			// Nefarian's class calls.
+                case 23462:         // Flamegor Fire Nova
                 case 23397:
                 case 23398:
                 case 23401:
