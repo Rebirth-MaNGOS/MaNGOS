@@ -8,6 +8,9 @@
 enum
 {
     MAX_ENCOUNTER               = 15,
+    
+    // Background screams in Instance if Thaddius still alive, four of them from 8873 to 8876
+    SOUND_SCREAM1 = 8873,
 
     // Kel'Thuzad
     SAY_KELTHUZAD_CAT_DIED      = -1533089,
@@ -222,6 +225,7 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
         
         uint32 m_uiSapphSpawnTimer;
         uint32 m_uiLivingPoisonTimer;
+        uint32 m_uiScreamsTimer;
 };
 
 #endif
