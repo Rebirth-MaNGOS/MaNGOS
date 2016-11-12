@@ -338,7 +338,7 @@ struct MANGOS_DLL_DECL boss_lethonAI : public boss_emerald_dragonAI
         float fX, fY, fZ, fO;
         pPlayer->GetPosition(fX, fY, fZ);
         fO = pPlayer->GetOrientation();
-        if (Creature* pShade = m_creature->SummonCreature(NPC_SPIRIT_SHADE, fX, fY, fZ, fO, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000))
+        if (Creature* pShade = m_creature->SummonCreature(NPC_SPIRIT_SHADE, fX, fY, fZ, fO, TEMPSUMMON_TIMED_DESPAWN, 60000))
         {
             pShade->SetVisibility(VISIBILITY_OFF);
             pShade->CastSpell(pShade, SPELL_SPIRIT_SHADE_VISUAL, true);					// looks weird in combat log
