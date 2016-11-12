@@ -151,7 +151,7 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
             }
         }
 
-        m_uiPhase1Timer = 228000;                           //Phase 1 lasts "3 minutes and 48 seconds"
+        m_uiPhase1Timer = 10000;//228000;                           //Phase 1 lasts "3 minutes and 48 seconds"
         m_uiSoldierTimer = 5000;
         m_uiUndeadTimer = 5000;
         m_bSummonedIntro = false;
