@@ -18462,6 +18462,16 @@ void Player::SendInitialPacketsAfterAddToMap()
 
     if(HasAuraType(SPELL_AURA_MOD_STUN))
         SetMovement(MOVE_ROOT);
+    
+    if (HasAuraType(SPELL_AURA_GHOST) || HasAuraType(SPELL_AURA_WATER_WALK))
+    {
+        WorldPacket data;
+        data.Initialize(SMSG_MOVE_WATER_WALK, 8+4); 
+
+        data << GetPackGUID();
+        data << uint32(0);
+        SendMessageToSet(&data, true);
+    }
 
     // manual send package (have code in ApplyModifier(true,true); that don't must be re-applied.
     if(HasAuraType(SPELL_AURA_MOD_ROOT))
