@@ -607,6 +607,109 @@ bool QuestAccept_npc_jordan_stilwell(Player* pPlayer, Creature* pCreature, Quest
     return true;
 }
 
+/*####
+# npc_curator_thorius
+####*/
+
+struct MANGOS_DLL_DECL npc_curator_thoriusAI : public ScriptedAI
+{
+    npc_curator_thoriusAI(Creature* pCreature) : ScriptedAI(pCreature) 
+    { 
+        Reset(); 
+    }
+    
+    uint32 m_uiRPTimer;
+    uint32 m_uiRPStopTimer;
+    bool m_b7;
+    bool m_b11;
+    bool m_b15;
+    bool m_bEmote11; 
+    
+     void Reset()
+    {
+        m_b7 = false;
+        m_b11 = false;
+        m_bEmote11 = false;
+        m_b15 = false;
+        m_uiRPTimer = 0;
+        m_uiRPStopTimer = 0;
+    }
+
+    void MovementInform(uint32 /*uiMotiontype*/, uint32 uiPointId)
+    {
+        // Eller -1 på alla
+        switch(uiPointId)
+        {
+            case 7: // emote 16 och text emote, 2 sek delay
+                m_uiRPTimer = 2000;
+                m_b7 = true;
+                break;
+            case 11:
+                m_uiRPTimer = 2000;
+                m_uiRPStopTimer = 5000;
+                m_b11 = true;
+                 m_bEmote11 = true;
+                break; // text emote och  emote 69 efter 2 sek, sedan sluta emote efter 3 sek, 
+            case 15: // ljud 2929 och 36 emote 2 sek delay och sedan /say
+                m_uiRPTimer = 2000;
+                m_b15 = true;
+                break;
+        }
+    }
+    
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if(m_uiRPTimer && !m_creature->isInCombat())
+        {
+            if (m_uiRPTimer <= uiDiff)
+            {           
+                if(m_b7)
+                {
+                    m_creature->GenericTextEmote("Curator Thorius dusts the base of the artifact.", nullptr, true);
+                    m_creature->HandleEmote(EMOTE_ONESHOT_KNEEL);
+                    m_b7 = false;
+                }                
+                if(m_b11)
+                {            
+                    if(m_bEmote11)
+                    {
+                        m_creature->HandleEmoteState(EMOTE_STATE_USESTANDING);
+                        m_creature->GenericTextEmote("Curator Thorius meticulously examines the large vase.", nullptr, true);
+                        m_bEmote11 = false;
+                    }
+                    // after 3 sec
+                    if(m_uiRPStopTimer <= uiDiff)
+                    {
+                        m_creature->HandleEmoteState(EMOTE_STATE_NONE);
+                        m_b11 = false;
+                    }
+                    else
+                        m_uiRPStopTimer -= uiDiff;                
+                }                 
+                if(m_b15)
+                {
+                    m_creature->MonsterSay("Poor Dorius. If I ever get my hands on those Dark Irons, so help me...", LANG_COMMON, NULL);
+                    m_creature->HandleEmote(EMOTE_ONESHOT_ATTACK1H);
+                    m_creature->PlayDirectSound(2929, nullptr);                    
+                    m_b15 = false;
+                }
+            }
+            else
+                m_uiRPTimer -= uiDiff;
+        }
+        
+        if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_curator_thorius(Creature* pCreature)
+{
+    return new npc_curator_thoriusAI(pCreature);
+}
+
 void AddSC_ironforge()
 {
     Script* pNewscript;
@@ -637,5 +740,10 @@ void AddSC_ironforge()
     pNewscript->Name = "npc_jordan_stilwell";
     pNewscript->GetAI = &GetAI_npc_jordan_stilwell;
     pNewscript->pQuestAcceptNPC = &QuestAccept_npc_jordan_stilwell;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_curator_thorius";
+    pNewscript->GetAI = &GetAI_npc_curator_thorius;
     pNewscript->RegisterSelf();
 }
