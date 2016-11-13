@@ -1185,10 +1185,6 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        // Check if we have a target
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-        
         if(m_bInitialGroundRupture)
         {
             // Initial Ground Rupture
@@ -1200,6 +1196,10 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
             else
                 m_uiInitialGroundRupture -= uiDiff;
         }
+        
+        // Check if we have a target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
         
         // EvadeTimer
         if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()) && m_creature->getVictim() && m_creature->getVictim()->isAlive())
@@ -1370,10 +1370,6 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        // Check if we have a target
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
         if(m_bInitialGroundRupture)
         {
             // Initial Ground Rupture
@@ -1385,6 +1381,10 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
             else
                 m_uiInitialGroundRupture -= uiDiff;
         }
+
+        // Check if we have a target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
         
          // EvadeTimer
         if (!m_creature->CanReachWithMeleeAttack(m_creature->getVictim()) && m_creature->getVictim() && m_creature->getVictim()->isAlive())
