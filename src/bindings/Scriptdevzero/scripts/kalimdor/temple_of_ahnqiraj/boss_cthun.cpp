@@ -1052,6 +1052,7 @@ struct MANGOS_DLL_DECL eye_tentacleAI : public ScriptedAI
             {
                 CastGroundRupture();
                 m_bInitialGroundRupture = false;
+                return;
             }
             else
                 m_uiInitialGroundRupture -= uiDiff;
@@ -1192,6 +1193,7 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
             {
                 CastGroundRupture();
                 m_bInitialGroundRupture = false;
+                return;
             }
             else
                 m_uiInitialGroundRupture -= uiDiff;
@@ -1261,6 +1263,10 @@ struct MANGOS_DLL_DECL claw_tentacleAI : public ScriptedAI
         {
                 CastGroundRupture();
                 m_bGroundRupture = false;
+
+                // Seems to screw with targeting.
+                // Exit this update here.
+                return;
         }            
 
         // HamstringTimer
@@ -1377,6 +1383,7 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
             {
                 CastGroundRupture();
                 m_bInitialGroundRupture = false;
+                return;
             }
             else
                 m_uiInitialGroundRupture -= uiDiff;
@@ -1450,6 +1457,10 @@ struct MANGOS_DLL_DECL giant_claw_tentacleAI : public ScriptedAI
         {
             CastGroundRupture();
             m_bGroundRupture = false;
+
+            // Return after ground rupture.
+            // Seems to screw with targeting.
+            return;
         }     
 
         // ThrashTimer
@@ -1517,10 +1528,6 @@ struct MANGOS_DLL_DECL giant_eye_tentacleAI : public ScriptedAI
     
     void UpdateAI(const uint32 uiDiff)
     {
-        // Check if we have a target
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
         if(m_bInitialGroundRupture)
         {
             // Initial Ground Rupture
@@ -1528,10 +1535,16 @@ struct MANGOS_DLL_DECL giant_eye_tentacleAI : public ScriptedAI
             {
                 CastGroundRupture();
                 m_bInitialGroundRupture = false;
+                return;
             }
             else
                 m_uiInitialGroundRupture -= uiDiff;
         }
+
+        // Check if we have a target
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
         
         // BeamTimer
         if (m_uiBeamTimer < uiDiff)
