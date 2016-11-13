@@ -637,10 +637,9 @@ struct MANGOS_DLL_DECL npc_curator_thoriusAI : public ScriptedAI
 
     void MovementInform(uint32 /*uiMotiontype*/, uint32 uiPointId)
     {
-        // Eller -1 på alla
         switch(uiPointId)
         {
-            case 7: // emote 16 och text emote, 2 sek delay
+            case 7:
                 m_uiRPTimer = 2000;
                 m_b7 = true;
                 break;
@@ -649,8 +648,8 @@ struct MANGOS_DLL_DECL npc_curator_thoriusAI : public ScriptedAI
                 m_uiRPStopTimer = 5000;
                 m_b11 = true;
                  m_bEmote11 = true;
-                break; // text emote och  emote 69 efter 2 sek, sedan sluta emote efter 3 sek, 
-            case 15: // ljud 2929 och 36 emote 2 sek delay och sedan /say
+                break;
+            case 15:
                 m_uiRPTimer = 2000;
                 m_b15 = true;
                 break;
