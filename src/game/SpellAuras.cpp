@@ -5536,8 +5536,14 @@ void Aura::HandleSpiritOfRedemption( bool apply, bool Real )
             if(!target->IsStandState())
                 target->SetStandState(UNIT_STAND_STATE_STAND);
         }
+        
+         // interrupt casting when entering Spirit of Redemption
+        if (target->IsNonMeleeSpellCasted(false))
+            target->InterruptNonMeleeSpells(false);
 
-        target->SetHealth(1);
+         // set health and mana to maximum
+        target->SetHealth(target->GetMaxHealth());
+        target->SetPower(POWER_MANA, target->GetMaxPower(POWER_MANA));
     }
     // die at aura end
     else
