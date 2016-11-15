@@ -499,9 +499,11 @@ struct MANGOS_DLL_DECL mob_lava_surgerAI : public ScriptedAI
         {
             Player* pPlayer = GetPlayerFarthestAwayFromThreatlistWithinRange(40.f);
 
-            DoCastSpellIfCan(pPlayer ? pPlayer : m_creature->getVictim(), SPELL_SURGE);
-
-            m_uiSuspendTimer = 2000;
+            if(pPlayer && (!m_creature->IsWithinDistInMap(pPlayer, 5.f) && m_creature->IsWithinLOSInMap(pPlayer)))
+            {
+                DoCastSpellIfCan(pPlayer, SPELL_SURGE);
+                m_uiSuspendTimer = 2000;
+            }
             m_uiSurgeTimer = 8000;
         }
         else
