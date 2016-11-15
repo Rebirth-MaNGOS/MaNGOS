@@ -116,7 +116,7 @@ void instance_blackrock_depths::OnCreatureCreate(Creature* pCreature)
     case NPC_ANVILRAGE_OFFICER:
     case NPC_SHADOWFORGE_PEASANT:
     case NPC_SHADOWFORGE_CITIZEN:
-    case NPC_SHADOWFORGE_SANETOR:
+    case NPC_SHADOWFORGE_SENATOR:
     case NPC_ARENA_SPECTATOR:
         m_uiRingSpectators.push_back(pCreature->GetObjectGuid());
         return;
@@ -598,6 +598,34 @@ void instance_blackrock_depths::Load(const char* in)
         m_auiEncounter[1] = NOT_STARTED;
 
     OUT_LOAD_INST_DATA_COMPLETE;
+}
+
+void instance_blackrock_depths::OnCreatureDeath(Creature* pCreature)
+{
+    uint32 uiTextId;
+    switch (pCreature->GetEntry())
+    {
+        case NPC_SHADOWFORGE_SENATOR:
+            // Emperor Dagran Thaurissan performs a random yell upon the death
+            // of Shadowforge Senators in the Throne Room
+            if (Creature* pDagran = GetSingleCreatureFromStorage(NPC_EMPEROR))
+            {
+                if (!pDagran->isAlive())
+                    return;
+                
+                switch (urand(0, 3))
+                {
+                    case 0:uiTextId = YELL_SENATOR_1;break;
+                    case 1:uiTextId = YELL_SENATOR_2;break;
+                    case 2:uiTextId = YELL_SENATOR_3;break;
+                    default:uiTextId = YELL_SENATOR_4;break;
+                }
+                // Timer doesn't work, so make it random
+                if(urand(0, 3) == 0)
+                    DoScriptText(uiTextId, pDagran);
+            }
+            break;
+    }
 }
 
 void instance_blackrock_depths::Update(uint32 uiDiff)
