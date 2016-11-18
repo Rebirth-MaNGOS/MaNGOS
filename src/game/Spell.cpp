@@ -3854,7 +3854,7 @@ void Spell::SendCastResult(Player* caster, SpellEntry const* spellInfo, SpellCas
     if(result != SPELL_CAST_OK)
     {
         data << uint8(2); // status = fail
-        data << uint8(result);                                  // problem
+        data << uint8(!IsPassiveSpell(spellInfo) ? result : SPELL_FAILED_DONT_REPORT); // do not report failed passive spells
 
         switch (result)
         {
@@ -6465,9 +6465,7 @@ uint32 Spell::CalculatePowerCost(SpellEntry const* spellInfo, Unit* caster, Spel
     SpellSchools school = GetFirstSchoolInMask(spell ? spell->m_spellSchoolMask : GetSpellSchoolMask(spellInfo));
     // Flat mod from caster auras by spell school
     powerCost += caster->GetInt32Value(UNIT_FIELD_POWER_COST_MODIFIER + school);
-    // Shiv - costs 20 + weaponSpeed*10 energy (apply only to non-triggered spell with energy cost)
-    if (spellInfo->AttributesEx4 & SPELL_ATTR_EX4_SPELL_VS_EXTEND_COST)
-        powerCost += caster->GetAttackTime(OFF_ATTACK) / 100;
+
     // Apply cost mod by spell
     if (spell && (spellInfo->manaCost != 0 || spellInfo->ManaCostPercentage != 0 || spellInfo->manaCostPerlevel != 0))  // Spells that cost no mana should not use auras that alter power cost.
         if (Player* modOwner = caster->GetSpellModOwner())
