@@ -2899,6 +2899,10 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         //sLog.outError( "SPELL: Unknown implicit target (%u) for spell ID %u", targetMode, m_spellInfo->Id );
         break;
     }
+    
+    // remove caster from the list if required by attribute
+    if (targetMode != TARGET_SELF && m_spellInfo->AttributesEx & SPELL_ATTR_EX_UNK19)
+        targetUnitMap.remove(m_caster);
 
     if (unMaxTargets && targetUnitMap.size() > unMaxTargets)
     {
@@ -3604,7 +3608,7 @@ void Spell::update(uint32 difftime)
                 if( m_caster->hasUnitState(UNIT_STAT_CAN_NOT_REACT))
                 {
                     // certain channel spells are not interrupted
-                    if (!m_spellInfo->AttributesEx & SPELL_ATTR_EX_CHANNELED_1 && !m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_UNK28)
+                    if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_CHANNELED_1) && !(m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_UNK28))
                         cancel();
                 }
 
