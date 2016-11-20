@@ -2933,7 +2933,12 @@ void Spell::EffectSummon(SpellEffectIndex eff_idx)
     CreatureCreatePos pos (m_caster->GetMap(), m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, -m_caster->GetOrientation());
 
     if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
-        pos = CreatureCreatePos(m_caster, -m_caster->GetOrientation());
+    {
+        float px, py, pz;
+        m_caster->GetClosePoint(px, py, pz, 2.0f);
+        pos = CreatureCreatePos(m_caster->GetMap(), px, py, pz, -m_caster->GetOrientation());
+    }
+    
 
     Map *map = m_caster->GetMap();
     uint32 pet_number = sObjectMgr.GeneratePetNumber();
@@ -3510,7 +3515,11 @@ void Spell::EffectSummonGuardian(SpellEffectIndex eff_idx)
         }
         // Summon if dest location not present near caster
         else
-            pos = CreatureCreatePos(m_caster, m_caster->GetOrientation());
+        {
+            float px, py, pz;
+            m_caster->GetClosePoint(px, py, pz, 2.0f);
+            pos = CreatureCreatePos(m_caster->GetMap(), px, py, pz, m_caster->GetOrientation());
+        }
 
         Map *map = m_caster->GetMap();
         uint32 pet_number = sObjectMgr.GeneratePetNumber();
