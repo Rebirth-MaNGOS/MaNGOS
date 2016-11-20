@@ -172,6 +172,79 @@ bool GOuse_guarded_barrel (Player* pPlayer, GameObject* pGameobject)
     return true;
 }
 
+/*######
+## npc_avarus_kharag
+######*/
+
+enum eAvaraus
+{
+    SPELL_HOLY_LIGHT = 1026,
+    SPELL_HAMMER_OF_JUSTICE  = 5588
+};
+
+struct MANGOS_DLL_DECL npc_avarus_kharagAI : public ScriptedAI
+{
+    uint32 m_uiHealTimer;
+    uint32 m_uiSelfHealTimer;
+    uint32 m_uiHammerOfJusticeTimer;
+    bool m_bCanHeal;
+
+    npc_avarus_kharagAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+
+    void Reset()
+    {
+        m_uiHealTimer = 12000;
+        m_uiSelfHealTimer = urand(20000, 30000);
+        m_uiHammerOfJusticeTimer = urand(6000, 8000);
+        m_bCanHeal = true;
+    }
+
+    void MoveInLineOfSight(Unit* who)
+    {
+        if(m_bCanHeal && (who->IsFriendlyTo(m_creature) && who->GetHealthPercent() < 80 && who->GetTypeId() == TYPEID_PLAYER))
+        {
+            DoCastSpellIfCan(who, SPELL_HOLY_LIGHT);
+            m_bCanHeal = false;
+            m_uiHealTimer = 10000;
+        }
+        ScriptedAI::MoveInLineOfSight(who);
+    }
+
+    void UpdateAI(const uint32 diff)
+    {
+        if (m_uiHealTimer < diff)
+            m_bCanHeal = true;
+        else
+            m_uiHealTimer -= diff;
+            
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+        
+        if (m_uiSelfHealTimer < diff && m_creature->GetHealthPercent() < 31)
+        {
+            DoCastSpellIfCan(m_creature, SPELL_HOLY_LIGHT);
+            m_uiSelfHealTimer = urand(20000, 30000); 
+        }
+        else
+            m_uiSelfHealTimer -= diff;
+        
+        if (m_uiHammerOfJusticeTimer < diff)
+        {
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_HAMMER_OF_JUSTICE);
+            m_uiHammerOfJusticeTimer = urand(14000, 20000);
+        }
+        else
+            m_uiHammerOfJusticeTimer -= diff;
+        
+        DoMeleeAttackIfReady();
+    }
+};
+
+CreatureAI* GetAI_npc_avarus_kharag(Creature* pCreature)
+{
+    return new npc_avarus_kharagAI(pCreature);
+}
+
 void AddSC_dun_morogh()
 {
     Script* pNewscript;
@@ -192,4 +265,8 @@ void AddSC_dun_morogh()
     pNewscript->Name = "go_use_guarded_barrel";
     pNewscript->RegisterSelf();
 
+    pNewscript = new Script;
+    pNewscript->Name = "npc_avarus_kharag";
+    pNewscript->GetAI = &GetAI_npc_avarus_kharag;
+    pNewscript->RegisterSelf();
 }

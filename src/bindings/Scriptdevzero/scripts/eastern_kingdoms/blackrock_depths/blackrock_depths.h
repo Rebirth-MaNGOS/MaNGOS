@@ -90,7 +90,7 @@ enum Creatures
     NPC_ANVILRAGE_OFFICER               = 8895,
     NPC_SHADOWFORGE_PEASANT             = 8896,
     NPC_SHADOWFORGE_CITIZEN             = 8902,
-    NPC_SHADOWFORGE_SANETOR             = 8904,
+    NPC_SHADOWFORGE_SENATOR             = 8904,
     NPC_FIREGUARD_DESTROYER             = 8911,
     NPC_ARENA_SPECTATOR                 = 8916,
     NPC_GRIM_PATRON                     = 9545,
@@ -103,7 +103,7 @@ enum Creatures
     NPC_WEAPON_TECHNICIAN               = 8920,
     NPC_RAGEREAVER_GOLEM                = 8906,
     NPC_DOOMGRIP                        = 9476,
-    NPC_SHADOWFORGE_FLAMEKEEPER         = 9956,
+    NPC_SHADOWFORGE_FLAMEKEEPER         = 9956,    
 
     // Triggers
     NPC_THELDREN_TRIGGER                = 16079,
@@ -188,6 +188,15 @@ enum Misc
     FACTION_ENEMY_TO_ALL                = 14,
 };
 
+enum Yell
+{
+    // Emperor Dagran Thaurissan
+    YELL_SENATOR_1         = -1230060,
+    YELL_SENATOR_2         = -1230061,
+    YELL_SENATOR_3         = -1230062,
+    YELL_SENATOR_4         = -1230063
+};
+
 class MANGOS_DLL_DECL instance_blackrock_depths : public ScriptedInstance
 {
 public:
@@ -200,6 +209,7 @@ public:
     void OnPlayerLeave(Player* pPlayer);
 
     void OnCreatureCreate(Creature* pCreature);
+    void OnCreatureDeath(Creature* pCreature);
     void OnObjectCreate(GameObject* pGo);
 
     void SetData(uint32 uiType, uint32 uiData);
@@ -228,7 +238,7 @@ protected:
     bool m_bBannerSpawned;
 
     bool m_bRelicCoffersRemoved;
-
+    
     uint32 m_uiBarAleCount;
     uint32 m_uiBarrelsDestroyedCount;
     uint32 m_uiCoffersOpenedCount;

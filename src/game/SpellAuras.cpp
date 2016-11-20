@@ -2041,6 +2041,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
             return;
         }
+        case 10848:
         case 27978:
             if (apply)
                 target->m_AuraFlags |= UNIT_AURAFLAG_ALIVE_INVISIBLE;
@@ -5468,14 +5469,12 @@ void Aura::HandleAuraGhost(bool apply, bool /*Real*/)
     if(GetTarget()->GetTypeId() != TYPEID_PLAYER)
         return;
 
+    Player* player = (Player*)GetTarget();
+    
     if(apply)
-    {
-        GetTarget()->SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST);
-    }
+        player->SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST);
     else
-    {
-        GetTarget()->RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST);
-    }
+        player->RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST);
 }
 
 void Aura::HandleShieldBlockValue(bool apply, bool /*Real*/)
@@ -5536,8 +5535,14 @@ void Aura::HandleSpiritOfRedemption( bool apply, bool Real )
             if(!target->IsStandState())
                 target->SetStandState(UNIT_STAND_STATE_STAND);
         }
+        
+         // interrupt casting when entering Spirit of Redemption
+        if (target->IsNonMeleeSpellCasted(false))
+            target->InterruptNonMeleeSpells(false);
 
-        target->SetHealth(1);
+         // set health and mana to maximum
+        target->SetHealth(target->GetMaxHealth());
+        target->SetPower(POWER_MANA, target->GetMaxPower(POWER_MANA));
     }
     // die at aura end
     else

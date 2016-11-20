@@ -2899,6 +2899,10 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         //sLog.outError( "SPELL: Unknown implicit target (%u) for spell ID %u", targetMode, m_spellInfo->Id );
         break;
     }
+    
+    // remove caster from the list if required by attribute
+    if (targetMode != TARGET_SELF && m_spellInfo->AttributesEx & SPELL_ATTR_EX_UNK19)
+        targetUnitMap.remove(m_caster);
 
     if (unMaxTargets && targetUnitMap.size() > unMaxTargets)
     {
@@ -3030,24 +3034,6 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
 
     sMod.spellPrepare(this, m_caster);  // extra for prepare
     
-    // Corrupted Mind 29201 in Naxx, shouldn't be able to heal/dispel while having this aura
-    // Confirm how it should work, add cooldown to all spells or just can't cast. 
-    // Fix: Find some better way than positiveEffect as now they can't buff  rather than just not heal/dispel
-//     Unit::AuraList const& aurasOverrideClassScripts = m_caster->GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
-//     for(Unit::AuraList::const_iterator iter = aurasOverrideClassScripts.begin(); iter != aurasOverrideClassScripts.end(); ++iter)
-//     {
-//         // select by script id
-//         if((*iter)->GetModifier()->m_miscvalue == 4327 && IsPositiveEffect(m_spellInfo, EFFECT_INDEX_0))
-//         {            
-//                 SendCastResult(SPELL_FAILED_SILENCED);
-//                 cancel();
-//                 finish(false);
-//                 m_caster->DecreaseCastCounter();
-//                 SetExecutedCurrently(false);
-//                 return;
-//         }
-//     }
-
     // Make the Ritual of Summoning effect instantly cast.
     if (m_spellInfo->Id == 7720)
         m_timer = 0;
@@ -3574,8 +3560,8 @@ void Spell::update(uint32 difftime)
         return;
     }
 
-    // check if the player caster has moved before the spell finished
-    if ((m_caster->GetTypeId() == TYPEID_PLAYER && m_timer != 0) &&
+    // check if the player or unit caster has moved before the spell finished
+    if (((m_caster->GetTypeId() == TYPEID_PLAYER || m_caster->GetTypeId() == TYPEID_UNIT) && m_timer != 0) &&
             (m_castPositionX != m_caster->GetPositionX() || m_castPositionY != m_caster->GetPositionY() || m_castPositionZ != m_caster->GetPositionZ()) &&
             (m_spellInfo->Effect[EFFECT_INDEX_0] != SPELL_EFFECT_STUCK || !((Player*)m_caster)->m_movementInfo.HasMovementFlag(MOVEFLAG_FALLING_FAR)))
     {
@@ -3612,7 +3598,7 @@ void Spell::update(uint32 difftime)
     {
         if(m_timer > 0)
         {
-            if( m_caster->GetTypeId() == TYPEID_PLAYER )
+            if( m_caster->GetTypeId() == TYPEID_PLAYER || m_caster->GetTypeId() == TYPEID_UNIT)
             {
                 // check if player has jumped before the channeling finished
                 if(((Player*)m_caster)->m_movementInfo.HasMovementFlag(MOVEFLAG_FALLING))
@@ -3620,7 +3606,11 @@ void Spell::update(uint32 difftime)
 
                 // check for incapacitating player states
                 if( m_caster->hasUnitState(UNIT_STAT_CAN_NOT_REACT))
-                    cancel();
+                {
+                    // certain channel spells are not interrupted
+                    if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_CHANNELED_1) && !(m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_UNK28))
+                        cancel();
+                }
 
                 // check if player has turned if flag is set
                 if( m_spellInfo->ChannelInterruptFlags & CHANNEL_FLAG_TURNING && m_castOrientation != m_caster->GetOrientation() )
@@ -3872,7 +3862,7 @@ void Spell::SendCastResult(Player* caster, SpellEntry const* spellInfo, SpellCas
     if(result != SPELL_CAST_OK)
     {
         data << uint8(2); // status = fail
-        data << uint8(result);                                  // problem
+        data << uint8(!IsPassiveSpell(spellInfo) ? result : SPELL_FAILED_DONT_REPORT); // do not report failed passive spells
 
         switch (result)
         {
@@ -4035,28 +4025,52 @@ void Spell::WriteAmmoToPacket(WorldPacket* data)
 
 void Spell::WriteSpellGoTargets(WorldPacket* data)
 {
+    size_t count_pos = data->wpos();
+    *data << uint8(0);                                      // placeholder
+    
     // This function also fill data for channeled spells:
     // m_needAliveTargetMask req for stop channeling if one target die
-    // Always hits on GO and expected all targets for Units
-    *data << (uint8)(m_UniqueTargetInfo.size() + m_UniqueGOTargetInfo.size());
+   uint32 hit  = m_UniqueGOTargetInfo.size();              // Always hits on GO
+   uint32 miss = 0;
 
     for(TargetList::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
     {
-        *data << ihit->targetGUID;                          // in 1.12.1 expected all targets
-
         if (ihit->effectMask == 0)                          // No effect apply - all immuned add state
         {
             // possibly SPELL_MISS_IMMUNE2 for this??
             ihit->missCondition = SPELL_MISS_IMMUNE2;
+            ++miss;
         }
         else if (ihit->missCondition == SPELL_MISS_NONE)    // Add only hits
+        {
+            ++hit;
+            *data << ihit->targetGUID;
             m_needAliveTargetMask |= ihit->effectMask;
+        }
+        else
+        {
+            if (IsChanneledSpell(m_spellInfo) && ihit->missCondition == SPELL_MISS_RESIST)
+                m_duration = 0;                             // cancel aura to avoid visual effect continue
+            ++miss;
+        }
     }
 
     for(GOTargetList::const_iterator ighit = m_UniqueGOTargetInfo.begin(); ighit != m_UniqueGOTargetInfo.end(); ++ighit)
         *data << ighit->targetGUID;                         // Always hits
 
-    *data << uint8(0);                                      // unknown, not miss
+    data->put<uint8>(count_pos, hit);
+    
+    *data << (uint8)miss;
+    for (TargetList::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+    {
+        if (ihit->missCondition != SPELL_MISS_NONE)         // Add only miss
+        {
+            *data << ihit->targetGUID;
+            *data << uint8(ihit->missCondition);
+            if (ihit->missCondition == SPELL_MISS_REFLECT)
+                *data << uint8(ihit->reflectResult);
+        }
+    }
 
     // Reset m_needAliveTargetMask for non channeled spell
     if(!IsChanneledSpell(m_spellInfo))
@@ -4204,6 +4218,10 @@ void Spell::SendChannelUpdate(uint32 time)
             if (Unit* target = ObjectAccessor::GetUnit(*m_caster, target_guid))
                 target->RemoveAurasByCasterSpell(m_spellInfo->Id, m_caster->GetObjectGuid());
 
+        // Only finish channeling when latest channeled spell finishes
+        if (m_caster->GetUInt32Value(UNIT_CHANNEL_SPELL) != m_spellInfo->Id)
+            return;
+            
         m_caster->SetChannelObjectGuid(ObjectGuid());
         m_caster->SetUInt32Value(UNIT_CHANNEL_SPELL, 0);
     }
@@ -4712,6 +4730,31 @@ SpellCastResult Spell::CheckCast(bool strict)
                 (!m_targets.getUnitTarget() || m_targets.getUnitTarget()->GetObjectGuid() != ((Player*)m_caster)->GetComboTargetGuid()))
             // warrior not have real combo-points at client side but use this way for mark allow Overpower use
             return m_caster->getClass() == CLASS_WARRIOR ? SPELL_FAILED_CANT_DO_THAT_YET : SPELL_FAILED_NO_COMBO_POINTS;
+        
+        // Loatheb Corrupted Mind spell failed
+        switch(m_spellInfo->SpellFamilyName)
+        {
+            case SPELLFAMILY_DRUID:
+            case SPELLFAMILY_PRIEST:
+            case SPELLFAMILY_SHAMAN:
+            case SPELLFAMILY_PALADIN:
+            {
+                if (IsSpellHaveEffect(m_spellInfo, SPELL_EFFECT_HEAL) || IsSpellHaveAura(m_spellInfo, SPELL_AURA_PERIODIC_HEAL) ||
+                        IsSpellHaveEffect(m_spellInfo, SPELL_EFFECT_DISPEL))
+                {
+                    Unit::AuraList const& auraClassScripts = m_caster->GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
+                    for (Unit::AuraList::const_iterator itr = auraClassScripts.begin(); itr != auraClassScripts.end();)
+                    {
+                        if ((*itr)->GetModifier()->m_miscvalue == 4327)
+                        {
+                            return SPELL_FAILED_FIZZLE;
+                        }
+                        else
+                            ++itr;
+                    }
+                }
+            }
+        }
     }
 
     if(Unit *target = m_targets.getUnitTarget())
@@ -5011,6 +5054,10 @@ SpellCastResult Spell::CheckCast(bool strict)
         // check if target is in combat
         if (non_caster_target && (m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_IN_COMBAT_TARGET) && target->isInCombat())
             return SPELL_FAILED_TARGET_AFFECTING_COMBAT;
+        
+        // check if target is affected by Spirit of Redemption (Aura: 27827)
+        if (target->HasAuraType(SPELL_AURA_SPIRIT_OF_REDEMPTION))
+            return SPELL_FAILED_BAD_TARGETS;
     }
     // zone check
     uint32 zone, area;
@@ -5052,6 +5099,10 @@ SpellCastResult Spell::CheckCast(bool strict)
             {
                 SpellRangeEntry const* srange = sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex);
                 float range = GetSpellMaxRange(srange);
+                
+                // override range with default when it's not provided
+                if (!range)
+                    range = m_caster->GetMap()->IsDungeon() ? DEFAULT_VISIBILITY_INSTANCE : DEFAULT_VISIBILITY_DISTANCE;
 
                 Creature* targetExplicit = NULL;            // used for cases where a target is provided (by script for example)
                 Creature* creatureScriptTarget = NULL;
@@ -6426,9 +6477,7 @@ uint32 Spell::CalculatePowerCost(SpellEntry const* spellInfo, Unit* caster, Spel
     SpellSchools school = GetFirstSchoolInMask(spell ? spell->m_spellSchoolMask : GetSpellSchoolMask(spellInfo));
     // Flat mod from caster auras by spell school
     powerCost += caster->GetInt32Value(UNIT_FIELD_POWER_COST_MODIFIER + school);
-    // Shiv - costs 20 + weaponSpeed*10 energy (apply only to non-triggered spell with energy cost)
-    if (spellInfo->AttributesEx4 & SPELL_ATTR_EX4_SPELL_VS_EXTEND_COST)
-        powerCost += caster->GetAttackTime(OFF_ATTACK) / 100;
+
     // Apply cost mod by spell
     if (spell && (spellInfo->manaCost != 0 || spellInfo->ManaCostPercentage != 0 || spellInfo->manaCostPerlevel != 0))  // Spells that cost no mana should not use auras that alter power cost.
         if (Player* modOwner = caster->GetSpellModOwner())
@@ -7086,6 +7135,7 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
                 case 28599:			// Shadowbolt Volley
                 case 22682:			// Shadow Flame debuff
                 case 23410:			// Nefarian's class calls.
+                case 23462:         // Flamegor Fire Nova
                 case 23397:
                 case 23398:
                 case 23401:

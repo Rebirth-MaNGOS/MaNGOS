@@ -1591,47 +1591,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
     break;
     }
     case SPELLFAMILY_ROGUE:
-    {
-        switch(m_spellInfo->Id)
-        {
-        case 5938:                                  // Shiv
-        {
-            if (m_caster->GetTypeId() != TYPEID_PLAYER)
-                return;
-
-            Player *pCaster = ((Player*)m_caster);
-
-            Item *item = pCaster->GetWeaponForAttack(OFF_ATTACK);
-            if (!item)
-                return;
-
-            // all poison enchantments is temporary
-            uint32 enchant_id = item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT);
-            if (!enchant_id)
-                return;
-
-            SpellItemEnchantmentEntry const *pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
-            if (!pEnchant)
-                return;
-
-            for (int s = 0; s < 3; ++s)
-            {
-                if (pEnchant->type[s]!=ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
-                    continue;
-
-                SpellEntry const* combatEntry = sSpellStore.LookupEntry(pEnchant->spellid[s]);
-                if (!combatEntry || combatEntry->Dispel != DISPEL_POISON)
-                    continue;
-
-                m_caster->CastSpell(unitTarget, combatEntry, true, item);
-            }
-
-            m_caster->CastSpell(unitTarget, 5940, true);
-            return;
-        }
-        }
         break;
-    }
     case SPELLFAMILY_HUNTER:
     {
         // Steady Shot
@@ -2973,7 +2933,12 @@ void Spell::EffectSummon(SpellEffectIndex eff_idx)
     CreatureCreatePos pos (m_caster->GetMap(), m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, -m_caster->GetOrientation());
 
     if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
-        pos = CreatureCreatePos(m_caster, -m_caster->GetOrientation());
+    {
+        float px, py, pz;
+        m_caster->GetClosePoint(px, py, pz, 2.0f);
+        pos = CreatureCreatePos(m_caster->GetMap(), px, py, pz, -m_caster->GetOrientation());
+    }
+    
 
     Map *map = m_caster->GetMap();
     uint32 pet_number = sObjectMgr.GeneratePetNumber();
@@ -3550,7 +3515,11 @@ void Spell::EffectSummonGuardian(SpellEffectIndex eff_idx)
         }
         // Summon if dest location not present near caster
         else
-            pos = CreatureCreatePos(m_caster, m_caster->GetOrientation());
+        {
+            float px, py, pz;
+            m_caster->GetClosePoint(px, py, pz, 2.0f);
+            pos = CreatureCreatePos(m_caster->GetMap(), px, py, pz, m_caster->GetOrientation());
+        }
 
         Map *map = m_caster->GetMap();
         uint32 pet_number = sObjectMgr.GeneratePetNumber();
@@ -4026,7 +3995,9 @@ void Spell::EffectSummonPet(SpellEffectIndex eff_idx)
         return;
     }
 
-    CreatureCreatePos pos(m_caster, m_caster->GetOrientation());
+    float px, py, pz;
+    m_caster->GetClosePoint(px, py, pz, 2.0f);
+    CreatureCreatePos pos(m_caster->GetMap(), px, py, pz, -m_caster->GetOrientation());
 
     Map *map = m_caster->GetMap();
     uint32 pet_number = sObjectMgr.GeneratePetNumber();

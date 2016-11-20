@@ -70,6 +70,8 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         Death = false;
         
         m_bStun = false;
+        // Reset speed in case they evade during eat phase
+        m_creature->SetSpeedRate(MOVE_RUN, 2.25f, false);
     }
     
     void JustDied(Unit* /*killer*/)
@@ -205,7 +207,7 @@ struct MANGOS_DLL_DECL boss_kriAI : public ScriptedAI
         if (ToxicVolley_Timer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_TOXIC_VOLLEY, true);
-            ToxicVolley_Timer = urand(10000, 15000);
+            ToxicVolley_Timer = urand(10000, 20000);
         }else ToxicVolley_Timer -= diff;
 
         if (!VemDead)
@@ -259,6 +261,9 @@ struct MANGOS_DLL_DECL boss_vemAI : public ScriptedAI
         
         if (m_pInstance)
             m_pInstance->SetData(TYPE_VEM, FAIL);
+        
+        // Reset speed in case they evade during eat phase
+        m_creature->SetSpeedRate(MOVE_RUN, 2.5f, false);
     }
     
     void Aggro(Unit* /*pWho*/)
@@ -451,6 +456,9 @@ struct MANGOS_DLL_DECL boss_yaujAI : public ScriptedAI
 
         VemDead = false;
         m_bStun = false;
+        
+        // Reset speed in case they evade during eat phase
+        m_creature->SetSpeedRate(MOVE_RUN, 2.25f, false);
     }
     
     void ResetToHome()
