@@ -1454,6 +1454,74 @@ bool OnQuestRewarded_npc_feegly_the_exiled(Player* pPlayer, Creature* pCreature,
 	return true;
 }
 
+/*######
+## npc_mangletooth
+######*/
+
+enum
+{    
+    QUEST_ID_SPIRIT_OF_THE_WIND = 889,
+    QUEST_ID_AGAMAGGANS_STRENGTH = 5042,
+    QUEST_ID_AGAMAGGANS_AGILITY = 5043,
+    QUEST_ID_WISDOM_OF_AGAMAGGAN = 5044,
+    QUEST_ID_RISING_SPIRIT = 5045,
+    QUEST_ID_RAZORHIDE = 5046
+};
+
+struct MANGOS_DLL_DECL npc_mangletoothAI : public ScriptedAI
+{
+    npc_mangletoothAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+    
+    void Reset()
+    {
+    }
+
+    void UpdateAI(const uint32 diff)
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
+    }   
+};
+
+CreatureAI* GetAI_npc_mangletooth(Creature* pCreature)
+{
+    return new npc_mangletoothAI(pCreature);
+}
+
+bool OnQuestRewarded_npc_mangletooth(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
+{
+    switch(pQuest->GetQuestId())
+    {
+        // Mangletooth should cast these on the player?, but it doesn't work here nor in the DB, so hack for now and let players cast it
+        case QUEST_ID_SPIRIT_OF_THE_WIND:
+            pPlayer->CastSpell(pPlayer, 16618, true);
+            break;
+        case QUEST_ID_AGAMAGGANS_STRENGTH:
+            pPlayer->CastSpell(pPlayer, 16612, true);
+            break;
+        case QUEST_ID_AGAMAGGANS_AGILITY:
+            pPlayer->CastSpell(pPlayer, 17013, true);
+            break;
+        case QUEST_ID_WISDOM_OF_AGAMAGGAN:
+            pPlayer->CastSpell(pPlayer, 7764, true);
+            break;
+        case QUEST_ID_RISING_SPIRIT:
+            pPlayer->CastSpell(pPlayer, 10767, true);
+            break;
+        case QUEST_ID_RAZORHIDE:
+            pPlayer->CastSpell(pPlayer, 16610, true);
+            break;
+        default:
+            break;           
+    }
+    return true;
+}
+
 /* go_ */
 
 void AddSC_the_barrens()
@@ -1557,5 +1625,11 @@ void AddSC_the_barrens()
     pNewscript->Name = "npc_feegly_the_exiled";
     pNewscript->GetAI = &GetAI_npc_feegly_the_exiled;
     pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_feegly_the_exiled;
+    pNewscript->RegisterSelf();
+    
+    pNewscript = new Script;
+    pNewscript->Name = "npc_mangletooth";
+    pNewscript->GetAI = &GetAI_npc_mangletooth;
+    pNewscript->pQuestRewardedNPC = &OnQuestRewarded_npc_mangletooth;
     pNewscript->RegisterSelf();
 }
