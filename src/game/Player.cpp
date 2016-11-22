@@ -12945,26 +12945,44 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
     {
         case TYPEID_UNIT:
             handled = sScriptMgr.OnQuestRewarded(this, (Creature*)questGiver, pQuest);
-			    
-			// cast spells after mark quest complete (some spells have quest completed state reqyurements in spell_area data)
-			if (pQuest->GetRewSpellCast() > 0)
-				((Creature*)questGiver)->CastSpell(this, pQuest->GetRewSpellCast(), true);
-			else if (pQuest->GetRewSpell() > 0)
-				((Creature*)questGiver)->CastSpell(this, pQuest->GetRewSpell(), true);
-
             break;
         case TYPEID_GAMEOBJECT:
             handled = sScriptMgr.OnQuestRewarded(this, (GameObject*)questGiver, pQuest);
-			if (pQuest->GetRewSpellCast() > 0)
-				CastSpell(this, pQuest->GetRewSpellCast(), true);
-			else if (pQuest->GetRewSpell() > 0)
-				CastSpell(this, pQuest->GetRewSpell(), true);
 			break;
     }
 
     if (!handled && pQuest->GetQuestCompleteScript() != 0)
         GetMap()->ScriptsStart(sQuestEndScripts, pQuest->GetQuestCompleteScript(), questGiver, this);
 
+     // Find spell cast on spell reward if any, then find the appropriate caster and cast it
+    uint32 spellId = pQuest->GetRewSpellCast();
+    if (!spellId)
+        spellId = pQuest->GetRewSpell();
+
+    if (spellId)
+    {
+        if (SpellEntry const* spellProto = sSpellStore.LookupEntry(spellId))
+        {
+            Unit* caster = this;
+
+            if (questGiver->GetTypeId() == TYPEID_UNIT)
+            {
+                for (uint8 i = 0; i < MAX_EFFECT_INDEX; ++i)
+                {
+                    if (spellProto->Effect[i] == SPELL_EFFECT_LEARN_SPELL ||
+                        spellProto->Effect[i] == SPELL_EFFECT_CREATE_ITEM ||
+                        spellProto->EffectImplicitTargetA[i] == TARGET_DUELVSPLAYER ||
+                        spellProto->EffectImplicitTargetA[i] == TARGET_SINGLE_FRIEND)
+                    {
+                        caster = (Unit*)questGiver;
+                        break;
+                    }
+                }
+            }
+            caster->CastSpell(this, spellProto, true);
+        }
+    }
+    
     uint32 zone = 0;
     uint32 area = 0;
 
