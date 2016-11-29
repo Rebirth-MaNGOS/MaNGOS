@@ -16,8 +16,8 @@
 
 /* ScriptData
 SDName: Boss_Gluth
-SD%Complete: 70
-SDComment:
+SD%Complete: 90
+SDComment: Should he turn towards zombie that is devoured? Should he really do emote for each zombie, could mean lots of spam
 SDCategory: Naxxramas
 EndScriptData */
 
@@ -30,6 +30,7 @@ enum
     EMOTE_BOSS_GENERIC_ENRAGED      = -1000006,
 //     EMOTE_DECIMATE                  = -1533152, // no emote on decimate
 
+    SPELL_DOUBLE_ATTACK = 19818,
     SPELL_MORTALWOUND               = 25646,
     SPELL_DECIMATE                  = 28374,
     SPELL_FRENZY                    = 28371,
@@ -56,7 +57,7 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
     boss_gluthAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (instance_naxxramas*)pCreature->GetInstanceData();
-        Reset();
+        Reset();       
     }
 
     instance_naxxramas* m_pInstance;
@@ -68,6 +69,7 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
     uint32 m_uiSummonTimer;
     uint32 m_uiZombieSearchTimer;
 
+    uint8 m_uiDecimateCount;
     uint32 m_uiBerserkTimer;
 
     GUIDList m_lZombieChowGuidList;
@@ -75,15 +77,19 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
     void Reset()
     {
         m_uiMortalWoundTimer  = 10000;
-        m_uiDecimateTimer     = 110000;
+        m_uiDecimateTimer     = 110000; // approx 105 sec wowwiki, or is that after first one only?
         m_uiFrenzyTimer       = 10000;
         m_uiSummonTimer       = 6000;
-        m_uiRoarTimer         = 15000;
+        m_uiRoarTimer         = urand(15000, 20000); // seems legit, every one after is 20 sec. In video its after 17 sec
         m_uiZombieSearchTimer = 3000;
 
-        m_uiBerserkTimer      = MINUTE * 8 * IN_MILLISECONDS;
+        m_uiDecimateCount = 0;
+        m_uiBerserkTimer      = m_uiDecimateTimer * 5; // ~15 seconds after the third Decimate, random high amount since it'll be changed after 3rd decimate
         // kill all zombies that are alive
         DoCallAllZombieChow(1);
+        
+         // Cmangos, should this be here?
+        DoCastSpellIfCan(m_creature, SPELL_DOUBLE_ATTACK, CAST_TRIGGERED | CAST_AURA_NOT_PRESENT);
     }
 
     void JustDied(Unit* /*pKiller*/) 
@@ -196,7 +202,12 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
             m_creature->CastSpell(m_creature, SPELL_DECIMATE, true);
             // This is called after like 2 sec of spell being cast should be instantly
             DoCallAllZombieChow(0);
-            m_uiDecimateTimer = 100000;
+            m_uiDecimateTimer = urand(100000, 110000); // approx 105 sec wowwiki, 108 in a video
+            ++m_uiDecimateCount;
+            
+            // Always approx 15 sec after 3rd decimate
+            if(m_uiDecimateCount >= 3)
+                m_uiBerserkTimer = urand(10000, 15000);
         }
         else
             m_uiDecimateTimer -= uiDiff;
@@ -205,7 +216,7 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
         if (m_uiFrenzyTimer< uiDiff)
         {
             if (DoCastSpellIfCan(m_creature, SPELL_FRENZY) == CAST_OK)
-                m_uiFrenzyTimer = 10000;
+                m_uiFrenzyTimer = urand(10000, 12000); // approx 10 sec wowwiki
         }
         else
             m_uiFrenzyTimer -= uiDiff;
@@ -214,7 +225,7 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
         if (m_uiRoarTimer < uiDiff)
         {
             if (DoCastSpellIfCan(m_creature, SPELL_TERRIFYING_ROAR) == CAST_OK)
-                m_uiRoarTimer = urand(18000, 22000);
+                m_uiRoarTimer = 20000;
         }
         else
             m_uiRoarTimer -= uiDiff;
