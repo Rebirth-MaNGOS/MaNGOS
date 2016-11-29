@@ -27,10 +27,10 @@ EndScriptData */
 enum
 {
     SAY_GREET                 = -1533009,
-    SAY_AGGRO1                = -1533010,
-    SAY_AGGRO2                = -1533011,
-    SAY_AGGRO3                = -1533012,
-    SAY_AGGRO4                = -1533013,
+    SAY_AGGRO_1                = -1533010,
+    SAY_ENRAGE_1                = -1533011,
+    SAY_ENRAGE_2                = -1533012,
+    SAY_ENRAGE_3                = -1533013,
     SAY_SLAY1                 = -1533014,
     SAY_SLAY2                   = -1533015,
     SAY_DEATH                   = -1533016,
@@ -71,13 +71,7 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
 
     void Aggro(Unit* /*pWho*/)
     {
-        switch(urand(0, 3))
-        {
-            case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
-            case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
-            case 2: DoScriptText(SAY_AGGRO3, m_creature); break;
-            case 3: DoScriptText(SAY_AGGRO4, m_creature); break;
-        }
+       DoScriptText(SAY_AGGRO_1, m_creature);
 
         if (m_pInstance)
             m_pInstance->SetData(TYPE_FAERLINA, IN_PROGRESS);
@@ -158,6 +152,17 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
             m_uiEnrageTimer = std::max(m_uiEnrageTimer, (uint32)30000);
             m_uiPoisonBoltVolleyTimer = std::max(m_uiPoisonBoltVolleyTimer, urand(33000, 38000));
         }
+        
+        // Text on real apply of enrage
+        if (pSpellEntry->Id == SPELL_ENRAGE)
+        {
+            switch (urand(0,2))
+            {
+                case 0: DoScriptText(SAY_ENRAGE_1, m_creature); break;
+                case 1: DoScriptText(SAY_ENRAGE_2, m_creature); break;
+                case 2: DoScriptText(SAY_ENRAGE_3, m_creature); break;
+            }
+        }
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -188,7 +193,7 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
         //Enrage_Timer
         if (m_uiEnrageTimer < uiDiff)
         {
-            DoCastSpellIfCan(m_creature, SPELL_ENRAGE);
+            m_creature->CastSpell(m_creature, SPELL_ENRAGE, true);
             m_uiEnrageTimer = 60000;
         }
         else 
