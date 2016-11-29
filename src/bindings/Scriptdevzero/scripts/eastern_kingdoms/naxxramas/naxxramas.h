@@ -9,12 +9,42 @@ enum
 {
     MAX_ENCOUNTER               = 15,
     
+    // A few instance-script related texts
+    SAY_THADDIUS_GREET = -1533029,
+    
     // Background screams in Instance if Thaddius still alive, four of them from 8873 to 8876
     SOUND_SCREAM1 = 8873,
 
     // Kel'Thuzad
-    SAY_KELTHUZAD_CAT_DIED      = -1533089,
+    SAY_KELTHUZAD_CAT_DIED      = -1533089,    
     
+    // Kel'Thuzad's taunts after killing Wing Bosses
+    SAY_KELTHUZAD_TAUNT1        = -1533090,
+    SAY_KELTHUZAD_TAUNT2        = -1533091,
+    SAY_KELTHUZAD_TAUNT3        = -1533092,
+    SAY_KELTHUZAD_TAUNT4        = -1533093,
+    
+    // Dialogues with Lich King
+    SAY_SAPP_DIALOG1            = -1533084,
+    SAY_SAPP_DIALOG2_LICH       = -1533085,
+    SAY_SAPP_DIALOG3            = -1533086,
+    SAY_SAPP_DIALOG4_LICH       = -1533087,
+    SAY_SAPP_DIALOG5            = -1533088,
+    
+    // Horsemen dialogue texts
+    SAY_BLAU_TAUNT1             = -1533045,
+    SAY_BLAU_TAUNT2             = -1533046,
+    SAY_BLAU_TAUNT3             = -1533047,             // NYI - requires additiona research
+    SAY_MORG_TAUNT1             = -1533071,
+    SAY_MORG_TAUNT2             = -1533072,
+    SAY_MORG_TAUNT3             = -1533073,             // NYI - requires additiona research
+    SAY_KORT_TAUNT1             = -1533052,
+    SAY_KORT_TAUNT2             = -1533053,
+    SAY_KORT_TAUNT3             = -1533054,             // NYI - requires additiona research
+    SAY_ZELI_TAUNT1             = -1533059,
+    SAY_ZELI_TAUNT2             = -1533060,
+    SAY_ZELI_TAUNT3 = -1533061, // NYI - requires additiona research
+        
     TYPE_ANUB_REKHAN            = 1,
     TYPE_FAERLINA               = 2,
     TYPE_MAEXXNA                = 3,
@@ -60,6 +90,7 @@ enum
     
     NPC_SAPPHIRON               = 15989,
     NPC_KELTHUZAD               = 15990,
+    NPC_THE_LICHKING = 16980,
     NPC_MR_BIGGLESWORTH         = 16998,
     NPC_LIVING_POISON = 16027,
 
@@ -94,7 +125,8 @@ enum
     GO_PLAG_NOTH_ENTRY_DOOR     = 181200,                   //encounter door
     GO_PLAG_NOTH_EXIT_DOOR      = 181201,                   //exit, open when boss dead
     GO_PLAG_HEIG_ENTRY_DOOR     = 181202,
-    GO_PLAG_HEIG_EXIT_DOOR      = 181496,                   //exit, open when boss dead
+    GO_PLAG_HEIG_EXIT_DOOR      = 181203,                   // exit door - not used here
+    GO_PLAG_HEIG_EXIT_HALLWAY = 181496, // exit door, at the end of the hallway, open when boss dead
     GO_PLAG_LOAT_DOOR           = 181241,                   //encounter door
 
     // Military Quarter
@@ -141,7 +173,9 @@ enum
 
     AREATRIGGER_FROSTWYRM       = 4120,                    //not needed here, but AT to be scripted
     AREATRIGGER_KELTHUZAD       = 4112,
-    AREATRIGGER_GOTHIK          = 4116
+    AREATRIGGER_GOTHIK          = 4116,
+    AREATRIGGER_THADDIUS_DOOR   = 4113,
+    AREATRIGGER_FROSTWYRM_TELE = 4156
 };
 
 struct GothTrigger
@@ -207,7 +241,8 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
         // kel
         void SetChamberCenterCoords(float fX, float fY, float fZ);
         void GetChamberCenterCoords(float &fX, float &fY, float &fZ) { fX = m_fChamberCenterX; fY = m_fChamberCenterY; fZ = m_fChamberCenterZ; }
-
+        void DoTaunt();
+        
     protected:
         uint32 m_auiEncounter[MAX_ENCOUNTER];
         std::string strInstData;
@@ -224,8 +259,12 @@ class MANGOS_DLL_DECL instance_naxxramas : public ScriptedInstance
         float m_fChamberCenterZ;
         
         uint32 m_uiSapphSpawnTimer;
+        uint32 m_uiTauntTimer;
+        uint8 m_uiHorseMenKilled; // to be implemented
         uint32 m_uiLivingPoisonTimer;
         uint32 m_uiScreamsTimer;
+        
+        DialogueHelper m_dialogueHelper;
 };
 
 #endif

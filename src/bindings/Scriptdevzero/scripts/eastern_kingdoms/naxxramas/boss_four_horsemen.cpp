@@ -32,9 +32,9 @@ enum
 
     //lady blaumeux
     SAY_BLAU_AGGRO          = -1533044,
-    SAY_BLAU_TAUNT1         = -1533045,
-    SAY_BLAU_TAUNT2         = -1533046,
-    SAY_BLAU_TAUNT3         = -1533047,
+//     SAY_BLAU_TAUNT1         = -1533045,
+//     SAY_BLAU_TAUNT2         = -1533046,
+//     SAY_BLAU_TAUNT3         = -1533047,
     SAY_BLAU_SPECIAL        = -1533048,
     SAY_BLAU_SLAY           = -1533049,
     SAY_BLAU_DEATH          = -1533050,
@@ -51,9 +51,9 @@ enum
     SAY_MOG_SLAY1          = -1533068,
     SAY_MOG_SLAY2          = -1533069,
     SAY_MOG_SPECIAL        = -1533070,
-    SAY_MOG_TAUNT1         = -1533071,
-    SAY_MOG_TAUNT2         = -1533072,
-    SAY_MOG_TAUNT3         = -1533073,
+//     SAY_MOG_TAUNT1         = -1533071,
+//     SAY_MOG_TAUNT2         = -1533072,
+//     SAY_MOG_TAUNT3         = -1533073,
     SAY_MOG_DEATH          = -1533074,
 
     SPELL_MARK_OF_MOGRAINE = 28834,
@@ -62,9 +62,9 @@ enum
 
     //thane korthazz
     SAY_KORT_AGGRO          = -1533051,
-    SAY_KORT_TAUNT1         = -1533052,
-    SAY_KORT_TAUNT2         = -1533053,
-    SAY_KORT_TAUNT3         = -1533054,
+//     SAY_KORT_TAUNT1         = -1533052,
+//     SAY_KORT_TAUNT2         = -1533053,
+//     SAY_KORT_TAUNT3         = -1533054,
     SAY_KORT_SPECIAL        = -1533055,
     SAY_KORT_SLAY           = -1533056,
     SAY_KORT_DEATH          = -1533057,
@@ -74,9 +74,9 @@ enum
 
     //sir zeliek
     SAY_ZELI_AGGRO          = -1533058,
-    SAY_ZELI_TAUNT1         = -1533059,
-    SAY_ZELI_TAUNT2         = -1533060,
-    SAY_ZELI_TAUNT3         = -1533061,
+//     SAY_ZELI_TAUNT1         = -1533059,
+//     SAY_ZELI_TAUNT2         = -1533060,
+//     SAY_ZELI_TAUNT3         = -1533061,
     SAY_ZELI_SPECIAL        = -1533062,
     SAY_ZELI_SLAY           = -1533063,
     SAY_ZELI_DEATH          = -1533064,

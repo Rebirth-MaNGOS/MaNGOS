@@ -24,11 +24,32 @@ EndScriptData */
 #include "precompiled.h"
 #include "naxxramas.h"
 
+static const DialogueEntry aNaxxDialogue[] =
+{
+    {NPC_KELTHUZAD,         0,                  10000},
+    {SAY_SAPP_DIALOG1,      NPC_KELTHUZAD,      5000},
+    {SAY_SAPP_DIALOG2_LICH, NPC_THE_LICHKING,   17000},
+    {SAY_SAPP_DIALOG3,      NPC_KELTHUZAD,      6000},
+    {SAY_SAPP_DIALOG4_LICH, NPC_THE_LICHKING,   8000},
+    {SAY_SAPP_DIALOG5,      NPC_KELTHUZAD,      0},
+    {NPC_THANE,             0,                  10000},
+    {SAY_KORT_TAUNT1,       NPC_THANE,          5000},
+    {SAY_ZELI_TAUNT1,       NPC_ZELIEK,         6000},
+    {SAY_BLAU_TAUNT1,       NPC_BLAUMEUX,       6000},
+    {SAY_MORG_TAUNT1,       NPC_MOGRAINE,       7000},
+    {SAY_BLAU_TAUNT2,       NPC_BLAUMEUX,       6000},
+    {SAY_ZELI_TAUNT2,       NPC_ZELIEK,         5000},
+    {SAY_KORT_TAUNT2,       NPC_THANE,          7000},
+    {SAY_MORG_TAUNT2,       NPC_MOGRAINE,       0},
+    {0, 0, 0}
+};
+
 instance_naxxramas::instance_naxxramas(Map* pMap) : ScriptedInstance(pMap),
     m_fChamberCenterX(0.0f),
     m_fChamberCenterY(0.0f),
     m_fChamberCenterZ(0.0f),
     m_uiSapphSpawnTimer(0),
+    m_dialogueHelper(aNaxxDialogue),
     m_uiLivingPoisonTimer(5000),
     m_uiScreamsTimer(2 * MINUTE * IN_MILLISECONDS)
 {
@@ -38,6 +59,8 @@ instance_naxxramas::instance_naxxramas(Map* pMap) : ScriptedInstance(pMap),
 void instance_naxxramas::Initialize()
 {
     memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
+    
+    m_dialogueHelper.InitializeDialogueHelper(this, true);
 }
 
 void instance_naxxramas::OnPlayerEnter(Player* pPlayer)
@@ -73,6 +96,7 @@ void instance_naxxramas::OnCreatureCreate(Creature* pCreature)
         case NPC_GOTHIK:
         case NPC_SAPPHIRON:
         case NPC_KELTHUZAD:
+        case NPC_THE_LICHKING:
 			m_mNpcEntryGuidStore[pCreature->GetEntry()] = pCreature->GetObjectGuid();
 			break;
         case NPC_SUB_BOSS_TRIGGER:
@@ -283,7 +307,7 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
                 DoUseDoorOrButton(GO_ARAC_EYE_BOSS);                
                 DoRespawnGameObject(GO_ARAC_PORTAL, 30*MINUTE);
                 DoToggleGameObjectFlags(GO_ARAC_PORTAL, GO_FLAG_NO_INTERACT, false);
-                // Add taunt timer
+                m_uiTauntTimer = 5000;
             }
             break;
         case TYPE_NOTH:
@@ -299,7 +323,7 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             m_auiEncounter[4] = uiData;
             DoUseDoorOrButton(GO_PLAG_HEIG_ENTRY_DOOR);
             if (uiData == DONE)  // This door should be open while boss is in progress and it shouldn't close when boss dies
-                DoUseDoorOrButton(GO_PLAG_HEIG_EXIT_DOOR);
+                DoUseDoorOrButton(GO_PLAG_HEIG_EXIT_HALLWAY);
             break;
         case TYPE_LOATHEB:
             m_auiEncounter[5] = uiData;
@@ -310,13 +334,13 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
                 DoUseDoorOrButton(GO_PLAG_EYE_BOSS);
                 DoRespawnGameObject(GO_PLAG_PORTAL, 30 * MINUTE);
                 DoToggleGameObjectFlags(GO_PLAG_PORTAL, GO_FLAG_NO_INTERACT, false);
-                // Add taunt
+                m_uiTauntTimer = 5000;
             }
             break;
         case TYPE_RAZUVIOUS:
             m_auiEncounter[6] = uiData;
-            if (uiData == DONE)
-                DoUseDoorOrButton(GO_MILI_GOTH_ENTRY_GATE); // needed?
+            /*if (uiData == DONE)
+                DoUseDoorOrButton(GO_MILI_GOTH_ENTRY_GATE);*/ // needed?
             break;
         case TYPE_GOTHIK:
             switch(uiData)
@@ -338,14 +362,31 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
                     DoUseDoorOrButton(GO_MILI_GOTH_ENTRY_GATE);
                     DoUseDoorOrButton(GO_MILI_GOTH_EXIT_GATE);
                     DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);          
-                    // m_dialogueHelper.StartNextDialogueText(NPC_THANE);
+                    m_dialogueHelper.StartNextDialogueText(NPC_THANE);
                     break;
             }
             m_auiEncounter[7] = uiData;
             break;
         case TYPE_FOUR_HORSEMEN:
-            m_auiEncounter[8] = uiData;
-            DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);
+            // Skip if already set
+            if (m_auiEncounter[uiType] == uiData)
+                return;
+            if (uiData == SPECIAL)
+            {
+                ++m_uiHorseMenKilled;
+
+                if (m_uiHorseMenKilled == 4)
+                    SetData(TYPE_FOUR_HORSEMEN, DONE);
+
+                // Don't store special data
+                break;
+            }
+            if (uiData == FAIL)
+                m_uiHorseMenKilled = 0;
+            
+            m_auiEncounter[uiType] = uiData;
+            DoUseDoorOrButton(GO_MILI_HORSEMEN_DOOR);            
+            
             if (uiData == DONE)
             {
                 // Despawn spirits
@@ -358,12 +399,12 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
                 if (Creature* pSpirit = GetSingleCreatureFromStorage(NPC_SPIRIT_OF_ZELIREK))
                     pSpirit->ForcedDespawn();
 
-               DoUseDoorOrButton(GO_MILI_EYE_RAMP);
+                DoUseDoorOrButton(GO_MILI_EYE_RAMP);
                 DoUseDoorOrButton(GO_MILI_EYE_BOSS);
                 DoRespawnGameObject(GO_MILI_PORTAL, 30 * MINUTE);
                 DoToggleGameObjectFlags(GO_MILI_PORTAL, GO_FLAG_NO_INTERACT, false);
                 DoRespawnGameObject(GO_CHEST_HORSEMEN_NORM, 30 * MINUTE);
-                // Add taunt
+                m_uiTauntTimer = 5000;
             }
             break;
         case TYPE_PATCHWERK:
@@ -396,7 +437,7 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
                 DoUseDoorOrButton(GO_CONS_EYE_BOSS);
                 DoRespawnGameObject(GO_CONS_PORTAL, 30 * MINUTE);
                 DoToggleGameObjectFlags(GO_CONS_PORTAL, GO_FLAG_NO_INTERACT, false);                
-                // Add taunt
+                m_uiTauntTimer = 5000;
             }
             break;
         case TYPE_SAPPHIRON:
@@ -404,7 +445,7 @@ void instance_naxxramas::SetData(uint32 uiType, uint32 uiData)
             if (uiData == DONE)
             {
                 DoUseDoorOrButton(GO_KELTHUZAD_WATERFALL_DOOR);
-                //m_dialogueHelper.StartNextDialogueText(NPC_KELTHUZAD);
+                m_dialogueHelper.StartNextDialogueText(NPC_KELTHUZAD);
             }
             
              // Start Sapph summoning process
@@ -576,6 +617,17 @@ void instance_naxxramas::Update(uint32 uiDiff)
             m_uiScreamsTimer -= uiDiff;
     }
     
+    if (m_uiTauntTimer)
+    {
+        if (m_uiTauntTimer <= uiDiff)
+        {
+            DoTaunt();
+            m_uiTauntTimer = 0;
+        }
+        else
+            m_uiTauntTimer -= uiDiff;
+    }
+    
     if (m_uiSapphSpawnTimer)
     {
         if (m_uiSapphSpawnTimer <= uiDiff)
@@ -588,6 +640,7 @@ void instance_naxxramas::Update(uint32 uiDiff)
         else
             m_uiSapphSpawnTimer -= uiDiff;
     }
+     m_dialogueHelper.DialogueUpdate(uiDiff);
 }
 
 void instance_naxxramas::SetGothTriggers()
@@ -678,6 +731,34 @@ void instance_naxxramas::SetChamberCenterCoords(float fX, float fY, float fZ)
     m_fChamberCenterZ = fZ;
 }
 
+void instance_naxxramas::DoTaunt()
+{
+    if (m_auiEncounter[TYPE_KELTHUZAD] != DONE)
+    {
+        uint8 uiWingsCleared = 0;
+
+        if (m_auiEncounter[TYPE_MAEXXNA] == DONE)
+            ++uiWingsCleared;
+
+        if (m_auiEncounter[TYPE_LOATHEB] == DONE)
+            ++uiWingsCleared;
+
+        if (m_auiEncounter[TYPE_FOUR_HORSEMEN] == DONE)
+            ++uiWingsCleared;
+
+        if (m_auiEncounter[TYPE_THADDIUS] == DONE)
+            ++uiWingsCleared;
+
+        switch (uiWingsCleared)
+        {
+            case 1: DoOrSimulateScriptTextForThisInstance(SAY_KELTHUZAD_TAUNT1, NPC_KELTHUZAD); break;
+            case 2: DoOrSimulateScriptTextForThisInstance(SAY_KELTHUZAD_TAUNT2, NPC_KELTHUZAD); break;
+            case 3: DoOrSimulateScriptTextForThisInstance(SAY_KELTHUZAD_TAUNT3, NPC_KELTHUZAD); break;
+            case 4: DoOrSimulateScriptTextForThisInstance(SAY_KELTHUZAD_TAUNT4, NPC_KELTHUZAD); break;
+        }
+    }
+}
+
 InstanceData* GetInstanceData_instance_naxxramas(Map* pMap)
 {
     return new instance_naxxramas(pMap);
@@ -707,6 +788,32 @@ bool AreaTrigger_at_naxxramas(Player* pPlayer, AreaTriggerEntry const* pAt)
                     pKelthuzad->SetInCombatWithZone();
                 }
             }
+        }
+    }
+
+     if (pAt->id == AREATRIGGER_THADDIUS_DOOR)
+    {
+        if (instance_naxxramas* pInstance = (instance_naxxramas*)pPlayer->GetInstanceData())
+        {
+            if (pInstance->GetData(TYPE_THADDIUS) == NOT_STARTED)
+            {
+                if (Creature* pThaddius = pInstance->GetSingleCreatureFromStorage(NPC_THADDIUS))
+                {
+                    pInstance->SetData(TYPE_THADDIUS, SPECIAL);
+                    DoScriptText(SAY_THADDIUS_GREET, pThaddius);
+                }
+            }
+        }
+    }
+
+    if (pAt->id == AREATRIGGER_FROSTWYRM_TELE)
+    {
+        if (instance_naxxramas* pInstance = (instance_naxxramas*)pPlayer->GetInstanceData())
+        {
+            // Area trigger handles teleport in DB. Here we only need to check if all the end wing encounters are done
+            if (pInstance->GetData(TYPE_THADDIUS) != DONE || pInstance->GetData(TYPE_LOATHEB) != DONE || pInstance->GetData(TYPE_MAEXXNA) != DONE ||
+                    pInstance->GetData(TYPE_FOUR_HORSEMEN) != DONE)
+                return true;
         }
     }
 
