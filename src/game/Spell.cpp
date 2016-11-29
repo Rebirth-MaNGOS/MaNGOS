@@ -3561,7 +3561,7 @@ void Spell::update(uint32 difftime)
     }
 
     // check if the player or unit caster has moved before the spell finished
-    if (((m_caster->GetTypeId() == TYPEID_PLAYER || m_caster->GetTypeId() == TYPEID_UNIT) && m_timer != 0) &&
+    if ((m_caster->GetTypeId() == TYPEID_PLAYER && m_timer != 0) &&
             (m_castPositionX != m_caster->GetPositionX() || m_castPositionY != m_caster->GetPositionY() || m_castPositionZ != m_caster->GetPositionZ()) &&
             (m_spellInfo->Effect[EFFECT_INDEX_0] != SPELL_EFFECT_STUCK || !((Player*)m_caster)->m_movementInfo.HasMovementFlag(MOVEFLAG_FALLING_FAR)))
     {
@@ -3598,7 +3598,7 @@ void Spell::update(uint32 difftime)
     {
         if(m_timer > 0)
         {
-            if( m_caster->GetTypeId() == TYPEID_PLAYER || m_caster->GetTypeId() == TYPEID_UNIT)
+            if( m_caster->GetTypeId() == TYPEID_PLAYER)
             {
                 // check if player has jumped before the channeling finished
                 if(((Player*)m_caster)->m_movementInfo.HasMovementFlag(MOVEFLAG_FALLING))
@@ -4209,10 +4209,6 @@ void Spell::SendChannelUpdate(uint32 time)
         if (target_guid != m_caster->GetObjectGuid() && target_guid.IsUnit())
             if (Unit* target = ObjectAccessor::GetUnit(*m_caster, target_guid))
                 target->RemoveAurasByCasterSpell(m_spellInfo->Id, m_caster->GetObjectGuid());
-
-        // Only finish channeling when latest channeled spell finishes
-        if (m_caster->GetUInt32Value(UNIT_CHANNEL_SPELL) != m_spellInfo->Id)
-            return;
             
         m_caster->SetChannelObjectGuid(ObjectGuid());
         m_caster->SetUInt32Value(UNIT_CHANNEL_SPELL, 0);
