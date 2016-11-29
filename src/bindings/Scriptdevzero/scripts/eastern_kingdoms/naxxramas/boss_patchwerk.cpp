@@ -16,8 +16,8 @@
 
 /* ScriptData
 SDName: Boss_Patchwerk
-SD%Complete: 80
-SDComment: TODO: confirm how hateful strike work
+SD%Complete: 100
+SDComment: 
 SDCategory: Naxxramas
 EndScriptData */
 
@@ -31,11 +31,10 @@ enum
     SAY_SLAY              = -1533019,
     SAY_DEATH             = -1533020,
 
-    EMOTE_BERSERK         = -1533021,
-    EMOTE_ENRAGE          = -1533022,
+    EMOTE_GENERIC_BERSERK   = -1533021,
+    EMOTE_GENERIC_ENRAGED = -1533022,
 
     SPELL_HATEFULSTRIKE   = 28308,
-    SPELL_HATEFULSTRIKE_H = 59192,
     SPELL_ENRAGE          = 28131,
     SPELL_BERSERK         = 26662,
     SPELL_SLIMEBOLT       = 32309
@@ -59,9 +58,9 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiHatefulStrikeTimer = 1000;                      //1 second
-        m_uiBerserkTimer = MINUTE*6*IN_MILLISECONDS;         //6 minutes
-        m_uiSlimeboltTimer = 10000;
+        m_uiHatefulStrikeTimer = urand(1100, 1300);
+        m_uiBerserkTimer = MINUTE * 7 * IN_MILLISECONDS;    // 7 minutes
+        m_uiSlimeboltTimer = 30000;
         m_bEnraged = false;
         m_bBerserk = false;
     }
@@ -90,6 +89,21 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
             m_pInstance->SetData(TYPE_PATCHWERK, IN_PROGRESS);
     }
 
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_PATCHWERK, FAIL);
+    }
+    
+    void SpellHit(Unit* /*pCaster*/, const SpellEntry* pSpellEntry)
+    {
+        // Only emote on real spell hit
+        if (pSpellEntry->Id == SPELL_ENRAGE)
+            DoScriptText(EMOTE_GENERIC_ENRAGED, m_creature);
+        else if (pSpellEntry->Id ==SPELL_BERSERK)
+            DoScriptText(EMOTE_GENERIC_BERSERK, m_creature);
+    }
+    
     void DoHatefulStrike()
     {
         // The ability is used on highest HP target choosen of the top 2 (3 heroic) targets on threat list being in melee range
@@ -98,25 +112,34 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
         uint32 uiTargets = 2;
 
         ThreatList const& tList = m_creature->getThreatManager().getThreatList();
-        for (ThreatList::const_iterator iter = tList.begin();iter != tList.end(); ++iter)
+       if (tList.size() > 1)                               // Check if more than two targets, and start loop with second-most aggro
         {
-            if (!uiTargets)
-                break;
-
-            if (Unit* pTempTarget = m_creature->GetMap()->GetUnit((*iter)->getUnitGuid()))
+            ThreatList::const_iterator iter = tList.begin();
+            std::advance(iter, 1);
+            for (; iter != tList.end(); ++iter)
             {
-                if (pTempTarget->GetHealth() > uiHighestHP && m_creature->IsWithinDistInMap(pTempTarget, ATTACK_DISTANCE))
+                if (!uiTargets)
+                    break;
+
+                if (Unit* pTempTarget = m_creature->GetMap()->GetUnit((*iter)->getUnitGuid()))
                 {
-                    uiHighestHP = pTempTarget->GetHealth();
-                    pTarget = pTempTarget;
+                    if (m_creature->CanReachWithMeleeAttack(pTempTarget))
+                    {
+                        if (pTempTarget->GetHealth() > uiHighestHP)
+                        {
+                            uiHighestHP = pTempTarget->GetHealth();
+                            pTarget = pTempTarget;
+                        }
+                        --uiTargets;
+                    }
                 }
             }
-
-            --uiTargets;
         }
 
-        if (pTarget)
-            DoCastSpellIfCan(pTarget,SPELL_HATEFULSTRIKE);
+        if (!pTarget)
+            pTarget = m_creature->getVictim();
+        
+        DoCastSpellIfCan(pTarget,SPELL_HATEFULSTRIKE);
     }
 
     void UpdateAI(const uint32 uiDiff)
@@ -128,7 +151,8 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
         if (m_uiHatefulStrikeTimer < uiDiff)
         {
             DoHatefulStrike();
-            m_uiHatefulStrikeTimer = 1000;
+            // wowwiki says about 1.2sec, so why not a bit random
+            m_uiHatefulStrikeTimer = urand(1100, 1300);
         }
         else
             m_uiHatefulStrikeTimer -= uiDiff;
@@ -138,31 +162,31 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
         {
             if (m_creature->GetHealthPercent() < 5.0f)
             {
-                DoCastSpellIfCan(m_creature, SPELL_ENRAGE);
-                DoScriptText(EMOTE_ENRAGE, m_creature);
+                m_creature->CastSpell(m_creature, SPELL_ENRAGE, true);                
                 m_bEnraged = true;
             }
         }
 
-        // Berserk after 6 minutes
+        // Berserk after 7 minutes
         if (!m_bBerserk)
         {
             if (m_uiBerserkTimer < uiDiff)
             {
-                DoCastSpellIfCan(m_creature, SPELL_BERSERK);
-                DoScriptText(EMOTE_BERSERK, m_creature);
+                m_creature->CastSpell(m_creature, SPELL_BERSERK, true);
                 m_bBerserk = true;
+                // First one after 30 sec
+                m_uiSlimeboltTimer = 30000;
             }
             else
                 m_uiBerserkTimer -= uiDiff;
         }
         else
         {
-            // Slimebolt - casted only while Berserking to prevent kiting
+            // Slimebolt - casted only 30 seconds after Berserking to prevent kiting
             if (m_uiSlimeboltTimer < uiDiff)
             {
                 DoCastSpellIfCan(m_creature->getVictim(), SPELL_SLIMEBOLT);
-                m_uiSlimeboltTimer = 5000;
+                m_uiSlimeboltTimer = 1000;
             }
             else
                 m_uiSlimeboltTimer -= uiDiff;
