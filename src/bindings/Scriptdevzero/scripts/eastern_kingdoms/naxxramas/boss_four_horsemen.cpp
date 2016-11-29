@@ -17,7 +17,7 @@
 /* ScriptData
 SDName: Boss_Four_Horsemen
 SD%Complete: 80
-SDComment: Lady Blaumeux, Thane Korthazz, Sir Zeliek, Baron Rivendare, manually spawn the spirits and fix void zone
+SDComment: Lady Blaumeux, Thane Korthazz, Sir Zeliek, Baron Rivendare, manually spawn the spirits and fix void zone, spirits should keep giving marks
 SDCategory: Naxxramas
 EndScriptData */
 
@@ -236,6 +236,7 @@ struct MANGOS_DLL_DECL boss_highlord_mograineAI : public ScriptedAI
         ShieldWall1 = true;
         ShieldWall2 = true;
         
+        // Righteous fire is an aura so its unknown if/how it should be cast more often during enrage
         if(!m_creature->HasAura(SPELL_RIGHTEOUS_FIRE))
             m_creature->CastSpell(m_creature, SPELL_RIGHTEOUS_FIRE, true);    
     }
@@ -460,7 +461,7 @@ struct MANGOS_DLL_DECL boss_thane_korthazzAI : public ScriptedAI
         if (Meteor_Timer < uiDiff)
         {
             CastMeteorOnRandomTarget();
-            Meteor_Timer = m_bEnrage ? 5000 : 20000;                           // wrong
+            Meteor_Timer = m_bEnrage ? 3000 : 12000;                           // 12 sec according to wowwiki
         }
         else 
             Meteor_Timer -= uiDiff;
