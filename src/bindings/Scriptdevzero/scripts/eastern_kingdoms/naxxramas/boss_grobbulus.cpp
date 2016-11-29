@@ -18,7 +18,7 @@
  * ScriptData
  * SDName:      Boss_Grobbulus
  * SD%Complete: 80
- * SDComment:   Timer need more care; Spells of Adds (Posion Cloud) need Mangos Fixes, and further handling
+ * SDComment:   Timer need more care; Spells of Adds (Posion Cloud) need Mangos Fixes, and further handling. Visuals of previously mentioned spells need to be implemented
  * SDCategory:  Naxxramas
  * EndScriptData
  */
@@ -38,6 +38,7 @@ enum
 {
     EMOTE_SPRAY_SLIME               = -1533021,
     //EMOTE_INJECTION                 = -1533158,           // no whisper on video, so skipping
+    EMOTE_GENERIC_BERSERK   = -1533021, // should have emote? added anyway
 
     SPELL_SLIME_STREAM              = 28137,
     SPELL_MUTATING_INJECTION        = 28169,
@@ -63,7 +64,6 @@ struct MANGOS_DLL_DECL boss_grobbulusAI : public ScriptedAI
     uint32 m_uiInjectionTimer;
     uint32 m_uiPoisonCloudTimer;
     uint32 m_uiSlimeSprayTimer;
-    uint32 m_uiBerserkTimeSecs;
     uint32 m_uiBerserkTimer;
     uint32 m_uiSlimeStreamTimer;
 
@@ -72,8 +72,7 @@ struct MANGOS_DLL_DECL boss_grobbulusAI : public ScriptedAI
         m_uiInjectionTimer = 12 * IN_MILLISECONDS;
         m_uiPoisonCloudTimer = urand(20 * IN_MILLISECONDS, 25 * IN_MILLISECONDS);
         m_uiSlimeSprayTimer = urand(20 * IN_MILLISECONDS, 30 * IN_MILLISECONDS);
-        m_uiBerserkTimeSecs = 12 * MINUTE;
-        m_uiBerserkTimer = m_uiBerserkTimeSecs * IN_MILLISECONDS;
+        m_uiBerserkTimer = 12 * MINUTE * IN_MILLISECONDS;
         m_uiSlimeStreamTimer = 5 * IN_MILLISECONDS;         // The first few secs it is ok to be out of range
     }
 
@@ -94,7 +93,7 @@ struct MANGOS_DLL_DECL boss_grobbulusAI : public ScriptedAI
         if (m_pInstance)
             m_pInstance->SetData(TYPE_GROBBULUS, FAIL);
     }
-
+    
     // This custom selecting function, because we only want to select players without mutagen aura
     bool DoCastMutagenInjection()
     {
@@ -132,7 +131,10 @@ struct MANGOS_DLL_DECL boss_grobbulusAI : public ScriptedAI
     void SpellHit(Unit* pCaster, SpellEntry const* pSpell)
     {
         if (pSpell->Id == SPELL_BERSERK)
+        {
+            DoScriptText(EMOTE_GENERIC_BERSERK, m_creature);
             m_uiBerserkTimer = 600000;
+        }
     }
     
     void UpdateAI(const uint32 uiDiff)
@@ -180,7 +182,13 @@ struct MANGOS_DLL_DECL boss_grobbulusAI : public ScriptedAI
         if (m_uiInjectionTimer < uiDiff)
         {
             if (DoCastMutagenInjection())
-                m_uiInjectionTimer = urand(10 * IN_MILLISECONDS, 13 * IN_MILLISECONDS) -  5 * (m_uiBerserkTimeSecs * IN_MILLISECONDS - m_uiBerserkTimer) / m_uiBerserkTimeSecs;
+            {
+                // Mutagen Injection should be used more often when below 30%
+                if (m_creature->GetHealthPercent() > 30.0f)
+                    m_uiInjectionTimer = urand(7000, 13000);
+                else
+                    m_uiInjectionTimer = urand(3000, 7000);
+            }
         }
         else
             m_uiInjectionTimer -= uiDiff;
