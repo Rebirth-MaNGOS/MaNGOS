@@ -1,0 +1,164 @@
+The Rebirth - MaNGOS server
+===========================
+
+This is the code base of The Rebirth as it were when the server shut
+down in March of 2017. It should be a fully functional MaNGOS server
+with all of its shortcomings and the things that were coded during the
+lifetime of the Rebirth.
+
+Due to the fallout at the end of 2014 when Muggle and andkem took over
+the management of the server all commit history before the start of
+2015 is, unfortunately, lost.
+
+Build instructions
+==================
+
+Windows
+
+The Windows builds are probably horribly broken, We haven't even tried
+them for a while, since at the end of the project's life we had no one
+developing on Windows. If you want it to build on Windows you can
+expect to have to go through a measure of pain and suffering and no
+instructions will be given here.
+
+Linux
+
+On Linux, building should be pretty straight forward.
+
+1. Make sure that you have a compiler installed (clang and gcc should
+   both work), make, cmake, ACE and TBB.
+
+2. Create a folder called "build" at the root of the project.
+
+3. In the build folder execute the following command to configure the
+   build:
+    cmake .. -DDEBUG=0 -DACE_USE_EXTERNAL=1 -DTBB_USE_EXTERNAL=1 -DCMAKE_INSTALL_PREFIX=/path/to/install/location
+
+   NOTE: If you set ACE_USE_EXTERNAL or TBB_USE_EXTERNAL to 0 it will
+         build using the bundled libraries. The bundled libraries
+         have NOT been used, ever, by The Rebirth in an production
+         environment and we cannot vouch for their stability.
+
+4. Execute "make" in the build folder to start the build process.
+
+5. Install the server in the desired location by executing "make
+   install" in the build folder.
+
+Example chain of commands:
+git clone git://github.com/Rebirth-MaNGOS/Rebirth.git
+cd Rebirth
+mkdir build
+cd build
+cmake .. -DACE_USE_EXTERNAL=1 -DTBB_USE_EXTERNAL=1 -DDEBUG=0 -DCMAKE_INSTALL_PREFIX=/tmp/Rebirth
+make
+make install
+
+When the commands above are done the server should be installed in
+"/tmp/Rebirth".
+
+You can find the configuration settings the Rebirth used under the
+"config_files" folder. Copy these to the "etc", /tmp/Rebirth/etc for
+the example above, folder of the installation given as
+"CMAKE_INSTALL_PREFIX" and change the settings as you see fit.
+
+Importing the database
+======================
+
+The complete Rebirth database is available in the repo and can be
+found under "full_database".
+
+1. Import the SQL-files found under "full_database" into your MariaDB
+   or MySQL server:
+   mysql -u root -p < zp_mangosd.sql
+   mysql -u root -p < zp_realmd.sql
+   mysql -u root -p < zp_charactersd.sql
+   mysql -u root -p < zp_scriptdevzerod.sql
+
+2. Configure your database with a user that has full access to the
+   databases created in the import. The databases are named the same
+   thing as the SQL files, but without the file ending.
+
+3. Change all entries in the mangos server configuration files to
+   match the login info of your database. Ex: "LoginDatabaseInfo"
+   in mangosd.conf.
+
+Extracting DBC files and generating maps
+========================================
+
+To get the server to work with pathing working correctly (as correctly
+as they can with our MaNGOS version, at least) you need to go through
+a few steps.
+
+There are a few tools under the contrib folder:
+  - extractor - used to extract maps from a World of Warcraft
+    client.
+  - vmap_assembler/vmap-extractor - used to created vmaps that deal
+    with LOS in the game.
+  - mmap - mmap generator that generates the pathing maps.
+
+Build the four different tools the same way you did the server. I.e.
+go into the folder, create a new folder called build, enter the build
+folder, execute "cmake .." and then run "make".
+
+Example:
+cd extractor
+mkdir build
+cd build
+cmake ..
+make
+cp ad /path/to/wow/folder
+
+When you have all four tools built, you copy them to a World of
+Warcraft client folder. Then you run the following commands in the
+World of Warcraft client folder:
+./ad
+./vmap-extractor
+mkdidr vmaps
+./vmap_assembler Buildings vmaps
+mkdir mmaps
+./MoveMapGen
+
+Now copy the following folders to the "bin" folder of your mangos
+server install , i.e. the path you gave in the previous step to
+"CMAKE_INSTALL_PREFIX" (/tmp/Rebirth/bin in the example):
+ - mmaps
+ - vmaps
+ - maps
+ - dbc
+
+Note: The Rebirth MoveMapGen has a new flag called --dumpTile that
+allows for viewing a movemap tile in Blender. See the readme.
+
+Starting the server
+===================
+
+If everything has gone the way it should, the server should now be
+ready to start. Make sure that your SQL server is up and running and
+that you have changed the mangos configuration according to your own
+password and username. Then go to the bin folder of your installation
+and simply execute "./realmd" to start the realm daemon and
+"./mangosd" to start the game server.
+
+If the database was imported as provided and the server started
+without throwing fatal errors, you should now be able to log on to the
+server using the already existing default GM account with username
+"admin" and password "admin". Change your realmlist to "set
+realmlist 127.0.0.1" to log on.
+
+DEFAULT GM USER:
+Username: admin
+Password: admin
+
+WARNING: If you intend on running the server publicly we highly
+encourage you to change the password of the default account, deleting
+it or disabling it!
+
+Thank you for the good times
+============================
+
+Hopefully you can get some joy out of the dirty hacks we have crafted
+with love, sweat and some tears during the years, as we now let our
+child out into the wild!
+
+Thank you for all the good times we had!
+- The Rebirth team!
